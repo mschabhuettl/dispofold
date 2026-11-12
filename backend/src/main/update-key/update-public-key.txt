@@ -1,0 +1,1 @@
+${dispofold.update.public-key}

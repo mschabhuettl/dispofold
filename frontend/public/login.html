@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-t="login.title">Dispofold</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="favicon.ico" sizes="16x16 32x32 48x48">
+  <link rel="stylesheet" href="css/app.css">
+  <script src="theme.js"></script>
+</head>
+<body class="center-page">
+  <button class="btn-icon theme-toggle" type="button"></button>
+  <main class="center-box">
+    <div class="brand">
+      <img src="img/logo.svg" alt="">
+      <p class="app-name" data-t="app.name"></p>
+    </div>
+    <h1 data-t="login.heading"></h1>
+    <p id="login-error" class="alert alert-error" role="alert" hidden data-t="login.error"></p>
+    <form method="post" action="/j_security_check">
+      <label for="j_username" data-t="login.username"></label>
+      <input id="j_username" name="j_username" autocomplete="username" required autofocus>
+      <label for="j_password" data-t="login.password"></label>
+      <input id="j_password" name="j_password" type="password" autocomplete="current-password" required>
+      <button class="btn btn-primary" type="submit" data-t="login.submit"></button>
+    </form>
+    <p class="source-note"><a href="https://github.com/mschabhuettl/dispofold" target="_blank" rel="noopener"
+       data-t="app.source"></a></p>
+  </main>
+  <script type="module" src="js/login.js"></script>
+</body>
+</html>

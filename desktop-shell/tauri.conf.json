@@ -1,0 +1,38 @@
+{
+  "$schema": "node_modules/@tauri-apps/cli/config.schema.json",
+  "productName": "Dispofold",
+  "mainBinaryName": "dispofold",
+  "version": "0.1.0",
+  "identifier": "app.dispofold",
+  "build": { "frontendDist": "pages" },
+  "app": {
+    "withGlobalTauri": false,
+    "windows": [],
+    "security": { "csp": null }
+  },
+  "bundle": {
+    "active": true,
+    "publisher": "Dispofold",
+    "copyright": "Alle Rechte vorbehalten",
+    "category": "Productivity",
+    "shortDescription": "Dienstplanung für Leitstellen",
+    "longDescription": "Dienstplanung für Leitstellen: Dienstplan, Wünsche, Abwesenheiten und automatische Planung.",
+    "license": "AGPL-3.0-only",
+    "licenseFile": "../LICENSE",
+    "icon": [
+      "../branding/png/icon-32.png",
+      "../branding/png/icon-128.png",
+      "../branding/png/icon-256.png",
+      "../branding/icon.icns",
+      "../branding/icon.ico"
+    ],
+    "linux": {
+      "deb": { "section": "office" },
+      "rpm": { "release": "1" }
+    },
+    "windows": {
+      "nsis": { "languages": ["German"], "displayLanguageSelector": false }
+    },
+    "macOS": { "minimumSystemVersion": "11.0" }
+  }
+}

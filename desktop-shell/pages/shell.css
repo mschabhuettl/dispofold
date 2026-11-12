@@ -1,0 +1,61 @@
+/* Look of the window's own pages (unlock, wait): colours and font of the Dispofold interface. */
+@font-face { font-family: 'IBM Plex Sans'; font-weight: 400; src: url(/__shell/fonts/plex-400.woff2) format('woff2'); }
+@font-face { font-family: 'IBM Plex Sans'; font-weight: 600; src: url(/__shell/fonts/plex-600.woff2) format('woff2'); }
+:root {
+  color-scheme: light;
+  --bg: #F3F6F8; --surface: #FFFFFF; --text: #16232B; --text-muted: #4A5963; --border: #CAD3D9;
+  --border-strong: #7D8D98; --primary: #0D6478; --primary-hover: #094F5F; --on-primary: #FFFFFF;
+  --danger: #B0361E; --danger-tint: #FBE9E4; --accent: #9A5B00; --focus: #1C64C8;
+  --shadow: 0 6px 20px rgb(22 35 43 / .16);
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #0E161B; --surface: #162129; --text: #E2E9ED; --text-muted: #A2B1BB; --border: #2F3F4A;
+    --border-strong: #62747F; --primary: #5BB8CC; --primary-hover: #82CCDB; --on-primary: #0B1418;
+    --danger: #FF8D78; --danger-tint: #3B211C; --accent: #E7A64A; --focus: #8CBBFF;
+    --shadow: 0 6px 24px rgb(0 0 0 / .5);
+  }
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  display: grid; place-items: center; background: var(--bg); color: var(--text);
+  font: 15px/1.5 'IBM Plex Sans', system-ui, sans-serif;
+}
+.card {
+  width: min(440px, calc(100vw - 32px)); background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; box-shadow: var(--shadow); padding: 28px 32px;
+}
+.brand { display: flex; align-items: center; gap: 12px; margin-bottom: 18px; }
+.brand img { width: 40px; height: 40px; }
+.brand span { font-size: 22px; font-weight: 600; }
+h1 { font-size: 18px; font-weight: 600; margin: 0 0 8px; }
+p { margin: 0 0 14px; color: var(--text-muted); }
+label { display: block; font-weight: 600; margin: 14px 0 4px; }
+input {
+  width: 100%; padding: 8px 10px; font: inherit; color: var(--text); background: var(--surface);
+  border: 1px solid var(--border-strong); border-radius: 6px;
+}
+input:focus-visible, button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+button {
+  margin-top: 20px; width: 100%; padding: 9px 14px; font: inherit; font-weight: 600; cursor: pointer;
+  background: var(--primary); color: var(--on-primary); border: 1px solid var(--primary); border-radius: 6px;
+}
+button:hover { background: var(--primary-hover); }
+button:disabled { opacity: .6; cursor: progress; }
+.note { border-left: 4px solid var(--accent); padding: 8px 12px; color: var(--text); background: var(--bg); border-radius: 4px; }
+.error { color: var(--danger); background: var(--danger-tint); border-radius: 6px; padding: 8px 12px; margin-top: 14px; }
+.spinner {
+  width: 28px; height: 28px; border-radius: 50%; border: 3px solid var(--border); border-top-color: var(--primary);
+  animation: spin 1s linear infinite; margin: 8px auto 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+[hidden] { display: none !important; }
+body.small { place-items: stretch; }
+body.small main { padding: 20px 24px; }
+.row { display: flex; gap: 12px; }
+.row button { margin-top: 4px; }
+button.secondary { background: var(--surface); color: var(--primary); border-color: var(--border-strong); }
+button.secondary:hover { background: var(--bg); }

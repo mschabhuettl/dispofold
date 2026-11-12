@@ -1,0 +1,23 @@
+{
+  "name": "dispofold-frontend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "dev": "node scripts/build.mjs && node scripts/dev-server.mjs",
+    "test": "node --test test/*.test.js",
+    "screenshots": "node scripts/screenshots.mjs",
+    "check:exports": "node scripts/build.mjs && node scripts/check-exports.mjs",
+    "check:desktop": "node scripts/build.mjs && node scripts/check-desktop.mjs"
+  },
+  "dependencies": {
+    "@bryntum/core-community": "8.0.0",
+    "@bryntum/scheduler-community": "8.0.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.10",
+    "playwright": "1.65.0"
+  }
+}

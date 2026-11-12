@@ -1,0 +1,22 @@
+# Data folders: real data never enters the repository
+data/
+imports/
+
+# Build output
+backend/target/
+frontend/dist/
+frontend/node_modules/
+tools/demodata/.venv/
+**/__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Local configuration
+.env
+*.local
+
+# Editors
+.idea/
+.vscode/
+*.iml

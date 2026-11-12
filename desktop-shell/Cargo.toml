@@ -1,0 +1,34 @@
+[package]
+name = "dispofold"
+version = "0.1.0"
+edition = "2021"
+license = "AGPL-3.0-only"
+description = "Dienstplanung für Leitstellen"
+publish = false
+
+[build-dependencies]
+tauri-build = { version = "=2.7.4", features = [] }
+
+[dependencies]
+tauri = { version = "=2.12.5", features = [] }
+tauri-plugin-single-instance = "=2.5.5"
+tauri-plugin-dialog = "=2.8.4"
+reqwest = { version = "0.13", default-features = false }
+tokio = { version = "1", features = ["sync", "time", "net"] }
+hyper = { version = "1", features = ["server", "http1"] }
+hyper-util = { version = "0.1", features = ["tokio"] }
+http-body-util = "0.1"
+bytes = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+hmac = "0.12"
+sha2 = "0.10"
+base64 = "0.22"
+getrandom = "0.3"
+dirs = "6"
+dunce = "1"
+
+[profile.release]
+strip = true
+lto = true
+codegen-units = 1

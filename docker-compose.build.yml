@@ -1,0 +1,12 @@
+# Builds the images from the source instead of using released ones:
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+# or set COMPOSE_FILE=docker-compose.yml:docker-compose.build.yml in .env.
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
