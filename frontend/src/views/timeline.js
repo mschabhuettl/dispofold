@@ -4,15 +4,17 @@ import { tint } from '../lib/colors.js';
 import { areaDuties, coverageModel } from '../lib/coverage.js';
 import { addDays, dayLabel, epochMinutes, formatLocalDateTime, monthDates, weekday } from '../lib/dates.js';
 import { fmt, h } from '../lib/dom.js';
-import { personName } from '../lib/grid-model.js';
+import { cellsEditable, personName } from '../lib/grid-model.js';
 import { t } from '../lib/texts.js';
+import { candidateList } from './candidate-list.js';
 import { coverageChart, coverageLegend } from './coverage-chart.js';
 
 const LABEL_WIDTH = 200;
 
 export async function render(root, ctx) {
-  const { api, month } = ctx;
-  const [dataset, state, period] = await Promise.all([ctx.dataset(), api.planState(month), api.period(month).catch(() => null)]);
+  const { api, month, canEdit } = ctx;
+  const [dataset, initialState, period] = await Promise.all([ctx.dataset(), api.planState(month), api.period(month).catch(() => null)]);
+  let state = initialState;
   const dates = monthDates(month);
   const storedArea = sessionStorage.getItem('timeline-area');
   let areaId = dataset.areas.some((a) => a.id === storedArea) ? storedArea : dataset.areas[0]?.id;
@@ -109,12 +111,37 @@ export async function render(root, ctx) {
     const box = timeline?.axisBox() ?? { left: LABEL_WIDTH, width: Math.max(300, host.clientWidth - LABEL_WIDTH) };
     chartHost.replaceChildren(coverageChart(model, { ...box, mode }));
     const fmtT = (t) => { const s = formatLocalDateTime(t); return `${dayLabel(s.slice(0, 10))} ${s.slice(11)}`; };
+    // planners only (viewers never ask for candidates): a button per gap opens the list of who could be asked
+    const ask = cellsEditable({ canEdit, solving: state.solving, closed: state.plan.status === 'CLOSED' });
     gapList.replaceChildren(model.gaps.length
       ? h('table.data', {}, h('caption', { style: { textAlign: 'left', fontWeight: 700, padding: '.5rem 0' } }, t('timeline.gaps.caption')),
-        h('thead', {}, h('tr', {}, h('th', {}, t('timeline.gaps.from')), h('th', {}, t('timeline.gaps.to')), h('th.num', {}, t('timeline.gaps.missing')), h('th.num', {}, t('timeline.gaps.hours')))),
+        h('thead', {}, h('tr', {}, h('th', {}, t('timeline.gaps.from')), h('th', {}, t('timeline.gaps.to')), h('th.num', {}, t('timeline.gaps.missing')), h('th.num', {}, t('timeline.gaps.hours')),
+          ask && h('th', {}, t('timeline.gaps.ask')))),
         h('tbody', {}, model.gaps.map((g) => h('tr', {}, h('td', {}, fmtT(g.from)), h('td', {}, fmtT(g.to)),
-          h('td.num', {}, String(g.maxShortfall)), h('td.num', {}, fmt.num(g.missingMinutes / 60, 1))))))
+          h('td.num', {}, String(g.maxShortfall)), h('td.num', {}, fmt.num(g.missingMinutes / 60, 1)),
+          ask && h('td', {}, askButton(g))))))
       : h('p.muted', {}, segments.length ? t('timeline.noGaps') : ''));
+  }
+
+  /** Shows or hides a row below the gap with the list of who could be asked. */
+  function askButton(g) {
+    const gap = { areaId, from: formatLocalDateTime(g.from), to: formatLocalDateTime(g.to) };
+    const button = h('button.btn.btn-secondary.btn-small', { type: 'button', 'aria-expanded': 'false', onclick: () => {
+      const row = button.closest('tr');
+      const open = row.nextElementSibling?.classList.contains('candidates-row');
+      if (open) row.nextElementSibling.remove();
+      else row.after(h('tr.candidates-row', {}, h('td', { colspan: 5 }, candidateList({ api, month, gap, dataset, onSet: afterSet }))));
+      button.setAttribute('aria-expanded', String(!open));
+    } }, t('candidates.title'));
+    return button;
+  }
+
+  /** A duty was set from the list: new plan, coverage and drawing. */
+  async function afterSet(plan) {
+    if (disposed) return;
+    state = { ...state, plan };
+    await loadCoverage();
+    draw();
   }
 
   const onResize = () => { if (timeline) drawCoverage(range().start, range().end); };

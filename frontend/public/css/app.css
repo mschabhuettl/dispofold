@@ -255,6 +255,15 @@ table.roster td.holiday { background: var(--holiday); }
 .cell-pinned .cell-code, .cell-code.pinned { outline: 2px solid var(--text); }
 .cell-pinned::after { content: ""; position: absolute; top: 1px; right: 1px; border: 4px solid transparent; border-top-color: var(--text); border-right-color: var(--text); }
 .cell-hard, .cell-code.hard { box-shadow: inset 0 0 0 2px var(--danger); }
+/* on request: a duty set by hand that the person only does when asked (corner mark bottom left) */
+.cell-code.on-request { position: relative; }
+.cell-on-request::before, .cell-code.on-request::before {
+  content: ""; position: absolute; bottom: 1px; left: 1px; border: 4px solid transparent; border-bottom-color: var(--accent); border-left-color: var(--accent);
+}
+.gap-marker .cell-code { color: var(--danger); background: var(--danger-tint); outline: 1px dashed var(--danger); font-weight: 600; }
+/* function view: empty positions keep the row height */
+table.functions .cell-btn { display: block; }
+.gap-btn { font: inherit; font-weight: 600; background: none; border: 0; padding: .2rem .5rem; cursor: pointer; text-decoration: underline; }
 .legend { display: flex; flex-wrap: wrap; gap: .9rem; align-items: center; font-size: .85rem; margin: .5rem 0 1rem; }
 .legend .swatch { display: inline-block; width: 1.4rem; height: 1rem; vertical-align: middle; margin-right: .3rem; border: 1px solid var(--border-strong); border-radius: 3px; }
 .legend .swatch.weekend { background: var(--weekend); box-shadow: inset 0 -3px 0 var(--weekend-mark); }
@@ -272,6 +281,16 @@ table.roster td.holiday { background: var(--holiday); }
 .popover li button { width: 100%; text-align: left; font: inherit; color: inherit; background: none; border: 0; padding: .25rem .3rem; cursor: pointer; display: flex; gap: .5rem; align-items: center; border-radius: 4px; }
 .popover li button:hover, .popover li button:focus-visible { background: var(--surface-2); }
 .popover li button[aria-current="true"] { font-weight: 600; }
+
+/* Who could be asked in a gap (duties only on request) */
+.gap-item + .gap-item { border-top: 1px solid var(--border); margin-top: .5rem; padding-top: .5rem; }
+.gap-item p { margin: 0 0 .3rem; }
+.candidates ul { list-style: none; margin: 0 0 .3rem; padding: 0; }
+.candidates li button { width: 100%; text-align: left; font: inherit; color: inherit; background: none; border: 0; padding: .25rem .3rem; cursor: pointer; display: flex; gap: .6rem; align-items: center; border-radius: 4px; }
+.candidates li button:hover, .candidates li button:focus-visible { background: var(--surface-2); }
+.candidates p { margin: 0 0 .3rem; }
+.candidate-name { font-weight: 600; flex: 1; }
+.candidates-row td { background: var(--surface-2); }
 
 /* Charts (SVG colours come from the tokens above) */
 .timeline-host { border: 1px solid var(--border); }
@@ -338,3 +357,25 @@ table.roster td.holiday { background: var(--holiday); }
 .center-box input { margin-bottom: .6rem; padding: .45rem; }
 .center-box .btn { margin-top: .5rem; }
 .center-page > .theme-toggle { position: fixed; top: 1rem; right: 1rem; }
+
+/* Print of the function view: A4 landscape, the month in two tables (days 1-15 and 16 to the end), one page each */
+.print-only { display: none; }
+@page functions { size: A4 landscape; margin: 8mm; }
+@media print {
+  body:has(.function-view) .sidebar, body:has(.function-view) .topbar, body:has(.function-view) .banner,
+  body:has(.function-view) .toast, body:has(.function-view) .skip-link { display: none !important; }
+  body:has(.function-view) { background: #FFFFFF; }
+  body:has(.function-view) main { padding: 0; }
+  .function-view { page: functions; }
+  .function-view > h1, .function-view > .alert, .function-view > .roster-wrap { display: none; }
+  .function-view .print-only { display: block; }
+  .function-view .legend { margin: 0 0 2mm; font-size: 8pt; }
+  table.functions-print { width: 100%; font-size: 7.5pt; break-after: page; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  table.functions-print:last-child { break-after: auto; }
+  table.functions-print caption { text-align: left; font-weight: 600; padding-bottom: 2mm; }
+  table.functions-print thead th, table.functions-print th.person, table.functions-print tr.group th { position: static; min-width: 0; }
+  table.functions-print thead th { min-width: 0; }
+  table.functions-print td.cell { height: auto; padding: .5mm 0; }
+  table.functions-print .cell-code { min-width: 0; }
+  table.functions-print tr { break-inside: avoid; }
+}

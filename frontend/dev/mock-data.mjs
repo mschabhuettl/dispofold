@@ -171,7 +171,9 @@ export const CONSTRAINTS = [
   ['fairWeekends', 'SOFT', 'Faire Wochenenden', 'Arbeitswochenenden gleichmäßig verteilen.', 25],
   ['fairUnpopular', 'SOFT', 'Unbeliebte Dienste', 'Unbeliebte Dienste gleichmäßig verteilen.', 15],
   ['restrictionOnRequest', 'SOFT', 'Nur auf Anfrage', 'Schichten, die eine Person nur nach Rückfrage macht.', 50],
-].map(([id, level, label, description, defaultWeight]) => ({ id, level, label, description, defaultWeight }));
+  // on-request duties are never planned automatically, so their weight is not a setting
+].map(([id, level, label, description, defaultWeight]) => ({ id, level, label, description, defaultWeight,
+  tunable: level === 'SOFT' && id !== 'restrictionOnRequest' }));
 
 export const DEFAULT_RULES = {
   minDailyRestHours: 11, minWeeklyRestHours: 36, maxDutyHours: 12, maxWeekHours: 60, maxAverageWeekHours: 46.16,

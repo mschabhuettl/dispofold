@@ -1,4 +1,4 @@
-// Regeln & Gewichte: constraint catalogue by level, editable soft weights and rule parameters.
+// Regeln & Gewichte: constraint catalogue by level, editable (tunable) soft weights and rule parameters.
 import { guarded, h } from '../lib/dom.js';
 import { constraintDescription, constraintLabel } from '../lib/codes.js';
 import { t } from '../lib/texts.js';
@@ -46,7 +46,8 @@ export async function render(root, ctx) {
       h('h2', { id: `lvl-${level}` }, title), h('p.muted', {}, help),
       list.map((c) => h('div.rule-row', {},
         h('div', {}, h('strong', {}, constraintLabel(c)), h('div.muted', {}, constraintDescription(c))),
-        level === 'SOFT' ? (canEdit ? weightControl(c) : h('div', {}, t('rules.weight', { weight: weights[c.id] }), h('div.muted', { style: { fontSize: '.8rem' } }, t('rules.default', { weight: c.defaultWeight })))) : h('div.muted', {}, level === 'HARD' ? t('rules.always') : t('rules.weight', { weight: weights[c.id] }))))));
+        level === 'SOFT' && !c.tunable ? h('div.muted', {}, t('rules.weightFixed', { weight: c.defaultWeight }))
+          : level === 'SOFT' ? (canEdit ? weightControl(c) : h('div', {}, t('rules.weight', { weight: weights[c.id] }), h('div.muted', { style: { fontSize: '.8rem' } }, t('rules.default', { weight: c.defaultWeight })))) : h('div.muted', {}, level === 'HARD' ? t('rules.always') : t('rules.weight', { weight: weights[c.id] }))))));
   }
 
   form.append(h('section.section', { 'aria-labelledby': 'h-params' }, h('h2', { id: 'h-params' }, t('rules.params')),
@@ -82,8 +83,13 @@ export async function render(root, ctx) {
 
   async function save() {
     if (!form.reportValidity()) return;
-    const soft = Object.fromEntries(constraints.filter((c) => c.level === 'SOFT').map((c) => [c.id, weights[c.id]]));
-    const body = { ...params, weights: { ...(rules.weights ?? {}), ...soft } };
+    const body = { ...params, weights: weightsToSave(constraints, weights, rules.weights) };
     await guarded(() => api.saveRules(body), t('rules.saved'));
   }
+}
+
+/** Weights for PUT /api/rules: the stored ones, overwritten by the tunable soft weights (others are not settings). */
+export function weightsToSave(constraints, weights, stored) {
+  const tunable = constraints.filter((c) => c.level === 'SOFT' && c.tunable).map((c) => [c.id, weights[c.id]]);
+  return { ...(stored ?? {}), ...Object.fromEntries(tunable) };
 }

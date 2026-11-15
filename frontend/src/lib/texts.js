@@ -18,6 +18,7 @@ export const TEXTS = {
   // navigation and page titles
   'nav.plan': 'Dienstplan',
   'nav.timeline': 'Bereichs-Zeitachse',
+  'nav.functions': 'Plan nach Funktion',
   'nav.person': 'Person',
   'nav.fairness': 'Fairness-Übersicht',
   'nav.rules': 'Regeln & Gewichte',
@@ -85,6 +86,7 @@ export const TEXTS = {
   'grid.compRest': 'Ersatzruhe',
   'grid.compRestCode': 'ER',
   'grid.absenceConflict': '{name}, aber Dienst {duty} geplant',
+  'grid.onRequestLabel': '{label}, nur auf Anfrage',
 
   // roster view
   'roster.title': 'Dienstplan {month}',
@@ -114,6 +116,8 @@ export const TEXTS = {
   'roster.hoursShort': 'Std.',
   'roster.gapsRow': 'Bedarfslücken',
   'roster.gapCount': '{count|Lücke|Lücken}',
+  'roster.gapButton': '{count|Lücke|Lücken} am {day}: wer kann gefragt werden?',
+  'roster.gapDialog': 'Bedarfslücken {day}',
   'roster.lockedWhileSolving': 'Während der Planung ist der Plan gesperrt.',
   'roster.status.closed': 'abgeschlossen',
   'roster.closedHint': 'Abgeschlossen: nur lesen. Wieder öffnen unter „Import/Export“.',
@@ -148,6 +152,7 @@ export const TEXTS = {
   'roster.legend.holiday': 'Feiertag',
   'roster.legend.pinned': 'fixiert',
   'roster.legend.conflict': 'Konflikt: Dienst trotz Abwesenheit',
+  'roster.legend.onRequest': 'nur auf Anfrage (von Hand gesetzt)',
 
   // timeline view
   'timeline.area': 'Bereich',
@@ -167,8 +172,28 @@ export const TEXTS = {
   'timeline.gaps.missing': 'Fehlend max.',
   'timeline.gaps.hours': 'Personenstunden',
   'timeline.noGaps': 'Keine Lücken im gezeigten Zeitraum.',
+  'timeline.gaps.ask': 'Anfrage',
   'timeline.personColumn': 'Person',
   'timeline.empty': 'Keine Dienste in diesem Zeitraum',
+
+  // Plan nach Funktion
+  'functions.title': 'Plan nach Funktion {month}',
+  'functions.function': 'Funktion',
+  'functions.position': 'Pos. {n}',
+  'functions.missing': 'fehlt 1',
+  'functions.gapTitle': '{shift}, {day}: 1 Person fehlt',
+  'functions.emptyTitle': '{shift}, {day}: leer',
+  'functions.gapDialog': 'Besetzung fehlt: {shift}, {day}',
+  'functions.printPart': 'Tage {from} bis {to}',
+  'functions.legend.missing': 'Besetzung fehlt',
+
+  // Wer kann gefragt werden? (Dienste nur auf Anfrage)
+  'candidates.title': 'Wer kann gefragt werden?',
+  'candidates.none': 'Niemand passt. Gefragt werden können nur Personen, die den Dienst nur auf Anfrage machen und an dem Tag frei sind.',
+  'candidates.hours': '{planned} von {target} h',
+  'candidates.item': '{name}, {code} am {day}, {hours}: Dienst setzen und fixieren',
+  'candidates.set': 'Dienst {code} am {day} für {name} gesetzt und fixiert',
+  'candidates.gap': '{area}, {time}: fehlt {count}',
 
   // coverage chart
   'coverage.gapTitle': 'Lücke {from} bis {to}: Bedarf {required}, geplant {planned}',
@@ -256,6 +281,7 @@ export const TEXTS = {
   'rules.weight': 'Gewicht {weight}',
   'rules.weightLabel': 'Gewicht {label}',
   'rules.default': 'Standard {weight}',
+  'rules.weightFixed': 'Gewicht {weight} (fest)',
   'rules.params': 'Parameter',
   'rules.valueWithHelp': '{value} ({help})',
   'rules.saved': 'Regeln gespeichert',
@@ -598,6 +624,7 @@ export const TEXTS = {
   'error.masterdata.areaHasShifts': 'Der Bereich {key} hat noch {count|Schicht|Schichten}. Bitte zuerst diese Schichten entfernen.',
   'error.import.masterChanged': 'Die Stammdaten wurden seit dem letzten Import in Dispofold geändert; der Import würde diese Änderungen ersetzen.',
   'error.area.unknown': 'Unbekannter Bereich {areaId}.',
+  'error.candidates.span': 'Zeitraum ungültig: Von und Bis als Zeitpunkte erwartet, Bis nach Von.',
   'error.export.format': 'Unbekanntes Exportformat.',
   'error.rules.missing': 'Die Regeln fehlen.',
   'error.rules.nightWindow': 'Beginn und Ende der Nachtzeit sind ungültig.',
@@ -739,7 +766,7 @@ export const TEXTS = {
   'constraint.family.label': 'Familienwunsch',
   'constraint.family.description': 'Persönliche Regel je Wochentag (spätestes Ende, frühester Beginn, keine Nacht), z. B. für Kinderbetreuung.',
   'constraint.onRequest.label': 'Dienst nur auf Anfrage',
-  'constraint.onRequest.description': 'Sperren der Art „nur auf Anfrage“: möglichst nicht einplanen.',
+  'constraint.onRequest.description': 'Wird nie automatisch eingeplant. Die Planung fragt die Person und setzt den Dienst von Hand.',
   'constraint.overstaffing.label': 'Überbesetzung',
   'constraint.overstaffing.description': 'Mehr Personen als die Höchstbesetzung oder, wo keine gesetzt ist, als die Mindestbesetzung, in Personenminuten.',
   'constraint.uselessDuty.label': 'Dienst ohne Bedarf',

@@ -107,3 +107,20 @@ test('employment period text', async () => {
   assert.equal(employmentText({ exitDate: '2027-06-30' }), 'bis 30.06.2027');
   assert.equal(employmentText({}), '');
 });
+
+test('duty cells are marked when the shift is only on request for the person that day', () => {
+  const onRequest = (personId, date, shiftId) => personId === 'P1' && date === '2026-12-01' && shiftId === 'TV-F';
+  const { rows } = buildGrid({ dataset, period, plan, month: '2026-12', onRequest });
+  const p1 = rows.find((r) => r.person.id === 'P1');
+  assert.deepEqual([p1.cells[0].onRequest, p1.cells[1].onRequest], [true, false]);
+  assert.equal(buildGrid({ dataset, period, plan, month: '2026-12' }).rows[0].cells[0].onRequest, false);
+});
+
+test('rules: only tunable soft weights are saved, stored ones (e.g. onRequest) are kept', async () => {
+  const { weightsToSave } = await import('../src/views/rules.js');
+  const constraints = [{ id: 'rest', level: 'HARD', tunable: false }, { id: 'wishes', level: 'SOFT', tunable: true },
+    { id: 'onRequest', level: 'SOFT', tunable: false }];
+  assert.deepEqual(weightsToSave(constraints, { rest: 1, wishes: 7, onRequest: 1000 }, { onRequest: 5, old: 3 }),
+    { onRequest: 5, old: 3, wishes: 7 });
+  assert.deepEqual(weightsToSave(constraints, { wishes: 7, onRequest: 1000 }, null), { wishes: 7 });
+});

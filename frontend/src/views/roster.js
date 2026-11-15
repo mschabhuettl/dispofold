@@ -1,11 +1,13 @@
 // Dienstplan: people x days of the month, cell editing, solving with progress polling.
 import { parseScore } from '../lib/api.js';
 import { tintStyle } from '../lib/colors.js';
-import { WEEKDAY_SHORT, dayLabel, monthLabel } from '../lib/dates.js';
+import { dayLabel, monthLabel } from '../lib/dates.js';
 import { append, fmt, guarded, h, toast } from '../lib/dom.js';
-import { NEUTRAL_ABSENCE, buildGrid, cellOptions, cellsEditable } from '../lib/grid-model.js';
-import { moveCell } from '../lib/grid-nav.js';
+import { NEUTRAL_ABSENCE, buildGrid, cellRequest, cellsEditable } from '../lib/grid-model.js';
+import { needsRulesForCategories, onRequestTest } from '../lib/restrictions.js';
 import { t } from '../lib/texts.js';
+import { gapsWithCandidates } from './candidate-list.js';
+import { cellChoice, createPopover, dayClass, dayHeader, rovingGrid } from './grid-shared.js';
 
 const POLL_INTERVAL_MS = 2000;
 const STATUS = {
@@ -26,19 +28,21 @@ export async function render(root, ctx) {
   let areaId = dataset.areas.some((a) => a.id === storedArea) ? storedArea : '';
   let search = '';
   let timer = null;
-  let popover = null;
+  const popover = createPopover('.cell-btn, .gap-btn');
   let disposed = false;
   let polling = false;
   let pollFailures = 0;
   let focusKey = null;
-  let rovingKey = null; // the one cell in the tab order
   /** Cells can be changed: planner role and no solve running (the solver owns the plan meanwhile). */
   const closed = () => state.plan.status === 'CLOSED';
   const editable = () => cellsEditable({ canEdit, solving: state.solving, closed: closed() });
 
   const areaName = new Map(dataset.areas.map((a) => [a.id, a.name]));
+  const rules = needsRulesForCategories(dataset) ? await api.rules().catch(() => null) : null;
+  const onRequest = onRequestTest(dataset.restrictions, dataset.shifts, rules);
   const status = h('div.statusbar', {});
   const table = h('div.roster-wrap', {});
+  const nav = rovingGrid(table);
   // empty fields leave seed, time and move limit to the server's reproducible defaults
   const seedInput = h('input', { id: 'seed', type: 'number', min: 0, placeholder: t('roster.serverDefault') });
   const limitInput = h('input', { id: 'limit', type: 'number', min: 5, placeholder: t('roster.serverDefault') });
@@ -102,21 +106,16 @@ export async function render(root, ctx) {
   function drawTable() {
     const active = document.activeElement?.dataset?.cell ?? null;
     closePopover();
-    const grid = buildGrid({ dataset, period, plan: state.plan, month, areaId: areaId || null, search });
+    const grid = buildGrid({ dataset, period, plan: state.plan, month, areaId: areaId || null, search, onRequest });
     const gapDays = new Map();
     for (const g of analysis?.gaps ?? []) {
       if (areaId && g.areaId !== areaId) continue;
       const d = g.from.slice(0, 10);
       gapDays.set(d, (gapDays.get(d) ?? 0) + 1);
     }
-    const dayClass = (d) => [d.weekend && 'weekend', d.holiday && 'holiday'].filter(Boolean).join(' ');
     const head = h('tr', {},
       h('th.person', { scope: 'col' }, t('roster.person')),
-      grid.days.map((d) => h('th', { scope: 'col', class: dayClass(d), title: d.holiday ?? '' },
-        WEEKDAY_SHORT[d.weekday - 1], h('br', {}), String(d.day),
-        // holiday also as text, not only as colour
-        d.holiday && [h('span.holiday-tag', { 'aria-hidden': 'true' }, t('roster.holidayShort')),
-          h('span.visually-hidden', {}, t('roster.holidayName', { name: d.holiday }))])),
+      grid.days.map(dayHeader),
       h('th', { scope: 'col' }, t('roster.hoursShort')));
     const body = [];
     let group = null;
@@ -137,46 +136,31 @@ export async function render(root, ctx) {
     }
     body.push(h('tr', {},
       h('th.person', { scope: 'row' }, t('roster.gapsRow')),
-      grid.days.map((d) => h('td.cell', { class: dayClass(d) },
-        gapDays.get(d.date) ? h('strong.text-danger', { title: t('roster.gapCount', { count: gapDays.get(d.date) }) }, String(gapDays.get(d.date))) : '')),
+      grid.days.map((d) => h('td.cell', { class: dayClass(d) }, gapCell(d, gapDays.get(d.date)))),
       h('td.sum', {}, '')));
     table.replaceChildren(h('table.roster', { role: 'grid', 'aria-readonly': editable() ? null : 'true' }, h('caption.visually-hidden', {}, t('roster.title', { month: monthLabel(month) })),
       h('thead', {}, head), h('tbody', {}, body)));
     // one tab stop: the last used cell, else the first; keep keyboard focus on the same cell after a redraw
     const key = focusKey ?? active;
     focusKey = null;
-    const cells = table.querySelectorAll('[data-cell]');
-    const roving = (rovingKey && table.querySelector(`[data-cell="${CSS.escape(rovingKey)}"]`)) || cells[0];
-    if (roving) roving.tabIndex = 0;
-    if (key) table.querySelector(`[data-cell="${CSS.escape(key)}"]`)?.focus();
+    nav.restore(key);
   }
 
-  function onGridFocus(e) {
-    const cell = e.target.closest?.('[data-cell]');
-    if (!cell || cell.dataset.cell === rovingKey) return;
-    for (const c of table.querySelectorAll('[data-cell][tabindex="0"]')) c.tabIndex = -1;
-    cell.tabIndex = 0;
-    rovingKey = cell.dataset.cell;
-  }
-
-  function onGridKey(e) {
-    const cell = e.target.closest?.('[data-cell]');
-    if (!cell) return;
-    const rows = table.querySelectorAll('tr[data-row]').length;
-    const cols = table.querySelector('tr[data-row]')?.querySelectorAll('[data-cell]').length ?? 0;
-    const next = moveCell({ row: Number(cell.dataset.r), col: Number(cell.dataset.c) }, e.key,
-      { rows, cols, ctrl: e.ctrlKey || e.metaKey });
-    if (!next) return;
-    e.preventDefault();
-    table.querySelector(`[data-r="${next.row}"][data-c="${next.col}"]`)?.focus();
+  /** Gap count of a day; planners open the day's gaps with who could be asked. */
+  function gapCell(d, count) {
+    if (!count) return '';
+    const title = t('roster.gapCount', { count });
+    if (!editable()) return h('strong.text-danger', { title }, String(count));
+    return h('button.gap-btn.text-danger', { type: 'button', title, 'aria-label': t('roster.gapButton', { count, day: dayLabel(d.date) }),
+      'aria-haspopup': 'dialog', onclick: (e) => openGaps(e.currentTarget, d.date) }, String(count));
   }
 
   function cellContent(row, cell, day, r, c) {
     const style = cell.color ? tintStyle(cell.color) : null;
-    const info = { name: row.name, day: dayLabel(day.date), label: cell.label };
+    const info = { name: row.name, day: dayLabel(day.date), label: cell.onRequest ? t('grid.onRequestLabel', { label: cell.label }) : cell.label };
     const title = cell.pinned ? t('roster.cellTitlePinned', info) : t('roster.cellTitle', info);
     const inner = h('span.cell-code', { class: style ? 'tinted' : null, style }, cell.code || '·');
-    const cls = `cell-btn cell-${cell.kind}${cell.pinned ? ' cell-pinned' : ''}${cell.conflict ? ' cell-hard' : ''}`;
+    const cls = `cell-btn cell-${cell.kind}${cell.pinned ? ' cell-pinned' : ''}${cell.conflict ? ' cell-hard' : ''}${cell.onRequest ? ' cell-on-request' : ''}`;
     // always focusable for arrow navigation; read-only cells do nothing on Enter or click
     const open = editable();
     return h('button', { type: 'button', class: cls, title, 'aria-label': title, 'aria-haspopup': open ? 'dialog' : null,
@@ -185,68 +169,38 @@ export async function render(root, ctx) {
   }
 
   function openPopover(anchor, row, cell, day) {
-    closePopover();
     const pick = (opt, pinned) => async () => {
       if (cell.kind === 'absence' && !cell.conflict) return;
       if (!editable()) return closePopover();
-      const res = await guarded(() => api.setCell(month, { personId: row.person.id, date: day.date, shiftId: opt.shiftId, compRest: opt.compRest, pinned }));
-      if (res) {
-        state = { ...state, plan: res };
-        analysis = await api.analysis(month).catch(() => analysis);
-        focusKey = `${row.person.id}|${day.date}`;
-        drawStatus();
-        drawTable();
-      }
+      const res = await guarded(() => api.setCell(month, cellRequest(row.person.id, day.date, opt, pinned)));
+      if (res) await afterSet(res, `${row.person.id}|${day.date}`);
     };
-    const current = { shiftId: cell.shiftId, compRest: cell.kind === 'compRest' };
-    const content = cell.conflict
-      ? [h('p.alert.alert-error', {}, t('roster.conflict', { label: cell.label })),
-        h('button.btn.btn-primary.btn-small', { type: 'button', onclick: pick({ shiftId: null, compRest: false }, false) }, t('roster.removeDuty')),
-        cell.fixedInPeriod && h('p.muted', {}, t('roster.conflictFixed'))]
-      : cell.kind === 'absence'
-      ? [h('p', {}, t('roster.absence', { label: cell.label })), h('p.muted', {}, t('roster.absenceHint'))]
-      : [
-        h('ul', {}, cellOptions(row.person, dataset.shifts).map((o) => {
-          const isCurrent = o.shiftId === current.shiftId && o.compRest === current.compRest;
-          return h('li', {}, h('button', { type: 'button', 'aria-current': isCurrent ? 'true' : 'false', onclick: pick(o, true) },
-            h('span.cell-code', o.color ? { class: 'tinted', style: tintStyle(o.color) } : { class: 'outlined' }, o.code || '·'),
-            o.label));
-        })),
-        cell.fixedInPeriod
-          ? h('p.muted', {}, t('roster.fixedFromInputs'))
-          : h('button.btn.btn-secondary.btn-small', { type: 'button', onclick: pick(current, !cell.pinned) }, cell.pinned ? t('roster.unpinCell') : t('roster.pinCell')),
-      ];
-    popover = h('div.popover', { role: 'dialog', 'aria-label': t('roster.cellDialog', { name: row.name, day: dayLabel(day.date) }) },
-      h('h3', {}, t('roster.cellDialog', { name: row.name, day: dayLabel(day.date) })), content);
-    popover.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        closePopover();
-        anchor.focus();
-      } else if (e.key === 'Tab') {
-        // keep focus inside the dialog
-        const items = [...popover.querySelectorAll('button')];
-        if (!items.length) return;
-        const i = items.indexOf(document.activeElement);
-        const next = e.shiftKey ? (i <= 0 ? items.length - 1 : i - 1) : (i + 1) % items.length;
-        e.preventDefault();
-        items[next].focus();
-      }
-    });
-    document.body.append(popover);
-    const r = anchor.getBoundingClientRect();
-    const left = Math.min(r.left + window.scrollX, window.scrollX + document.documentElement.clientWidth - popover.offsetWidth - 8);
-    popover.style.left = `${Math.max(8, left)}px`;
-    popover.style.top = `${r.bottom + window.scrollY + 4}px`;
-    (popover.querySelector('button[aria-current="true"]') ?? popover.querySelector('button'))?.focus();
+    const title = t('roster.cellDialog', { name: row.name, day: dayLabel(day.date) });
+    popover.open(anchor, title, cellChoice({ cell, person: row.person, shifts: dataset.shifts, pick }));
+  }
+
+  /** The gaps of a day (in the chosen area), each with the list of who could be asked. */
+  function openGaps(anchor, date) {
+    const gaps = (analysis?.gaps ?? []).filter((g) => (!areaId || g.areaId === areaId) && g.from.slice(0, 10) === date);
+    const el = popover.open(anchor, t('roster.gapDialog', { day: dayLabel(date) }), gapsWithCandidates({ api, month, gaps, dataset,
+      onSet: (plan, req) => afterSet(plan, `${req.personId}|${req.date}`) }));
+    // the names load later: focus the dialog so that Escape works meanwhile
+    el.tabIndex = -1;
+    el.focus();
+  }
+
+  /** A cell was set: new plan and analysis, keyboard focus on that cell. */
+  async function afterSet(plan, key) {
+    if (disposed) return;
+    state = { ...state, plan };
+    analysis = await api.analysis(month).catch(() => analysis);
+    focusKey = key;
+    drawStatus();
+    drawTable();
   }
 
   function closePopover() {
-    popover?.remove();
-    popover = null;
-  }
-
-  function onDocClick(e) {
-    if (popover && !popover.contains(e.target) && !e.target.closest('.cell-btn')) closePopover();
+    popover.close();
   }
 
   async function poll() {
@@ -312,16 +266,12 @@ export async function render(root, ctx) {
 
   drawStatus();
   drawTable();
-  table.addEventListener('keydown', onGridKey);
-  table.addEventListener('focusin', onGridFocus);
-  document.addEventListener('click', onDocClick, true);
   if (state.solving) timer = setTimeout(poll, POLL_INTERVAL_MS);
   return () => {
     disposed = true;
     clearTimeout(timer);
     timer = null;
     closePopover();
-    document.removeEventListener('click', onDocClick, true);
   };
 }
 
@@ -342,6 +292,7 @@ function legend(dataset, canEdit) {
     h('span', {}, h('span.cell-code.pinned', {}, 'A1'), ' ', t('roster.legend.pinned')),
     h('span', {}, h('span.cell-code.comp-rest', {}, t('grid.compRestCode')), ' ', t('grid.compRest')),
     h('span', {}, h('span.cell-code.strong.hard', {}, 'K/A1'), ' ', t('roster.legend.conflict')),
+    canEdit && h('span', {}, h('span.cell-code.on-request', {}, 'A1'), ' ', t('roster.legend.onRequest')),
     !canEdit && h('span', {}, h('span.cell-code.strong.absence.outlined', {}, NEUTRAL_ABSENCE), ` ${t('grid.absent')}`),
     (dataset.absenceTypes ?? []).filter((type) => !type.compensatoryRest).map((type) =>
       h('span', {}, h('span.cell-code.strong.absence.tinted', { style: tintStyle(type.color) }, type.code), ` ${type.name}`)));

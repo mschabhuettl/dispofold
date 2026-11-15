@@ -160,6 +160,8 @@ export function createApi({ fetchImpl = (...a) => globalThis.fetch(...a), onUnau
     analysis: (month) => request('GET', `/api/plans/${m(month)}/analysis`),
     person: (month, id) => request('GET', `/api/plans/${m(month)}/people/${encodeURIComponent(id)}`),
     coverage: (month, areaId) => request('GET', `/api/plans/${m(month)}/coverage/${encodeURIComponent(areaId)}`),
+    /** Planners only: who could be asked in a gap {areaId, from, to} (local date-times as in the analysis). */
+    candidates: (month, gap) => request('GET', `/api/plans/${m(month)}/candidates?areaId=${k(gap.areaId)}&from=${k(gap.from)}&to=${k(gap.to)}`),
     finalize: (month) => request('POST', `/api/plans/${m(month)}/finalize`),
     reopen: (month) => request('POST', `/api/plans/${m(month)}/reopen`),
     importPlan: (month, plan) => request('POST', `/api/plans/${m(month)}/import`, plan),

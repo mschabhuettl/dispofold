@@ -71,7 +71,8 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
             .filter((p) => p.areaIds.includes(areaId) && !taken.has(`${p.id}|${date}`) && !blocked.has(`${p.id}|${date}`))
             .filter((p) => (lastEnd.get(p.id) ?? -1e9) + rules.minDailyRestHours * 60 <= start)
             .filter((p) => hours.get(p.id) + shiftHours(sh) <= target(p) + 6)
-            .filter((p) => !dataset.restrictions.some((r) => r.personId === p.id && r.shiftId === shiftId && r.kind === 'NEVER'))
+            // like the solver: neither restricted nor only on request (restrictions by shift only in the mock)
+            .filter((p) => !dataset.restrictions.some((r) => r.personId === p.id && r.shiftId === shiftId))
             .sort((a, b) => hours.get(a.id) / a.weeklyHours - hours.get(b.id) / b.weeklyHours || ((a.id.charCodeAt(4) + offset) % 5) - ((b.id.charCodeAt(4) + offset) % 5));
           const p = candidates[0];
           if (!p) continue;
@@ -123,6 +124,32 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
       else segments.push({ areaId, from, to, required, max, planned });
     }
     return segments.map((sg) => ({ ...sg, from: formatLocalDateTime(sg.from) + ':00', to: formatLocalDateTime(sg.to) + ':00' }));
+  }
+
+  /** Who could be asked in a gap: a shift of the area overlapping the span is on request for the person, the day is free. */
+  function candidates(m, areaId, fromText, toText) {
+    let from;
+    let to;
+    try { from = parseLocalDateTime(fromText); to = parseLocalDateTime(toText); } catch { from = NaN; }
+    if (!(to > from)) return err(400, 'Zeitraum von bis erwartet', 'candidates.span');
+    if (!dataset.areas.some((x) => x.id === areaId)) return err(404, 'Unbekannter Bereich', 'area.unknown', { areaId });
+    const busy = new Set((plans.get(m)?.assignments ?? []).filter((x) => x.shiftId || x.pinned || x.compRest).map((x) => `${x.personId}|${x.date}`));
+    for (const x of periods.get(m)?.absences ?? []) busy.add(`${x.personId}|${x.date}`);
+    const out = [];
+    for (const r of dataset.restrictions.filter((x) => x.kind === 'ON_REQUEST' && x.shiftId)) {
+      const shift = shiftsById().get(r.shiftId);
+      const p = dataset.people.find((x) => x.id === r.personId);
+      if (!shift || !p || shift.areaId !== areaId || !p.areaIds.includes(areaId)) continue;
+      for (const date of monthDates(m)) {
+        if (r.weekday && r.weekday !== weekday(date)) continue;
+        const iv = shiftInterval(date, shift);
+        if (iv.start >= to || iv.end <= from || busy.has(`${p.id}|${date}`)) continue;
+        const s = personStats(m, p);
+        out.push({ personId: p.id, date, shiftId: shift.id, plannedHours: Math.round(s.plannedHours * 10) / 10,
+          targetHours: Math.round(s.targetHours * 10) / 10 });
+      }
+    }
+    return json(out.sort((x, y) => (x.plannedHours - x.targetHours) - (y.plannedHours - y.targetHours) || x.personId.localeCompare(y.personId)));
   }
 
   function personStats(m, p) {
@@ -437,6 +464,10 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
         return json({ stats, hits: hitsOf(m, p, stats) });
       }
       if (c === 'coverage') return json(coverage(m, d));
+      if (c === 'candidates') {
+        if (role !== 'planner') return err(403, 'Nur für Planung', 'auth.forbidden');
+        return candidates(m, query.get('areaId'), query.get('from'), query.get('to'));
+      }
       if (c === 'finalize') {
         if (busy) return err(409, 'Planung läuft', 'plan.solving');
         const plan = plans.get(m) ?? emptyPlan(m);

@@ -8,6 +8,7 @@ import { applyTexts, t } from './lib/texts.js';
 import { initThemeToggle } from './lib/theme.js';
 import * as roster from './views/roster.js';
 import * as timeline from './views/timeline.js';
+import * as functions from './views/functions.js';
 import * as person from './views/person.js';
 import * as fairness from './views/fairness.js';
 import * as rules from './views/rules.js';
@@ -18,6 +19,7 @@ import * as settings from './views/settings.js';
 
 const ROUTES = [
   { path: 'plan', label: t('nav.plan'), view: roster },
+  { path: 'funktionen', label: t('nav.functions'), view: functions },
   { path: 'zeitachse', label: t('nav.timeline'), view: timeline },
   { path: 'person', label: t('nav.person'), view: person },
   { path: 'fairness', label: t('nav.fairness'), view: fairness },

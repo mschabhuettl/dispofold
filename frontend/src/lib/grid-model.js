@@ -71,8 +71,9 @@ export function buildCell(assignment, absence, fixed, shiftsById, absenceTypes) 
  * @param {string} p.month 'YYYY-MM'
  * @param {string|null} [p.areaId] only people qualified for this area
  * @param {string} [p.search] case-insensitive filter on name, short name or id
+ * @param {function} [p.onRequest] (personId, date, shiftId) => boolean, see onRequestTest; marks duty cells
  */
-export function buildGrid({ dataset, period, plan, month, areaId = null, search = '' }) {
+export function buildGrid({ dataset, period, plan, month, areaId = null, search = '', onRequest = null }) {
   const days = buildDays(month, dataset.holidays);
   const shiftsById = new Map(dataset.shifts.map((s) => [s.id, s]));
   const absenceTypes = new Map((dataset.absenceTypes ?? []).map((t) => [t.code, t]));
@@ -86,8 +87,12 @@ export function buildGrid({ dataset, period, plan, month, areaId = null, search 
     .filter((p) => !areaId || p.areaIds.includes(areaId))
     .filter((p) => !needle || [personName(p), p.shortName ?? '', p.id].some((t) => t.toLowerCase().includes(needle)))
     .map((person) => {
-      const cells = days.map((d) => buildCell(assignments.get(key(person.id, d.date)),
-        absences.get(key(person.id, d.date)), fixed.get(key(person.id, d.date)), shiftsById, absenceTypes));
+      const cells = days.map((d) => {
+        const cell = buildCell(assignments.get(key(person.id, d.date)),
+          absences.get(key(person.id, d.date)), fixed.get(key(person.id, d.date)), shiftsById, absenceTypes);
+        cell.onRequest = Boolean(cell.shiftId && onRequest?.(person.id, d.date, cell.shiftId));
+        return cell;
+      });
       const hours = cells.reduce((sum, c) => sum + (c.kind === 'shift' && shiftsById.has(c.shiftId) ? shiftHours(shiftsById.get(c.shiftId)) : 0), 0);
       return { person, name: personName(person), cells, hours };
     })
@@ -106,6 +111,10 @@ export function cellOptions(person, shifts) {
   ];
 }
 
+/** Request body for PUT .../cells when a choice of the cell popover is picked. */
+export function cellRequest(personId, date, option, pinned) {
+  return { personId, date, shiftId: option.shiftId, compRest: option.compRest, pinned };
+}
 
 /** Grid cells can be changed only by planners, not while a solve runs and not in a closed month. */
 export function cellsEditable({ canEdit, solving = false, closed = false }) {

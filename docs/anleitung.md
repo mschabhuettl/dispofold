@@ -49,7 +49,8 @@ Planung pflegt sie hier, ein neuer Import ist dafür nicht nötig:
   Mit **Einschränkungen** in der Zeile einer Person legt man fest, welche Schicht oder Kategorie (zum Beispiel
   alle Nachtschichten) sie nie oder nur auf Anfrage macht, an jedem Tag oder an einem Wochentag, auf Wunsch nur
   für eine bestimmte Zeit (gültig ab, gültig bis). Einschränkungen und Familienregeln stehen auch auf der Seite
-  **Person**.
+  **Person**. Was „nur auf Anfrage“ beim Planen bedeutet, steht unter
+  [Dienste nur auf Anfrage](#dienste-nur-auf-anfrage).
 - **Ids:** Neue Personen und Schichten bekommen ihre Id vom Programm (`PN1`, `SN1`, ...). Bereiche und
   Abwesenheitsarten haben als Id ihr Kürzel, das im Plan steht. Es wird beim Anlegen eingegeben und lässt sich
   danach nicht mehr ändern. Ein entferntes Kürzel bleibt gesperrt und kann nicht neu vergeben werden.
@@ -128,13 +129,18 @@ Oben im **Dienstplan** stehen:
 - **Bedarfslücken:** Zeitabschnitte, in denen weniger Personen eingeteilt sind als der Bedarf verlangt. Die
   Zeile **Bedarfslücken** unter dem Plan zeigt sie je Tag, **Ungedeckter Bedarf** die Summe in
   Personenstunden. Lücken sind kein Fehler des Solvers: Reicht das Personal nicht, bleibt die Lücke sichtbar,
-  statt dass eine harte Regel verletzt wird.
+  statt dass eine harte Regel verletzt wird. Ein Klick auf die Zahl eines Tages listet die Lücken dieses
+  Tages mit Bereich, Uhrzeit und fehlender Besetzung, jeweils mit der Liste **Wer kann gefragt werden?** (siehe
+  [Dienste nur auf Anfrage](#dienste-nur-auf-anfrage)).
 - **Score:** Die Bewertung in drei Stufen: hart, Bedarf, weich. Einzelheiten in [regeln.md](regeln.md).
 
 Weitere Seiten:
 
+- **Plan nach Funktion:** derselbe Monat, aber je Funktion statt je Person, siehe
+  [Plan nach Funktion](#plan-nach-funktion).
 - **Bereichs-Zeitachse:** Dienste eines Bereichs als Tag oder Woche und die Besetzung gegen den Bedarf. Lücken
-  sind rot markiert und darunter als Liste mit Uhrzeit und fehlender Besetzung aufgeführt.
+  sind rot markiert und darunter als Liste mit Uhrzeit und fehlender Besetzung aufgeführt. **Wer kann gefragt
+  werden?** in einer Zeile der Liste klappt darunter die Personen auf, die man für diese Lücke fragen kann.
 - **Person:** Eine Person auswählen. Die Seite zeigt Soll, geplante Stunden, Stundenkonto vorher und danach,
   Nächte, Wochenenden, Feiertage, unbeliebte Dienste, erfüllte Wünsche und Ersatzruhe. Unter **Warum dieser
   Dienst?** steht für jeden Tag (oder **Ganzer Monat**), welche Regeln gegriffen haben, mit ihrer Stufe
@@ -144,7 +150,50 @@ Weitere Seiten:
   Fairness zählt die Abweichung vom Mittelwert: Ein Treffer in der Erklärung erscheint nur bei Personen über dem
   Mittelwert.
 - **Regeln & Gewichte:** Regelwerte (zum Beispiel Ruhezeiten) und die Gewichte der weichen Regeln. Die tägliche
-  Ruhezeit kann nicht unter 11 Stunden gesetzt werden.
+  Ruhezeit kann nicht unter 11 Stunden gesetzt werden. Das Gewicht von **Dienst nur auf Anfrage** ist fest
+  („fest“ statt eines Reglers): Solche Dienste plant das Programm ohnehin nie selbst ein.
+
+## Plan nach Funktion
+
+![Plan nach Funktion](screenshots/funktionen.png)
+
+Unter **Plan nach Funktion** steht derselbe Monat wie im **Dienstplan**, aber je Funktion: Eine Funktion ist
+eine Schicht eines Bereichs. Die Spalten sind die Tage des Monats (Wochenenden und Feiertage hinterlegt wie im
+Dienstplan), die Zeilen die Funktionen, nach Bereichen gruppiert. Gezeigt werden Schichten mit mindestens einem
+Dienst im Monat und Schichten, deren Zeit ein Bedarf des Bereichs überschneidet.
+
+- **Eine Zeile je Position:** Arbeiten an einem Tag zwei Personen in derselben Schicht, stehen sie in zwei
+  Zeilen untereinander (nach Namen sortiert). Eine Schicht hat so viele Zeilen, wie an ihrem vollsten Tag
+  Personen eingeteilt sind und fehlen.
+- **In der Zelle** steht das Kürzel der Person, der ganze Name erscheint beim Darüberfahren. Fixierte Dienste,
+  Konflikte und Dienste nur auf Anfrage sind markiert wie im Dienstplan.
+- **„fehlt 1“** (rot) zeigt eine fehlende Besetzung: Eine Bedarfslücke des Bereichs zählt bei jeder Schicht,
+  deren Zeit sie überschneidet (eine Nacht bis zum nächsten Morgen). Fehlen zwei Personen, stehen zwei Marken
+  untereinander.
+- **Ein Klick auf einen Namen** öffnet dieselbe Auswahl wie im Dienstplan (Dienst ändern, frei, fixieren).
+  **Ein Klick auf „fehlt 1“** öffnet die Liste **Wer kann gefragt werden?** für diese Lücke.
+- Mit den Pfeiltasten bewegt man sich wie im Dienstplan durch die Zellen, Enter öffnet die Auswahl.
+- **Drucken** (Druckfunktion des Browsers): A4 quer, der Monat in zwei Tabellen, Tag 1 bis 15 und Tag 16 bis
+  zum Monatsende, jede auf einer eigenen Seite. Fixierte Dienste sind eingerahmt.
+
+## Dienste nur auf Anfrage
+
+![Wer kann gefragt werden?](screenshots/anfrage.png)
+
+Eine Einschränkung „nur auf Anfrage“ (unter **Stammdaten**, **Einschränkungen**) heißt: Das Programm plant
+diese Schicht für diese Person nie von selbst ein. Fehlt dadurch Personal, bleibt die Lücke im Plan stehen.
+Die Planung fragt die Person und setzt den Dienst dann von Hand.
+
+- **Wer kann gefragt werden?** Diese Liste steht bei jeder Lücke: im **Dienstplan** nach einem Klick auf die
+  Zahl in der Zeile **Bedarfslücken**, in **Plan nach Funktion** nach einem Klick auf „fehlt 1“ und in der
+  Lückenliste der **Bereichs-Zeitachse**. Sie nennt die Personen, für die eine Schicht des Bereichs in dieser
+  Lücke an diesem Tag nur auf Anfrage geht, die an dem Tag frei sind (kein Dienst, keine Abwesenheit, nicht
+  fixiert) und für die der Dienst keine harte Regel verletzt. Je Person stehen Schicht, Datum und Stunden
+  (geplant von Soll); wer am wenigsten Stunden hat, steht oben. Passt niemand, sagt die Liste das.
+- **Ein Klick auf einen Namen** setzt den Dienst für diese Person und fixiert ihn. Die nächste Planung behält
+  ihn bei.
+- Im Plan ist ein solcher Dienst unten links mit einer kleinen Ecke markiert (**nur auf Anfrage**). Er zählt
+  nicht als harter Verstoß.
 
 ## Von Hand ändern und fixieren
 
@@ -209,11 +258,12 @@ landet die Datei im Ordner Downloads, eine Meldung nennt den Namen.
 
 ## Rolle „nur lesen“
 
-Im Serverbetrieb gibt es neben der Planung die Rolle **nur lesen** (`viewer`). Sie sieht Dienstplan,
-Zeitachse, Personen und Fairness, kann aber nichts ändern, nicht planen, nicht abschließen und nicht
+Im Serverbetrieb gibt es neben der Planung die Rolle **nur lesen** (`viewer`). Sie sieht Dienstplan, Plan nach
+Funktion, Zeitachse, Personen und Fairness, kann aber nichts ändern, nicht planen, nicht abschließen und nicht
 exportieren. Aus Datenschutzgründen sieht sie außerdem nicht:
 
 - Wünsche und die Quote erfüllter Wünsche,
-- Einschränkungen und Familienregeln von Personen,
+- Einschränkungen und Familienregeln von Personen (auch nicht die Markierung „nur auf Anfrage“ und nicht die
+  Liste **Wer kann gefragt werden?**),
 - den Grund einer Abwesenheit (sie erscheint nur als „abwesend“),
 - das Stundenkonto.

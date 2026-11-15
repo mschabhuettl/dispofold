@@ -201,3 +201,12 @@ test('a coded 403 shows the permission text', async () => {
   const api = createApi({ fetchImpl: fakeFetch(403, { code: 'security.forbidden', params: {}, error: 'x' }) });
   await assert.rejects(api.exportPlan('2027-01', 'csv'), (e) => e.status === 403 && e.message === 'Dafür fehlt die Berechtigung.');
 });
+
+test('candidates of a gap: area and local date-times as URL-encoded query parameters', async () => {
+  const calls = [];
+  const list = [{ personId: 'P1', date: '2027-01-03', shiftId: 'X-T', plannedHours: 120, targetHours: 160 }];
+  const api = createApi({ fetchImpl: fakeFetch(200, list, calls) });
+  assert.deepEqual(await api.candidates('2027-01', { areaId: 'A&B', from: '2027-01-03T07:00', to: '2027-01-03T19:00', required: 2, planned: 1 }), list);
+  assert.equal(calls[0].path, '/api/plans/2027-01/candidates?areaId=A%26B&from=2027-01-03T07%3A00&to=2027-01-03T19%3A00');
+  assert.equal(calls[0].init.method, 'GET');
+});
