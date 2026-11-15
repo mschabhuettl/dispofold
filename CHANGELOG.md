@@ -3,7 +3,10 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
-## Unveröffentlicht
+## 0.3.0 (2026-11-15)
+
+„Nur auf Anfrage“ heißt jetzt: Die Planung fragt, das Programm plant es nie selbst ein. Neu ist die Ansicht
+Plan nach Funktion.
 
 - **„Nur auf Anfrage“ plant das Programm nie selbst ein**, auch nicht, wenn dadurch eine Bedarfslücke bleibt.
   Die Planung fragt die Person und setzt den Dienst von Hand (fixiert) oder als fixen Dienst in den
@@ -17,6 +20,7 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
   „Nachname Vorname“.
 - Regeln: Das Gewicht von `onRequest` ist fest und auf der Seite Regeln nicht mehr einstellbar. Gespeicherte
   Einstellungen mit diesem Gewicht laden weiter.
+- Betrieb: keine Änderung an der Datenbank, an `docker-compose.yml` oder `.env`.
 - REST-Schnittstelle: neu `GET /api/plans/{month}/candidates`; `GET /api/constraints` liefert `tunable`.
 
 ## 0.2.0 (2026-11-15)
