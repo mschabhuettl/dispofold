@@ -3,6 +3,21 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## Unveröffentlicht
+
+- **„Nur auf Anfrage“ plant das Programm nie selbst ein**, auch nicht, wenn dadurch eine Bedarfslücke bleibt.
+  Die Planung fragt die Person und setzt den Dienst von Hand (fixiert) oder als fixen Dienst in den
+  Eingaben; ein solcher Dienst ist kein Verstoß und bleibt als Anfrage-Dienst markiert. Ein nicht fixierter
+  Anfrage-Dienst aus einem früheren Plan fällt bei der nächsten Planung weg.
+- **Wer kann gefragt werden?** Zu jeder Bedarfslücke (Zeile „Bedarfslücken“ im Dienstplan, Lückenliste der
+  Bereichs-Zeitachse, Plan nach Funktion) zeigt Dispofold die Personen, die den Dienst auf Anfrage übernehmen
+  könnten, die mit den wenigsten Stunden zum Soll zuerst. Ein Klick auf den Namen setzt den Dienst.
+- **Plan nach Funktion:** eine zweite Ansicht desselben Plans mit den Schichten je Bereich als Zeilen und den
+  Tagen als Spalten; fehlende Besetzung steht als „fehlt“ in der Zelle.
+- Regeln: Das Gewicht von `onRequest` ist fest und auf der Seite Regeln nicht mehr einstellbar. Gespeicherte
+  Einstellungen mit diesem Gewicht laden weiter.
+- REST-Schnittstelle: neu `GET /api/plans/{month}/candidates`; `GET /api/constraints` liefert `tunable`.
+
 ## 0.2.0 (2026-11-15)
 
 Stammdaten werden jetzt in Dispofold gepflegt. Ein Import aus dem bisherigen System ist nur noch zum Start nötig.

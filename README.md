@@ -95,9 +95,13 @@ Betrieb.
 |---|---|
 | ![Fairness](docs/screenshots/fairness.png) | ![Regeln](docs/screenshots/regeln.png) |
 
-| Stammdaten bearbeiten |
+| Stammdaten bearbeiten | Plan nach Funktion |
+|---|---|
+| ![Stammdaten](docs/screenshots/stammdaten.png) | ![Plan nach Funktion](docs/screenshots/funktionen.png) |
+
+| Wer kann gefragt werden? |
 |---|
-| ![Stammdaten](docs/screenshots/stammdaten.png) |
+| ![Wer kann gefragt werden?](docs/screenshots/anfrage.png) |
 
 | Dienstplan, dunkel | Bereichs-Zeitachse, dunkel |
 |---|---|
