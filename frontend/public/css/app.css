@@ -381,5 +381,7 @@ tr.gap-row th.person { color: var(--danger); font-weight: 600; }
   table.functions-print thead th { min-width: 0; }
   table.functions-print td.cell { height: auto; padding: .5mm 0; }
   table.functions-print .cell-code { min-width: 0; }
+  /* gap spans wrap after the count, so a row of daily gaps keeps the half month on the page width */
+  table.functions-print tr.gap-row .cell-code { white-space: normal; }
   table.functions-print tr { break-inside: avoid; }
 }

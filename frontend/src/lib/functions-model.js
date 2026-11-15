@@ -1,5 +1,5 @@
 // "Plan nach Funktion": functions (a shift of an area) x days of the month, one row per position. Pure, no DOM.
-import { epochMinutes, formatTime, parseLocalDateTime, parseTime, shiftInterval } from './dates.js';
+import { dayLabel, epochMinutes, formatTime, parseLocalDateTime, parseTime, shiftInterval } from './dates.js';
 import { buildGrid } from './grid-model.js';
 
 /** The demand window [from, to) of a rule overlaps the shift's time of day (both may cross midnight). */
@@ -65,7 +65,11 @@ export function buildFunctionRows({ dataset, period, plan, month, gaps = [], onR
 
 /** One line of a gap cell: missing people and the time span, e.g. {count: 1, from: '07:00', to: '19:00'}. */
 export function gapLine(gap) {
-  return { count: gap.required - gap.planned, from: formatTime(parseLocalDateTime(gap.from)), to: formatTime(parseLocalDateTime(gap.to)) };
+  const from = parseLocalDateTime(gap.from);
+  const to = parseLocalDateTime(gap.to);
+  // the analysis merges gaps over several days: then the end shows its date (a night up to 24 h does not)
+  const end = to - from > 1440 ? `${dayLabel(gap.to.slice(0, 10))} ${formatTime(to)}` : formatTime(to);
+  return { count: gap.required - gap.planned, from: formatTime(from), to: end };
 }
 
 /** Day columns for print: the whole month does not fit an A4 landscape page, so days 1-15 and 16 to the end. */

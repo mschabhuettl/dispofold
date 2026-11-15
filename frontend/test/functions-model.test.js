@@ -89,6 +89,9 @@ test('a gap belongs to the day of its start: after midnight the next day, a nigh
   assert.deepEqual(row.cells[7].gaps, [gaps[3]]); // 2027-01-08
   assert.equal(row.cells[8].kind, 'empty');
   assert.deepEqual(gapLine(gaps[3]), { count: 1, from: '19:00', to: '07:00' });
+  // a gap the analysis merged over several days keeps its end date
+  assert.deepEqual(gapLine({ areaId: 'AN', from: '2027-01-10T07:00:00', to: '2027-01-13T19:00:00', required: 2, planned: 1 }),
+    { count: 1, from: '07:00', to: 'Mi 13.01. 19:00' });
 });
 
 test('each gap shows once; no gap row without missing people; an area with gaps but no shown shift gets one', () => {
