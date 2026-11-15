@@ -51,7 +51,7 @@ class DesktopResourceTest {
     @Test
     void updateSettingsArePersisted() throws Exception {
         Files.deleteIfExists(Path.of(DesktopProfile.BASE, "daten/einstellungen.json"));
-        local().get("/api/desktop/update").then().statusCode(200).body("current", equalTo("0.1.0"))
+        local().get("/api/desktop/update").then().statusCode(200).body("current", equalTo("0.2.0"))
                 .body("source", equalTo("")).body("available", nullValue())
                 .body("error", nullValue());
         // No source by default: a check answers "no source" without contacting anything
@@ -81,12 +81,12 @@ class DesktopResourceTest {
         local().contentType(ContentType.JSON).body("{\"source\":\"" + folder + "\",\"checkOnStart\":true}")
                 .put("/api/desktop/update/settings").then().statusCode(200);
         local().get("/api/desktop/update?check=true").then().body("available", nullValue()).body("error", nullValue());
-        BundleMaker.make(app, Version.parse("0.2.0"), key, folder);
-        local().get("/api/desktop/update?check=true").then().body("available.version", equalTo("0.2.0"));
+        BundleMaker.make(app, Version.parse("9.9.9"), key, folder);
+        local().get("/api/desktop/update?check=true").then().body("available.version", equalTo("9.9.9"));
         // A version that failed its trial start is not offered again
         Path state = Path.of(DesktopProfile.BASE, "versionen/state.json");
         Files.createDirectories(state.getParent());
-        Files.writeString(state, "{\"bad\": [\"0.2.0\"]}");
+        Files.writeString(state, "{\"bad\": [\"9.9.9\"]}");
         local().get("/api/desktop/update?check=true").then().body("available", nullValue());
         Files.delete(state);
         // Signed with a key that is not the release key: refused, nothing staged, no exit

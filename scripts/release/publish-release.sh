@@ -41,8 +41,18 @@ field() {
 case "$CMD" in
   create)
     if [ -z "$(find_release)" ]; then
-      body=$(printf '{"tag_name":"%s","name":"%s","draft":true,"body":"Installation und Update: docs/betrieb.md"}' \
-        "$TAG" "$TAG")
+      # The notes are the section of the version in CHANGELOG.md (if any), then the pointer to the docs.
+      body=$(python3 - "$TAG" <<'PY'
+import json, pathlib, re, sys
+tag = sys.argv[1]
+log = pathlib.Path("CHANGELOG.md")
+text = log.read_text(encoding="utf-8") if log.exists() else ""
+section = re.search(r"^## " + re.escape(tag[1:]) + r" .*?\n(.*?)(?=^## |\Z)", text, re.S | re.M)
+notes = section.group(1).strip() + "\n\n" if section else ""
+print(json.dumps({"tag_name": tag, "name": tag, "draft": True,
+                  "body": notes + "Installation und Update: docs/betrieb.md"}))
+PY
+)
       api -o /dev/null -X POST -H 'Content-Type: application/json' -d "$body" "$API/repos/$REPO/releases"
     fi
     echo "release $TAG: draft ready"

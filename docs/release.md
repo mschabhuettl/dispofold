@@ -51,6 +51,10 @@ git tag -a v1.0.0 -m "Version 1.0.0"
 git push origin v1.0.0   # GitHub; danach dasselbe Tag auch zur Kopie auf Gitea pushen
 ```
 
+Vorher die Version in `CHANGELOG.md` als Abschnitt `## MAJOR.MINOR.PATCH (Datum)` beschreiben und mit
+`scripts/release/set-version.sh vMAJOR.MINOR.PATCH` in alle Builds schreiben (beides committen). Der Abschnitt
+wird der Text des Releases.
+
 Der Release-Workflow macht dann:
 
 1. **Versionsprüfung** des Tags und **die ganze CI** (`ci.yml`). Erst wenn beides grün ist, geht es weiter;
