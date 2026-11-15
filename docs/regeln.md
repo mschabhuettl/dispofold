@@ -220,8 +220,9 @@ der Erklärung je Person.
   Folgemonat weitergehen kann. Ersatzruhe zählt als freier Tag.
 - Einzelner freier Tag: genau ein freier Tag zwischen zwei Diensten.
 - Gewichte (ab 0.6.0): Einzelner freier Tag 10000 je Fall, Blocklänge 6000 je Tag. Mit dem Ziel für diesen
-  Plan prägen sie den Plan sichtbar: Im Demomonat sanken die einzelnen freien Tage von 261 auf 38, die
-  Blocktage außerhalb von 2 bis 4 von 602 auf 208; unerfüllte Wünsche stiegen leicht. Wer die Gewichte auf der
+  Plan prägen sie den Plan sichtbar: Im Demomonat sanken die einzelnen freien Tage von 261 auf 76, die
+  Blocktage außerhalb von 2 bis 4 von 602 auf 328; der Preis: unerfüllte Wünsche stiegen von 24 auf 38. Mit
+  deutlich weniger Bedarf als Arbeit sanken die einzelnen freien Tage von 123 auf 16. Wer die Gewichte auf der
   Seite Regeln einmal gespeichert hat, behält die gespeicherten Werte; dort lassen sie sich auf die neuen
   Standards setzen. Die Analyse zeigt beide Zahlen (`singleDaysOff`, `blockDays`).
 - Vorwärtsrotation: die Reihenfolge Früh, Tag, Spät, Nacht. Ein Wechsel von einem Tag auf den nächsten in
