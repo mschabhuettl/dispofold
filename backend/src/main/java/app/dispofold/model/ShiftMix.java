@@ -31,9 +31,11 @@ public record ShiftMix(Map<ShiftCategory, Double> categories, Map<String, Double
             return this;
         }
         double sum = rest.values().stream().mapToDouble(Double::doubleValue).sum();
-        if (sum > 0) {
-            rest.replaceAll((k, v) -> v / sum);
+        if (sum <= 0) {
+            // Only zero shares left: no area mix any more.
+            return new ShiftMix(categories, Map.of());
         }
+        rest.replaceAll((k, v) -> v / sum);
         return new ShiftMix(categories, rest);
     }
 }

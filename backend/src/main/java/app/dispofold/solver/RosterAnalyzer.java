@@ -117,22 +117,28 @@ public final class RosterAnalyzer {
         return hits;
     }
 
-    /** What one fairness comparison counts for a person in this month. */
-    private record Counter(String id, java.util.function.Predicate<Staff> eligible,
+    /**
+     * What one fairness comparison counts for a person in this month; {@code compared} leaves people out like the
+     * rule does (people with a usual category mix are not compared for nights).
+     */
+    private record Counter(String id, java.util.function.Predicate<Staff> compared,
+            java.util.function.Predicate<Staff> eligible,
             java.util.function.ToIntFunction<Staff.History> history,
             java.util.function.Function<List<DutyCell>, Integer> count) {
     }
 
     private static final List<Counter> COUNTERS = List.of(
-            new Counter(ConstraintCatalog.FAIR_NIGHTS, s -> s.getFairness().nights(), Staff.History::nights,
+            new Counter(ConstraintCatalog.FAIR_NIGHTS, s -> !s.hasCategoryMix(), s -> s.getFairness().nights(),
+                    Staff.History::nights,
                     cells -> (int) cells.stream().filter(c -> c.getShift().isNight()).count()),
-            new Counter(ConstraintCatalog.FAIR_WEEKENDS, s -> true, Staff.History::weekends,
+            new Counter(ConstraintCatalog.FAIR_WEEKENDS, s -> true, s -> true, Staff.History::weekends,
                     cells -> (int) cells.stream()
                             .filter(c -> c.isWeekendDay() && !RosterConstraints.startsBeforeMonth(c))
                             .map(c -> c.getWeekday() == 7 ? c.getDay() - 1 : c.getDay()).distinct().count()),
-            new Counter(ConstraintCatalog.FAIR_HOLIDAYS, s -> true, Staff.History::holidays,
+            new Counter(ConstraintCatalog.FAIR_HOLIDAYS, s -> true, s -> true, Staff.History::holidays,
                     cells -> (int) cells.stream().filter(DutyCell::isHoliday).count()),
-            new Counter(ConstraintCatalog.FAIR_UNPOPULAR, s -> s.getFairness().unpopular(), Staff.History::unpopular,
+            new Counter(ConstraintCatalog.FAIR_UNPOPULAR, s -> true, s -> s.getFairness().unpopular(),
+                    Staff.History::unpopular,
                     cells -> (int) cells.stream().filter(c -> c.getShift().isUnpopular()).count()));
 
     /**
@@ -152,7 +158,8 @@ public final class RosterAnalyzer {
             Map<Staff, Long> loads = new java.util.LinkedHashMap<>();
             for (Staff s : roster.getStaff()) {
                 int count = counter.count().apply(work.getOrDefault(s, List.of()));
-                if (s.getFairness().weight() > 0 && (counter.eligible().test(s) || count > 0)) {
+                if (s.getFairness().weight() > 0 && counter.compared().test(s)
+                        && (counter.eligible().test(s) || count > 0)) {
                     loads.put(s, (count + (long) counter.history().applyAsInt(s.getHistory()))
                             * s.getFairness().weight());
                 }

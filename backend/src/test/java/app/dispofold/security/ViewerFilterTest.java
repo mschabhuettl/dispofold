@@ -157,7 +157,8 @@ class ViewerFilterTest {
         // The goals in the target hits are corrected by the hours account: planners only.
         e.putArray("hits").add(hit).add(mapper.createObjectNode().put("constraintId", "family"))
                 .add(mapper.createObjectNode().put("constraintId", "targetHours"))
-                .add(mapper.createObjectNode().put("constraintId", "maxMonthHours"));
+                .add(mapper.createObjectNode().put("constraintId", "maxMonthHours"))
+                .add(mapper.createObjectNode().put("constraintId", "shiftMix"));
         ViewerFilter.explanation(e);
         assertThat(e.toString()).isEqualTo(
                 "{\"stats\":{\"historyWishes\":0,\"duties\":3},\"hits\":[{\"constraintId\":\"maxWeekHours\",\"params\":{\"minutes\":3000}}]}");

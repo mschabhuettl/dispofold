@@ -122,9 +122,12 @@ public class PlanResource {
                 s.averageWeekHours(), s.averageComplete(), 0, 0, s.plannedMix());
     }
 
-    /** Hits that would show wishes, family rules, restrictions, the kind of absence or the goals are planners only. */
+    /**
+     * Hits that would show wishes, family rules, restrictions, the kind of absence, the goals or the usual mix are
+     * planners only.
+     */
     static final Set<String> PRIVATE_HITS = Set.of("hit.wishes", "hit.family", "hit.onRequest",
-            "hit.neverRestriction", "hit.targetHours", "hit.maxMonthHours");
+            "hit.neverRestriction", "hit.targetHours", "hit.maxMonthHours", "hit.shiftMix");
 
     @GET
     @Path("people/{personId}")

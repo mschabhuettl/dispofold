@@ -91,4 +91,13 @@ class ShiftMixTest {
         }
         assertThat(RosterConstraints.mixDeviation(s, tenDays)).isEqualTo(2 * 40 * 40);
     }
+
+    @Test
+    void removingAnAreaRescalesTheRestOrClearsTheAreaMix() {
+        ShiftMix mix = new ShiftMix(Map.of(ShiftCategory.DAY, 1.0), Map.of("AN", 0.6, "DR", 0.2, "TV", 0.2));
+        assertThat(mix.withoutArea("AN").areasOrEmpty()).containsOnlyKeys("DR", "TV")
+                .allSatisfy((k, v) -> assertThat(v).isEqualTo(0.5, org.assertj.core.data.Offset.offset(1e-9)));
+        assertThat(new ShiftMix(Map.of(), Map.of("AN", 1.0, "DR", 0.0)).withoutArea("AN").areasOrEmpty()).isEmpty();
+        assertThat(mix.withoutArea("XX")).isSameAs(mix);
+    }
 }
