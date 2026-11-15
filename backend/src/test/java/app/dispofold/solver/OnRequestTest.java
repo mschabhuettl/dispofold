@@ -20,6 +20,7 @@ import app.dispofold.model.PlanAnalysis;
 import app.dispofold.model.PlanAssignment;
 import app.dispofold.model.Restriction;
 import app.dispofold.model.RestrictionKind;
+import app.dispofold.model.Rules;
 import app.dispofold.planning.PlanningInput;
 import app.dispofold.planning.SolveOptions;
 import app.dispofold.planning.SolveProgress;
@@ -171,5 +172,21 @@ class OnRequestTest {
                 .extracting(Candidate::personId).doesNotContain("P0017").contains("P0018");
         assertThat(facade.candidates(input, "AN", later.atTime(19, 30), later.atTime(21, 0))).isEmpty();
         assertThat(facade.candidates(input, "DR", later.atTime(7, 0), later.atTime(14, 30))).isEmpty();
+    }
+
+    @Test
+    void candidatesUseRealTimesOnTheDayTheClockChanges() {
+        PlanningInput base = Fixtures.input(Fixtures.SMALL_MARCH);
+        // 28 March 2027 has 23 hours in Vienna: after AN-S until 22:00 the rest before DR-M at 09:00 is 10 hours.
+        Dataset d = with(base.dataset(), List.of(onRequest("P0002", "DR-M", 0, null, null)),
+                base.dataset().demand());
+        LocalDate change = LocalDate.of(2027, 3, 28);
+        PlanningInput input = new PlanningInput(d, base.period(), Rules.defaults(),
+                List.of(new PlanAssignment("P0002", change.minusDays(1), "AN-S", false, true)));
+        TimefoldPlanningFacade facade = new TimefoldPlanningFacade();
+        assertThat(facade.candidates(input, "DR", change.atTime(9, 0), change.atTime(17, 0)))
+                .extracting(Candidate::personId).doesNotContain("P0002");
+        assertThat(facade.candidates(input, "DR", change.plusDays(1).atTime(9, 0), change.plusDays(1).atTime(17, 0)))
+                .extracting(Candidate::personId).contains("P0002");
     }
 }

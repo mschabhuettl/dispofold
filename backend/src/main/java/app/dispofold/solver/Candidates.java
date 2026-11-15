@@ -44,34 +44,46 @@ final class Candidates {
                         || c.isOutsideEmployment()) {
                     continue;
                 }
-                for (ShiftOption o : roster.getShiftOptions()) {
-                    if (o.isCompRest() || !areaId.equals(o.getAreaId()) || !c.getOnRequest().contains(o.getId())
-                            || c.startOf(o) >= end || c.endOf(o) <= start) {
-                        continue;
+                List<ShiftOption> requested = roster.getShiftOptions().stream()
+                        .filter(o -> !o.isCompRest() && areaId.equals(o.getAreaId())
+                                && c.getOnRequest().contains(o.getId()))
+                        .toList();
+                if (requested.isEmpty()) {
+                    continue;
+                }
+                // These shifts are not in the cell's value range (the solver must not choose them): add them for
+                // the check, with their real times on days with a change of the clock.
+                List<ShiftOption> range = c.getOptions();
+                List<ShiftOption> widened = new ArrayList<>(range);
+                widened.addAll(requested);
+                c.setOptions(widened);
+                c.setTimes(timeLine);
+                try {
+                    for (ShiftOption o : requested) {
+                        if (c.startOf(o) >= end || c.endOf(o) <= start) {
+                            continue;
+                        }
+                        if (single == null) {
+                            single = new Roster(roster.getMonth(), timeLine, List.of(staff),
+                                    roster.getShiftOptions(), List.of(), roster.getWeeks(), own,
+                                    roster.getConstraintWeightOverrides());
+                            hardBefore = scorer.score(single).hardScore();
+                        }
+                        HardMediumSoftScore after;
+                        c.setShift(o);
+                        try {
+                            after = scorer.score(single);
+                        } finally {
+                            c.setShift(null);
+                        }
+                        if (after.hardScore() >= hardBefore) {
+                            result.add(new Candidate(staff.getId(), c.getDate(), o.getId(), hours(counted(own)),
+                                    hours(staff.getTargetMinutes())));
+                        }
                     }
-                    if (single == null) {
-                        single = new Roster(roster.getMonth(), timeLine, List.of(staff), roster.getShiftOptions(),
-                                List.of(), roster.getWeeks(), own, roster.getConstraintWeightOverrides());
-                        hardBefore = scorer.score(single).hardScore();
-                    }
-                    // The shift is not in the cell's value range (the solver must not choose it), so it is
-                    // added for the check.
-                    List<ShiftOption> range = c.getOptions();
-                    List<ShiftOption> widened = new ArrayList<>(range);
-                    widened.add(o);
-                    HardMediumSoftScore after;
-                    c.setOptions(widened);
-                    c.setShift(o);
-                    try {
-                        after = scorer.score(single);
-                    } finally {
-                        c.setShift(null);
-                        c.setOptions(range);
-                    }
-                    if (after.hardScore() >= hardBefore) {
-                        result.add(new Candidate(staff.getId(), c.getDate(), o.getId(), hours(counted(own)),
-                                hours(staff.getTargetMinutes())));
-                    }
+                } finally {
+                    c.setOptions(range);
+                    c.setTimes(timeLine);
                 }
             }
         }
