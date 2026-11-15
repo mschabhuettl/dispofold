@@ -260,12 +260,14 @@ export async function render(root, ctx) {
       return;
     }
     const decision = conflictDecision(op.kind, op.key, op.base, dataset);
+    // the own values back in the form on the newer version, so that a rejected retry can be corrected
+    const reopen = () => (op.kind === 'restrictions' ? openRestrictions(op.key, op.values) : openForm(op.kind, decision.key, op.values));
     if (decision.action === 'retry') {
+      if (op.item !== undefined) reopen();
       await write({ ...op, key: decision.key });
     } else if (decision.action === 'changed' && op.item !== undefined) {
-      // the object itself was changed too: show the own values on the newer version for checking, do not save
-      if (op.kind === 'restrictions') openRestrictions(op.key, op.values);
-      else openForm(op.kind, decision.key, op.values);
+      // the object itself was changed too: do not save, let the user check
+      reopen();
       showProblem(new Error(t('masterdata.conflict.changed')));
     } else {
       toast(decision.action === 'gone' ? t('masterdata.conflict.gone') : t('masterdata.conflict.changedRemove'), true);
