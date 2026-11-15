@@ -6,6 +6,7 @@ package app.dispofold.model;
  *
  * @param id stable id, also the key in {@link Rules#weights()}
  * @param level HARD, MEDIUM (demand coverage) or SOFT
+ * @param tunable the weight can be set in {@link Rules#weights()}; else the default weight always applies
  */
-public record ConstraintInfo(String id, String level, long defaultWeight) {
+public record ConstraintInfo(String id, String level, long defaultWeight, boolean tunable) {
 }

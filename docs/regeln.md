@@ -134,7 +134,7 @@ der Erklärung je Person.
 | `shiftVariety` | Abwechslung der Dienste | je Paar Dienste gleichen Bereichs und gleicher Kategorie, mit Vormonat | 5 |
 | `areaVariety` | Abwechslung der Bereiche | je Paar Dienste im selben Bereich, mit Vormonat (nur bei mehreren Bereichen) | 1 |
 | `family` | Familienwunsch | je Dienst gegen die Regel | 800 |
-| `onRequest` | Dienst nur auf Anfrage | je solchem Dienst | 1000 |
+| `onRequest` | Dienst nur auf Anfrage, von Hand gesetzt | je solchem Dienst; Gewicht fest, nicht einstellbar | 1000 |
 | `overstaffing` | Überbesetzung | Personenminuten über der Höchstbesetzung, ohne Höchstbesetzung über der Mindestbesetzung | 2 |
 | `uselessDuty` | Dienst ohne Bedarf | je Dienst, der keinen Bedarf deckt | 5000 |
 
@@ -218,9 +218,14 @@ der Erklärung je Person.
 - Familienwunsch je Person und Wochentag: spätestes Dienstende, frühester Dienstbeginn, keine Nacht. Die
   Uhrzeiten beziehen sich auf den Tag des Dienstbeginns; ein Nachtdienst endet also immer nach einem
   spätesten Ende am selben Tag.
-- Sperren der Art "nur auf Anfrage" werden möglichst vermieden. Sperren gelten für eine Schicht oder für alle
-  Schichten einer Kategorie (z. B. keine Nachtdienste), je Wochentag und optional nur von `validFrom` bis
-  `validTo`.
+- Sperren der Art "nur auf Anfrage" plant der Solver nie ein, auch nicht, wenn sonst eine Bedarfslücke bleibt:
+  Die Planung fragt die Person und trägt den Dienst dann von Hand ein (fixiert) oder als fixen Dienst in den
+  Eingaben. Ein solcher Dienst ist kein harter Verstoß; er erscheint als Treffer der Regel `onRequest`, damit
+  er sichtbar bleibt. Ihr Gewicht ist fest; ein gespeichertes Gewicht für `onRequest` wird ignoriert. Ein nicht
+  fixierter Anfrage-Dienst aus einem früheren Plan fällt bei der nächsten Planung weg. Zu jeder Lücke zeigt die
+  Oberfläche, wer gefragt werden kann (siehe [api.md](api.md), `candidates`).
+- Sperren gelten für eine Schicht oder für alle Schichten einer Kategorie (z. B. keine Nachtdienste), je
+  Wochentag und optional nur von `validFrom` bis `validTo`.
 - Abwechslung: gezählt werden Paare von Diensten im selben Bereich und derselben Kategorie (Früh, Tag, Spät,
   Nacht) bzw. im selben Bereich, einschließlich der Dienste des Vormonats.
 - Überbesetzung: Personen über der Höchstbesetzung; hat ein Abschnitt keine Höchstbesetzung, zählt jede

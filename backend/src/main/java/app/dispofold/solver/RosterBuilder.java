@@ -327,9 +327,11 @@ public final class RosterBuilder {
                     }
                 }
             }
+            // The solver never chooses a duty that is restricted or only on request; planners may set the latter.
             List<ShiftOption> range = new ArrayList<>();
             for (ShiftOption o : options.values()) {
-                if (s.getAreaIds().contains(o.getAreaId()) && !never.contains(o.getId())) {
+                if (s.getAreaIds().contains(o.getAreaId()) && !never.contains(o.getId())
+                        && !onRequest.contains(o.getId())) {
                     range.add(o);
                 }
             }

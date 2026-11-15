@@ -51,32 +51,35 @@ public final class ConstraintCatalog {
             hard(DAILY_REST), hard(WEEKLY_REST), hard(MAX_DUTY), hard(MAX_WEEK), hard(AVERAGE_WEEK),
             hard(QUALIFICATION), hard(ABSENCE), hard(EMPLOYMENT), hard(NEVER), hard(COMP_REST_BALANCE),
             hard(MISSING_SHIFT),
-            new ConstraintInfo(DEMAND, MEDIUM, 1),
+            new ConstraintInfo(DEMAND, MEDIUM, 1, false),
             soft(TARGET_HOURS, 20), soft(FAIR_NIGHTS, 3), soft(FAIR_WEEKENDS, 3), soft(FAIR_HOLIDAYS, 3),
             soft(FAIR_UNPOPULAR, 2), soft(WISHES, 300), soft(BLOCK_LENGTH, 600), soft(ISOLATED_DAY_OFF, 400),
             soft(FORWARD_ROTATION, 500), soft(SPLIT_WEEKEND, 300), soft(COMP_REST_USE, 500),
-            soft(SHIFT_VARIETY, 5), soft(AREA_VARIETY, 1), soft(FAMILY, 800), soft(ON_REQUEST, 1000),
+            soft(SHIFT_VARIETY, 5), soft(AREA_VARIETY, 1), soft(FAMILY, 800),
+            // On-request duties are never chosen by the solver (see RosterBuilder); the constraint only marks
+            // duties set by planners, so its weight is not a setting.
+            new ConstraintInfo(ON_REQUEST, SOFT, 1000, false),
             soft(OVERSTAFFING, 2), soft(USELESS_DUTY, 5000));
 
     private ConstraintCatalog() {
     }
 
     private static ConstraintInfo hard(String id) {
-        return new ConstraintInfo(id, HARD, 1);
+        return new ConstraintInfo(id, HARD, 1, false);
     }
 
     private static ConstraintInfo soft(String id, long weight) {
-        return new ConstraintInfo(id, SOFT, weight);
+        return new ConstraintInfo(id, SOFT, weight, true);
     }
 
     public static ConstraintInfo get(String id) {
         return ALL.stream().filter(c -> c.id().equals(id)).findFirst().orElseThrow();
     }
 
-    /** Effective weight: the configured one for soft constraints, else the default. */
+    /** Effective weight: the configured one for tunable constraints, else the default. */
     public static long weight(ConstraintInfo info, Map<String, Long> weights) {
         Long configured = weights == null ? null : weights.get(info.id());
-        return SOFT.equals(info.level()) && configured != null ? configured : info.defaultWeight();
+        return info.tunable() && configured != null ? configured : info.defaultWeight();
     }
 
     public static ConstraintWeightOverrides<HardMediumSoftScore> overrides(Map<String, Long> weights) {

@@ -1,9 +1,11 @@
 package app.dispofold.planning;
 
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.function.Consumer;
 
+import app.dispofold.model.Candidate;
 import app.dispofold.model.ConstraintInfo;
 import app.dispofold.model.CoverageSegment;
 import app.dispofold.model.PersonExplanation;
@@ -38,4 +40,10 @@ public interface PlanningFacade {
 
     /** Demand against staffing of one area for every segment of the month. */
     List<CoverageSegment> coverage(PlanningInput input, String areaId);
+
+    /**
+     * People who could take a duty on request that overlaps the given local time span of an area, fewest counted
+     * hours against the target first.
+     */
+    List<Candidate> candidates(PlanningInput input, String areaId, LocalDateTime from, LocalDateTime to);
 }

@@ -1,6 +1,7 @@
 package app.dispofold.api;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.function.Consumer;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Alternative;
 
+import app.dispofold.model.Candidate;
 import app.dispofold.model.ConstraintHit;
 import app.dispofold.model.ConstraintInfo;
 import app.dispofold.model.CoverageSegment;
@@ -51,7 +53,7 @@ public class FakePlanningFacade implements PlanningFacade {
 
     @Override
     public List<ConstraintInfo> constraintCatalog() {
-        return List.of(new ConstraintInfo("rest", "HARD", 1), new ConstraintInfo("wishes", "SOFT", 10));
+        return List.of(new ConstraintInfo("rest", "HARD", 1, false), new ConstraintInfo("wishes", "SOFT", 10, true));
     }
 
     @Override
@@ -138,6 +140,11 @@ public class FakePlanningFacade implements PlanningFacade {
     public PersonExplanation explain(PlanningInput input, String personId) {
         return new PersonExplanation(stats(input, personId),
                 List.of(new ConstraintHit("wishes", "SOFT", null, -10, "hit.wishes", Map.of("unmet", 1))));
+    }
+
+    @Override
+    public List<Candidate> candidates(PlanningInput input, String areaId, LocalDateTime from, LocalDateTime to) {
+        return List.of();
     }
 
     @Override

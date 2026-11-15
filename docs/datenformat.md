@@ -116,7 +116,7 @@ leer sein. Felder, die im Beispiel `null` sind, dürfen fehlen.
 | person | `entryDate`, `exitDate` | erster und letzter Tag der Beschäftigung, `null` = offen. Tage außerhalb werden nicht verplant, das Soll wird anteilig berechnet |
 | restriction | `shiftId` / `category` | genau eines von beiden: eine Schicht oder alle Schichten einer Kategorie (z. B. `NIGHT`) |
 | restriction | `weekday` | 1..7, 0 = jeden Tag |
-| restriction | `kind` | `NEVER` (nie, hart) oder `ON_REQUEST` (nur auf Anfrage, weich) |
+| restriction | `kind` | `NEVER` (nie, hart) oder `ON_REQUEST` (nur auf Anfrage: nie automatisch geplant, nur von Hand) |
 | restriction | `validFrom`, `validTo` | erster und letzter Tag, an dem die Einschränkung gilt, `null` = offen |
 | history | | Kennzahlen früherer Monate für die Fairness über mehrere Monate |
 | history | `source` | `import` (Istwerte aus dem Quellsystem) oder `plan` (beim Monatsabschluss geschrieben) |

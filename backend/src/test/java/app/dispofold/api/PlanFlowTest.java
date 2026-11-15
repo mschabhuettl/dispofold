@@ -374,12 +374,17 @@ class PlanFlowTest {
         given().get("/api/rules").then().statusCode(200).body("minDailyRestHours", equalTo(11.0f))
                 .body("nightStart", equalTo("22:00"));
         String rules = given().get("/api/rules").then().extract().asString()
-                .replace("\"weights\":{}", "\"weights\":{\"wishes\":77}");
+                .replace("\"weights\":{}", "\"weights\":{\"wishes\":77,\"rest\":5,\"onRequest\":3}");
         given().contentType(ContentType.JSON).body(rules).put("/api/rules").then().statusCode(200);
+        // Saved weights of constraints that are not tunable (any more, like onRequest) still load and are ignored.
+        given().get("/api/rules").then().statusCode(200).body("weights.onRequest", equalTo(3));
         given().get("/api/constraints").then().statusCode(200)
                 .body("find { it.id == 'wishes' }.weight", equalTo(77))
-                .body("find { it.id == 'rest' }.weight", equalTo(1));
-        given().contentType(ContentType.JSON).body(rules.replace("\"weights\":{\"wishes\":77}", "\"weights\":{}"))
+                .body("find { it.id == 'wishes' }.tunable", equalTo(true))
+                .body("find { it.id == 'rest' }.weight", equalTo(1))
+                .body("find { it.id == 'rest' }.tunable", equalTo(false));
+        given().contentType(ContentType.JSON)
+                .body(rules.replace("\"weights\":{\"wishes\":77,\"rest\":5,\"onRequest\":3}", "\"weights\":{}"))
                 .put("/api/rules").then().statusCode(200);
 
         String person = given().get("/api/dataset").then().statusCode(200).body("periods.size()", equalTo(0))

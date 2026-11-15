@@ -56,6 +56,14 @@ class EndToEndTest {
         given().get("/api/plans/" + MONTH + "/people/P0001").then().statusCode(200)
                 .body("stats.personId", equalTo("P0001"));
         given().get("/api/plans/" + MONTH + "/coverage/DR").then().statusCode(200);
+        String day = MONTH.atDay(2).toString();
+        given().queryParam("areaId", "DR").queryParam("from", day + "T07:00").queryParam("to", day + "T19:00")
+                .get("/api/plans/" + MONTH + "/candidates").then().statusCode(200).body("size()", equalTo(0));
+        given().queryParam("areaId", "DR").queryParam("from", day + "T19:00").queryParam("to", day + "T07:00")
+                .get("/api/plans/" + MONTH + "/candidates").then().statusCode(400)
+                .body("code", equalTo("candidates.span"));
+        given().queryParam("areaId", "XX").queryParam("from", day + "T07:00").queryParam("to", day + "T19:00")
+                .get("/api/plans/" + MONTH + "/candidates").then().statusCode(404);
         given().get("/api/plans/" + MONTH + "/export?format=xlsx").then().statusCode(200);
         given().post("/api/plans/" + MONTH + "/finalize").then().statusCode(200).body("size()", equalTo(6));
     }

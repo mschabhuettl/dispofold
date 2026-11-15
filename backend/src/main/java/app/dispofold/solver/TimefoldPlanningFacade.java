@@ -1,5 +1,6 @@
 package app.dispofold.solver;
 
+import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,7 @@ import java.util.function.Consumer;
 import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 
+import app.dispofold.model.Candidate;
 import app.dispofold.model.ConstraintInfo;
 import app.dispofold.model.CoverageSegment;
 import app.dispofold.model.PersonExplanation;
@@ -189,6 +191,11 @@ public class TimefoldPlanningFacade implements PlanningFacade {
     @Override
     public List<CoverageSegment> coverage(PlanningInput input, String areaId) {
         return RosterAnalyzer.coverage(new RosterBuilder(input, true).build(), areaId);
+    }
+
+    @Override
+    public List<Candidate> candidates(PlanningInput input, String areaId, LocalDateTime from, LocalDateTime to) {
+        return Candidates.find(new RosterBuilder(input, true).build(), areaId, from, to, explainer());
     }
 
     private ScoreExplainer.Explanation analyzeScore(Roster roster) {

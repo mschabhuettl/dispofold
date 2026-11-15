@@ -1,5 +1,6 @@
 package app.dispofold.api;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -23,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import app.dispofold.api.PlanService.PlanState;
 import app.dispofold.api.PlanService.SolveRequest;
 import app.dispofold.export.PlanExporter;
+import app.dispofold.model.Candidate;
 import app.dispofold.model.ConstraintHit;
 import app.dispofold.model.CoverageSegment;
 import app.dispofold.model.HistoryEntry;
@@ -150,6 +152,34 @@ public class PlanResource {
                     "Unbekannter Bereich");
         }
         return plans.facade().coverage(input, areaId);
+    }
+
+    /**
+     * Planners only: who could be asked to take a duty on request in a gap of the area (the list shows
+     * restrictions). {@code from} and {@code to} are local date-times as in the gaps of the analysis.
+     */
+    @GET
+    @Path("candidates")
+    @RolesAllowed("planner")
+    public List<Candidate> candidates(@PathParam("month") String month, @QueryParam("areaId") String areaId,
+            @QueryParam("from") String from, @QueryParam("to") String to) {
+        LocalDateTime start;
+        LocalDateTime end;
+        try {
+            start = LocalDateTime.parse(from);
+            end = LocalDateTime.parse(to);
+        } catch (RuntimeException e) {
+            throw ApiErrors.error(Status.BAD_REQUEST, "candidates.span", "Zeitraum von bis erwartet");
+        }
+        if (!end.isAfter(start)) {
+            throw ApiErrors.error(Status.BAD_REQUEST, "candidates.span", "Zeitraum von bis erwartet");
+        }
+        PlanningInput input = plans.input(ApiErrors.month(month));
+        if (areaId == null || input.dataset().areas().stream().noneMatch(a -> a.id().equals(areaId))) {
+            throw ApiErrors.error(Status.NOT_FOUND, "area.unknown", Map.of("areaId", String.valueOf(areaId)),
+                    "Unbekannter Bereich");
+        }
+        return plans.facade().candidates(input, areaId, start, end);
     }
 
     /** Closes the month (balances into the history, read-only); see {@link PlanService#closeMonth}. */

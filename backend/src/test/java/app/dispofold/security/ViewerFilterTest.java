@@ -122,6 +122,10 @@ class ViewerFilterTest {
             given().cookie(viewer).get("/api/plans/" + MONTH + "/export?format=" + format).then().statusCode(403)
                     .body("code", equalTo("security.forbidden"));
         }
+        // Who could be asked shows restrictions.
+        given().cookie(viewer).queryParam("areaId", "AN").queryParam("from", MONTH + "-01T07:00")
+                .queryParam("to", MONTH + "-01T19:00").get("/api/plans/" + MONTH + "/candidates").then()
+                .statusCode(403);
         given().get("/api/dataset").then().statusCode(401).body("code", equalTo("security.unauthenticated"));
     }
 

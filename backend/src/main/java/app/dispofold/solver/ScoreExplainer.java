@@ -46,6 +46,15 @@ public final class ScoreExplainer {
         this.factory = ((DefaultSolverFactory<Roster>) solverFactory).getScoreDirectorFactory();
     }
 
+    /** The score only, without constraint matches. */
+    public HardMediumSoftScore score(Roster roster) {
+        try (AbstractScoreDirector<Roster, HardMediumSoftScore, ?> director = factory.createScoreDirectorBuilder()
+                .withConstraintMatchPolicy(ConstraintMatchPolicy.DISABLED).build()) {
+            director.setWorkingSolution(roster);
+            return director.calculateScore().raw();
+        }
+    }
+
     public Explanation explain(Roster roster) {
         try (AbstractScoreDirector<Roster, HardMediumSoftScore, ?> director = factory.createScoreDirectorBuilder()
                 .withConstraintMatchPolicy(ConstraintMatchPolicy.ENABLED_WITHOUT_INDICTMENTS).build()) {

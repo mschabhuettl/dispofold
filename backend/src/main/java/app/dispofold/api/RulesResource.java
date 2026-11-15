@@ -23,8 +23,8 @@ import app.dispofold.store.Store;
 @RolesAllowed({ "planner", "viewer" })
 public class RulesResource {
 
-    /** A catalogue entry with the weight currently in effect. */
-    public record ConstraintWeight(String id, String level, long defaultWeight, long weight) {
+    /** A catalogue entry with the weight currently in effect; only tunable weights can be set. */
+    public record ConstraintWeight(String id, String level, long defaultWeight, long weight, boolean tunable) {
     }
 
     @Inject
@@ -90,7 +90,8 @@ public class RulesResource {
         Map<String, Long> weights = store.rules().weights() == null ? Map.of() : store.rules().weights();
         return plans.facade().constraintCatalog().stream()
                 .map(c -> new ConstraintWeight(c.id(), c.level(), c.defaultWeight(),
-                        weights.getOrDefault(c.id(), c.defaultWeight())))
+                        c.tunable() ? weights.getOrDefault(c.id(), c.defaultWeight()) : c.defaultWeight(),
+                        c.tunable()))
                 .toList();
     }
 }

@@ -74,7 +74,7 @@ abgeschlossene Monate (`import.closed`) ist der Import gesperrt.
 |---|---|---|
 | `GET` | `/api/rules` | `Rules` |
 | `PUT` | `/api/rules` | speichert `Rules` (Body), Antwort `Rules`; die Mindestruhe ist mindestens 11 Stunden |
-| `GET` | `/api/constraints` | `[{ "id", "level", "defaultWeight", "weight" }]`; Name und Beschreibung jeder Regel stehen in der Oberfläche |
+| `GET` | `/api/constraints` | `[{ "id", "level", "defaultWeight", "weight", "tunable" }]`; nur Regeln mit `tunable: true` nehmen ein Gewicht aus `Rules.weights` an, für die anderen gilt immer `defaultWeight`. Name und Beschreibung jeder Regel stehen in der Oberfläche |
 
 ## Planungsmonate
 
@@ -100,6 +100,7 @@ sie, antwortet das Backend mit `428` `period.revisionMissing`; hat inzwischen je
 | `GET` | `/api/plans/{month}/analysis` | `PlanAnalysis` (Score, Summen je Regel, Bedarfslücken, Kennzahlen je Person) |
 | `GET` | `/api/plans/{month}/people/{personId}` | `PersonExplanation` (Kennzahlen und alle Regel-Treffer der Person) |
 | `GET` | `/api/plans/{month}/coverage/{areaId}` | Liste von `CoverageSegment` für den ganzen Monat |
+| `GET` | `/api/plans/{month}/candidates?areaId=&from=&to=` | wer für eine Bedarfslücke gefragt werden kann, nur für `planner`; siehe unten |
 | `POST` | `/api/plans/{month}/finalize` | schließt den Monat ab (Status `CLOSED`), Antwort Liste von `HistoryEntry` mit `source: "plan"` |
 | `POST` | `/api/plans/{month}/reopen` | öffnet einen abgeschlossenen Monat wieder |
 | `GET` | `/api/plans/{month}/export?format=xlsx\|csv\|json` | Datei-Download, nur für `planner` |
@@ -116,6 +117,14 @@ Planung:
   Zellen, `unpin`, `finalize`, `import`, Exporte und ein zweites `solve` sind dann gesperrt (`409`). Der beste
   Stand wird höchstens alle zwei Sekunden gespeichert. Nach `stop` ist der Status `STOPPED`, nach Ablauf
   `SOLVED`, nach einem Fehler `FAILED`.
+
+Wer gefragt werden kann: `from` und `to` sind lokale Zeitpunkte wie in den Bedarfslücken der Analyse (z. B.
+`2027-01-04T07:00`). Die Antwort `[{ "personId", "date", "shiftId", "plannedHours", "targetHours" }]` nennt
+alle Personen, für die eine Schicht des Bereichs, die die Lücke überschneidet, an diesem Tag nur auf Anfrage
+geht, deren Tag frei ist (kein Dienst, keine Abwesenheit, beschäftigt, nicht fixiert) und für die der Dienst
+keinen neuen harten Verstoß bringt. `plannedHours` sind die Stunden, die bisher zum Soll zählen (Dienste und
+gutgeschriebene Tage). Sortiert nach `plannedHours - targetHours`, die mit den wenigsten Stunden zuerst. Fehler:
+`400` `candidates.span`, `404` `area.unknown`.
 
 Monatsabschluss: `finalize` speichert je Person das Stundenkonto und die Ersatzruhe nach dem Monat (verbraucht
 und neu erworben, Arbeit an einem Feiertag erwirbt eine). Importierte Ist-Werte (`source: "import"`) werden nie
@@ -180,6 +189,7 @@ Anfrage und Daten:
 | `masterdata.inUseClosed` | 409 | `kind`, `key`, `months` |
 | `masterdata.areaHasShifts` | 409 | `key`, `count` |
 | `area.unknown` | 404 | `areaId` |
+| `candidates.span` | 400 | |
 | `rules.missing`, `rules.nightWindow`, `rules.values`, `rules.block`, `rules.accountShare`, `rules.weights`, `rules.timeZone` | 400 | |
 | `rules.minDailyRest` | 400 | `minHours` |
 
