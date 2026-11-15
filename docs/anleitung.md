@@ -133,6 +133,14 @@ Oben im **Dienstplan** stehen:
   nie darüber. Ein von Hand gesetzter Dienst darf darüber gehen, zählt dann aber als harter Verstoß und steht auf
   der Seite **Person** unter **Ganzer Monat**. Die Liste **Wer kann gefragt werden?** lässt Personen aus, die
   der Dienst über diese Grenze brächte.
+- **Ziel für diesen Plan:** Braucht der Bedarf weniger Arbeit, als die Ziele aller Personen zusammen ergeben,
+  strebt das Programm ein verkleinertes Ziel an: Der Arbeitsanteil jedes Ziels (Ziel ohne angerechnete
+  Abwesenheitstage) schrumpft um denselben Anteil. So muss niemand Stunden über den Bedarf hinaus sammeln, und
+  der Plan kann zusammenhängende Dienstblöcke bevorzugen und einzelne freie Tage zwischen Diensten vermeiden.
+  Die harte Obergrenze (Höchststunden im Monat) rechnet weiter mit dem echten Ziel. Die Seite **Person** zeigt
+  Soll, Ziel und, wenn es abweicht, das Ziel für diesen Plan mit den geplanten und angerechneten Stunden
+  daneben; die Zeile **Warum dieser Dienst?** nennt beide Ziele. Für Lesende sind die Ziele ausgeblendet, weil
+  sie das Stundenkonto enthalten.
 - **Bedarfslücken:** Zeitabschnitte, in denen weniger Personen eingeteilt sind als der Bedarf verlangt. Die
   Zeile **Bedarfslücken** unter dem Plan zeigt sie je Tag, **Ungedeckter Bedarf** die Summe in
   Personenstunden. Daneben steht **Überbesetzung**: Personenstunden über der Höchstbesetzung (wo keine gesetzt
@@ -140,6 +148,10 @@ Oben im **Dienstplan** stehen:
   Reicht das Personal nicht, bleibt die Lücke sichtbar, statt dass eine harte Regel verletzt wird. Ein Klick auf die Zahl eines Tages listet die Lücken dieses
   Tages mit Bereich, Uhrzeit und fehlender Besetzung, jeweils mit der Liste **Wer kann gefragt werden?** (siehe
   [Dienste nur auf Anfrage](#dienste-nur-auf-anfrage)).
+- **Einzelne freie Tage / Blocktage abweichend:** Zwei Kennzahlen der Statuszeile nach der Planung.
+  **Einzelne freie Tage** zählt freie Tage, die zwischen zwei Diensten liegen (wenig Erholung). **Blocktage
+  abweichend** zählt die Tage, um die Dienstblöcke kürzer oder länger sind als bevorzugt. Beide sollen klein
+  sein; sie sind keine Fehler, sondern Maß für die Güte des Plans.
 - **Score:** Die Bewertung in drei Stufen: hart, mittel, weich. Mittel umfasst ungedeckten Bedarf und
   Besetzung über dem Bedarf, beides in der Statuszeile in Personenstunden. Eine fehlende Minute wiegt schwerer als
   jeder ganze Dienst über dem Bedarf: Ist jemand frei, wird eine Lücke immer zuerst gefüllt. Besetzung über dem
@@ -153,7 +165,7 @@ Weitere Seiten:
 - **Bereichs-Zeitachse:** Dienste eines Bereichs als Tag oder Woche und die Besetzung gegen den Bedarf. Lücken
   sind rot markiert und darunter als Liste mit Uhrzeit und fehlender Besetzung aufgeführt. **Wer kann gefragt
   werden?** in einer Zeile der Liste klappt darunter die Personen auf, die man für diese Lücke fragen kann.
-- **Person:** Eine Person auswählen. Die Seite zeigt Soll, geplante Stunden, Stundenkonto vorher und danach,
+- **Person:** Eine Person auswählen. Die Seite zeigt Soll, Ziel, Ziel für diesen Plan, geplante Stunden, Stundenkonto vorher und danach,
   Nächte, Wochenenden, Feiertage, unbeliebte Dienste, erfüllte Wünsche und Ersatzruhe. Unter **Warum dieser
   Dienst?** steht für jeden Tag (oder **Ganzer Monat**), welche Regeln gegriffen haben, mit ihrer Stufe
   (**Hart**, **Bedarf**, **Weich**).

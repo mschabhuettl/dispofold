@@ -90,6 +90,8 @@ export async function render(root, ctx) {
       h('span', { class: hard > 0 ? 'badge badge-hard' : 'badge' }, t('roster.hardViolations', { count: hard ?? '–' })),
       figures && h('span', { class: figures.uncovered > 0 ? 'badge badge-hard' : '' }, t('roster.uncovered'), ' ', h('strong', {}, t('roster.personHours', { hours: fmt.num(figures.uncovered, 1) }))),
       figures && h('span', { class: figures.overstaffed > 0 ? 'badge badge-warn' : '' }, t('roster.overstaffed'), ' ', h('strong', {}, t('roster.personHours', { hours: fmt.num(figures.overstaffed, 1) }))),
+      analysis?.singleDaysOff != null && h('span.badge', { title: t('roster.singleDaysOffHelp') }, t('roster.singleDaysOff', { count: analysis.singleDaysOff })),
+      analysis?.blockDays != null && h('span.badge', { title: t('roster.blockDaysHelp') }, t('roster.blockDays', { count: analysis.blockDays })),
       gaps != null && h('span', { class: gaps > 0 ? 'badge badge-hard' : 'badge' }, t('roster.gaps', { count: gaps })),
       canEdit && state.solving && h('span.muted', {}, t('roster.lockedWhileSolving')),
       closed() && h('span.muted', {}, t('roster.closedHint')),

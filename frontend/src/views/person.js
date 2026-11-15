@@ -50,7 +50,14 @@ export async function render(root, ctx, [personId]) {
   root.append(
     h('section.section', { 'aria-labelledby': 'h-hours' }, h('h2', { id: 'h-hours' }, t('person.section.hours')),
       h('div.kpis', {},
-        kpi(t('person.kpi.target'), hours(s.targetHours)), kpi(t('person.kpi.planned'), hours(s.plannedHours)), ctx.canEdit && kpi(t('person.kpi.credited'), hours(s.creditedHours)),
+        kpi(t('person.kpi.target'), hours(s.targetHours)),
+        // the goals are personal (hours account): null for viewers
+        s.goalHours != null && kpi(t('person.kpi.goal'), hours(s.goalHours)),
+        s.goalHours != null && s.scaledGoalHours != null && s.scaledGoalHours !== s.goalHours && kpi(t('person.kpi.scaledGoal'), hours(s.scaledGoalHours)),
+        s.goalHours != null && kpi(t('person.kpi.counted'), t('person.kpi.countedVsGoal', { counted: fmt.num(s.plannedHours + s.creditedHours, 1), goal: fmt.num(s.goalHours, 1) })),
+        s.goalHours != null && s.scaledGoalHours != null && s.scaledGoalHours !== s.goalHours
+          && kpi(t('person.kpi.countedScaled'), t('person.kpi.countedVsGoal', { counted: fmt.num(s.plannedHours + s.creditedHours, 1), goal: fmt.num(s.scaledGoalHours, 1) })),
+        kpi(t('person.kpi.planned'), hours(s.plannedHours)), ctx.canEdit && kpi(t('person.kpi.credited'), hours(s.creditedHours)),
         // the hours account is personal: planners only (viewers get 0 from the server)
         ctx.canEdit && kpi(t('person.kpi.accountBefore'), hours(s.accountBefore)), ctx.canEdit && kpi(t('person.kpi.accountAfter'), hours(s.accountAfter)),
         kpi(t('person.kpi.duties'), fmt.num(s.duties)),

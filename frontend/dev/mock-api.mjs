@@ -181,6 +181,7 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
     const round = (x) => Math.round(x * 100) / 100;
     return {
       personId: p.id, targetHours: round(targetHours), creditedHours: round(creditedHours), plannedHours: round(plannedHours),
+      goalHours: round(targetHours + p.hoursAccount * 0.5), scaledGoalHours: round((targetHours + p.hoursAccount * 0.5) * 0.92),
       accountBefore: p.hoursAccount, accountAfter: round(p.hoursAccount + plannedHours + creditedHours - targetHours),
       duties: duties.length, nights: duties.filter((a) => shifts.get(a.shiftId).category === 'NIGHT').length,
       weekendsWorked, weekendsOff: saturdays.length - weekendsWorked,
@@ -250,7 +251,8 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
       return { id: c.id, level: c.level, label: c.label, weight: w, score, matches };
     });
     const uncoveredHours = gaps.reduce((sum, g) => sum + (g.required - g.planned) * hours(g), 0);
-    return { score: plan?.score ?? null, hardViolations: 0, constraints, gaps, people, uncoveredHours, overstaffedHours };
+    return { score: plan?.score ?? null, hardViolations: 0, constraints, gaps, people, uncoveredHours, overstaffedHours,
+      singleDaysOff: people.reduce((s, st) => s + st.singleDays, 0), blockDays: people.reduce((s, st) => s + st.singleDays * 2, 0) };
   }
 
   function scoreFor(m) {
@@ -315,7 +317,7 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
     absences: (period.absences ?? []).map((x) => ({ ...x, typeCode: 'ABW' })) });
 
   /** Personal figures viewers do not get: wishes 0, hours account and compensatory rest null. */
-  const redactStats = (s) => ({ ...s, wishes: 0, wishesMet: 0, historyWishes: 0, historyWishesMet: 0, accountBefore: null,
+  const redactStats = (s) => ({ ...s, wishes: 0, wishesMet: 0, historyWishes: 0, historyWishesMet: 0, accountBefore: null, goalHours: null, scaledGoalHours: null,
     accountAfter: null, compRestBalanceAfter: null, compRestEarned: null, chargedHours: null, creditedHours: null });
 
   /** True while the mock program "restarts" after an update. */

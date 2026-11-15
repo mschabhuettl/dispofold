@@ -150,3 +150,11 @@ test('hit params are shown readably', async () => {
   assert.equal(messageText({ code: 'import.missingField', params: { kind: 'shift', field: 'start', index: 2 } }),
     'Schicht Nr. 3: Pflichtfeld „start“ fehlt.');
 });
+
+test('hit targetHours names the scaled goal only when it differs', async () => {
+  const { hitText } = await import('../src/lib/codes.js');
+  assert.equal(hitText({ code: 'hit.targetHours', params: { minutes: 7842, targetMinutes: 7947, scaledMinutes: 7947 } }),
+    'Geplant und angerechnet 130,7 h, Ziel 132,5 h (Soll mit Ausgleich des Stundenkontos).');
+  assert.equal(hitText({ code: 'hit.targetHours', params: { minutes: 7842, targetMinutes: 7947, scaledMinutes: 7800 } }),
+    'Geplant und angerechnet 130,7 h, Ziel für diesen Plan 130,0 h (Ziel 132,5 h, verkleinert, weil der Bedarf weniger Arbeit braucht).');
+});

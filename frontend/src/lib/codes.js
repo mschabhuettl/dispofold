@@ -65,6 +65,8 @@ export function constraintDescription(c) {
 /** Explanation of one constraint hit; the code may come with or without the 'hit.' prefix. */
 export function hitText(hit) {
   if (!hit.code) return hit.text ?? '';
-  const key = hit.code.startsWith('hit.') ? hit.code : `hit.${hit.code}`;
+  let key = hit.code.startsWith('hit.') ? hit.code : `hit.${hit.code}`;
+  // the scaled goal is only named when it differs from the goal
+  if (key === 'hit.targetHours' && hit.params?.scaledMinutes != null && hit.params.scaledMinutes !== hit.params.targetMinutes) key = 'hit.targetHoursScaled';
   return codeText(key, displayParams(hit.params), hit.text);
 }
