@@ -95,6 +95,10 @@ Betrieb.
 |---|---|
 | ![Fairness](docs/screenshots/fairness.png) | ![Regeln](docs/screenshots/regeln.png) |
 
+| Stammdaten bearbeiten |
+|---|
+| ![Stammdaten](docs/screenshots/stammdaten.png) |
+
 | Dienstplan, dunkel | Bereichs-Zeitachse, dunkel |
 |---|---|
 | ![Dienstplan dunkel](docs/screenshots/dienstplan-dunkel.png) | ![Zeitachse dunkel](docs/screenshots/zeitachse-dunkel.png) |
