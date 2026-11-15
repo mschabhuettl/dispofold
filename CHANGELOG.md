@@ -3,6 +3,22 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.7.0 (2026-11-15)
+
+Gewohnte Verteilung der Dienste je Person und freie Sonntage.
+
+- **Gewohnte Verteilung:** Eine Person kann Anteile ihrer Dienste je Schichtart (Früh, Tag, Spät, Nacht) und
+  je Bereich haben, z. B. aus der Historie exportiert (neues optionales Feld `shiftMix`). Die Planung folgt
+  ihnen (weiche Regel „Gewohnte Verteilung“, Gewicht 100). Unter Stammdaten bearbeiten oder entfernen; die
+  Personenansicht zeigt geplante gegen gewohnte Anteile. Für Personen mit Verteilung entfallen die
+  Nacht-Fairness und die Abwechslung (sonst würden sie die Verteilung einebnen). Ältere Datensätze ohne das Feld
+  laden unverändert.
+- **Freie Sonntage:** Jede Person hat im Kalendermonat mindestens zwei Sonntage ohne Dienst (harte Regel,
+  einstellbar auf der Seite Regeln, 0 schaltet sie aus). Ein Sonntag ist frei, wenn kein Dienst ihn von 0 bis
+  24 Uhr berührt, auch kein Nachtdienst von Samstag auf Sonntag; Abwesenheiten zählen als frei.
+- Rolle Lesen: Verteilung und ihre Treffer sind nur für die Planung sichtbar.
+- Betrieb: keine Änderung an Datenbank, `docker-compose.yml` oder `.env`.
+
 ## 0.6.0 (2026-11-15)
 
 Blöcke statt einzelner freier Tage, auch wenn der Bedarf weniger Arbeit braucht, als die Ziele hergeben.
