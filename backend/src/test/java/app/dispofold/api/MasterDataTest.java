@@ -277,6 +277,24 @@ class MasterDataTest {
     }
 
     @Test
+    void peopleAndShiftsStayWhileAMonthIsSolving() throws Exception {
+        create("people", Map.of("firstName", "Neu", "lastName", "Person", "weeklyHours", 40, "areaIds",
+                List.of("AN"), "hoursAccount", 0, "compRestBalance", 0)).statusCode(200);
+        FakePlanningFacade.solveMillis = 3000;
+        try {
+            given().contentType(ContentType.JSON).body("{}").post("/api/plans/" + MONTH + "/solve").then()
+                    .statusCode(202);
+            remove("people", "PN1", true).statusCode(409).body("code", equalTo("plan.solving"));
+            remove("shifts", "DR-N", true).statusCode(409).body("code", equalTo("plan.solving"));
+        } finally {
+            FakePlanningFacade.solveMillis = 100;
+            org.awaitility.Awaitility.await().atMost(java.time.Duration.ofSeconds(10))
+                    .until(() -> !given().get("/api/plans/" + MONTH).then().extract().<Boolean> path("solving"));
+        }
+        remove("people", "PN1", true).statusCode(200);
+    }
+
+    @Test
     void aChangeBasedOnAnOldRevisionConflicts() throws Exception {
         long read = revision();
         ObjectNode p = person("P0003");

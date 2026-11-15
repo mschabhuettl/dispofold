@@ -254,6 +254,10 @@ public class MasterDataService {
         Kind kind = Kind.of(kindPath);
         MasterChange change = change(revision, (master, months, ids) -> {
             int index = indexOf(kind, master, key);
+            if (kind == Kind.PEOPLE || kind == Kind.SHIFTS) {
+                // A running solve may assign the person or shift before anything of it is stored.
+                months.plans.keySet().forEach(plans::requireNotSolving);
+            }
             int removed = switch (kind) {
                 case PEOPLE -> removePerson(master, months, key, confirm);
                 case SHIFTS -> removeShift(master, months, key, confirm);

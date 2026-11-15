@@ -48,9 +48,14 @@ public class DatasetResource {
     /** The master data with their revision, or an empty dataset (revision 0) before the first import. */
     @GET
     public ObjectNode get() {
-        Dataset d = store.dataset().orElseGet(() -> new Dataset(Dataset.FORMAT, 1, null, List.of(), List.of(),
-                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of()));
-        DatasetState state = master.state();
+        Dataset d;
+        DatasetState state;
+        // Read together: a change saved in between would otherwise pair old data with the new revision.
+        synchronized (Store.DATASET_LOCK) {
+            d = store.dataset().orElseGet(() -> new Dataset(Dataset.FORMAT, 1, null, List.of(), List.of(),
+                    List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of()));
+            state = master.state();
+        }
         ObjectNode node = mapper.valueToTree(d);
         node.put("revision", state.revision());
         node.put("changedSinceImport", state.changedSinceImport());
