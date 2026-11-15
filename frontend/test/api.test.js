@@ -106,17 +106,17 @@ test('a blocked export shows the coded error, without a name it falls back to mo
 
 test('master data changes send the revision as If-Match, also revision 0', async () => {
   const calls = [];
-  const api = createApi({ fetchImpl: fakeFetch(200, { revision: 1, key: 'DP1', item: {} }, calls) });
+  const api = createApi({ fetchImpl: fakeFetch(200, { revision: 1, key: 'PN1', item: {} }, calls) });
   await api.createMaster('people', { firstName: 'Neu' }, 0);
   await api.updateMaster('areas', 'A/B', { id: 'A/B' }, 7);
   await api.deleteMaster('holidays', 2, 8);
-  await api.deleteMaster('shifts', 'DS1', 9, true);
+  await api.deleteMaster('shifts', 'SN1', 9, true);
   await api.saveRestrictions('P1', [], 10);
   assert.deepEqual(calls.map((c) => [c.init.method, c.path, c.init.headers['If-Match']]), [
     ['POST', '/api/dataset/people', '0'],
     ['PUT', '/api/dataset/areas/A%2FB', '7'],
     ['DELETE', '/api/dataset/holidays/2', '8'],
-    ['DELETE', '/api/dataset/shifts/DS1?confirm=true', '9'],
+    ['DELETE', '/api/dataset/shifts/SN1?confirm=true', '9'],
     ['PUT', '/api/dataset/people/P1/restrictions', '10'],
   ]);
   assert.equal(calls[4].init.body, '[]');

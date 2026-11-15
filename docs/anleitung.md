@@ -50,7 +50,7 @@ Planung pflegt sie hier, ein neuer Import ist dafür nicht nötig:
   alle Nachtschichten) sie nie oder nur auf Anfrage macht, an jedem Tag oder an einem Wochentag, auf Wunsch nur
   für eine bestimmte Zeit (gültig ab, gültig bis). Einschränkungen und Familienregeln stehen auch auf der Seite
   **Person**.
-- **Ids:** Neue Personen und Schichten bekommen ihre Id vom Programm (`DP1`, `DS1`, ...). Bereiche und
+- **Ids:** Neue Personen und Schichten bekommen ihre Id vom Programm (`PN1`, `SN1`, ...). Bereiche und
   Abwesenheitsarten haben als Id ihr Kürzel, das im Plan steht. Es wird beim Anlegen eingegeben und lässt sich
   danach nicht mehr ändern. Ein entferntes Kürzel bleibt gesperrt und kann nicht neu vergeben werden.
 - **Bedarf** gilt entweder an bestimmten Tagen (Montag bis Sonntag, Feiertag) oder an einem Datum.
