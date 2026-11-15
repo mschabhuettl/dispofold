@@ -97,7 +97,7 @@ sie, antwortet das Backend mit `428` `period.revisionMissing`; hat inzwischen je
 | `POST` | `/api/plans/{month}/stop` | beendet die Planung, der beste Stand bleibt |
 | `PUT` | `/api/plans/{month}/cells` | ändert eine Zelle, Body `PlanAssignment`; eine von Hand gesetzte Zelle ist normalerweise `pinned: true`. Antwort `Plan` |
 | `POST` | `/api/plans/{month}/unpin` | löst alle Fixierungen, die nicht aus `Period.fixed` kommen |
-| `GET` | `/api/plans/{month}/analysis` | `PlanAnalysis` (Score, Summen je Regel, Bedarfslücken, Kennzahlen je Person) |
+| `GET` | `/api/plans/{month}/analysis` | `PlanAnalysis` (Score, Summen je Regel, Bedarfslücken, Kennzahlen je Person, `uncoveredHours` und `overstaffedHours`: ungedeckter Bedarf und Überbesetzung in Personenstunden, zusammen die mittlere Stufe) |
 | `GET` | `/api/plans/{month}/people/{personId}` | `PersonExplanation` (Kennzahlen und alle Regel-Treffer der Person) |
 | `GET` | `/api/plans/{month}/coverage/{areaId}` | Liste von `CoverageSegment` für den ganzen Monat |
 | `GET` | `/api/plans/{month}/candidates?areaId=&from=&to=` | wer für eine Bedarfslücke gefragt werden kann, nur für `planner`; siehe unten |

@@ -51,7 +51,8 @@ Regeln; harte Regeln und der Bedarf haben kein einstellbares Gewicht.
   festen Zahl von Zügen (`SOLVER_MOVE_LIMIT`), gleicher Stand und gleicher Startwert geben denselben Plan.
   Ein Kaltstart beginnt ohne den bisherigen Plan (nur fixierte Zellen bleiben).
 - Der Solver startet mit einem einfachen Startplan: Tag für Tag deckt er den offenen Bedarf jedes Bereichs mit
-  Personen, die am weitesten unter ihrem Soll liegen, und hält dabei die harten Regeln ein. Danach verbessert
+  Personen, die am weitesten unter ihrem Soll liegen, und hält dabei die harten Regeln ein. Einen Dienst, der
+  keinen offenen Bedarf deckt, setzt er nicht, auch nicht für die Sollstunden. Danach verbessert
   die lokale Suche den Plan gegen alle Regeln.
 - Fixe Dienste (`fixed`) und von Hand fixierte Zellen ändert der Solver nicht. Verletzen sie eine Regel,
   zeigt die Analyse das als Treffer.
@@ -99,11 +100,25 @@ Einzelheiten:
   Feiertagsarbeit neu erworbene Ersatzruhe wird bewusst nicht im selben Monat verplant (einfach und
   nachvollziehbar; sie steht in den Kennzahlen als `compRestEarned`).
 
-## Mittlere Stufe: Bedarf
+## Mittlere Stufe: Bedarf und Überbesetzung
 
-| Id | Regel | Quelle |
+| Id | Regel | Gewicht (fest) |
 |---|---|---|
-| `demand` | Fehlende Besetzung je Bereich und Zeitabschnitt, in Personenminuten | Bedarfsregeln |
+| `demand` | Fehlende Besetzung je Bereich und Zeitabschnitt, in Personenminuten | 1500 je Personenminute |
+| `overstaffing` | Überbesetzung: Personen über der Höchstbesetzung, ohne Höchstbesetzung über der Mindestbesetzung, in Personenminuten | 1 je Personenminute |
+| `uselessDuty` | Dienst, der keinen Bedarfsabschnitt seines Bereichs berührt, mit seinen ganzen Minuten | 1 je Minute |
+
+- Warum Überbesetzung auf dieser Stufe steht: Wäre sie weich, würde der Solver Positionen doppelt besetzen,
+  nur um Personen auf ihre Sollstunden zu bringen; die Sollstunden (quadriert) wiegen dort schwerer. Auf der
+  mittleren Stufe wiegt jede Minute über dem Bedarf schwerer als alle weichen Regeln zusammen. Ist der Bedarf
+  gedeckt, bleiben übrige Sollstunden offen (Personen unter dem Soll), statt Positionen doppelt zu besetzen.
+- Warum fehlender Bedarf 1500 wiegt: Eine fehlende Minute wiegt mehr als ein ganzer Dienst über dem Bedarf
+  (eine Schicht dauert weniger als einen Tag, in der Nacht der Zeitumstellung eine Stunde mehr). Der Solver
+  lässt also nie eine Lücke offen, um anderswo Überbesetzung zu vermeiden; wo eine Lücke nur mit einem Dienst
+  zu füllen ist, der teils überbesetzt, füllt er sie.
+- Von Hand gesetzte und fixe Dienste dürfen überbesetzen; sie erscheinen dann in der mittleren Stufe und in
+  der Analyse. Die Statuszeile zeigt ungedeckten Bedarf und Überbesetzung getrennt in Personenstunden.
+- Gespeicherte Gewichte für `overstaffing` und `uselessDuty` (früher weich) werden ignoriert.
 
 - Die Bedarfsfenster eines Tages werden an allen Beginn- und Endzeiten der Schichten des Bereichs und an
   den Fenstergrenzen geteilt. In jedem Abschnitt ist die Besetzung konstant.
@@ -136,8 +151,6 @@ der Erklärung je Person.
 | `areaVariety` | Abwechslung der Bereiche | je Paar Dienste im selben Bereich, mit Vormonat (nur bei mehreren Bereichen) | 1 |
 | `family` | Familienwunsch | je Dienst gegen die Regel | 800 |
 | `onRequest` | Dienst nur auf Anfrage, von Hand gesetzt | je solchem Dienst; Gewicht fest, nicht einstellbar | 1000 |
-| `overstaffing` | Überbesetzung | Personenminuten über der Höchstbesetzung, ohne Höchstbesetzung über der Mindestbesetzung | 2 |
-| `uselessDuty` | Dienst ohne Bedarf | je Dienst, der keinen Bedarf deckt | 5000 |
 
 ### Sollstunden
 
@@ -238,11 +251,6 @@ der Erklärung je Person.
   Wochentag und optional nur von `validFrom` bis `validTo`.
 - Abwechslung: gezählt werden Paare von Diensten im selben Bereich und derselben Kategorie (Früh, Tag, Spät,
   Nacht) bzw. im selben Bereich, einschließlich der Dienste des Vormonats.
-- Überbesetzung: Personen über der Höchstbesetzung; hat ein Abschnitt keine Höchstbesetzung, zählt jede
-  Person über der Mindestbesetzung. So verteilt der Solver Stunden, die über den Bedarf hinaus nötig sind,
-  dorthin, wo am wenigsten zu viele Personen sind.
-- Ein Dienst, der keinen Bedarfsabschnitt seines Bereichs berührt, wird bestraft, damit die Sollstunden
-  nicht mit nutzlosen Diensten aufgefüllt werden.
 
 ## Offene Punkte für die Betriebsvereinbarung
 
