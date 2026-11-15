@@ -13,7 +13,8 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
   Bereichs-Zeitachse, Plan nach Funktion) zeigt Dispofold die Personen, die den Dienst auf Anfrage übernehmen
   könnten, die mit den wenigsten Stunden zum Soll zuerst. Ein Klick auf den Namen setzt den Dienst.
 - **Plan nach Funktion:** eine zweite Ansicht desselben Plans mit den Schichten je Bereich als Zeilen und den
-  Tagen als Spalten; fehlende Besetzung steht als „fehlt“ in der Zelle.
+  Tagen als Spalten; fehlende Besetzung steht als „fehlt“ in der Zelle. In den Zellen wahlweise Kürzel oder
+  „Nachname Vorname“.
 - Regeln: Das Gewicht von `onRequest` ist fest und auf der Seite Regeln nicht mehr einstellbar. Gespeicherte
   Einstellungen mit diesem Gewicht laden weiter.
 - REST-Schnittstelle: neu `GET /api/plans/{month}/candidates`; `GET /api/constraints` liefert `tunable`.
