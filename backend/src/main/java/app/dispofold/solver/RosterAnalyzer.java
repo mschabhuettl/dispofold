@@ -44,17 +44,45 @@ public final class RosterAnalyzer {
         for (Staff s : roster.getStaff()) {
             people.add(stats(input, roster, s.getId()));
         }
+        int[] blocks = blocks(roster);
         return new PlanAnalysis(score.score().toString(), hardViolations(score), constraints, gaps(roster), people,
                 personHours(score, ConstraintCatalog.DEMAND),
                 personHours(score, ConstraintCatalog.OVERSTAFFING) + personHours(score, ConstraintCatalog.USELESS_DUTY),
-                score.total(ConstraintCatalog.ISOLATED_DAY_OFF).matches().size(),
-                blockDays(score, weights));
+                blocks[0], blocks[1]);
     }
 
-    /** Days blocks are too short or too long: the block rule's score divided by its weight. */
-    static int blockDays(ScoreExplainer.Explanation score, Map<String, Long> weights) {
-        long weight = ConstraintCatalog.weight(ConstraintCatalog.get(ConstraintCatalog.BLOCK_LENGTH), weights);
-        return weight == 0 ? 0 : (int) (-score.total(ConstraintCatalog.BLOCK_LENGTH).score().softScore() / weight);
+    /**
+     * Single days off between two duties and days by which blocks are too short or too long, counted from the
+     * roster like the rules {@code isolatedDayOff} and {@code blockLength} count them, whatever their weights.
+     */
+    static int[] blocks(Roster roster) {
+        Map<Staff, List<DutyCell>> work = new java.util.HashMap<>();
+        for (DutyCell c : roster.getCells()) {
+            if (c.isWork()) {
+                work.computeIfAbsent(c.getStaff(), k -> new ArrayList<>()).add(c);
+            }
+        }
+        int single = 0;
+        long blockDays = 0;
+        for (Map.Entry<Staff, List<DutyCell>> e : work.entrySet()) {
+            List<DutyCell> cells = e.getValue();
+            cells.sort(java.util.Comparator.comparingLong(DutyCell::getDay));
+            int start = 0;
+            for (int i = 1; i <= cells.size(); i++) {
+                if (i < cells.size() && cells.get(i).getDay() == cells.get(i - 1).getDay() + 1) {
+                    continue;
+                }
+                DutyCell last = cells.get(i - 1);
+                if (last.isInMonth()) {
+                    blockDays += RosterConstraints.blockExcess(e.getKey(), i - start, last.isMonthEnd());
+                }
+                if (i < cells.size() && cells.get(i).getDay() - last.getDay() == 2 && cells.get(i).isInMonth()) {
+                    single++;
+                }
+                start = i;
+            }
+        }
+        return new int[] { single, (int) blockDays };
     }
 
     /** Person minutes of a medium constraint (its score divided by its fixed weight), in hours. */

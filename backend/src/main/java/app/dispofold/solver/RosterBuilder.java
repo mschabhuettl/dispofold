@@ -147,11 +147,15 @@ public final class RosterBuilder {
         for (DemandSegment s : segments) {
             demand += s.required() * s.minutes();
         }
+        // Credited: absences of the month and the open compensatory rest days the plan is expected to give.
         Map<Staff, Long> credited = new HashMap<>();
         for (DutyCell c : cells) {
             if (c.isInMonth() && c.isPinned() && !c.isWork()) {
                 credited.merge(c.getStaff(), (long) c.getCountedMinutes(), Long::sum);
             }
+        }
+        for (Staff s : staff) {
+            credited.merge(s, (long) s.getCompRestBalance() * s.getCreditMinutes(), Long::sum);
         }
         long work = 0;
         for (Staff s : staff) {

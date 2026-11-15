@@ -30,9 +30,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 public class ViewerFilter implements ContainerResponseFilter {
 
     public static final String NEUTRAL_ABSENCE = "ABW";
-    /** Constraints whose results would tell wishes, family rules, restrictions or absences. */
+    /**
+     * Constraints whose results would tell wishes, family rules, restrictions or absences, or the goals (corrected
+     * by the hours account) in their parameters.
+     */
     static final Set<String> HIDDEN_CONSTRAINTS = Set.of("wishes", "family", "neverRestriction", "onRequest",
-            "absence");
+            "absence", "targetHours", "maxMonthHours");
     static final Set<String> WISH_STATS = Set.of("wishes", "wishesMet", "historyWishes", "historyWishesMet");
     /** Personal balances: hours account and compensatory rest (and the absence hours and goals behind them). */
     static final Set<String> PERSON_BALANCES = Set.of("hoursAccount", "compRestBalance");

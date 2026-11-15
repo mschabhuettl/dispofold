@@ -154,7 +154,10 @@ class ViewerFilterTest {
         hit.putObject("params").put("typeCode", "K").put("minutes", 3000);
         var e = mapper.createObjectNode();
         e.putObject("stats").put("historyWishes", 4).put("duties", 3);
-        e.putArray("hits").add(hit).add(mapper.createObjectNode().put("constraintId", "family"));
+        // The goals in the target hits are corrected by the hours account: planners only.
+        e.putArray("hits").add(hit).add(mapper.createObjectNode().put("constraintId", "family"))
+                .add(mapper.createObjectNode().put("constraintId", "targetHours"))
+                .add(mapper.createObjectNode().put("constraintId", "maxMonthHours"));
         ViewerFilter.explanation(e);
         assertThat(e.toString()).isEqualTo(
                 "{\"stats\":{\"historyWishes\":0,\"duties\":3},\"hits\":[{\"constraintId\":\"maxWeekHours\",\"params\":{\"minutes\":3000}}]}");

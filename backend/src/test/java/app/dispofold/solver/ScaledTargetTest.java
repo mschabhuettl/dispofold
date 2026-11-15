@@ -21,6 +21,8 @@ import org.junit.jupiter.api.Test;
 class ScaledTargetTest {
 
     private static final LocalDate MON = LocalDate.of(2027, 1, 4);
+    /** A fixed number of moves: the same plan on every machine, unlike a time limit. */
+    private static final long MOVES = 150_000;
 
     private static Staff staff(String id, int target) {
         return new Staff(id, 40, Set.of("AN"), 480, target, 0,
@@ -74,7 +76,7 @@ class ScaledTargetTest {
     void belowCapacityTheScaledTargetsAreReachedEvenly() throws Exception {
         PlanningInput input = halfDemand();
         TimefoldPlanningFacade facade = new TimefoldPlanningFacade();
-        SolveProgress result = TimefoldPlanningFacadeTest.solve(facade, input, new SolveOptions(1, 15, 0, 0));
+        SolveProgress result = TimefoldPlanningFacadeTest.solve(facade, input, new SolveOptions(1, 600, 0, MOVES));
         PlanAnalysis analysis = facade.analyze(TimefoldPlanningFacadeTest.withAssignments(input,
                 result.assignments()));
         assertThat(analysis.gaps()).isEmpty();
@@ -94,5 +96,23 @@ class ScaledTargetTest {
         PersonStats part = people.stream().filter(p -> p.personId().equals("P0007")).findFirst().orElseThrow();
         assertThat(part.scaledGoalHours() / part.goalHours())
                 .isCloseTo(full.scaledGoalHours() / full.goalHours(), org.assertj.core.data.Offset.offset(0.15));
+    }
+
+    @Test
+    void blockFiguresAreCountedFromTheRosterWhateverTheWeights() {
+        Staff a = staff("A", 9600);
+        ShiftOption day = new ShiftOption("D", "AN", 7 * 60, 720, app.dispofold.model.ShiftCategory.DAY, false, false,
+                false);
+        // Duties on the 4th, 6th and 7th: one single day off, and a block of one day (one day too short).
+        List<DutyCell> cells = new java.util.ArrayList<>();
+        for (int d : new int[] { 4, 6, 7 }) {
+            DutyCell c = new DutyCell(a, LocalDate.of(2027, 1, d), true, List.of(day));
+            c.setShift(day);
+            cells.add(c);
+        }
+        Roster roster = new Roster(java.time.YearMonth.of(2027, 1), TimeLine.UTC, List.of(a), List.of(day), List.of(),
+                List.of(), cells, ConstraintCatalog.overrides(Map.of(ConstraintCatalog.ISOLATED_DAY_OFF, 0L,
+                        ConstraintCatalog.BLOCK_LENGTH, 0L)));
+        assertThat(RosterAnalyzer.blocks(roster)).containsExactly(1, 1);
     }
 }

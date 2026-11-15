@@ -329,11 +329,14 @@ public class RosterConstraints implements ConstraintProvider {
 
     /** Days a block is shorter than minBlock (not for a block running into the next month) or longer than maxBlock. */
     static long blockExcess(Staff s, Sequence<DutyCell, Integer> seq) {
-        int n = seq.getCount();
+        return blockExcess(s, seq.getCount(), seq.getLastItem().isMonthEnd());
+    }
+
+    static long blockExcess(Staff s, int n, boolean endsAtMonthEnd) {
         if (n > s.getLimits().maxBlock()) {
             return n - s.getLimits().maxBlock();
         }
-        if (n < s.getLimits().minBlock() && !seq.getLastItem().isMonthEnd()) {
+        if (n < s.getLimits().minBlock() && !endsAtMonthEnd) {
             return s.getLimits().minBlock() - n;
         }
         return 0;
