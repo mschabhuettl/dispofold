@@ -30,8 +30,48 @@ Unter **Import/Export**:
 - **Demodaten laden (Jänner 2027):** 150 erfundene Personen in fünf Bereichen. Gut zum Ausprobieren. Die
   Demodaten ersetzen alle Stammdaten.
 
-Unter **Stammdaten** stehen danach Personen, Bereiche, Abwesenheitsarten, Schichten und Bedarf. Bei Personen
-lassen sich einzelne Angaben bearbeiten (zum Beispiel Eintritt und Austritt).
+**Wenn Stammdaten in Dispofold geändert wurden** (unter **Stammdaten**, siehe unten), würde ein Import diese
+Änderungen überschreiben. Das Programm fragt dann nach:
+
+- **Datensatz exportieren:** sichert den jetzigen Stand als Datei (siehe [Exportieren](#exportieren)).
+- **Trotzdem importieren:** Der Import ersetzt die Stammdaten, die Änderungen in Dispofold gehen verloren.
+- **Abbrechen:** Es wird nichts importiert.
+
+## Stammdaten bearbeiten
+
+Unter **Stammdaten** stehen Personen, Bereiche, Abwesenheitsarten, Schichten, Bedarf und Feiertage. Die Rolle
+Planung pflegt sie hier, ein neuer Import ist dafür nicht nötig:
+
+- **Neu** über jeder Tabelle legt einen Eintrag an, **Bearbeiten** und **Entfernen** stehen in jeder Zeile. Es
+  ist immer nur ein Formular offen. **Speichern** übernimmt die Änderung sofort, **Abbrechen** verwirft sie.
+- **Personen:** Name, Kürzel, Wochenstunden, Bereiche, Stundenkonto, offene Ersatzruhe, externe Id, Eintritt
+  und Austritt sowie die **Familienregeln** (Wochentage, spätestes Ende, frühester Beginn, keine Nacht, Notiz).
+  Mit **Einschränkungen** in der Zeile einer Person legt man fest, welche Schicht oder Kategorie (zum Beispiel
+  alle Nachtschichten) sie nie oder nur auf Anfrage macht, an jedem Tag oder an einem Wochentag, auf Wunsch nur
+  für eine bestimmte Zeit (gültig ab, gültig bis). Einschränkungen und Familienregeln stehen auch auf der Seite
+  **Person**.
+- **Ids:** Neue Personen und Schichten bekommen ihre Id vom Programm (`DP1`, `DS1`, ...). Bereiche und
+  Abwesenheitsarten haben als Id ihr Kürzel, das im Plan steht. Es wird beim Anlegen eingegeben und lässt sich
+  danach nicht mehr ändern. Ein entferntes Kürzel bleibt gesperrt und kann nicht neu vergeben werden.
+- **Bedarf** gilt entweder an bestimmten Tagen (Montag bis Sonntag, Feiertag) oder an einem Datum.
+- Das Programm prüft jede Änderung wie einen Import. Ist etwas falsch, wird nichts gespeichert, und die Liste
+  der Fehler erscheint im Formular.
+
+**Entfernen:**
+
+- Wird ein Eintrag noch verwendet (in offenen Monaten oder in anderen Stammdaten, zum Beispiel eine Schicht in
+  Einschränkungen oder im Plan), nennt das Programm die Zahl der Verweise und die Monate und fragt, ob er mit
+  allen Verweisen entfernt werden soll.
+- Kommt ein Eintrag in einem abgeschlossenen Monat vor, lässt er sich nicht entfernen. Bei Personen trägt man
+  stattdessen den Austritt ein.
+- Ein Bereich lässt sich erst entfernen, wenn seine Schichten entfernt sind. Während einer Planung sind
+  Änderungen an betroffenen Monaten gesperrt.
+- Offene Monate, die eine Änderung betrifft, zeigen danach „Eingaben geändert“.
+
+**Wenn jemand anderer inzwischen Stammdaten gespeichert hat**, fragt das Programm wie bei den Eingaben nach:
+**OK** übernimmt die eigene Änderung in die neue Fassung, **Abbrechen** verwirft sie und lädt die neue Fassung.
+Wurde derselbe Eintrag auch von der anderen Person geändert, speichert das Programm nicht von selbst: Die eigenen
+Angaben stehen wieder im Formular, sie sind zu prüfen und noch einmal zu speichern.
 
 ## Eingaben des Monats
 
@@ -152,7 +192,12 @@ Lücken geklärt.
 
 ## Exportieren
 
-Unter **Import/Export**, **Plan exportieren**, als XLSX (Excel), CSV oder JSON. Im Programmfenster der Desktop-Version
+Unter **Import/Export**, **Datensatz exportieren**, speichert man alle Stammdaten und Planungsmonate als Datei
+im Format von [datenformat.md](datenformat.md). Die Datei lässt sich später wieder importieren. Sie enthält
+personenbezogene Daten (auch Stundenkonten, Einschränkungen und Familienregeln) und ist entsprechend sicher
+aufzubewahren.
+
+Ebenfalls unter **Import/Export**, **Plan exportieren**, als XLSX (Excel), CSV oder JSON. Im Programmfenster der Desktop-Version
 landet die Datei im Ordner Downloads, eine Meldung nennt den Namen.
 
 - Nur die Rolle Planung kann exportieren. Während einer Planung ist der Export gesperrt.
