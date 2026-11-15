@@ -174,7 +174,8 @@ Dienst im Monat und Schichten, deren Zeit ein Bedarf des Bereichs überschneidet
   **Ein Klick auf „fehlt 1“** öffnet die Liste **Wer kann gefragt werden?** für diese Lücke.
 - Mit den Pfeiltasten bewegt man sich wie im Dienstplan durch die Zellen, Enter öffnet die Auswahl.
 - **Drucken** (Druckfunktion des Browsers): A4 quer, der Monat in zwei Tabellen, Tag 1 bis 15 und Tag 16 bis
-  zum Monatsende, jede auf einer eigenen Seite. Fixierte Dienste sind eingerahmt.
+  zum Monatsende. Jede Hälfte beginnt auf einer neuen Seite; mit vielen Funktionen reicht eine Hälfte über
+  mehrere Seiten, der Tabellenkopf steht dann auf jeder Seite. Fixierte Dienste sind eingerahmt.
 
 ## Dienste nur auf Anfrage
 
