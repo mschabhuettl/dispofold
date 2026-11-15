@@ -165,7 +165,8 @@ Dienst im Monat und Schichten, deren Zeit ein Bedarf des Bereichs überschneidet
 - **Eine Zeile je Position:** Arbeiten an einem Tag zwei Personen in derselben Schicht, stehen sie in zwei
   Zeilen untereinander (nach Namen sortiert). Eine Schicht hat so viele Zeilen, wie an ihrem vollsten Tag
   Personen eingeteilt sind und fehlen.
-- **In der Zelle** steht das Kürzel der Person, der ganze Name erscheint beim Darüberfahren. Fixierte Dienste,
+- **In der Zelle** steht das Kürzel der Person, der ganze Name erscheint beim Darüberfahren. Unter **Anzeige**
+  lässt sich stattdessen „Nachname Vorname“ wählen; der Browser merkt sich die Wahl. Fixierte Dienste,
   Konflikte und Dienste nur auf Anfrage sind markiert wie im Dienstplan.
 - **„fehlt 1“** (rot) zeigt eine fehlende Besetzung: Eine Bedarfslücke des Bereichs zählt bei jeder Schicht,
   deren Zeit sie überschneidet (eine Nacht bis zum nächsten Morgen). Fehlen zwei Personen, stehen zwei Marken

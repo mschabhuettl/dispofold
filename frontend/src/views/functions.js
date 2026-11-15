@@ -2,12 +2,14 @@
 import { tintStyle } from '../lib/colors.js';
 import { dayLabel, monthLabel } from '../lib/dates.js';
 import { append, guarded, h } from '../lib/dom.js';
-import { buildFunctionRows, printParts } from '../lib/functions-model.js';
+import { NAME_MODES, buildFunctionRows, personLabel, printParts } from '../lib/functions-model.js';
 import { cellRequest, cellsEditable } from '../lib/grid-model.js';
 import { needsRulesForCategories, onRequestTest } from '../lib/restrictions.js';
 import { t } from '../lib/texts.js';
 import { gapsWithCandidates } from './candidate-list.js';
 import { cellChoice, createPopover, dayClass, dayHeader, rovingGrid } from './grid-shared.js';
+
+const NAME_LABELS = { short: t('functions.names.short'), full: t('functions.names.full') };
 
 export async function render(root, ctx) {
   const { api, month, canEdit } = ctx;
@@ -25,6 +27,14 @@ export async function render(root, ctx) {
   const table = h('div.roster-wrap', {});
   const nav = rovingGrid(table);
   const print = h('div.print-only', {});
+  // per viewer: short names or full names in the cells
+  let nameMode = 'short';
+  try { nameMode = NAME_MODES.includes(localStorage.getItem('functions-names')) ? localStorage.getItem('functions-names') : 'short'; } catch { /* no storage */ }
+  const nameSelect = h('select', { id: 'fn-names', onchange: (e) => {
+    nameMode = e.target.value;
+    try { localStorage.setItem('functions-names', nameMode); } catch { /* no storage */ }
+    draw();
+  } }, NAME_MODES.map((m) => h('option', { value: m, selected: m === nameMode }, NAME_LABELS[m])));
 
   root.classList.add('function-view');
   append(root, [
@@ -33,6 +43,7 @@ export async function render(root, ctx) {
     dataset.people.length > 0 && !state.plan.assignments.length && h('p.alert', {}, t('common.noPlan')),
     state.solving && h('p.alert', {}, t('roster.lockedWhileSolving')),
     state.plan.status === 'CLOSED' && h('p.alert', {}, t('roster.closedHint')),
+    h('div.toolbar', {}, h('div.field', {}, h('label', { for: 'fn-names' }, t('functions.names')), nameSelect)),
     legend(canEdit),
     table,
     print,
@@ -46,7 +57,7 @@ export async function render(root, ctx) {
     const body = model.rows.map((row) => (row.type === 'group'
       ? h('tr.group', {}, h('th', { colspan: model.days.length + 1, scope: 'colgroup' }, row.area.name))
       : positionRow(row, r++, model.days)));
-    table.replaceChildren(h('table.roster.functions', { role: 'grid', 'aria-readonly': editable() ? null : 'true' },
+    table.replaceChildren(h('table.roster.functions', { class: nameMode === 'full' ? 'full-names' : null, role: 'grid', 'aria-readonly': editable() ? null : 'true' },
       h('caption.visually-hidden', {}, title),
       h('thead', {}, h('tr', {}, h('th.person', { scope: 'col' }, t('functions.function')), model.days.map(dayHeader))),
       h('tbody', {}, body)));
@@ -79,7 +90,7 @@ export async function render(root, ctx) {
       const info = { name: c.name, day: dayLabel(day.date), label: cell.onRequest ? t('grid.onRequestLabel', { label: cell.label }) : cell.label };
       label = cell.pinned ? t('roster.cellTitlePinned', info) : t('roster.cellTitle', info);
       cls += `${cell.pinned ? ' cell-pinned' : ''}${cell.conflict ? ' cell-hard' : ''}${cell.onRequest ? ' cell-on-request' : ''}`;
-      inner = h('span.cell-code', shift.color ? { class: 'tinted', style: tintStyle(shift.color) } : {}, c.person.shortName || c.name);
+      inner = h('span.cell-code', shift.color ? { class: 'tinted', style: tintStyle(shift.color) } : {}, personLabel(c.person, c.name, nameMode));
     } else if (c.kind === 'gap') {
       label = t('functions.gapTitle', { shift: shift.name, day: dayLabel(day.date) });
       cls += ' gap-marker';
@@ -135,7 +146,7 @@ export async function render(root, ctx) {
     const from = model.days.indexOf(days[0]);
     const text = (c) => (c.kind === 'person'
       ? h('span.cell-code', { class: [c.cell.pinned && 'pinned', c.cell.conflict && 'hard', c.cell.onRequest && 'on-request'].filter(Boolean).join(' ') },
-        c.person.shortName || c.name)
+        personLabel(c.person, c.name, nameMode))
       : c.kind === 'gap' ? h('span.cell-code', {}, t('functions.missing')) : '');
     return h('table.roster.functions-print', {},
       h('caption', {}, `${title}, ${t('functions.printPart', { from: days[0].day, to: days.at(-1).day })}`),

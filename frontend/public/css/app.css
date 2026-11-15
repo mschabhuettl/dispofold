@@ -263,6 +263,7 @@ table.roster td.holiday { background: var(--holiday); }
 .gap-marker .cell-code { color: var(--danger); background: var(--danger-tint); outline: 1px dashed var(--danger); font-weight: 600; }
 /* function view: empty positions keep the row height */
 table.functions .cell-btn { display: block; }
+table.functions.full-names .cell-code { white-space: nowrap; }
 .gap-btn { font: inherit; font-weight: 600; background: none; border: 0; padding: .2rem .5rem; cursor: pointer; text-decoration: underline; }
 .legend { display: flex; flex-wrap: wrap; gap: .9rem; align-items: center; font-size: .85rem; margin: .5rem 0 1rem; }
 .legend .swatch { display: inline-block; width: 1.4rem; height: 1rem; vertical-align: middle; margin-right: .3rem; border: 1px solid var(--border-strong); border-radius: 3px; }

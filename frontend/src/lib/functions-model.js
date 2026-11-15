@@ -92,3 +92,11 @@ export function printParts(days) {
   return [days.slice(0, 15), days.slice(15)].filter((part) => part.length);
 }
 
+
+/** Name modes of the function view: the short name (Kürzel) or "Nachname Vorname". */
+export const NAME_MODES = ['short', 'full'];
+
+/** Text of a person cell; the short name falls back to the full name when a person has none. */
+export function personLabel(person, name, mode) {
+  return mode === 'full' ? name : person.shortName || name;
+}

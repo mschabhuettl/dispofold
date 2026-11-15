@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildFunctionRows, missingByShiftDay, printParts, windowOverlapsShift } from '../src/lib/functions-model.js';
+import { buildFunctionRows, missingByShiftDay, personLabel, printParts, windowOverlapsShift } from '../src/lib/functions-model.js';
 import { buildDays } from '../src/lib/grid-model.js';
 import { onRequestTest } from '../src/lib/restrictions.js';
 
@@ -106,4 +106,11 @@ test('cells carry the roster marks: fixed, conflict with an absence, on request'
 test('print: days 1-15 and 16 to the end', () => {
   assert.deepEqual(printParts(buildDays('2027-01')).map((p) => [p[0].day, p.at(-1).day]), [[1, 15], [16, 31]]);
   assert.deepEqual(printParts(buildDays('2027-02')).map((p) => [p[0].day, p.at(-1).day]), [[1, 15], [16, 28]]);
+});
+
+test('cells show the short name or the full name; without a short name always the full name', () => {
+  const p = { shortName: 'MUS' };
+  assert.equal(personLabel(p, 'Muster Anna', 'short'), 'MUS');
+  assert.equal(personLabel(p, 'Muster Anna', 'full'), 'Muster Anna');
+  assert.equal(personLabel({ shortName: '' }, 'Muster Anna', 'short'), 'Muster Anna');
 });

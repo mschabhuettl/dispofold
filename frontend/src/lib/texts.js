@@ -184,6 +184,9 @@ export const TEXTS = {
   'functions.gapTitle': '{shift}, {day}: 1 Person fehlt',
   'functions.emptyTitle': '{shift}, {day}: leer',
   'functions.gapDialog': 'Besetzung fehlt: {shift}, {day}',
+  'functions.names': 'Anzeige',
+  'functions.names.short': 'Kürzel',
+  'functions.names.full': 'Nachname Vorname',
   'functions.printPart': 'Tage {from} bis {to}',
   'functions.legend.missing': 'Besetzung fehlt',
 
