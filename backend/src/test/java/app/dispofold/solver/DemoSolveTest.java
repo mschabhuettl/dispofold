@@ -49,9 +49,17 @@ class DemoSolveTest {
         LOG.infof("Demo month: %d people, feasible and covered after %d ms, final score %s after %d ms",
                 input.dataset().people().size(), feasibleAfter[0], result.score(), result.elapsedMillis());
         analysis.constraints().forEach(c -> LOG.infof("  %s: %d (%d matches)", c.id(), c.score(), c.matches()));
+        analysis.people().stream().max(java.util.Comparator.comparingDouble(DemoSolveTest::overTarget))
+                .ifPresent(p -> LOG.infof("Largest hours over target: %.1f h (%.1f counted, %.1f target)",
+                        overTarget(p), p.plannedHours() + p.creditedHours(), p.targetHours()));
         assertThat(analysis.hardViolations()).isZero();
         assertThat(analysis.gaps()).isEmpty();
         assertThat(result.score()).startsWith("0hard/0medium/");
         assertThat(feasibleAfter[0]).isBetween(0L, seconds * 1000L);
+    }
+
+    /** Counted hours (duties and credited days) above the target of the month. */
+    private static double overTarget(app.dispofold.model.PersonStats p) {
+        return p.plannedHours() + p.creditedHours() - p.targetHours();
     }
 }
