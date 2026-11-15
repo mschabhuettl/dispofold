@@ -24,6 +24,8 @@ public final class Staff {
     private final Fairness fairness;
     private final Average average;
     private final Map<String, Integer> previous;
+    /** Usual shares per category and area, or null (see {@link app.dispofold.model.ShiftMix}). */
+    private app.dispofold.model.ShiftMix mix;
     /** Target the soft rule aims at: the target scaled to the work the demand needs (see RosterBuilder). */
     private int scaledTargetMinutes;
 
@@ -131,6 +133,24 @@ public final class Staff {
 
     public void setScaledTargetMinutes(int scaledTargetMinutes) {
         this.scaledTargetMinutes = scaledTargetMinutes;
+    }
+
+    public app.dispofold.model.ShiftMix getMix() {
+        return mix;
+    }
+
+    public void setMix(app.dispofold.model.ShiftMix mix) {
+        this.mix = mix;
+    }
+
+    /** The person has usual shares per category: they replace night fairness and shift variety. */
+    public boolean hasCategoryMix() {
+        return mix != null && !mix.categoriesOrEmpty().isEmpty();
+    }
+
+    /** The person has usual shares per area: they replace area variety. */
+    public boolean hasAreaMix() {
+        return mix != null && !mix.areasOrEmpty().isEmpty();
     }
 
     public int getCompRestBalance() {

@@ -52,7 +52,7 @@ class RosterBuilderTest {
         List<Person> people = new ArrayList<>(d.people());
         Person p = people.get(5);
         people.set(5, new Person(p.id(), p.firstName(), p.lastName(), p.shortName(), p.weeklyHours(), p.areaIds(),
-                0, 0, p.familyRules(), p.externalId(), MONTH.atDay(16), null));
+                0, 0, p.familyRules(), p.externalId(), MONTH.atDay(16), null, null));
         Roster r = build(withPeople(d, people), d.periods().get(0), List.of());
 
         // 40 h: 8 h per workday; August 2027 has 22 workdays, 12 of them from the 16th.

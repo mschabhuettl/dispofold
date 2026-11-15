@@ -6,6 +6,7 @@ import static ai.timefold.solver.core.api.score.stream.ConstraintCollectors.load
 import static ai.timefold.solver.core.api.score.stream.ConstraintCollectors.sum;
 import static ai.timefold.solver.core.api.score.stream.ConstraintCollectors.toConnectedRanges;
 import static ai.timefold.solver.core.api.score.stream.ConstraintCollectors.toConsecutiveSequences;
+import static ai.timefold.solver.core.api.score.stream.ConstraintCollectors.toList;
 import static ai.timefold.solver.core.api.score.stream.Joiners.equal;
 import static ai.timefold.solver.core.api.score.stream.Joiners.lessThan;
 import static ai.timefold.solver.core.api.score.stream.Joiners.overlapping;
@@ -40,7 +41,7 @@ public class RosterConstraints implements ConstraintProvider {
                 demand(f), overstaffing(f), uselessDuty(f),
                 targetHours(f), fairNights(f), fairWeekends(f), fairHolidays(f), fairUnpopular(f), wishes(f),
                 blockLength(f), isolatedDayOff(f), forwardRotation(f), splitWeekend(f), compRestUse(f),
-                shiftVariety(f), areaVariety(f), family(f), onRequest(f)
+                shiftVariety(f), areaVariety(f), shiftMix(f), family(f), onRequest(f)
         };
     }
 
@@ -240,9 +241,11 @@ public class RosterConstraints implements ConstraintProvider {
     record Load(Staff staff, long load) {
     }
 
+    /** People with usual shares per category are left out: their nights follow their mix (see shiftMix). */
     Constraint fairNights(ConstraintFactory f) {
-        return fairness(monthWork(f).filter(c -> c.getShift().isNight()).map(RosterConstraints::load),
-                f, s -> s.getFairness().nights(), s -> s.getHistory().nights(), ConstraintCatalog.FAIR_NIGHTS);
+        return fairness(monthWork(f).filter(c -> c.getShift().isNight() && !c.getStaff().hasCategoryMix())
+                .map(RosterConstraints::load), f, s -> s.getFairness().nights() && !s.hasCategoryMix(),
+                s -> s.getHistory().nights(), ConstraintCatalog.FAIR_NIGHTS);
     }
 
     Constraint fairWeekends(ConstraintFactory f) {
@@ -384,8 +387,10 @@ public class RosterConstraints implements ConstraintProvider {
     }
 
     /** Same area and category again and again, counting the previous month too. */
+    /** Not for people with usual shares per category: their mix decides the categories. */
     Constraint shiftVariety(ConstraintFactory f) {
         return monthWork(f)
+                .filter(c -> !c.getStaff().hasCategoryMix())
                 .groupBy(DutyCell::getStaff, c -> Staff.varietyKey(c.getShift()), count())
                 .filter((s, key, n) -> pairs(n + s.previous(key)) > pairs(s.previous(key)))
                 .penalize(SOFT, (s, key, n) -> pairs(n + s.previous(key)) - pairs(s.previous(key)))
@@ -394,16 +399,57 @@ public class RosterConstraints implements ConstraintProvider {
                 .asConstraint(ConstraintCatalog.SHIFT_VARIETY);
     }
 
-    /** People qualified for several areas work in all of them, counting the previous month too. */
+    /**
+     * People qualified for several areas work in all of them, counting the previous month too; not for people with
+     * usual shares per area, whose mix decides the areas.
+     */
     Constraint areaVariety(ConstraintFactory f) {
         return monthWork(f)
-                .filter(c -> c.getStaff().isMultiArea())
+                .filter(c -> c.getStaff().isMultiArea() && !c.getStaff().hasAreaMix())
                 .groupBy(DutyCell::getStaff, DutyCell::getAreaId, count())
                 .filter((s, area, n) -> pairs(n + s.previous(area)) > pairs(s.previous(area)))
                 .penalize(SOFT, (s, area, n) -> pairs(n + s.previous(area)) - pairs(s.previous(area)))
                 .justifyWith((s, area, n, score) -> Hit.of(s.getId(), null, "count", n, "previous", s.previous(area),
                         "areaId", area))
                 .asConstraint(ConstraintCatalog.AREA_VARIETY);
+    }
+
+    /**
+     * People with a usual mix: per category and per area the planned duties follow the shares (expected = share x
+     * the person's duties of the month). Penalty: the squared deviation in tenths of a duty, summed over categories
+     * and areas, so a few duties off cost little and a 50:50 month for a 90:10 person costs a lot.
+     */
+    Constraint shiftMix(ConstraintFactory f) {
+        return monthWork(f)
+                .filter(c -> c.getStaff().getMix() != null)
+                .groupBy(DutyCell::getStaff, toList())
+                .filter((s, cells) -> mixDeviation(s, cells) > 0)
+                .penalize(SOFT, RosterConstraints::mixDeviation)
+                .justifyWith((s, cells, score) -> Hit.of(s.getId(), null, "duties", cells.size()))
+                .asConstraint(ConstraintCatalog.SHIFT_MIX);
+    }
+
+    static long mixDeviation(Staff s, java.util.List<DutyCell> cells) {
+        java.util.Map<Object, Integer> planned = new java.util.HashMap<>();
+        for (DutyCell c : cells) {
+            planned.merge(c.getShift().getCategory(), 1, Integer::sum);
+            planned.merge("area:" + c.getAreaId(), 1, Integer::sum);
+        }
+        int n = cells.size();
+        long sum = 0;
+        if (s.hasCategoryMix()) {
+            for (app.dispofold.model.ShiftCategory category : app.dispofold.model.ShiftCategory.values()) {
+                double share = s.getMix().categoriesOrEmpty().getOrDefault(category, 0.0);
+                sum += square(Math.round(10 * (planned.getOrDefault(category, 0) - share * n)));
+            }
+        }
+        if (s.hasAreaMix()) {
+            for (String area : s.getAreaIds()) {
+                double share = s.getMix().areasOrEmpty().getOrDefault(area, 0.0);
+                sum += square(Math.round(10 * (planned.getOrDefault("area:" + area, 0) - share * n)));
+            }
+        }
+        return sum;
     }
 
     /** Pairs of equal duties: n (n - 1) / 2. */

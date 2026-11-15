@@ -208,8 +208,10 @@ public final class RosterBuilder {
         }
         Staff.Fairness fairness = Staff.Fairness.of(p.weeklyHours(),
                 available == 0 ? 0 : available + h.months() * MONTH_DAYS, nights, unpopular);
-        return new Staff(p.id(), p.weeklyHours(), Set.copyOf(list(p.areaIds())), credit, target, compRestBalance,
-                limits, h, wishCount, fairness, average(history), previousCounts);
+        Staff staff = new Staff(p.id(), p.weeklyHours(), Set.copyOf(list(p.areaIds())), credit, target,
+                compRestBalance, limits, h, wishCount, fairness, average(history), previousCounts);
+        staff.setMix(p.shiftMix());
+        return staff;
     }
 
     /** Average length of a month in days. */

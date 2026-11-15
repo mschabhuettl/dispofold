@@ -27,6 +27,7 @@ import app.dispofold.model.Person;
 import app.dispofold.model.PreviousDuty;
 import app.dispofold.model.Restriction;
 import app.dispofold.model.Rules;
+import app.dispofold.model.ShiftMix;
 import app.dispofold.model.ShiftType;
 import app.dispofold.model.Wish;
 import app.dispofold.model.WishKind;
@@ -182,6 +183,9 @@ public final class DatasetValidator {
             }
             if (p.entryDate() != null && p.exitDate() != null && p.exitDate().isBefore(p.entryDate())) {
                 error("import.badEmployment", "personId", p.id());
+            }
+            if (p.shiftMix() != null && !validMix(p.shiftMix(), list(p.areaIds()))) {
+                error("import.badShiftMix", "personId", p.id());
             }
             for (FamilyRule f : list(p.familyRules())) {
                 if (f == null) {
@@ -454,5 +458,26 @@ public final class DatasetValidator {
             }
         }
         return new Issue(code, Collections.unmodifiableMap(map));
+    }
+
+    /** Shares between 0 and 1, each non-empty map summing to 1, areas among the person's areas. */
+    static boolean validMix(ShiftMix mix, List<String> areaIds) {
+        return validShares(mix.categoriesOrEmpty().values()) && validShares(mix.areasOrEmpty().values())
+                && mix.categoriesOrEmpty().keySet().stream().noneMatch(java.util.Objects::isNull)
+                && areaIds.containsAll(mix.areasOrEmpty().keySet());
+    }
+
+    private static boolean validShares(java.util.Collection<Double> shares) {
+        if (shares.isEmpty()) {
+            return true;
+        }
+        double sum = 0;
+        for (Double share : shares) {
+            if (share == null || share < 0 || share > 1) {
+                return false;
+            }
+            sum += share;
+        }
+        return Math.abs(sum - 1) <= ShiftMix.SUM_TOLERANCE;
     }
 }

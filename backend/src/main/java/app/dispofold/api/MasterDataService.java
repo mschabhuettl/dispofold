@@ -315,7 +315,8 @@ public class MasterDataService {
         master.people.replaceAll(p -> !list(p.areaIds()).contains(id) ? p
                 : new Person(p.id(), p.firstName(), p.lastName(), p.shortName(), p.weeklyHours(),
                         p.areaIds().stream().filter(a -> !id.equals(a)).toList(), p.hoursAccount(),
-                        p.compRestBalance(), p.familyRules(), p.externalId(), p.entryDate(), p.exitDate()));
+                        p.compRestBalance(), p.familyRules(), p.externalId(), p.entryDate(), p.exitDate(),
+                        p.shiftMix() == null ? null : p.shiftMix().withoutArea(id)));
         return demand + people;
     }
 

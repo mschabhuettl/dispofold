@@ -15,10 +15,11 @@ import java.util.List;
  * @param externalId id in the source system (e.g. the personnel number)
  * @param entryDate first day of employment, null when employed before the planning month
  * @param exitDate last day of employment, null when open; days outside are not planned and the target is pro rata
+ * @param shiftMix usual shares of duties per category and area (for example from the history), or null
  */
 public record Person(String id, String firstName, String lastName, String shortName, double weeklyHours,
         List<String> areaIds, double hoursAccount, int compRestBalance, List<FamilyRule> familyRules,
-        String externalId, LocalDate entryDate, LocalDate exitDate) {
+        String externalId, LocalDate entryDate, LocalDate exitDate, ShiftMix shiftMix) {
 
     /** Employed on this day. */
     public boolean employedOn(LocalDate date) {

@@ -83,6 +83,7 @@ public class ViewerFilter implements ContainerResponseFilter {
     static JsonNode dataset(JsonNode d) {
         for (JsonNode p : d.path("people")) {
             ((ObjectNode) p).putArray("familyRules");
+            ((ObjectNode) p).putNull("shiftMix");
             blank(p, PERSON_BALANCES);
         }
         empty(d, "restrictions");

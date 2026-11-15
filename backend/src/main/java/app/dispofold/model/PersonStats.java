@@ -17,11 +17,14 @@ package app.dispofold.model;
  *        on it)
  * @param scaledGoalHours the goal scaled to the work the demand needs, which the soft target rule aims at; equal to
  *        {@code goalHours} when the demand needs all the work
+ * @param plannedMix the plan's shares of the person's duties per category and area, to compare with the stored
+ *        mix; null without duties
  */
 public record PersonStats(String personId, double targetHours, double creditedHours, double plannedHours,
         double accountBefore, double accountAfter, int duties, int nights, int weekendsWorked, int weekendsOff,
         int holidays, int unpopular, int wishes, int wishesMet, int compRestPlanned, int compRestEarned,
         int compRestBalanceAfter, int singleDays, int historyNights, int historyWeekends, int historyHolidays,
         int historyUnpopular, int historyWishes, int historyWishesMet, int availableDays, double chargedHours,
-        double averageWeekHours, boolean averageComplete, double goalHours, double scaledGoalHours) {
+        double averageWeekHours, boolean averageComplete, double goalHours, double scaledGoalHours,
+        ShiftMix plannedMix) {
 }

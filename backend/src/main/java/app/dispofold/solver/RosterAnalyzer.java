@@ -262,6 +262,9 @@ public final class RosterAnalyzer {
         long chargedMinutes = 0;
         int available = 0;
         int duties = 0, nights = 0, holidayDuties = 0, unpopular = 0, wishes = 0, wishesMet = 0;
+        Map<app.dispofold.model.ShiftCategory, Double> byCategory = new java.util.EnumMap<>(
+                app.dispofold.model.ShiftCategory.class);
+        Map<String, Double> byArea = new java.util.TreeMap<>();
         int compRestPlanned = 0, compRestEarned = 0, singleDays = 0;
         Set<Long> weekendsWorked = new HashSet<>();
         Set<Long> fullWeekends = new HashSet<>();
@@ -281,6 +284,8 @@ public final class RosterAnalyzer {
             if (c.isWork()) {
                 worked[i] = true;
                 duties++;
+                byCategory.merge(c.getShift().getCategory(), 1.0, Double::sum);
+                byArea.merge(c.getAreaId(), 1.0, Double::sum);
                 plannedMinutes += c.getDurationMinutes();
                 nights += c.getShift().isNight() ? 1 : 0;
                 unpopular += c.getShift().isUnpopular() ? 1 : 0;
@@ -329,13 +334,25 @@ public final class RosterAnalyzer {
                 weekendsOff, holidayDuties, unpopular, wishes, wishesMet, compRestPlanned, compRestEarned,
                 balance - compRestPlanned + compRestEarned, singleDays, h.nights(), h.weekends(), h.holidays(),
                 h.unpopular(), h.wishes(), h.wishesMet(), available, round(charged), round(average), a.complete(),
-                round(staff.getTargetMinutes() / 60.0), round(staff.getScaledTargetMinutes() / 60.0));
+                round(staff.getTargetMinutes() / 60.0), round(staff.getScaledTargetMinutes() / 60.0),
+                shares(byCategory, byArea, duties));
     }
 
     private static boolean previousWorked(Roster roster, String personId, YearMonth month) {
         LocalDate last = month.atDay(1).minusDays(1);
         return roster.getCells().stream().anyMatch(c -> !c.isInMonth() && c.getDate().equals(last)
                 && c.getStaff().getId().equals(personId) && c.isWork());
+    }
+
+    /** The plan's shares of the person's duties per category and area (like a stored mix), or null without duties. */
+    static app.dispofold.model.ShiftMix shares(Map<app.dispofold.model.ShiftCategory, Double> byCategory,
+            Map<String, Double> byArea, int duties) {
+        if (duties == 0) {
+            return null;
+        }
+        byCategory.replaceAll((k, n) -> Math.round(n / duties * 1000) / 1000.0);
+        byArea.replaceAll((k, n) -> Math.round(n / duties * 1000) / 1000.0);
+        return new app.dispofold.model.ShiftMix(byCategory, byArea);
     }
 
     private static double round(double hours) {

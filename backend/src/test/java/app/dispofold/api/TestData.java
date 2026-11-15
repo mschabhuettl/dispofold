@@ -45,7 +45,7 @@ public final class TestData {
         List<Person> people = new ArrayList<>();
         for (int i = 1; i <= 6; i++) {
             people.add(new Person(String.format("P%04d", i), "Vorname" + i, "Testperson" + i, "T" + i, 40.0,
-                    i % 2 == 0 ? List.of("AN", "DR") : List.of("AN"), 0, 0, List.of(), String.valueOf(i), null, null));
+                    i % 2 == 0 ? List.of("AN", "DR") : List.of("AN"), 0, 0, List.of(), String.valueOf(i), null, null, null));
         }
         List<AbsenceType> types = List.of(new AbsenceType("U", "Urlaub", true, false, false, "#A3C585"),
                 new AbsenceType("ER", "Ersatzruhe", true, false, true, "#8FD3C7"));
