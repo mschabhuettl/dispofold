@@ -104,6 +104,41 @@ test('a blocked export shows the coded error, without a name it falls back to mo
   assert.equal((await createApi({ fetchImpl }).exportPlan('2027-01', 'xlsx')).filename, 'dienstplan-2027-01.xlsx');
 });
 
+test('master data changes send the revision as If-Match, also revision 0', async () => {
+  const calls = [];
+  const api = createApi({ fetchImpl: fakeFetch(200, { revision: 1, key: 'DP1', item: {} }, calls) });
+  await api.createMaster('people', { firstName: 'Neu' }, 0);
+  await api.updateMaster('areas', 'A/B', { id: 'A/B' }, 7);
+  await api.deleteMaster('holidays', 2, 8);
+  await api.deleteMaster('shifts', 'DS1', 9, true);
+  await api.saveRestrictions('P1', [], 10);
+  assert.deepEqual(calls.map((c) => [c.init.method, c.path, c.init.headers['If-Match']]), [
+    ['POST', '/api/dataset/people', '0'],
+    ['PUT', '/api/dataset/areas/A%2FB', '7'],
+    ['DELETE', '/api/dataset/holidays/2', '8'],
+    ['DELETE', '/api/dataset/shifts/DS1?confirm=true', '9'],
+    ['PUT', '/api/dataset/people/P1/restrictions', '10'],
+  ]);
+  assert.equal(calls[4].init.body, '[]');
+  // reads carry no revision
+  await api.dataset();
+  assert.equal('If-Match' in calls[5].init.headers, false);
+});
+
+test('imports replace changed master data only when asked, the dataset export is a download', async () => {
+  const calls = [];
+  const api = createApi({ fetchImpl: fakeFetch(200, {}, calls) });
+  await api.importDataset({ format: 'dispofold/dataset' });
+  await api.importDataset({ format: 'dispofold/dataset' }, true);
+  await api.importDemo();
+  await api.importDemo(true);
+  assert.deepEqual(calls.map((c) => c.path), ['/api/import/dataset', '/api/import/dataset?replace=true', '/api/import/demo', '/api/import/demo?replace=true']);
+  const fetchImpl = async (path) => ({ status: 200, ok: true, path, headers: new Map(), blob: async () => new Blob(['{}']) });
+  assert.equal((await createApi({ fetchImpl }).exportDataset()).filename, 'dispofold-datensatz.json');
+  const changed = createApi({ fetchImpl: fakeFetch(409, { code: 'import.masterChanged', params: {} }) });
+  await assert.rejects(changed.importDemo(), (e) => e.code === 'import.masterChanged');
+});
+
 test('saveBlob clicks a temporary download link and revokes the object URL', async () => {
   const { saveBlob } = await import('../src/lib/dom.js');
   const log = [];

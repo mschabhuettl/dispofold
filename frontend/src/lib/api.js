@@ -51,8 +51,10 @@ export function createApi({ fetchImpl = (...a) => globalThis.fetch(...a), onUnau
   let restarting = false;
   // Only relative URLs, JSON strings or plain bytes as bodies: the desktop window (custom scheme in WebKitGTK)
   // crashes on Blob, File or FormData bodies and does not report redirects reliably.
-  async function send(method, path, body, accept) {
+  async function send(method, path, body, accept, revision) {
     const init = { method, headers: { Accept: accept }, credentials: 'same-origin' };
+    // master data changes carry the revision they were made on (0 for an empty dataset)
+    if (revision != null) init.headers['If-Match'] = String(revision);
     if (body instanceof Uint8Array) {
       // file upload: the bytes as they are
       init.headers['Content-Type'] = 'application/octet-stream';
@@ -106,8 +108,8 @@ export function createApi({ fetchImpl = (...a) => globalThis.fetch(...a), onUnau
       data && typeof data === 'object' ? data : null);
   }
 
-  async function request(method, path, body) {
-    const res = await send(method, path, body, 'application/json');
+  async function request(method, path, body, revision) {
+    const res = await send(method, path, body, 'application/json', revision);
     if (!res.ok) throw await failure(res);
     const text = await res.text();
     let data = null;
@@ -122,14 +124,28 @@ export function createApi({ fetchImpl = (...a) => globalThis.fetch(...a), onUnau
   }
 
   const m = (month) => encodeURIComponent(month);
+  const k = (key) => encodeURIComponent(key);
+  const replace = (yes) => (yes ? '?replace=true' : '');
+  /** A file download as { blob, filename }; saved by the caller (no navigation to the export URL). */
+  async function download(path, fallback) {
+    const res = await send('GET', path, undefined, '*/*');
+    if (!res.ok) throw await failure(res);
+    const disposition = res.headers?.get?.('Content-Disposition') ?? '';
+    const named = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition);
+    return { blob: await res.blob(), filename: named ? decodeURIComponent(named[1]) : fallback };
+  }
   return {
     request,
     me: () => request('GET', '/api/me'),
     logout: () => request('POST', '/api/logout'),
     dataset: () => request('GET', '/api/dataset'),
-    savePerson: (p) => request('PUT', `/api/dataset/people/${encodeURIComponent(p.id)}`, p),
-    importDemo: () => request('POST', '/api/import/demo'),
-    importDataset: (dataset) => request('POST', '/api/import/dataset', dataset),
+    createMaster: (kind, item, revision) => request('POST', `/api/dataset/${k(kind)}`, item, revision),
+    updateMaster: (kind, key, item, revision) => request('PUT', `/api/dataset/${k(kind)}/${k(key)}`, item, revision),
+    deleteMaster: (kind, key, revision, confirmed) => request('DELETE', `/api/dataset/${k(kind)}/${k(key)}${confirmed ? '?confirm=true' : ''}`, undefined, revision),
+    saveRestrictions: (personId, list, revision) => request('PUT', `/api/dataset/people/${k(personId)}/restrictions`, list, revision),
+    exportDataset: () => download('/api/dataset/export', 'dispofold-datensatz.json'),
+    importDemo: (replaceChanged) => request('POST', `/api/import/demo${replace(replaceChanged)}`),
+    importDataset: (dataset, replaceChanged) => request('POST', `/api/import/dataset${replace(replaceChanged)}`, dataset),
     rules: () => request('GET', '/api/rules'),
     saveRules: (rules) => request('PUT', '/api/rules', rules),
     constraints: () => request('GET', '/api/constraints'),
@@ -153,15 +169,8 @@ export function createApi({ fetchImpl = (...a) => globalThis.fetch(...a), onUnau
     desktopSettings: (settings) => request('PUT', '/api/desktop/update/settings', settings),
     desktopInstall: () => request('POST', '/api/desktop/update/install'),
     desktopUploadUpdate: async (file) => request('POST', '/api/desktop/update/file', new Uint8Array(await file.arrayBuffer())),
-    /** Export of the month as { blob, filename }; saved by the caller (no navigation to the export URL). */
-    exportPlan: async (month, format) => {
-      const res = await send('GET', `/api/plans/${m(month)}/export?format=${encodeURIComponent(format)}`, undefined, '*/*');
-      if (!res.ok) throw await failure(res);
-      const disposition = res.headers?.get?.('Content-Disposition') ?? '';
-      const named = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition);
-      const filename = named ? decodeURIComponent(named[1]) : `dienstplan-${month}.${format}`;
-      return { blob: await res.blob(), filename };
-    },
+    /** Export of the month as { blob, filename }. */
+    exportPlan: (month, format) => download(`/api/plans/${m(month)}/export?format=${encodeURIComponent(format)}`, `dienstplan-${month}.${format}`),
   };
 }
 

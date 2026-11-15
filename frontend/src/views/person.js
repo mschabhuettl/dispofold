@@ -4,6 +4,7 @@ import { fmt, h } from '../lib/dom.js';
 import { groupHitsByDate } from '../lib/explain.js';
 import { personName } from '../lib/grid-model.js';
 import { constraintLabel, hitText } from '../lib/codes.js';
+import { familyText, restrictionText } from '../lib/masterdata-edit.js';
 import { t } from '../lib/texts.js';
 
 const LEVEL = { HARD: t('person.level.hard'), MEDIUM: t('person.level.medium'), SOFT: t('person.level.soft') };
@@ -30,6 +31,15 @@ export async function render(root, ctx, [personId]) {
   const explanation = await api.person(month, person.id).catch((e) => ({ error: e.message }));
   root.prepend(h('h1', {}, `${personName(person)}`),
     h('p.muted', {}, t('person.meta', { short: person.shortName ?? '', hours: fmt.num(person.weeklyHours, 1), areas: person.areaIds.map((a) => areaNames.get(a) ?? a).join(', '), month: monthLabel(month) })));
+  // restrictions and family rules are personal: planners only (viewers get none)
+  if (ctx.canEdit) {
+    const shifts = new Map(dataset.shifts.map((x) => [x.id, x]));
+    const restrictions = (dataset.restrictions ?? []).filter((r) => r.personId === person.id);
+    const items = (list) => (list.length ? h('ul', {}, list.map((x) => h('li', {}, x))) : h('p.muted', {}, t('masterdata.restriction.none')));
+    root.append(h('section.section', { 'aria-labelledby': 'h-limits' }, h('h2', { id: 'h-limits' }, t('person.section.limits')),
+      h('h3', {}, t('masterdata.col.restrictions')), items(restrictions.map((r) => restrictionText(r, shifts))),
+      h('h3', {}, t('masterdata.col.familyRules')), items((person.familyRules ?? []).map(familyText))));
+  }
   if (explanation.error) {
     root.append(h('p.alert', {}, t('person.noStats', { message: explanation.error })));
     return;

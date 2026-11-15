@@ -1,5 +1,5 @@
 // Texts for codes sent by the server (docs/api.md, "Fehlercodes"): errors, import messages, constraints and hits.
-import { codeText, t } from './texts.js';
+import { codeText, formatParams, t } from './texts.js';
 
 /** Entry kinds named in import messages (param "kind"). */
 const KIND = {
@@ -32,6 +32,7 @@ export function displayParams(params) {
     else if (/Minutes$/.test(k) && typeof v === 'number') out[k.replace(/Minutes$/, 'Hours')] = hours(v);
     else if ((k === 'load' || k === 'mean') && typeof v === 'number') out[k] = v / 1000;
     else if (k === 'index' && typeof v === 'number') out.number = v + 1;
+    else if (k === 'months' && typeof v === 'string') out.months = v.split(',').map((m) => formatParams({ m: m.trim() }).m).filter(Boolean).join(', ');
   }
   return out;
 }

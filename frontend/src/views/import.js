@@ -11,11 +11,21 @@ export async function render(root, ctx) {
   const solving = Boolean(state?.solving);
   const closed = state?.plan?.status === 'CLOSED';
 
-  /** A rejected import lists all its errors ({ code, params }), not only the first. */
-  const importDataset = async (data) => {
+  /**
+   * Runs an import (load(replace) calls the API). A rejected import lists all its errors ({ code, params }), not
+   * only the first. Master data changed in Dispofold since the last import are only replaced after asking.
+   */
+  const runImport = async (load, replace = false) => {
     try {
-      return await api.importDataset(data);
+      return await load(replace);
     } catch (e) {
+      if (e.code === 'import.masterChanged') {
+        result.replaceChildren(h('div.alert', { role: 'alert' }, h('strong', {}, t('import.masterChanged.title')), ' ', t('import.masterChanged.text'),
+          h('div.toolbar', {}, button(t('import.datasetExport'), exportDataset),
+            button(t('import.masterChanged.replace'), async () => showSummary(await runImport(load, true)), true),
+            button(t('common.cancel'), async () => result.replaceChildren()))));
+        return undefined;
+      }
       const errors = e.body?.errors ?? [];
       const warnings = e.body?.warnings ?? [];
       result.replaceChildren(h('div.alert.alert-error', { role: 'alert' }, h('strong', {}, e.message),
@@ -24,6 +34,10 @@ export async function render(root, ctx) {
           h('ul', {}, warnings.map((w) => h('li', {}, messageText(w))))] : null));
       return undefined;
     }
+  };
+  const exportDataset = async () => {
+    const file = await guarded(() => api.exportDataset());
+    if (file) saveBlob(file.blob, file.filename);
   };
 
   const showSummary = (s) => {
@@ -67,18 +81,21 @@ export async function render(root, ctx) {
           button(t('import.dataset.import'), async () => {
             const data = await guarded(() => readJson(datasetFile));
             if (data && !confirm(t('import.dataset.confirm'))) return;
-            if (data) showSummary(await importDataset(data));
+            if (data) showSummary(await runImport((replace) => api.importDataset(data, replace)));
           }, true)),
         h('div.toolbar', {},
           button(t('import.demo'), async () => {
             if (!confirm(t('import.demo.confirm'))) return;
-            showSummary(await guarded(() => api.importDemo()));
+            showSummary(await runImport((replace) => api.importDemo(replace)));
           }))),
     );
   }
 
   // exports are for planners only (viewers get 403) and blocked while a solve runs
   if (canEdit) {
+    root.append(h('section.section', { 'aria-labelledby': 'h-dataset-export' }, h('h2', { id: 'h-dataset-export' }, t('import.datasetExport')),
+      h('p.muted', {}, t('import.datasetExport.help')),
+      h('div.toolbar', {}, button(t('import.datasetExport'), exportDataset))));
     root.append(h('section.section', { 'aria-labelledby': 'h-export' }, h('h2', { id: 'h-export' }, t('import.export.heading', { month: monthLabel(month) })),
       solving && h('p.muted', {}, t('import.export.solving')),
       h('div.toolbar', {}, ['xlsx', 'csv', 'json'].map((f) => (solving
