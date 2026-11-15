@@ -67,7 +67,7 @@ public final class ConstraintCatalog {
             new ConstraintInfo(DEMAND, MEDIUM, DEMAND_WEIGHT, false), new ConstraintInfo(OVERSTAFFING, MEDIUM, 1, false),
             new ConstraintInfo(USELESS_DUTY, MEDIUM, 1, false),
             soft(TARGET_HOURS, 20), soft(FAIR_NIGHTS, 3), soft(FAIR_WEEKENDS, 3), soft(FAIR_HOLIDAYS, 3),
-            soft(FAIR_UNPOPULAR, 2), soft(WISHES, 300), soft(BLOCK_LENGTH, 600), soft(ISOLATED_DAY_OFF, 400),
+            soft(FAIR_UNPOPULAR, 2), soft(WISHES, 300), soft(BLOCK_LENGTH, 6000), soft(ISOLATED_DAY_OFF, 10000),
             soft(FORWARD_ROTATION, 500), soft(SPLIT_WEEKEND, 300), soft(COMP_REST_USE, 500),
             soft(SHIFT_VARIETY, 5), soft(AREA_VARIETY, 1), soft(FAMILY, 800),
             // On-request duties are never chosen by the solver (see RosterBuilder); the constraint only marks

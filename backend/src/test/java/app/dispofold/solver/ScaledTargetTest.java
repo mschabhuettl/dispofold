@@ -87,6 +87,8 @@ class ScaledTargetTest {
         assertThat(near).isGreaterThanOrEqualTo(people.size() * 3 / 4);
         assertThat(people).allSatisfy(p -> assertThat(p.plannedHours() + p.creditedHours())
                 .isLessThanOrEqualTo(p.goalHours() * 1.1 + 0.1));
+        // Blocks are clearly possible here: hardly any single day off between duties.
+        assertThat(analysis.singleDaysOff()).isLessThanOrEqualTo(people.size() / 4);
         // Part-timers proportionally less: the scaled goal follows the goal.
         PersonStats full = people.stream().filter(p -> p.personId().equals("P0001")).findFirst().orElseThrow();
         PersonStats part = people.stream().filter(p -> p.personId().equals("P0007")).findFirst().orElseThrow();

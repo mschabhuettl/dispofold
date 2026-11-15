@@ -143,8 +143,8 @@ der Erklärung je Person.
 | `fairHolidays` | Fairness Feiertage | siehe Fairness | 3 |
 | `fairUnpopular` | Fairness unbeliebte Dienste | siehe Fairness | 2 |
 | `wishes` | Wünsche mit gleicher Quote | siehe Wünsche | 300 |
-| `blockLength` | Blöcke von 2 bis 4 Diensten | je Tag zu kurz oder zu lang | 600 |
-| `isolatedDayOff` | Kein einzelner freier Tag zwischen Diensten | je Fall | 400 |
+| `blockLength` | Blöcke von 2 bis 4 Diensten | je Tag zu kurz oder zu lang | 6000 |
+| `isolatedDayOff` | Kein einzelner freier Tag zwischen Diensten | je Fall | 10000 |
 | `forwardRotation` | Vorwärtsrotation | je Rückwärtswechsel | 500 |
 | `splitWeekend` | Ganze Wochenenden | je Wochenende mit nur einem Diensttag | 300 |
 | `compRestUse` | Ersatzruhe abbauen | Bonus je geplantem Ersatzruhetag | 500 |
@@ -175,7 +175,17 @@ der Erklärung je Person.
   Dienst darf die Grenze überschreiten, erscheint dann aber als harter Verstoß; die Liste „Wer kann gefragt
   werden?“ nennt niemanden, den der Dienst über die Grenze brächte. Regeln, die vor dieser Grenze gespeichert
   wurden, bekommen den Standard.
-- Die Strafe ist die Abweichung in Viertelstunden, quadriert, damit sie sich auf viele Personen verteilt statt
+- Ziel für diesen Plan: Braucht der Bedarf weniger Arbeit, als die Ziele aller Personen zusammen ergeben,
+  wird das Ziel jeder Person um denselben Anteil verkleinert. Angerechnete Abwesenheitstage bleiben, der Rest
+  des Ziels (die Arbeit) wird mit Bedarf / Summe der Arbeit malgenommen. Der Bedarf ist die Mindestbesetzung
+  aller Abschnitte des Monats in Personenminuten, vor der Planung fest. Teilzeitkräfte bekommen so anteilig
+  weniger. Warum: Überbesetzung steht auf der mittleren Stufe, die vollen Ziele sind dann nicht erreichbar,
+  und die quadrierte Abweichung würde alle anderen weichen Regeln überdecken; der Solver würde nur noch
+  ausgleichen, wer wie weit unter dem Ziel bleibt, statt Blöcke zu bilden. Braucht der Bedarf alle Arbeit oder
+  mehr, ändert sich nichts. Wer seinen Anteil nicht arbeiten kann (Sperren, wenige erlaubte Schichten), wird
+  nicht eigens berücksichtigt: Die quadrierte Abweichung verteilt den Rest gleichmäßig auf die anderen, und die
+  harte Obergrenze bleibt beim echten Ziel. Personenansicht und Analyse zeigen beide Ziele.
+- Die Strafe ist die Abweichung in Viertelstunden (vom Ziel für diesen Plan), quadriert, damit sie sich auf viele Personen verteilt statt
   bei wenigen hängen zu bleiben. Beispiel: 4 h Abweichung sind 16 Viertelstunden, Strafe 256 mal Gewicht.
 
 ### Fairness
@@ -209,6 +219,11 @@ der Erklärung je Person.
   kostet je Tag Unterschied. Ein Block, der am Monatsende endet, gilt nicht als zu kurz, weil er im
   Folgemonat weitergehen kann. Ersatzruhe zählt als freier Tag.
 - Einzelner freier Tag: genau ein freier Tag zwischen zwei Diensten.
+- Gewichte (ab 0.6.0): Einzelner freier Tag 10000 je Fall, Blocklänge 6000 je Tag. Mit dem Ziel für diesen
+  Plan prägen sie den Plan sichtbar: Im Demomonat sanken die einzelnen freien Tage von 261 auf 38, die
+  Blocktage außerhalb von 2 bis 4 von 602 auf 208; unerfüllte Wünsche stiegen leicht. Wer die Gewichte auf der
+  Seite Regeln einmal gespeichert hat, behält die gespeicherten Werte; dort lassen sie sich auf die neuen
+  Standards setzen. Die Analyse zeigt beide Zahlen (`singleDaysOff`, `blockDays`).
 - Vorwärtsrotation: die Reihenfolge Früh, Tag, Spät, Nacht. Ein Wechsel von einem Tag auf den nächsten in
   eine frühere Kategorie kostet. Nacht auf Früh ohne genug Ruhe ist ohnehin hart verboten.
 - Kategorie einer Schicht: aus dem Schichtkatalog; fehlt sie, gilt Nacht (siehe oben), Früh (Beginn vor
