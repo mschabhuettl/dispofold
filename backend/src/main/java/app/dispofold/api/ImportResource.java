@@ -11,6 +11,7 @@ import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.WebApplicationException;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -55,20 +56,20 @@ public class ImportResource {
 
     @POST
     @Path("demo")
-    public ImportSummary demo() throws IOException {
+    public ImportSummary demo(@QueryParam("replace") boolean replace) throws IOException {
         try (InputStream in = ImportResource.class.getResourceAsStream(DEMO_RESOURCE)) {
             if (in == null) {
                 throw ApiErrors.error(Status.INTERNAL_SERVER_ERROR, "import.demoMissing",
                         "Demodaten fehlen im Programm");
             }
-            return save(mapper.readValue(in, Dataset.class));
+            return save(mapper.readValue(in, Dataset.class), replace);
         }
     }
 
     @POST
     @Path("dataset")
     @Consumes(MediaType.APPLICATION_JSON)
-    public ImportSummary dataset(String body) {
+    public ImportSummary dataset(@QueryParam("replace") boolean replace, String body) {
         Dataset dataset;
         try {
             dataset = mapper.readValue(body, Dataset.class);
@@ -80,17 +81,20 @@ public class ImportResource {
             throw ApiErrors.error(Status.BAD_REQUEST, "import.parse", params,
                     "Die Datei passt nicht zum Datenformat");
         }
-        return save(dataset);
+        return save(dataset, replace);
     }
 
-    /** Replaces the master data and the months contained in the dataset; plans stay. */
-    private ImportSummary save(Dataset dataset) {
+    /**
+     * Replaces the master data and the months contained in the dataset; plans stay. Master data changed in Dispofold
+     * since the last import are only replaced with {@code replace}.
+     */
+    private ImportSummary save(Dataset dataset, boolean replace) {
         synchronized (Store.DATASET_LOCK) {
-            return replace(dataset);
+            return replace(dataset, replace);
         }
     }
 
-    private ImportSummary replace(Dataset dataset) {
+    private ImportSummary replace(Dataset dataset, boolean replace) {
         DatasetValidator.Result result = DatasetValidator.validate(dataset, store.rules());
         if (!result.ok()) {
             throw new WebApplicationException(Response.status(Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON)
@@ -98,6 +102,11 @@ public class ImportResource {
                             "Der Datensatz enthält Fehler und wurde nicht importiert", result.errors(),
                             result.warnings()))
                     .build());
+        }
+        // Asked only for a valid file: an invalid one is rejected anyway.
+        if (!replace && store.datasetState().changedSinceImport()) {
+            throw ApiErrors.error(Status.CONFLICT, "import.masterChanged",
+                    "Die Stammdaten wurden seit dem letzten Import in Dispofold geändert");
         }
         Dataset d = result.dataset();
         return plans.withMonths(d.periods().stream().map(Period::month).toList(), () -> saveChecked(d, result));
@@ -110,15 +119,19 @@ public class ImportResource {
                 throw ApiErrors.error(Status.CONFLICT, "import.solving", Map.of("month", p.month().toString()),
                         "Für einen importierten Monat läuft gerade eine Planung");
             }
-            if (plans.isClosed(p.month())) {
+            // A closed month may come back unchanged (a dataset exported from here); it then stays as it is.
+            if (plans.isClosed(p.month()) && !store.period(p.month()).map(p::equals).orElse(false)) {
                 throw ApiErrors.error(Status.CONFLICT, "import.closed", Map.of("month", p.month().toString()),
                         "Ein importierter Monat ist abgeschlossen");
             }
         }
-        store.saveDataset(new Dataset(d.format(), d.version(), d.source(), d.areas(), d.shifts(), d.demand(),
-                d.holidays(), d.absenceTypes(), d.people(), d.restrictions(), d.history(), List.of()));
+        Dataset master = new Dataset(d.format(), d.version(), d.source(), d.areas(), d.shifts(), d.demand(),
+                d.holidays(), d.absenceTypes(), d.people(), d.restrictions(), d.history(), List.of());
+        store.saveDataset(master, MasterDataService.track(store.datasetState().ids(), master), true);
         for (Period p : d.periods()) {
-            plans.savePeriod(p, null);
+            if (!plans.isClosed(p.month())) {
+                plans.savePeriod(p, null);
+            }
         }
         return new ImportSummary(d.source(), d.people().size(), d.areas().size(), d.shifts().size(),
                 d.periods().stream().map(p -> p.month().toString()).toList(), result.warnings());

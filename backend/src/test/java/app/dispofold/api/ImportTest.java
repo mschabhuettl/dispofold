@@ -22,7 +22,7 @@ class ImportTest {
 
     @Test
     void demoDataIsTheBundledSyntheticMonth() {
-        given().post("/api/import/demo").then().statusCode(200).body("source", equalTo("synthetic"))
+        given().post("/api/import/demo?replace=true").then().statusCode(200).body("source", equalTo("synthetic"))
                 .body("people", equalTo(150)).body("areas", equalTo(5)).body("months", equalTo(List.of("2027-01")))
                 .body("warnings.size()", equalTo(0));
         given().get("/api/dataset").then().body("people.size()", equalTo(150));

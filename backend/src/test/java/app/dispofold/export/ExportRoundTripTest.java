@@ -52,7 +52,7 @@ class ExportRoundTripTest {
     void solvedPlan() throws Exception {
         FakePlanningFacade.solveMillis = 100;
         FakePlanningFacade.fail = false;
-        given().contentType(ContentType.JSON).body(mapper.writeValueAsString(dataset)).post("/api/import/dataset")
+        given().contentType(ContentType.JSON).body(mapper.writeValueAsString(dataset)).post("/api/import/dataset?replace=true")
                 .then().statusCode(200);
         given().post(BASE + "/solve").then().statusCode(202);
         await().atMost(Duration.ofSeconds(10))

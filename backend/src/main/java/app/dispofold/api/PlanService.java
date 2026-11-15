@@ -479,6 +479,23 @@ public class PlanService {
         }
     }
 
+    /**
+     * Stores other cells for the plan of an open month, keeping status, score and solve figures; used when master
+     * data are removed with their references. The caller holds the month's lock.
+     */
+    void saveCells(YearMonth month, List<PlanAssignment> cells) {
+        StoredPlan stored = store.plan(month).orElseThrow();
+        Plan p = stored.plan();
+        store.savePlan(with(p, p.status(), p.score(), cells), stored.hardViolations(), stored.elapsedMillis());
+    }
+
+    /** Scores the stored plan again with the current master data (when the planning is available). */
+    void rescore(YearMonth month) {
+        if (facades.isResolvable()) {
+            saveRescored(month, plan(month));
+        }
+    }
+
     // Month closing
 
     /**

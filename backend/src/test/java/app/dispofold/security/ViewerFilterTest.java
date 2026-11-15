@@ -33,7 +33,7 @@ class ViewerFilterTest {
     void demoData() {
         planner = LoginTest.login("planer", "planpw");
         viewer = LoginTest.login("leser", "geheim");
-        given().cookie(planner).post("/api/import/demo").then().statusCode(200);
+        given().cookie(planner).post("/api/import/demo?replace=true").then().statusCode(200);
     }
 
     @Test
@@ -128,16 +128,19 @@ class ViewerFilterTest {
     @Test
     void personEditErrorsHaveCodes() {
         Map<String, Object> p1 = given().cookie(planner).get("/api/dataset").then().extract().path("people[0]");
-        given().cookie(planner).contentType("application/json").body(p1).put("/api/dataset/people/P0002").then()
-                .statusCode(400).body("code", equalTo("person.idMismatch")).body("params.personId", equalTo("P0002"));
+        String revision = given().cookie(planner).get("/api/dataset").then().extract().path("revision").toString();
+        given().cookie(planner).contentType("application/json").header("If-Match", revision).body(p1)
+                .put("/api/dataset/people/P0002").then().statusCode(400).body("code", equalTo("masterdata.idMismatch"))
+                .body("params.key", equalTo("P0002")).body("params.kind", equalTo("person"));
         java.util.HashMap<String, Object> unknown = new java.util.HashMap<>(p1);
         unknown.put("id", "X9999");
-        given().cookie(planner).contentType("application/json").body(unknown).put("/api/dataset/people/X9999").then()
-                .statusCode(404).body("code", equalTo("person.unknown"));
+        given().cookie(planner).contentType("application/json").header("If-Match", revision).body(unknown)
+                .put("/api/dataset/people/X9999").then().statusCode(404).body("code", equalTo("masterdata.unknown"));
         java.util.HashMap<String, Object> badArea = new java.util.HashMap<>(p1);
         badArea.put("areaIds", List.of("NOPE"));
-        given().cookie(planner).contentType("application/json").body(badArea).put("/api/dataset/people/P0001").then()
-                .statusCode(400).body("code", equalTo("person.unknownArea"));
+        given().cookie(planner).contentType("application/json").header("If-Match", revision).body(badArea)
+                .put("/api/dataset/people/P0001").then().statusCode(400).body("code", equalTo("masterdata.invalid"))
+                .body("errors.code", hasItem("import.unknownArea"));
     }
 
     @Test

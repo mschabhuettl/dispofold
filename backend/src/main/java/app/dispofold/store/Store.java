@@ -50,8 +50,27 @@ public class Store {
         }
     }
 
-    /** Held while master data is read, changed and written back (person edits, imports). */
+    /** Held while master data is read, changed and written back (edits, imports). */
     public static final Object DATASET_LOCK = new Object();
+
+    /**
+     * Counters of generated ids per kind and the short codes that may not be used again per kind.
+     */
+    public record Ids(Map<String, Long> counters, Map<String, List<String>> retired) {
+        public static Ids empty() {
+            return new Ids(Map.of(), Map.of());
+        }
+    }
+
+    /**
+     * The revision of the master data (0 before the first import), the revision of the last import and the id
+     * state. {@code revision != importedRevision} means the master data were changed in Dispofold since.
+     */
+    public record DatasetState(long revision, long importedRevision, Ids ids) {
+        public boolean changedSinceImport() {
+            return revision != importedRevision;
+        }
+    }
 
     @Inject
     DataSource dataSource;
@@ -63,10 +82,32 @@ public class Store {
         return queryOne("select doc from dataset where id = 1", Dataset.class);
     }
 
-    /** Stores the master data; periods are stored separately with {@link #savePeriod}. */
-    public void saveDataset(Dataset dataset) {
-        upsert("update dataset set doc = ?, updated = current_timestamp where id = 1",
-                "insert into dataset (id, doc) values (1, ?)", json(dataset));
+    public DatasetState datasetState() {
+        List<DatasetState> states = new ArrayList<>();
+        query("select revision, imported_revision, ids from dataset where id = 1",
+                rs -> states.add(new DatasetState(rs.getLong(1), rs.getLong(2),
+                        rs.getString(3) == null ? Ids.empty() : read(rs.getString(3), Ids.class))));
+        return states.stream().findFirst().orElse(new DatasetState(0, 0, Ids.empty()));
+    }
+
+    /**
+     * Stores the master data (periods are stored separately with {@link #savePeriod}) and increments the revision.
+     * The caller holds {@link #DATASET_LOCK} and has checked the revision.
+     *
+     * @param imported the save is an import: the master data count as unchanged since the import
+     * @return the new revision
+     */
+    public long saveDataset(Dataset dataset, Ids ids, boolean imported) {
+        String doc = json(dataset);
+        String idState = json(ids);
+        DatasetState before = datasetState();
+        long next = before.revision() + 1;
+        long importedRevision = imported ? next : before.importedRevision();
+        upsert2("update dataset set doc = ?, revision = ?, imported_revision = ?, ids = ?,"
+                + " updated = current_timestamp where id = 1", new Object[] { doc, next, importedRevision, idState },
+                "insert into dataset (id, doc, revision, imported_revision, ids) values (1, ?, ?, ?, ?)",
+                new Object[] { doc, next, importedRevision, idState });
+        return next;
     }
 
     public Optional<Period> period(YearMonth month) {

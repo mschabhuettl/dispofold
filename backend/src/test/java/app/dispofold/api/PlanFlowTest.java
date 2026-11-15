@@ -57,7 +57,7 @@ class PlanFlowTest {
         FakePlanningFacade.fail = false;
         FakePlanningFacade.finalHardViolations = 0;
         given().contentType(ContentType.JSON).body(mapper.writeValueAsString(TestData.dataset(MONTH)))
-                .post("/api/import/dataset").then().statusCode(200)
+                .post("/api/import/dataset?replace=true").then().statusCode(200)
                 .body("people", equalTo(6)).body("months", equalTo(List.of(MONTH.toString())));
     }
 
@@ -385,9 +385,12 @@ class PlanFlowTest {
         String person = given().get("/api/dataset").then().statusCode(200).body("periods.size()", equalTo(0))
                 .extract().jsonPath().prettify();
         String p1 = mapper.writeValueAsString(mapper.readTree(person).path("people").get(0));
-        given().contentType(ContentType.JSON).body(p1.replace("\"weeklyHours\":40.0", "\"weeklyHours\":30.0"))
-                .put("/api/dataset/people/P0001").then().statusCode(200).body("weeklyHours", equalTo(30.0f));
+        String read = mapper.readTree(person).path("revision").asText();
+        given().contentType(ContentType.JSON).header("If-Match", read)
+                .body(p1.replace("\"weeklyHours\":40.0", "\"weeklyHours\":30.0"))
+                .put("/api/dataset/people/P0001").then().statusCode(200).body("item.weeklyHours", equalTo(30.0f));
         given().get("/api/dataset").then().body("people[0].weeklyHours", equalTo(30.0f));
-        given().contentType(ContentType.JSON).body(p1).put("/api/dataset/people/P0002").then().statusCode(400);
+        given().contentType(ContentType.JSON).header("If-Match", Long.parseLong(read) + 1).body(p1)
+                .put("/api/dataset/people/P0002").then().statusCode(400);
     }
 }

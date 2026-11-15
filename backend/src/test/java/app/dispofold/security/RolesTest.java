@@ -19,7 +19,9 @@ class RolesTest {
             "/api/periods/2032-01", "/api/plans/2032-01", "/api/dataset" };
 
     static final String[][] WRITES = { { "PUT", "/api/rules" }, { "PUT", "/api/periods/2032-01" },
-            { "PUT", "/api/dataset/people/P0001" }, { "POST", "/api/import/demo" }, { "POST", "/api/import/dataset" },
+            { "PUT", "/api/dataset/people/P0001" }, { "POST", "/api/dataset/areas" },
+            { "DELETE", "/api/dataset/areas/AN" }, { "PUT", "/api/dataset/people/P0001/restrictions" },
+            { "POST", "/api/import/demo" }, { "POST", "/api/import/dataset" },
             { "POST", "/api/plans/2032-01/solve" }, { "POST", "/api/plans/2032-01/stop" },
             { "PUT", "/api/plans/2032-01/cells" }, { "POST", "/api/plans/2032-01/unpin" },
             { "POST", "/api/plans/2032-01/finalize" }, { "POST", "/api/plans/2032-01/import" } };
@@ -43,6 +45,7 @@ class RolesTest {
         for (String[] w : WRITES) {
             given().contentType(ContentType.JSON).body("{}").request(w[0], w[1]).then().statusCode(403);
         }
+        given().get("/api/dataset/export").then().statusCode(403);
         given().post("/api/logout").then().statusCode(204);
     }
 

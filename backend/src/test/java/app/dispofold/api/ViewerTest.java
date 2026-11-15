@@ -36,7 +36,8 @@ class ViewerTest {
     void data() {
         Dataset d = TestData.dataset(MONTH);
         store.saveDataset(new Dataset(d.format(), d.version(), d.source(), d.areas(), d.shifts(), d.demand(),
-                d.holidays(), d.absenceTypes(), d.people(), d.restrictions(), d.history(), List.of()));
+                d.holidays(), d.absenceTypes(), d.people(), d.restrictions(), d.history(), List.of()), Store.Ids.empty(),
+                true);
         store.savePeriod(d.periods().get(0));
     }
 

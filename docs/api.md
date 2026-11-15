@@ -24,10 +24,42 @@ Im Docker-Betrieb begrenzt nginx die Anmeldeversuche auf 10 je Minute und Adress
 
 | Methode | Pfad | Antwort |
 |---|---|---|
-| `GET` | `/api/dataset` | `Dataset` mit allen Stammdaten, `periods` leer (vor dem ersten Import ein leerer Datensatz) |
-| `PUT` | `/api/dataset/people/{personId}` | ändert eine Person (Body `Person`), Antwort `Person` |
-| `POST` | `/api/import/dataset` | lädt ein `Dataset`-Dokument (Body, siehe `docs/datenformat.md`), Antwort `ImportSummary` |
-| `POST` | `/api/import/demo` | lädt die mitgelieferten synthetischen Demodaten (150 Personen, Jänner 2027), Antwort `ImportSummary` |
+| `GET` | `/api/dataset` | `{ ...Dataset, "revision": n, "changedSinceImport": bool }` mit allen Stammdaten, `periods` leer (vor dem ersten Import ein leerer Datensatz mit Revision 0) |
+| `POST` | `/api/dataset/{kind}` | legt ein Objekt an (Body: das Objekt), Antwort `MasterChange` |
+| `PUT` | `/api/dataset/{kind}/{key}` | ändert ein Objekt (Body: das ganze Objekt), Antwort `MasterChange` |
+| `DELETE` | `/api/dataset/{kind}/{key}?confirm=true` | entfernt ein Objekt, Antwort `{ "revision": n, "removed": n }` |
+| `PUT` | `/api/dataset/people/{personId}/restrictions` | ersetzt die Einschränkungen einer Person (Body: Liste von `Restriction`), Antwort `MasterChange` mit der Liste als `item` |
+| `GET` | `/api/dataset/export` | Datei-Download: Stammdaten und alle Planungsmonate als `Dataset` (Version 2), nur für `planner` |
+| `POST` | `/api/import/dataset?replace=true` | lädt ein `Dataset`-Dokument (Body, siehe `docs/datenformat.md`), Antwort `ImportSummary` |
+| `POST` | `/api/import/demo?replace=true` | lädt die mitgelieferten synthetischen Demodaten (150 Personen, Jänner 2027), Antwort `ImportSummary` |
+
+Stammdaten bearbeiten:
+
+- `kind` und `key`: `people` (Person, `key` = `id`), `shifts` (`ShiftType`, `id`), `areas` (`Area`, `id`),
+  `absenceTypes` (`AbsenceType`, `code`), `holidays` (`Holiday`, Position in der Liste ab 0), `demand`
+  (`DemandRule`, Position ab 0).
+- Ids neuer Personen (`DP1`, `DP2`, ...) und Schichten (`DS1`, ...) vergibt das Backend; eine Id im Body wird
+  beim Anlegen ignoriert und nie wieder vergeben. Bereiche und Abwesenheitsarten haben als Id ihr Kürzel, das
+  im Plan steht: Es wird beim Anlegen angegeben (`masterdata.idMissing`), danach nicht mehr geändert
+  (`masterdata.idMismatch`) und ist nach dem Entfernen gesperrt (`masterdata.idTaken`).
+- `MasterChange`: `{ "revision": n, "key": "<key>", "item": { ... } }`.
+- Jede Änderung muss die gelesene Revision mitschicken (Header `If-Match: <n>`). Fehlt sie: `428`
+  `masterdata.revisionMissing`; hat inzwischen jemand anderer Stammdaten gespeichert oder importiert: `409`
+  `masterdata.conflict`.
+- Das Backend prüft jede Änderung mit derselben Prüfung wie den Import (`DatasetValidator`), und zwar den ganzen
+  Datensatz danach mit allen gespeicherten Planungsmonaten. Bei Fehlern speichert es nichts (`400`
+  `masterdata.invalid` mit `errors` und `warnings` wie beim Import).
+- Entfernen: Kommt das Objekt in einem abgeschlossenen Monat vor (Plan, Eingaben oder Historie, auch
+  importierte), antwortet das Backend mit `409` `masterdata.inUseClosed`. Kommt es nur in offenen Monaten vor
+  (Eingaben, Pläne) oder in anderen Stammdaten (Einschränkungen, Bedarf, Bereiche einer Person), antwortet es
+  ohne `confirm=true` mit `409` `masterdata.inUse` und der Zahl der Verweise; mit `confirm=true` entfernt es die
+  Verweise mit. Ein Bereich mit Schichten lässt sich erst entfernen, wenn seine Schichten entfernt sind
+  (`masterdata.areaHasShifts`). Läuft für einen betroffenen Monat eine Planung: `409` `plan.solving`.
+- Offene Monate, deren Eingaben oder Stammdaten sich geändert haben, zeigen wie bisher "Eingaben geändert"
+  (`stale`). Abgeschlossene Monate bleiben unverändert.
+- Import: Wurden die Stammdaten seit dem letzten Import in Dispofold geändert (`changedSinceImport`), lehnt der
+  Import ohne `replace=true` mit `409` `import.masterChanged` ab. Ein Planungsmonat im Datensatz, der hier
+  abgeschlossen ist, muss gleich sein wie der gespeicherte (er bleibt dann unverändert), sonst `import.closed`.
 
 `ImportSummary`: `{ "source", "people", "areas", "shifts", "months": ["YYYY-MM"], "warnings": [{ "code", "params" }] }`.
 Ein Import ersetzt die Stammdaten und die Planungsmonate, die im Datensatz enthalten sind. Pläne bleiben.
@@ -135,7 +167,18 @@ Anfrage und Daten:
 | `request.month`, `request.solveOptions`, `request.noCell`, `request.periodMissing`, `request.periodFormat` | 400 | |
 | `dataset.missing` | 409 | |
 | `person.unknown` | 404 | `personId` |
-| `person.idMismatch`, `person.unknownArea` | 400 | `personId` |
+| `masterdata.kind` | 404 | `kind` |
+| `masterdata.unknown` | 404 | `kind`, `key` |
+| `masterdata.revisionMissing` | 428 | |
+| `masterdata.conflict` | 409 | `revision` |
+| `masterdata.invalid` | 400 | `count`; dazu `errors` und `warnings` |
+| `masterdata.format` | 400 | `kind` |
+| `masterdata.idMissing` | 400 | `kind` |
+| `masterdata.idMismatch` | 400 | `kind`, `key` |
+| `masterdata.idTaken` | 400 | `kind`, `key` |
+| `masterdata.inUse` | 409 | `kind`, `key`, `count`, `months` (durch Komma getrennt, kann leer sein) |
+| `masterdata.inUseClosed` | 409 | `kind`, `key`, `months` |
+| `masterdata.areaHasShifts` | 409 | `key`, `count` |
 | `area.unknown` | 404 | `areaId` |
 | `rules.missing`, `rules.nightWindow`, `rules.values`, `rules.block`, `rules.accountShare`, `rules.weights`, `rules.timeZone` | 400 | |
 | `rules.minDailyRest` | 400 | `minHours` |
@@ -147,6 +190,7 @@ Import:
 | `import.parse` | 400 | `line`, `column` |
 | `import.invalid` | 400 | `count`; dazu `errors` und `warnings` als Listen von `{ code, params }` |
 | `import.solving`, `import.closed` | 409 | `month` |
+| `import.masterChanged` | 409 | |
 | `import.demoMissing` | 500 | |
 
 Die Codes in `errors` und `warnings` stehen in `docs/datenformat.md` unter "Fehlercodes beim Import".

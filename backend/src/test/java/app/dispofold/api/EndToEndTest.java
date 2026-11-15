@@ -35,7 +35,7 @@ class EndToEndTest {
     @Test
     void importSolveAnalyse() throws Exception {
         given().contentType(ContentType.JSON).body(mapper.writeValueAsString(TestData.dataset(MONTH)))
-                .post("/api/import/dataset").then().statusCode(200);
+                .post("/api/import/dataset?replace=true").then().statusCode(200);
         given().get("/api/constraints").then().statusCode(200).body("size()", greaterThan(0));
 
         given().contentType(ContentType.JSON).body("{\"seed\": 3, \"timeLimitSeconds\": 5}")

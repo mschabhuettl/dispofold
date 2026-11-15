@@ -37,7 +37,7 @@ class NonBlockingSolveTest {
     @Test
     void otherUsersAreNotBlockedWhileAMonthIsBuilt() throws Exception {
         given().contentType(ContentType.JSON).body(mapper.writeValueAsString(Fixtures.dataset(Fixtures.LARGE)))
-                .post("/api/import/dataset").then().statusCode(200).body("people", equalTo(150));
+                .post("/api/import/dataset?replace=true").then().statusCode(200).body("people", equalTo(150));
         CountDownLatch gate = new CountDownLatch(1);
         TimefoldPlanningFacade.beforeModel = gate;
         try {

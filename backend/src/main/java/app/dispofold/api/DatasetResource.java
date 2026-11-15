@@ -1,26 +1,35 @@
 package app.dispofold.api;
 
+import java.time.LocalDate;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.HeaderParam;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.Response.Status;
+import jakarta.ws.rs.core.Response;
 
-import app.dispofold.model.Area;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import app.dispofold.api.MasterDataService.MasterChange;
+import app.dispofold.api.MasterDataService.Removal;
 import app.dispofold.model.Dataset;
-import app.dispofold.model.Person;
+import app.dispofold.model.Restriction;
 import app.dispofold.store.Store;
+import app.dispofold.store.Store.DatasetState;
 
+/** The master data: read, edit per object (planners), and export with all planning months (planners). */
 @Path("/api/dataset")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
@@ -31,42 +40,73 @@ public class DatasetResource {
     Store store;
 
     @Inject
-    PlanService plans;
+    MasterDataService master;
 
-    /** The master data, or an empty dataset before the first import. */
+    @Inject
+    ObjectMapper mapper;
+
+    /** The master data with their revision, or an empty dataset (revision 0) before the first import. */
     @GET
-    public Dataset get() {
-        return store.dataset().orElseGet(() -> new Dataset(Dataset.FORMAT, 1, null, List.of(), List.of(), List.of(),
-                List.of(), List.of(), List.of(), List.of(), List.of(), List.of()));
+    public ObjectNode get() {
+        Dataset d = store.dataset().orElseGet(() -> new Dataset(Dataset.FORMAT, 1, null, List.of(), List.of(),
+                List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of()));
+        DatasetState state = master.state();
+        ObjectNode node = mapper.valueToTree(d);
+        node.put("revision", state.revision());
+        node.put("changedSinceImport", state.changedSinceImport());
+        return node;
+    }
+
+    /** Master data and all planning months as a dataset file to import again. */
+    @GET
+    @Path("export")
+    @RolesAllowed("planner")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response export() {
+        return Response.ok(master.export(), MediaType.APPLICATION_JSON)
+                .header("Content-Disposition",
+                        "attachment; filename=\"dispofold-datensatz-" + LocalDate.now() + ".json\"")
+                .build();
+    }
+
+    @POST
+    @Path("{kind}")
+    @RolesAllowed("planner")
+    public MasterChange create(@PathParam("kind") String kind, @HeaderParam("If-Match") String ifMatch,
+            JsonNode body) {
+        return master.create(kind, body, revision(ifMatch));
     }
 
     @PUT
-    @Path("people/{personId}")
+    @Path("{kind}/{key}")
     @RolesAllowed("planner")
-    public Person updatePerson(@PathParam("personId") String personId, Person person) {
-        synchronized (Store.DATASET_LOCK) {
-            return update(personId, person);
-        }
+    public MasterChange update(@PathParam("kind") String kind, @PathParam("key") String key,
+            @HeaderParam("If-Match") String ifMatch, JsonNode body) {
+        return master.update(kind, key, body, revision(ifMatch));
     }
 
-    private Person update(String personId, Person person) {
-        if (person == null || !personId.equals(person.id())) {
-            throw ApiErrors.error(Status.BAD_REQUEST, "person.idMismatch", Map.of("personId", personId),
-                    "Die Id im Pfad und im Body muss gleich sein");
+    @DELETE
+    @Path("{kind}/{key}")
+    @RolesAllowed("planner")
+    public Removal remove(@PathParam("kind") String kind, @PathParam("key") String key,
+            @QueryParam("confirm") boolean confirm, @HeaderParam("If-Match") String ifMatch) {
+        return master.remove(kind, key, confirm, revision(ifMatch));
+    }
+
+    @PUT
+    @Path("people/{personId}/restrictions")
+    @RolesAllowed("planner")
+    public MasterChange restrictions(@PathParam("personId") String personId,
+            @HeaderParam("If-Match") String ifMatch, List<Restriction> restrictions) {
+        return master.restrictions(personId, restrictions, revision(ifMatch));
+    }
+
+    /** The revision from {@code If-Match}; null when missing or not a number (the service answers 428). */
+    private static Long revision(String ifMatch) {
+        try {
+            return ifMatch == null ? null : Long.valueOf(ifMatch.replace("\"", "").trim());
+        } catch (NumberFormatException e) {
+            return null;
         }
-        Dataset d = plans.dataset();
-        if (d.people().stream().noneMatch(p -> p.id().equals(personId))) {
-            throw ApiErrors.error(Status.NOT_FOUND, "person.unknown", Map.of("personId", personId),
-                    "Unbekannte Person");
-        }
-        Set<String> areas = d.areas().stream().map(Area::id).collect(Collectors.toSet());
-        if (person.areaIds() == null || !areas.containsAll(person.areaIds())) {
-            throw ApiErrors.error(Status.BAD_REQUEST, "person.unknownArea", Map.of("personId", personId),
-                    "Unbekannter Bereich");
-        }
-        List<Person> people = d.people().stream().map(p -> p.id().equals(personId) ? person : p).toList();
-        store.saveDataset(new Dataset(d.format(), d.version(), d.source(), d.areas(), d.shifts(), d.demand(),
-                d.holidays(), d.absenceTypes(), people, d.restrictions(), d.history(), List.of()));
-        return person;
     }
 }
