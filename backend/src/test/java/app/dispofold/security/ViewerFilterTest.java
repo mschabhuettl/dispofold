@@ -80,7 +80,7 @@ class ViewerFilterTest {
         // Personal balances: absent or null wherever they appear.
         for (String field : new String[] { "hoursAccount", "compRestBalance", "hoursAccountAfter",
                 "compRestBalanceAfter", "compRestUsed", "compRestEarned", "accountBefore", "accountAfter",
-                "chargedHours", "creditedHours" }) {
+                "chargedHours", "creditedHours", "goalHours", "scaledGoalHours" }) {
             assertThat(json).as(field).doesNotContainPattern("\"" + field + "\":(?!null)");
         }
     }

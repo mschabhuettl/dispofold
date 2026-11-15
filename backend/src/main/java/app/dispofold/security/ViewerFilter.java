@@ -34,12 +34,12 @@ public class ViewerFilter implements ContainerResponseFilter {
     static final Set<String> HIDDEN_CONSTRAINTS = Set.of("wishes", "family", "neverRestriction", "onRequest",
             "absence");
     static final Set<String> WISH_STATS = Set.of("wishes", "wishesMet", "historyWishes", "historyWishesMet");
-    /** Personal balances: hours account and compensatory rest (and the absence hours behind them). */
+    /** Personal balances: hours account and compensatory rest (and the absence hours and goals behind them). */
     static final Set<String> PERSON_BALANCES = Set.of("hoursAccount", "compRestBalance");
     static final Set<String> HISTORY_BALANCES = Set.of("hoursAccountAfter", "compRestBalanceAfter", "compRestUsed",
             "compRestEarned");
     static final Set<String> STATS_BALANCES = Set.of("accountBefore", "accountAfter", "compRestBalanceAfter",
-            "compRestEarned", "chargedHours", "creditedHours");
+            "compRestEarned", "chargedHours", "creditedHours", "goalHours", "scaledGoalHours");
 
     private static final Pattern PERIOD = Pattern.compile("api/periods/[^/]+");
     private static final Pattern ANALYSIS = Pattern.compile("api/plans/[^/]+/analysis");

@@ -24,6 +24,8 @@ public final class Staff {
     private final Fairness fairness;
     private final Average average;
     private final Map<String, Integer> previous;
+    /** Target the soft rule aims at: the target scaled to the work the demand needs (see RosterBuilder). */
+    private int scaledTargetMinutes;
 
     /**
      * Per-person limits from {@link app.dispofold.model.Rules}, in minutes.
@@ -80,6 +82,7 @@ public final class Staff {
         this.areaIds = areaIds;
         this.creditMinutes = creditMinutes;
         this.targetMinutes = targetMinutes;
+        this.scaledTargetMinutes = targetMinutes;
         this.compRestBalance = compRestBalance;
         this.limits = limits;
         this.history = history;
@@ -119,6 +122,15 @@ public final class Staff {
     /** Monthly target after the hours account correction, in minutes. */
     public int getTargetMinutes() {
         return targetMinutes;
+    }
+
+    /** The target scaled to the available work; equal to the target when the demand needs all of it. */
+    public int getScaledTargetMinutes() {
+        return scaledTargetMinutes;
+    }
+
+    public void setScaledTargetMinutes(int scaledTargetMinutes) {
+        this.scaledTargetMinutes = scaledTargetMinutes;
     }
 
     public int getCompRestBalance() {

@@ -107,16 +107,19 @@ public class PlanResource {
         }
         return new PlanAnalysis(analysis.score(), analysis.hardViolations(), analysis.constraints(), analysis.gaps(),
                 analysis.people().stream().map(PlanResource::forViewer).toList(), analysis.uncoveredHours(),
-                analysis.overstaffedHours());
+                analysis.overstaffedHours(), analysis.singleDaysOff(), analysis.blockDays());
     }
 
-    /** Key figures without wishes, hours account and time off in lieu (which would reveal the absence type). */
+    /**
+     * Key figures without wishes, hours account and time off in lieu (which would reveal the absence type); the
+     * goals are corrected by the hours account, so they are left out too.
+     */
     static PersonStats forViewer(PersonStats s) {
         return new PersonStats(s.personId(), s.targetHours(), s.creditedHours(), s.plannedHours(), 0, 0,
                 s.duties(), s.nights(), s.weekendsWorked(), s.weekendsOff(), s.holidays(), s.unpopular(), 0, 0,
                 s.compRestPlanned(), s.compRestEarned(), s.compRestBalanceAfter(), s.singleDays(), s.historyNights(),
                 s.historyWeekends(), s.historyHolidays(), s.historyUnpopular(), 0, 0, s.availableDays(), 0,
-                s.averageWeekHours(), s.averageComplete());
+                s.averageWeekHours(), s.averageComplete(), 0, 0);
     }
 
     /** Hits that would show wishes, family rules, restrictions or the kind of absence are planners only. */

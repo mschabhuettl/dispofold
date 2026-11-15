@@ -129,7 +129,7 @@ final class InitialRoster {
         List<Staff> open = new ArrayList<>(roster.getStaff());
         while (!open.isEmpty()) {
             Staff staff = open.stream()
-                    .max(Comparator.comparingDouble(s -> (double) remaining(s) / Math.max(1, s.getTargetMinutes())))
+                    .max(Comparator.comparingDouble(s -> (double) remaining(s) / Math.max(1, s.getScaledTargetMinutes())))
                     .orElseThrow();
             if (!addDuty(staff)) {
                 open.remove(staff);
@@ -214,7 +214,7 @@ final class InitialRoster {
                     continue;
                 }
                 double score = 4.0 * gain / option.getDurationMinutes()
-                        + 2.0 * remaining(staff) / Math.max(1, staff.getTargetMinutes())
+                        + 2.0 * remaining(staff) / Math.max(1, staff.getScaledTargetMinutes())
                         + blockBonus(cells, d, staff);
                 if (score > bestScore) {
                     bestScore = score;
@@ -233,7 +233,7 @@ final class InitialRoster {
     }
 
     private long remaining(Staff staff) {
-        return staff.getTargetMinutes() - counted.getOrDefault(staff, 0L);
+        return staff.getScaledTargetMinutes() - counted.getOrDefault(staff, 0L);
     }
 
     /** Continuing a block is good, starting a block right after a single day off is not. */

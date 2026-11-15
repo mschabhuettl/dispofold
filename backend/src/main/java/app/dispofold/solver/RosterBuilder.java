@@ -124,11 +124,48 @@ public final class RosterBuilder {
                     absenceTypes, fixed, assignments));
         }
         cells.forEach(c -> c.setTimes(timeLine));
+        List<DemandSegment> segments = segments();
+        scaleTargets(staff, cells, segments);
         sortForConstruction(cells, staff.size());
         List<ShiftOption> all = new ArrayList<>(options.values());
         all.add(compRest);
-        return new Roster(month, timeLine, staff, all, segments(), weeks(), cells,
+        return new Roster(month, timeLine, staff, all, segments, weeks(), cells,
                 ConstraintCatalog.overrides(rules.weights()));
+    }
+
+    /**
+     * When the demand needs less work than the people's targets add up to, each person's scored target shrinks by
+     * the same share: credited days (absences) stay, the rest of the target (the work part) is multiplied by
+     * demand / sum of work parts. The demand is the minimum staffing of all segments in person minutes, fixed
+     * before solving. Without this, the solver could not reach the targets anyway (overstaffing is medium) and
+     * would spend the soft score on evening out who stays how far below target instead of on blocks and rest.
+     * People who cannot work their share (restrictions, few allowed shifts) are not modelled: the squared target
+     * rule spreads the rest evenly over the others, and the hard cap on the real target bounds it.
+     */
+    static void scaleTargets(List<Staff> staff, List<DutyCell> cells, List<DemandSegment> segments) {
+        long demand = 0;
+        for (DemandSegment s : segments) {
+            demand += s.required() * s.minutes();
+        }
+        Map<Staff, Long> credited = new HashMap<>();
+        for (DutyCell c : cells) {
+            if (c.isInMonth() && c.isPinned() && !c.isWork()) {
+                credited.merge(c.getStaff(), (long) c.getCountedMinutes(), Long::sum);
+            }
+        }
+        long work = 0;
+        for (Staff s : staff) {
+            work += Math.max(0, s.getTargetMinutes() - credited.getOrDefault(s, 0L));
+        }
+        if (work <= demand) {
+            return;
+        }
+        double share = (double) demand / work;
+        for (Staff s : staff) {
+            long credit = credited.getOrDefault(s, 0L);
+            long part = Math.max(0, s.getTargetMinutes() - credit);
+            s.setScaledTargetMinutes((int) Math.min(s.getTargetMinutes(), credit + Math.round(part * share)));
+        }
     }
 
     /**

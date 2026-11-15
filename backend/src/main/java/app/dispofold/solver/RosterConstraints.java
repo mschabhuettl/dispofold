@@ -227,13 +227,13 @@ public class RosterConstraints implements ConstraintProvider {
                 .filter((s, minutes) -> deviationBuckets(s, minutes) != 0)
                 .penalize(SOFT, (s, minutes) -> square(deviationBuckets(s, minutes)))
                 .justifyWith((s, minutes, score) -> Hit.of(s.getId(), null, "minutes", minutes,
-                        "targetMinutes", s.getTargetMinutes()))
+                        "targetMinutes", s.getTargetMinutes(), "scaledMinutes", s.getScaledTargetMinutes()))
                 .asConstraint(ConstraintCatalog.TARGET_HOURS);
     }
 
-    /** Deviation from the target in quarter hours. */
+    /** Deviation from the scaled target in quarter hours. */
     static long deviationBuckets(Staff s, long minutes) {
-        return Math.abs(minutes - s.getTargetMinutes()) / 15;
+        return Math.abs(minutes - s.getScaledTargetMinutes()) / 15;
     }
 
     /** One counted duty (load = the person's weight) or the person itself (load 0) in a fairness comparison. */

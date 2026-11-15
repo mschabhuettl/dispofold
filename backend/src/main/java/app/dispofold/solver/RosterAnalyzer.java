@@ -46,7 +46,15 @@ public final class RosterAnalyzer {
         }
         return new PlanAnalysis(score.score().toString(), hardViolations(score), constraints, gaps(roster), people,
                 personHours(score, ConstraintCatalog.DEMAND),
-                personHours(score, ConstraintCatalog.OVERSTAFFING) + personHours(score, ConstraintCatalog.USELESS_DUTY));
+                personHours(score, ConstraintCatalog.OVERSTAFFING) + personHours(score, ConstraintCatalog.USELESS_DUTY),
+                score.total(ConstraintCatalog.ISOLATED_DAY_OFF).matches().size(),
+                blockDays(score, weights));
+    }
+
+    /** Days blocks are too short or too long: the block rule's score divided by its weight. */
+    static int blockDays(ScoreExplainer.Explanation score, Map<String, Long> weights) {
+        long weight = ConstraintCatalog.weight(ConstraintCatalog.get(ConstraintCatalog.BLOCK_LENGTH), weights);
+        return weight == 0 ? 0 : (int) (-score.total(ConstraintCatalog.BLOCK_LENGTH).score().softScore() / weight);
     }
 
     /** Person minutes of a medium constraint (its score divided by its fixed weight), in hours. */
@@ -292,7 +300,8 @@ public final class RosterAnalyzer {
                 round(accountBefore + planned + credited - target - charged), duties, nights, weekendsWorked.size(),
                 weekendsOff, holidayDuties, unpopular, wishes, wishesMet, compRestPlanned, compRestEarned,
                 balance - compRestPlanned + compRestEarned, singleDays, h.nights(), h.weekends(), h.holidays(),
-                h.unpopular(), h.wishes(), h.wishesMet(), available, round(charged), round(average), a.complete());
+                h.unpopular(), h.wishes(), h.wishesMet(), available, round(charged), round(average), a.complete(),
+                round(staff.getTargetMinutes() / 60.0), round(staff.getScaledTargetMinutes() / 60.0));
     }
 
     private static boolean previousWorked(Roster roster, String personId, YearMonth month) {
