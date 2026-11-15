@@ -38,7 +38,7 @@ Stammdaten bearbeiten:
 - `kind` und `key`: `people` (Person, `key` = `id`), `shifts` (`ShiftType`, `id`), `areas` (`Area`, `id`),
   `absenceTypes` (`AbsenceType`, `code`), `holidays` (`Holiday`, Position in der Liste ab 0), `demand`
   (`DemandRule`, Position ab 0).
-- Ids neuer Personen (`DP1`, `DP2`, ...) und Schichten (`DS1`, ...) vergibt das Backend; eine Id im Body wird
+- Ids neuer Personen (`PN1`, `PN2`, ...) und Schichten (`SN1`, ...) vergibt das Backend; eine Id im Body wird
   beim Anlegen ignoriert und nie wieder vergeben. Bereiche und Abwesenheitsarten haben als Id ihr Kürzel, das
   im Plan steht: Es wird beim Anlegen angegeben (`masterdata.idMissing`), danach nicht mehr geändert
   (`masterdata.idMismatch`) und ist nach dem Entfernen gesperrt (`masterdata.idTaken`).

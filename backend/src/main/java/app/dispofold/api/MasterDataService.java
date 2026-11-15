@@ -90,8 +90,8 @@ public class MasterDataService {
             List<Issue> warnings) {
     }
 
-    /** Prefixes of generated ids; imports use other ids (e.g. P0001, E1001, S12). */
-    static final Map<Kind, String> PREFIX = Map.of(Kind.PEOPLE, "DP", Kind.SHIFTS, "DS");
+    /** Prefixes of generated ids ("neu"); imports use other ids (e.g. P0001, E1001, S12). */
+    static final Map<Kind, String> PREFIX = Map.of(Kind.PEOPLE, "PN", Kind.SHIFTS, "SN");
 
     @Inject
     Store store;
@@ -496,7 +496,7 @@ public class MasterDataService {
         long max = 0;
         for (String id : ids) {
             if (id != null && id.startsWith(prefix) && id.length() > prefix.length() && id.length() < 19
-                    && id.substring(prefix.length()).chars().allMatch(Character::isDigit)) {
+                    && id.substring(prefix.length()).matches("\\d+")) {
                 max = Math.max(max, Long.parseLong(id.substring(prefix.length())));
             }
         }

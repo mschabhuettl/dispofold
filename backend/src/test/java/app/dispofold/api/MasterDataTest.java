@@ -114,26 +114,26 @@ class MasterDataTest {
                 "compRestBalance", 1, "familyRules", List.of(Map.of("weekdays", List.of(2), "latestEnd", "18:00",
                         "noNights", true, "note", "Kinder")),
                 "externalId", "X-1");
-        create("people", newPerson).statusCode(200).body("key", equalTo("DP1")).body("item.id", equalTo("DP1"))
+        create("people", newPerson).statusCode(200).body("key", equalTo("PN1")).body("item.id", equalTo("PN1"))
                 .body("revision", equalTo((int) start + 1));
-        ObjectNode p = person("DP1");
+        ObjectNode p = person("PN1");
         assertThat(p.path("weeklyHours").asDouble()).isEqualTo(38.5);
         assertThat(p.path("familyRules").get(0).path("latestEnd").asText()).isEqualTo("18:00");
         p.put("lastName", "Geändert").put("entryDate", MONTH.atDay(10).toString());
-        update("people", "DP1", p).statusCode(200).body("item.lastName", equalTo("Geändert"));
+        update("people", "PN1", p).statusCode(200).body("item.lastName", equalTo("Geändert"));
         given().get("/api/dataset").then().body("changedSinceImport", equalTo(true));
         // a new person is used nowhere: removed without asking; the id is never given again
-        remove("people", "DP1", false).statusCode(200).body("removed", equalTo(0));
-        create("people", newPerson).statusCode(200).body("key", equalTo("DP2"));
+        remove("people", "PN1", false).statusCode(200).body("removed", equalTo(0));
+        create("people", newPerson).statusCode(200).body("key", equalTo("PN2"));
 
         create("areas", Map.of("id", "LF", "name", "Leitstelle Feuer", "color", "#B91C1C")).statusCode(200)
                 .body("key", equalTo("LF"));
         Map<String, Object> shift = Map.of("areaId", "LF", "code", "F1", "name", "Feuer Tag", "start", "07:00",
                 "end", "19:00", "category", "DAY", "color", "#FDE68A", "unpopular", false);
-        create("shifts", shift).statusCode(200).body("key", equalTo("DS1")).body("item.areaId", equalTo("LF"));
+        create("shifts", shift).statusCode(200).body("key", equalTo("SN1")).body("item.areaId", equalTo("LF"));
         ObjectNode s = (ObjectNode) mapper.valueToTree(shift);
-        s.put("id", "DS1").put("name", "Feuer Tag lang");
-        update("shifts", "DS1", s).statusCode(200).body("item.name", equalTo("Feuer Tag lang"));
+        s.put("id", "SN1").put("name", "Feuer Tag lang");
+        update("shifts", "SN1", s).statusCode(200).body("item.name", equalTo("Feuer Tag lang"));
         create("demand", Map.of("areaId", "LF", "days", List.of("MON", "TUE"), "from", "07:00", "to", "19:00",
                 "min", 1)).statusCode(200).body("key", equalTo("3"));
         update("demand", "3", Map.of("areaId", "LF", "days", List.of("MON"), "from", "07:00", "to", "19:00",
@@ -158,14 +158,14 @@ class MasterDataTest {
         // an area keeps its shifts until they are removed; its demand and the people's areas go with it
         remove("areas", "LF", true).statusCode(409).body("code", equalTo("masterdata.areaHasShifts"))
                 .body("params.count", equalTo(1));
-        remove("shifts", "DS1", false).statusCode(200);
-        ObjectNode withArea = person("DP2");
+        remove("shifts", "SN1", false).statusCode(200);
+        ObjectNode withArea = person("PN2");
         withArea.putArray("areaIds").add("AN").add("LF");
-        update("people", "DP2", withArea).statusCode(200);
+        update("people", "PN2", withArea).statusCode(200);
         remove("areas", "LF", false).statusCode(409).body("code", equalTo("masterdata.inUse"))
                 .body("params.count", equalTo(1));
         remove("areas", "LF", true).statusCode(200).body("removed", equalTo(1));
-        assertThat(mapper.convertValue(person("DP2").path("areaIds"), List.class)).isEqualTo(List.of("AN"));
+        assertThat(mapper.convertValue(person("PN2").path("areaIds"), List.class)).isEqualTo(List.of("AN"));
         // removed short codes are not given again, existing ones not twice
         create("areas", Map.of("id", "LF", "name", "Wieder", "color", "#000000")).statusCode(400)
                 .body("code", equalTo("masterdata.idTaken"));
