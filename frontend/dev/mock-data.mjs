@@ -99,6 +99,8 @@ export function makeDataset(month, seed = 1) {
       compRestBalance: Math.floor(r() * 4),
       familyRules: r() < 0.12 ? [{ weekdays: [2, 4], latestEnd: '18:00', earliestStart: null, noNights: true, note: 'Kinderbetreuung' }] : [],
       externalId: String(100 + i),
+      shiftMix: i % 6 === 0 ? { categories: { DAY: 0.9, NIGHT: 0.1 }, areas: Object.fromEntries(areaIds.map((a, k) => [a, areaIds.length === 1 ? 1 : (k === 0 ? 0.7 : 0.3)])) }
+        : i % 6 === 3 ? { categories: { EARLY: 0.5, LATE: 0.5 }, areas: {} } : null,
     };
   });
   const dates = monthDates(month);
@@ -173,6 +175,7 @@ export const CONSTRAINTS = [
   ['fairNights', 'SOFT', 'Faire Nachtverteilung', 'Nächte gleichmäßig verteilen, mit Historie der Vormonate.', 25],
   ['fairWeekends', 'SOFT', 'Faire Wochenenden', 'Arbeitswochenenden gleichmäßig verteilen.', 25],
   ['fairUnpopular', 'SOFT', 'Unbeliebte Dienste', 'Unbeliebte Dienste gleichmäßig verteilen.', 15],
+  ['shiftMix', 'SOFT', 'Gewohnte Verteilung', 'Dienste folgen den gewohnten Anteilen je Schichtart und Bereich.', 200],
   ['restrictionOnRequest', 'SOFT', 'Nur auf Anfrage', 'Schichten, die eine Person nur nach Rückfrage macht.', 50],
   // on-request duties are never planned automatically, so their weight is not a setting
 ].map(([id, level, label, description, defaultWeight]) => ({ id, level, label, description, defaultWeight,

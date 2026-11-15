@@ -179,7 +179,13 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
     let singleDays = 0;
     for (const a of duties) if (!dutyDates.has(addDays(a.date, -1)) && !dutyDates.has(addDays(a.date, 1))) singleDays++;
     const round = (x) => Math.round(x * 100) / 100;
+    const share = (key) => {
+      const out = {};
+      for (const a of duties) { const k = key(a); out[k] = (out[k] ?? 0) + 1; }
+      return Object.fromEntries(Object.entries(out).map(([k, n]) => [k, Math.round((n / duties.length) * 1000) / 1000]));
+    };
     return {
+      plannedMix: duties.length ? { categories: share((a) => shifts.get(a.shiftId).category), areas: share((a) => shifts.get(a.shiftId).areaId) } : null,
       personId: p.id, targetHours: round(targetHours), creditedHours: round(creditedHours), plannedHours: round(plannedHours),
       goalHours: round(targetHours + p.hoursAccount * 0.5), scaledGoalHours: round((targetHours + p.hoursAccount * 0.5) * 0.92),
       accountBefore: p.hoursAccount, accountAfter: round(p.hoursAccount + plannedHours + creditedHours - targetHours),
@@ -365,7 +371,7 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
     if (a === 'logout') return json(null, 204);
     if (a === 'dataset' && !b && method === 'GET') {
       if (role !== 'planner') {
-        return json({ ...dataset, periods: [], restrictions: [], people: dataset.people.map((p) => ({ ...p, familyRules: [], hoursAccount: null, compRestBalance: null })) });
+        return json({ ...dataset, periods: [], restrictions: [], people: dataset.people.map((p) => ({ ...p, familyRules: [], hoursAccount: null, compRestBalance: null, shiftMix: null })) });
       }
       return json({ ...dataset, periods: [] });
     }

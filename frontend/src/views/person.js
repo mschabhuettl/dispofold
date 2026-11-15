@@ -5,6 +5,7 @@ import { groupHitsByDate } from '../lib/explain.js';
 import { personName } from '../lib/grid-model.js';
 import { constraintLabel, hitText } from '../lib/codes.js';
 import { familyText, restrictionText } from '../lib/masterdata-edit.js';
+import { mixRows, sharePercent } from '../lib/shift-mix.js';
 import { t } from '../lib/texts.js';
 
 const LEVEL = { HARD: t('person.level.hard'), MEDIUM: t('person.level.medium'), SOFT: t('person.level.soft') };
@@ -75,6 +76,7 @@ export async function render(root, ctx, [personId]) {
         // compensatory-rest balance and the hours account are personal: planners only (viewers get null)
         ctx.canEdit && kpi(t('person.kpi.compRestEarned'), fmt.num(s.compRestEarned)),
         ctx.canEdit && kpi(t('person.kpi.compRestOpenAfter'), fmt.num(s.compRestBalanceAfter)))),
+    mixSection(s.plannedMix, person.shiftMix, areaNames),
     h('section.section', { 'aria-labelledby': 'h-hist' }, h('h2', { id: 'h-hist' }, t('person.section.history')),
       h('div.kpis', {},
         kpi(t('person.kpi.nights'), fmt.num(s.historyNights)), kpi(t('person.kpi.weekends'), fmt.num(s.historyWeekends)), kpi(t('person.kpi.holidays'), fmt.num(s.historyHolidays)),
@@ -88,4 +90,13 @@ export async function render(root, ctx, [personId]) {
           h('span', { class: `score ${hit.score < 0 ? 'score-neg' : hit.score > 0 ? 'score-pos' : ''}` }, fmt.num(hit.score))))))
         : h('p.muted', {}, t('person.noHits'))),
   );
+}
+
+/** Planned against usual share of the duties per category and area; nothing to show without either. */
+function mixSection(planned, usual, areaNames) {
+  const rows = mixRows(planned, usual, (id) => areaNames.get(id) ?? id);
+  if (!rows.length) return null;
+  return h('section.section', { 'aria-labelledby': 'h-mix' }, h('h2', { id: 'h-mix' }, t('person.section.mix')),
+    h('table.data', {}, h('thead', {}, h('tr', {}, h('th', {}, t('person.mix.group')), h('th.num', {}, t('person.mix.planned')), h('th.num', {}, t('person.mix.usual')))),
+      h('tbody', {}, rows.map((r) => h('tr', {}, h('td', {}, r.name), h('td.num', {}, sharePercent(r.planned)), h('td.num', {}, sharePercent(r.usual)))))));
 }

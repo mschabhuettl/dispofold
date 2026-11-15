@@ -150,6 +150,7 @@ der Erklärung je Person.
 | `compRestUse` | Ersatzruhe abbauen | Bonus je geplantem Ersatzruhetag | 500 |
 | `shiftVariety` | Abwechslung der Dienste | je Paar Dienste gleichen Bereichs und gleicher Kategorie, mit Vormonat | 5 |
 | `areaVariety` | Abwechslung der Bereiche | je Paar Dienste im selben Bereich, mit Vormonat (nur bei mehreren Bereichen) | 1 |
+| `shiftMix` | Gewohnte Verteilung | quadrierte Abweichung in Zehntel-Diensten je Kategorie und Bereich, siehe unten | 200 |
 | `family` | Familienwunsch | je Dienst gegen die Regel | 800 |
 | `onRequest` | Dienst nur auf Anfrage, von Hand gesetzt | je solchem Dienst; Gewicht fest, nicht einstellbar | 1000 |
 
@@ -187,6 +188,23 @@ der Erklärung je Person.
   harte Obergrenze bleibt beim echten Ziel. Personenansicht und Analyse zeigen beide Ziele.
 - Die Strafe ist die Abweichung in Viertelstunden (vom Ziel für diesen Plan), quadriert, damit sie sich auf viele Personen verteilt statt
   bei wenigen hängen zu bleiben. Beispiel: 4 h Abweichung sind 16 Viertelstunden, Strafe 256 mal Gewicht.
+
+### Gewohnte Verteilung
+
+- Eine Person kann eine gewohnte Verteilung haben (`shiftMix` in den Stammdaten, z. B. aus der Historie
+  exportiert): Anteile ihrer Dienste je Kategorie (Früh, Tag, Spät, Nacht) und je Bereich. Die Planung
+  korrigiert sie in den Stammdaten oder entfernt sie.
+- Je Kategorie und Bereich wird verglichen: geplante Dienste des Monats gegen Anteil mal alle geplanten
+  Dienste der Person. Die Strafe ist die quadrierte Abweichung in Zehntel-Diensten, summiert. Beispiel: Eine
+  Person mit 90 % Tag und 10 % Nacht hat 10 Dienste; 9 Tag und 1 Nacht kosten nichts, 5 und 5 kosten
+  2 × 40² = 3200 mal Gewicht. Quadriert, damit kleine Abweichungen wenig und eine ganz andere Verteilung viel
+  kosten. Gewicht 200, damit die Verteilung den Plan sichtbar prägt; Bedarf und Überbesetzung (mittlere
+  Stufe) gehen immer vor.
+- Wechselwirkung: Wer eine Verteilung je Kategorie hat, zählt nicht für die Fairness der Nachtdienste und nicht
+  für die Abwechslung der Dienste, sonst würden diese Regeln die Verteilung wieder einebnen. Wer eine
+  Verteilung je Bereich hat, zählt nicht für die Abwechslung der Bereiche. Wochenenden, Feiertage und
+  unbeliebte Dienste bleiben fair verteilt. Personen ohne Verteilung werden geplant wie bisher.
+- Die Personenansicht zeigt die geplante Verteilung neben der gewohnten.
 
 ### Fairness
 

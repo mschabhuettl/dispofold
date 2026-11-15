@@ -2,6 +2,7 @@
 // after a 409 masterdata.conflict, and texts for restrictions, family rules and the in-use question. Pure, no DOM.
 // Form values are plain objects of strings, booleans and string lists as read from the inputs.
 import { monthLabel, WEEKDAY_SHORT } from './dates.js';
+import { mixFromForm, mixToForm } from './shift-mix.js';
 import { t } from './texts.js';
 
 export const KINDS = ['people', 'areas', 'shifts', 'demand', 'holidays', 'absenceTypes'];
@@ -70,7 +71,7 @@ const TO_FORM = {
   people: (p) => ({ firstName: p.firstName ?? '', lastName: p.lastName ?? '', shortName: p.shortName ?? '',
     weeklyHours: String(p.weeklyHours ?? ''), areaIds: [...(p.areaIds ?? [])], hoursAccount: String(p.hoursAccount ?? 0),
     compRestBalance: String(p.compRestBalance ?? 0), externalId: p.externalId ?? '', entryDate: p.entryDate ?? '',
-    exitDate: p.exitDate ?? '', familyRules: (p.familyRules ?? []).map(familyRuleToForm) }),
+    exitDate: p.exitDate ?? '', familyRules: (p.familyRules ?? []).map(familyRuleToForm), shiftMix: mixToForm(p.shiftMix, p.areaIds) }),
   areas: (a) => ({ id: a.id ?? '', name: a.name ?? '', color: a.color ?? '' }),
   shifts: (s) => ({ areaId: s.areaId ?? '', code: s.code ?? '', name: s.name ?? '', start: hhmm(s.start), end: hhmm(s.end),
     category: s.category ?? '', color: s.color ?? '', unpopular: Boolean(s.unpopular) }),
@@ -91,11 +92,16 @@ const FROM_FORM = {
     const entryDate = orNull(v.entryDate);
     const exitDate = orNull(v.exitDate);
     if (entryDate && exitDate && exitDate < entryDate) throw new Error(t('masterdata.exitBeforeEntry'));
+    const areaIds = [...(v.areaIds ?? [])];
+    const shiftMix = mixFromForm(v.shiftMix, areaIds);
     // fields the form does not show (e.g. from a newer server) stay as they were
-    return { ...base, firstName: required(v.firstName, t('masterdata.col.firstName')), lastName: required(v.lastName, t('masterdata.col.lastName')),
-      shortName: orNull(v.shortName), weeklyHours: number(v.weeklyHours, t('masterdata.col.weeklyHours')), areaIds: [...(v.areaIds ?? [])],
+    const person = { ...base, firstName: required(v.firstName, t('masterdata.col.firstName')), lastName: required(v.lastName, t('masterdata.col.lastName')),
+      shortName: orNull(v.shortName), weeklyHours: number(v.weeklyHours, t('masterdata.col.weeklyHours')), areaIds,
       hoursAccount: number(v.hoursAccount, t('masterdata.col.account')), compRestBalance: number(v.compRestBalance, t('masterdata.col.compRestOpen')),
       familyRules: (v.familyRules ?? []).map(familyRuleFromForm), externalId: orNull(v.externalId), entryDate, exitDate };
+    // the key stays absent for a person without a mix (and without one before)
+    if (shiftMix || 'shiftMix' in base) person.shiftMix = shiftMix;
+    return person;
   },
   areas: (v, base) => ({ ...base, id: required(v.id, t('masterdata.col.shortName')), name: required(v.name, t('masterdata.col.name')), color: orNull(v.color) }),
   shifts: (v, base) => ({ ...base, areaId: required(v.areaId, t('masterdata.col.area')), code: required(v.code, t('masterdata.col.code')),

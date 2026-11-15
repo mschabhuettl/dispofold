@@ -7,6 +7,7 @@ import { personName } from '../lib/grid-model.js';
 import { messageText } from '../lib/codes.js';
 import { CATEGORIES, DEMAND_DAYS, conflictDecision, familyText, fromForm, inUseQuestion, itemLabel, keyOf, restrictionFromForm,
   restrictionText, toForm } from '../lib/masterdata-edit.js';
+import { MIX_CATEGORIES, mixText } from '../lib/shift-mix.js';
 import { t } from '../lib/texts.js';
 
 const CATEGORY = { EARLY: t('masterdata.category.early'), DAY: t('masterdata.category.day'), LATE: t('masterdata.category.late'), NIGHT: t('masterdata.category.night') };
@@ -38,6 +39,7 @@ export async function render(root, ctx) {
         // hours account, compensatory rest, family rules and restrictions are personal: planners only (viewers get null)
         canEdit && [t('masterdata.col.account'), (p) => fmt.num(p.hoursAccount, 1), 'num'], canEdit && [t('masterdata.col.compRestOpen'), (p) => fmt.num(p.compRestBalance), 'num'],
         canEdit && [t('masterdata.col.familyRules'), (p) => (p.familyRules ?? []).map(familyText).join('; ')],
+        [t('masterdata.col.shiftMix'), (p) => mixText(p.shiftMix, (id) => id)],
         canEdit && [t('masterdata.col.restrictions'), (p) => restrictions(p).map((r) => restrictionText(r, shifts)).join('; ')]],
       areas: [[t('masterdata.col.shortName'), (a) => chip(a.color, a.id)], [t('masterdata.col.name'), (a) => a.name]],
       absenceTypes: [[t('masterdata.col.code'), (a) => a.code], [t('masterdata.col.name'), (a) => a.name], [t('masterdata.col.reducesTarget'), (a) => yesNo(a.reducesTarget)],
@@ -65,7 +67,7 @@ export async function render(root, ctx) {
         { name: 'externalId', label: t('masterdata.col.externalId') },
         { name: 'entryDate', label: t('masterdata.entryDate'), type: 'date' }, { name: 'exitDate', label: t('masterdata.exitDate'), type: 'date' },
         { name: 'areaIds', label: t('masterdata.col.areas'), type: 'checks', options: dataset.areas.map((a) => [a.id, a.id]) },
-        { name: 'familyRules', type: 'family' }],
+        { name: 'familyRules', type: 'family' }, { name: 'shiftMix', type: 'mix' }],
       areas: [{ name: 'id', label: t('masterdata.col.shortName'), required: true, readOnly: editing }, { name: 'name', label: t('masterdata.col.name'), required: true },
         { name: 'color', label: t('masterdata.col.color'), placeholder: '#RRGGBB' }],
       absenceTypes: [{ name: 'code', label: t('masterdata.col.code'), required: true, readOnly: editing }, { name: 'name', label: t('masterdata.col.name'), required: true },
@@ -155,6 +157,15 @@ export async function render(root, ctx) {
     } },
     base && kind === 'people' && h('span.muted', {}, `${t('masterdata.col.id')}: ${base.id}`),
     defs.map((f) => control(f, v[f.name])), formButtons(), problems());
+    if (kind === 'people') {
+      // the area shares only offer the areas ticked above
+      const sync = () => {
+        const ticked = new Set([...form.querySelectorAll('input[name="areaIds"]:checked')].map((c) => c.value));
+        form.querySelectorAll('div[data-mix-area]').forEach((el) => { el.hidden = !ticked.has(el.dataset.mixArea); });
+      };
+      form.addEventListener('change', sync);
+      sync();
+    }
     if (kind === 'demand') {
       const mode = form.querySelector('#f-mode');
       const show = () => form.querySelectorAll('[data-mode]').forEach((el) => { el.hidden = el.dataset.mode !== mode.value; });
@@ -297,6 +308,7 @@ export async function render(root, ctx) {
     const id = `f-${f.name}`;
     const data = f.mode ? { 'data-mode': f.mode } : {};
     if (f.type === 'family') return familyEditor(value ?? []);
+    if (f.type === 'mix') return mixEditor(value);
     if (f.type === 'checks') {
       return h('fieldset', { style: bare, ...data }, h('legend', { style: { fontWeight: 600 } }, f.label),
         f.options.map(([v, label]) => h('label', { style: inline }, h('input', { type: 'checkbox', name: f.name, value: v, checked: (value ?? []).includes(v) }), ` ${label}`)));
@@ -333,6 +345,18 @@ export async function render(root, ctx) {
     return h('div', { style: { flexBasis: '100%' } }, host);
   }
 
+  /** Usual shift mix of the person form: a percentage per category and per area, cleared with one button. */
+  function mixEditor(mix) {
+    const field = (wrapper, attr, key, name, value) => h('div.field', wrapper,
+      h('label', {}, t('masterdata.shiftMix.input', { name })), h('input', { type: 'text', inputmode: 'decimal', size: 5, value, [attr]: key }));
+    const inputs = h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '.4rem .8rem', alignItems: 'end' } },
+      MIX_CATEGORIES.map((c) => field({}, 'data-mix-cat', c, CATEGORY[c], mix?.categories?.[c] ?? '')),
+      dataset.areas.map((a) => field({ 'data-mix-area': a.id }, 'data-mix-area', a.id, a.id, mix?.areas?.[a.id] ?? '')));
+    const clear = h('button.btn.btn-secondary.btn-small', { type: 'button',
+      onclick: () => inputs.querySelectorAll('input').forEach((i) => { i.value = ''; }) }, t('masterdata.shiftMix.remove'));
+    return h('div', { style: { flexBasis: '100%' } }, h('strong', {}, t('masterdata.col.shiftMix')), h('p.muted', {}, t('masterdata.shiftMix.help')), inputs, clear);
+  }
+
   draw();
 }
 
@@ -345,6 +369,9 @@ function readForm(form, defs) {
         weekdays: [...el.querySelectorAll('[data-fr=weekdays]:checked')].map((c) => c.value),
         latestEnd: el.querySelector('[data-fr=latestEnd]').value, earliestStart: el.querySelector('[data-fr=earliestStart]').value,
         noNights: el.querySelector('[data-fr=noNights]').checked, note: el.querySelector('[data-fr=note]').value }));
+    } else if (f.type === 'mix') {
+      const read = (attr) => Object.fromEntries([...form.querySelectorAll(`input[${attr}]`)].map((i) => [i.getAttribute(attr), i.value]));
+      out[f.name] = { categories: read('data-mix-cat'), areas: read('data-mix-area') };
     } else if (f.type === 'checks') out[f.name] = [...form.querySelectorAll(`input[name="${f.name}"]:checked`)].map((c) => c.value);
     else if (f.type === 'checkbox') out[f.name] = form.querySelector(`#f-${f.name}`).checked;
     else out[f.name] = form.querySelector(`#f-${f.name}`).value;
