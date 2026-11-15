@@ -51,7 +51,7 @@ class DesktopResourceTest {
     @Test
     void updateSettingsArePersisted() throws Exception {
         Files.deleteIfExists(Path.of(DesktopProfile.BASE, "daten/einstellungen.json"));
-        local().get("/api/desktop/update").then().statusCode(200).body("current", equalTo("0.5.0"))
+        local().get("/api/desktop/update").then().statusCode(200).body("current", equalTo("0.6.0"))
                 .body("source", equalTo("")).body("available", nullValue())
                 .body("error", nullValue());
         // No source by default: a check answers "no source" without contacting anything

@@ -3,6 +3,24 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.6.0 (2026-11-15)
+
+Blöcke statt einzelner freier Tage, auch wenn der Bedarf weniger Arbeit braucht, als die Ziele hergeben.
+
+- **Ziel für diesen Plan:** Braucht der Bedarf weniger Arbeit, als die Ziele aller Personen zusammen ergeben,
+  wird jedes Ziel um denselben Anteil verkleinert (angerechnete Abwesenheiten und offene Ersatzruhe bleiben).
+  Die weiche Sollstunden-Regel misst gegen dieses Ziel, die harte Obergrenze weiter gegen das echte Ziel. Die
+  Personenansicht zeigt Soll, Ziel und Ziel für diesen Plan.
+- **Blöcke bevorzugt:** Standardgewichte „Einzelner freier Tag“ 10000 (vorher 400) und „Blöcke von 2 bis 4
+  Diensten“ 6000 (vorher 600). Im Demomonat sanken die einzelnen freien Tage von 261 auf 76, unerfüllte
+  Wünsche stiegen von 24 auf 38. Gespeicherte Gewichte bleiben; auf der Seite Regeln lassen sie sich auf die
+  neuen Standards setzen.
+- **Statuszeile und Analyse:** Zahl der einzelnen freien Tage und der Blocktage außerhalb von 2 bis 4
+  (`singleDaysOff`, `blockDays`); in den Kennzahlen je Person `goalHours` und `scaledGoalHours`.
+- Rolle Lesen: Treffer zu Sollstunden und Höchststunden sind nur für die Planung sichtbar (sie enthalten das
+  um das Stundenkonto korrigierte Ziel).
+- Betrieb: keine Änderung an Datenbank, `docker-compose.yml` oder `.env`.
+
 ## 0.5.0 (2026-11-15)
 
 Keine doppelt besetzten Positionen mehr, nur um Sollstunden zu füllen.
