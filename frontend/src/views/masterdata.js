@@ -269,6 +269,10 @@ export async function render(root, ctx) {
       // the object itself was changed too: do not save, let the user check
       reopen();
       showProblem(new Error(t('masterdata.conflict.changed')));
+    } else if (decision.action === 'gone' && op.item !== undefined && op.kind !== 'restrictions') {
+      // changed or removed meanwhile (holidays and demand cannot tell): the own values as a new entry, not saved
+      openForm(op.kind, null, op.values);
+      showProblem(new Error(t('masterdata.conflict.goneForm')));
     } else {
       toast(decision.action === 'gone' ? t('masterdata.conflict.gone') : t('masterdata.conflict.changedRemove'), true);
     }

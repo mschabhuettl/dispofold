@@ -14,6 +14,8 @@ const CATEGORY = { EARLY: t('masterdata.category.early'), DAY: t('masterdata.cat
 const KIND_ONE = { people: t('kind.person'), areas: t('kind.area'), shifts: t('kind.shift'), demand: t('kind.demand'),
   holidays: t('kind.holiday'), absenceTypes: t('kind.absenceType'), restrictions: t('kind.restrictions') };
 const WEEKDAYS = ['', ...WEEKDAY_SHORT];
+const DAY_NAMES = { MON: WEEKDAY_SHORT[0], TUE: WEEKDAY_SHORT[1], WED: WEEKDAY_SHORT[2], THU: WEEKDAY_SHORT[3], FRI: WEEKDAY_SHORT[4],
+  SAT: WEEKDAY_SHORT[5], SUN: WEEKDAY_SHORT[6], HOL: t('masterdata.holiday') };
 
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
 const text = (v) => String(v ?? '').trim();
@@ -160,11 +162,12 @@ export function familyText(f) {
   return f.note ? `${out} (${f.note})` : out;
 }
 
-/** Short label of an object for questions and messages, e.g. "Schicht N1" or "Feiertag 25.12.2026". */
+/** Short label of an object for questions and messages, e.g. "Schicht N1", "Bedarfsregel AN Mo, Di 07:00-19:00". */
 export function itemLabel(kind, item) {
   const name = kind === 'people' ? [item.firstName, item.lastName].filter(Boolean).join(' ') || item.id
     : kind === 'shifts' ? item.code : kind === 'areas' ? item.id : kind === 'absenceTypes' ? item.code
-      : kind === 'holidays' ? de(item.date) : `${item.areaId} ${item.date ? de(item.date) : (item.days ?? []).join(', ')}`;
+      : kind === 'holidays' ? de(item.date)
+        : `${item.areaId} ${item.date ? de(item.date) : (item.days ?? []).map((d) => DAY_NAMES[d] ?? d).join(', ')} ${hhmm(item.from)}-${hhmm(item.to)}`;
   return `${KIND_ONE[kind]} ${name}`;
 }
 

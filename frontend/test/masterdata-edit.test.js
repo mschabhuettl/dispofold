@@ -90,6 +90,7 @@ test('keys, labels and the in-use question', () => {
   assert.equal(keyOf('holidays', { date: '2026-12-25' }, 4), 4);
   assert.equal(itemLabel('holidays', { date: '2026-12-25', name: 'Christtag' }), 'Feiertag 25.12.2026');
   assert.equal(itemLabel('people', person), 'Person Anna Beispiel');
+  assert.equal(itemLabel('demand', { areaId: 'AN', days: ['MON', 'HOL'], date: null, from: '07:00:00', to: '19:00' }), 'Bedarfsregel AN Mo, Feiertag 07:00-19:00');
   assert.equal(inUseQuestion('shifts', { code: 'N1' }, { kind: 'shifts', key: 'DS3', count: 4, months: '2027-01,2027-02' }),
     'Schicht N1 wird noch 4-mal verwendet (in Jänner 2027, Februar 2027). Mit allen Verweisen entfernen?');
   assert.equal(messageText({ code: 'masterdata.inUseClosed', params: { kind: 'people', key: 'P1', months: '2026-11,2026-12' } }),

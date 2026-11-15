@@ -415,6 +415,7 @@ export const TEXTS = {
   'masterdata.conflict.reloaded': 'Eigene Änderung verworfen, die neue Fassung ist geladen.',
   'masterdata.conflict.changed': 'Dieser Eintrag wurde inzwischen auch von jemand anderem geändert. Die eigenen Angaben stehen wieder im Formular: bitte prüfen und erneut speichern.',
   'masterdata.conflict.changedRemove': 'Der Eintrag wurde inzwischen von jemand anderem geändert und deshalb nicht entfernt. Bitte prüfen.',
+  'masterdata.conflict.goneForm': 'Der Eintrag wurde inzwischen von jemand anderem geändert oder entfernt. Nichts wurde gespeichert. Die eigenen Angaben stehen als neuer Eintrag im Formular: bitte prüfen und nur bei Bedarf speichern.',
   'masterdata.conflict.gone': 'Der Eintrag wurde inzwischen von jemand anderem geändert oder entfernt. Nichts wurde gespeichert; bitte prüfen.',
 
   // import and export view
