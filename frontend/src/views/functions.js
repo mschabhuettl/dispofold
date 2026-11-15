@@ -1,8 +1,8 @@
-// Plan nach Funktion: functions (a shift of an area) x days of the month, one row per position, gaps marked.
+// Plan nach Funktion: functions (a shift of an area) x days of the month, one row per position, a row of gaps per area.
 import { tintStyle } from '../lib/colors.js';
 import { dayLabel, monthLabel } from '../lib/dates.js';
 import { append, guarded, h } from '../lib/dom.js';
-import { NAME_MODES, buildFunctionRows, personLabel, printParts } from '../lib/functions-model.js';
+import { NAME_MODES, buildFunctionRows, gapLine, personLabel, printParts } from '../lib/functions-model.js';
 import { cellRequest, cellsEditable } from '../lib/grid-model.js';
 import { needsRulesForCategories, onRequestTest } from '../lib/restrictions.js';
 import { t } from '../lib/texts.js';
@@ -56,7 +56,7 @@ export async function render(root, ctx) {
     let r = 0;
     const body = model.rows.map((row) => (row.type === 'group'
       ? h('tr.group', {}, h('th', { colspan: model.days.length + 1, scope: 'colgroup' }, row.area.name))
-      : positionRow(row, r++, model.days)));
+      : row.type === 'gaps' ? gapRow(row, r++, model.days) : positionRow(row, r++, model.days)));
     table.replaceChildren(h('table.roster.functions', { class: nameMode === 'full' ? 'full-names' : null, role: 'grid', 'aria-readonly': editable() ? null : 'true' },
       h('caption.visually-hidden', {}, title),
       h('thead', {}, h('tr', {}, h('th.person', { scope: 'col' }, t('functions.function')), model.days.map(dayHeader))),
@@ -74,13 +74,41 @@ export async function render(root, ctx) {
       ' ', h('span.meta', {}, t('functions.position', { n: row.index + 1 })));
   }
 
+  function gapRowHeader() {
+    return h('th.person.gap-row', { scope: 'row' }, t('functions.gapsRow'));
+  }
+
+  /** The gaps of an area, one cell per day: each gap of the day on its own line. */
+  function gapLines(c) {
+    return c.gaps.map((g) => h('span.cell-code', {}, t('functions.gapLine', gapLine(g))));
+  }
+
+  function gapRow(row, r, days) {
+    return h('tr.gap-row', { 'data-row': String(r) }, gapRowHeader(),
+      row.cells.map((c, i) => h('td.cell', { class: dayClass(days[i]) }, gapButton(row, c, days[i], r, i))));
+  }
+
+  function gapButton(row, c, day, r, col) {
+    const open = editable() && c.kind === 'gaps';
+    const info = { area: row.area.name, day: dayLabel(day.date) };
+    const label = c.kind === 'gaps'
+      ? t('functions.gapTitle', { ...info, gaps: c.gaps.map((g) => t('functions.gapLine', gapLine(g))).join(', ') })
+      : t('functions.gapsEmptyTitle', info);
+    // always focusable for arrow navigation; read-only cells do nothing on Enter or click
+    return h('button', { type: 'button', class: `cell-btn${c.kind === 'gaps' ? ' gap-marker' : ' cell-free'}`, title: label, 'aria-label': label,
+      'aria-haspopup': open ? 'dialog' : null, 'aria-disabled': open ? null : 'true', tabindex: '-1',
+      'data-cell': `gaps|${row.area.id}|${day.date}`, 'data-r': String(r), 'data-c': String(col),
+      onclick: (e) => { if (open && editable()) openGap(e.currentTarget, row.area, c, day); } },
+    c.kind === 'gaps' ? gapLines(c) : '');
+  }
+
   function positionRow(row, r, days) {
     return h('tr', { 'data-row': String(r) }, rowHeader(row),
       row.cells.map((c, i) => h('td.cell', { class: dayClass(days[i]) }, cellButton(row, c, days[i], r, i))));
   }
 
   function cellButton(row, c, day, r, col) {
-    const open = editable() && c.kind !== 'empty';
+    const open = editable() && c.kind === 'person';
     const shift = row.shift;
     let label;
     let cls = 'cell-btn';
@@ -91,10 +119,6 @@ export async function render(root, ctx) {
       label = cell.pinned ? t('roster.cellTitlePinned', info) : t('roster.cellTitle', info);
       cls += `${cell.pinned ? ' cell-pinned' : ''}${cell.conflict ? ' cell-hard' : ''}${cell.onRequest ? ' cell-on-request' : ''}`;
       inner = h('span.cell-code', shift.color ? { class: 'tinted', style: tintStyle(shift.color) } : {}, personLabel(c.person, c.name, nameMode));
-    } else if (c.kind === 'gap') {
-      label = t('functions.gapTitle', { shift: shift.name, day: dayLabel(day.date) });
-      cls += ' gap-marker';
-      inner = h('span.cell-code', {}, t('functions.missing'));
     } else {
       label = t('functions.emptyTitle', { shift: shift.name, day: dayLabel(day.date) });
       cls += ' cell-free';
@@ -104,9 +128,7 @@ export async function render(root, ctx) {
       'aria-disabled': open ? null : 'true', tabindex: '-1', 'data-cell': `${shift.id}|${row.index}|${day.date}`,
       'data-r': String(r), 'data-c': String(col),
       onclick: (e) => {
-        if (!editable()) return;
-        if (c.kind === 'person') openCell(e.currentTarget, c, day);
-        else if (c.kind === 'gap') openGap(e.currentTarget, shift, c, day);
+        if (editable() && c.kind === 'person') openCell(e.currentTarget, c, day);
       } }, inner);
   }
 
@@ -123,9 +145,9 @@ export async function render(root, ctx) {
       cellChoice({ cell, person, shifts: dataset.shifts, pick }));
   }
 
-  /** The gaps behind a marker, each with who could be asked. */
-  function openGap(anchor, shift, c, day) {
-    const el = popover.open(anchor, t('functions.gapDialog', { shift: shift.name, day: dayLabel(day.date) }),
+  /** The gaps of a day, each with who could be asked. */
+  function openGap(anchor, area, c, day) {
+    const el = popover.open(anchor, t('functions.gapDialog', { area: area.name, day: dayLabel(day.date) }),
       gapsWithCandidates({ api, month, gaps: c.gaps, dataset, onSet: (plan) => afterSet(plan, anchor.dataset.cell) }));
     // the names load later: focus the dialog so that Escape works meanwhile
     el.tabIndex = -1;
@@ -147,15 +169,15 @@ export async function render(root, ctx) {
     const text = (c) => (c.kind === 'person'
       ? h('span.cell-code', { class: [c.cell.pinned && 'pinned', c.cell.conflict && 'hard', c.cell.onRequest && 'on-request'].filter(Boolean).join(' ') },
         personLabel(c.person, c.name, nameMode))
-      : c.kind === 'gap' ? h('span.cell-code', {}, t('functions.missing')) : '');
+      : c.kind === 'gaps' ? gapLines(c) : '');
     return h('table.roster.functions-print', {},
       h('caption', {}, `${title}, ${t('functions.printPart', { from: days[0].day, to: days.at(-1).day })}`),
       h('thead', {}, h('tr', {}, h('th.person', { scope: 'col' }, t('functions.function')), days.map(dayHeader))),
       h('tbody', {}, model.rows.map((row) => (row.type === 'group'
         ? h('tr.group', {}, h('th', { colspan: days.length + 1, scope: 'colgroup' }, row.area.name))
-        : h('tr', {}, rowHeader(row), days.map((d, i) => {
+        : h(row.type === 'gaps' ? 'tr.gap-row' : 'tr', {}, row.type === 'gaps' ? gapRowHeader() : rowHeader(row), days.map((d, i) => {
           const c = row.cells[from + i];
-          return h('td.cell', { class: `${dayClass(d)}${c.kind === 'gap' ? ' gap-marker' : ''}` }, text(c));
+          return h('td.cell', { class: `${dayClass(d)}${c.kind === 'gaps' ? ' gap-marker' : ''}` }, text(c));
         }))))));
   }
 
@@ -181,5 +203,5 @@ function legend(canEdit) {
     h('span', {}, h('span.cell-code.pinned', {}, 'ABC'), ' ', t('roster.legend.pinned')),
     h('span', {}, h('span.cell-code.strong.hard', {}, 'ABC'), ' ', t('roster.legend.conflict')),
     canEdit && h('span', {}, h('span.cell-code.on-request', {}, 'ABC'), ' ', t('roster.legend.onRequest')),
-    h('span.gap-marker', {}, h('span.cell-code', {}, t('functions.missing')), ' ', t('functions.legend.missing')));
+    h('span.gap-marker', {}, h('span.cell-code', {}, t('functions.gapLine', { count: 1, from: '07:00', to: '19:00' })), ' ', t('functions.legend.missing')));
 }

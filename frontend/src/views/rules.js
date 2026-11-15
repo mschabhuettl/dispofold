@@ -23,6 +23,7 @@ const PARAMS = [
   ['nightStart', t('rules.param.nightStart.label'), '', 'time'],
   ['nightEnd', t('rules.param.nightEnd.label'), '', 'time'],
   ['nightMinHours', t('rules.param.nightMinHours.label'), t('rules.param.nightMinHours.help'), 'number', 0.5],
+  ['maxOverTargetPercent', t('rules.param.maxOverTargetPercent.label'), t('rules.param.maxOverTargetPercent.help'), 'number', 1],
   ['accountCarryShare', t('rules.param.accountCarryShare.label'), t('rules.param.accountCarryShare.help'), 'number', 0.05],
   ['historyMonths', t('rules.param.historyMonths.label'), t('rules.param.historyMonths.help'), 'number', 1],
 ];
@@ -32,6 +33,7 @@ export async function render(root, ctx) {
   const [constraints, rules] = await Promise.all([api.constraints(), api.rules()]);
   const weights = Object.fromEntries(constraints.map((c) => [c.id, c.weight ?? rules.weights?.[c.id] ?? c.defaultWeight]));
   const params = { ...rules };
+  params.maxOverTargetPercent ??= 10; // rules saved before the setting existed
 
   root.append(h('h1', {}, t('nav.rules')));
   if (!canEdit) root.append(h('p.alert', {}, t('rules.readonly')));

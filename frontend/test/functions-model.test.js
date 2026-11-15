@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildFunctionRows, missingByShiftDay, personLabel, printParts, windowOverlapsShift } from '../src/lib/functions-model.js';
+import { buildFunctionRows, gapLine, personLabel, printParts, windowOverlapsShift } from '../src/lib/functions-model.js';
 import { buildDays } from '../src/lib/grid-model.js';
 import { onRequestTest } from '../src/lib/restrictions.js';
 
@@ -34,11 +34,15 @@ const plan = {
 };
 const period = { absences: [{ personId: 'P2', date: '2027-01-06', typeCode: 'U' }], fixed: [] };
 const gaps = [
-  { areaId: 'A', from: '2027-01-04T07:00', to: '2027-01-04T19:00', required: 3, planned: 2 },
-  // a shorter gap the same day misses more: the larger count applies
+  // two gaps the same day, given out of order
   { areaId: 'A', from: '2027-01-04T10:00', to: '2027-01-04T12:00', required: 4, planned: 2 },
-  // after midnight: belongs to the night that started the day before
+  { areaId: 'A', from: '2027-01-04T07:00', to: '2027-01-04T19:00', required: 3, planned: 2 },
+  // starts after midnight: belongs to the day it starts
   { areaId: 'A', from: '2027-01-05T00:00', to: '2027-01-05T07:00', required: 2, planned: 1 },
+  // a night gap past midnight belongs to the day it starts
+  { areaId: 'A', from: '2027-01-08T19:00', to: '2027-01-09T07:00', required: 1, planned: 0 },
+  // nothing missing: not shown
+  { areaId: 'B', from: '2027-01-04T06:00', to: '2027-01-04T14:00', required: 1, planned: 1 },
 ];
 const D4 = 3; // column of 2027-01-04
 
@@ -46,11 +50,12 @@ function model() {
   return buildFunctionRows({ dataset, period, plan, month: '2027-01', gaps, onRequest: onRequestTest(dataset.restrictions, dataset.shifts) });
 }
 const positions = (rows, shiftId) => rows.filter((r) => r.type === 'position' && r.shift.id === shiftId);
+const gapRow = (rows, areaId) => rows.filter((r) => r.type === 'gaps' && r.area.id === areaId);
+const label = (r) => (r.type === 'group' ? `[${r.area.id}]` : r.type === 'gaps' ? `${r.area.id}:offen` : `${r.shift.id}#${r.index}`);
 
 test('rows are grouped by area in dataset order, shifts in dataset order, unused shifts without demand left out', () => {
-  const { rows } = model();
-  assert.deepEqual(rows.map((r) => (r.type === 'group' ? `[${r.area.id}]` : `${r.shift.id}#${r.index}`)),
-    ['[B]', 'B-F#0', '[A]', 'A-T#0', 'A-T#1', 'A-T#2', 'A-T#3', 'A-N#0', 'A-N#1']);
+  // one gap row per area with gaps, after its shifts; position rows count planned people only
+  assert.deepEqual(model().rows.map(label), ['[B]', 'B-F#0', '[A]', 'A-T#0', 'A-T#1', 'A-N#0', 'A:offen']);
 });
 
 test('demand windows overlap a shift by time of day, also across midnight', () => {
@@ -61,34 +66,46 @@ test('demand windows overlap a shift by time of day, also across midnight', () =
   assert.equal(windowOverlapsShift({ from: '07:00', to: '19:00' }, { start: '06:00', end: '14:00' }), true);
 });
 
-test('several people on one shift and day are separate positions sorted by name, then the missing ones', () => {
+test('several people on one shift and day are separate positions sorted by name, no gap markers', () => {
   const day = positions(model().rows, 'A-T').map((r) => r.cells[D4]);
-  assert.deepEqual(day.map((c) => (c.kind === 'person' ? c.name : c.kind)), ['Berg Otto', 'Zett Anna', 'gap', 'gap']);
-  assert.equal(day[2].gaps.length, 2);
-  // the next day nobody works the shift and nothing is missing
-  assert.deepEqual(positions(model().rows, 'A-T').map((r) => r.cells[D4 + 1].kind), ['empty', 'empty', 'empty', 'empty']);
+  assert.deepEqual(day.map((c) => (c.kind === 'person' ? c.name : c.kind)), ['Berg Otto', 'Zett Anna']);
+  assert.deepEqual(positions(model().rows, 'A-T').map((r) => r.cells[D4 + 1].kind), ['empty', 'empty']);
+  assert.ok(model().rows.filter((r) => r.type === 'position').every((r) => r.cells.every((c) => c.kind === 'person' || c.kind === 'empty')));
 });
 
-test('a gap after midnight marks the night shift of the day before', () => {
-  const night = positions(model().rows, 'A-N');
-  assert.equal(night[0].cells[D4].kind, 'person');
-  assert.equal(night[1].cells[D4].kind, 'gap');
-  assert.deepEqual(night[1].cells[D4].gaps, [gaps[2]]);
-  assert.equal(night[1].cells[D4 + 1].kind, 'empty');
+test('gap row: several gaps of a day in one cell, sorted by start', () => {
+  const [row] = gapRow(model().rows, 'A');
+  assert.equal(row.cells[D4].kind, 'gaps');
+  assert.deepEqual(row.cells[D4].gaps, [gaps[1], gaps[0]]);
+  assert.deepEqual(row.cells[D4].gaps.map(gapLine), [{ count: 1, from: '07:00', to: '19:00' }, { count: 2, from: '10:00', to: '12:00' }]);
+  // every other day without a gap is empty
+  const withGaps = row.cells.flatMap((c, i) => (c.kind === 'gaps' ? [i + 1] : []));
+  assert.deepEqual(withGaps, [4, 5, 8]);
 });
 
-test('missing per shift and day: overlap of the shift time with the gap, the largest count of several gaps', () => {
-  const dates = buildDays('2027-01').map((d) => d.date);
-  const missing = missingByShiftDay(gaps, dataset.shifts, dates);
-  assert.equal(missing.get('A-T|2027-01-04').missing, 2);
-  assert.equal(missing.get('A-N|2027-01-04').missing, 1);
-  assert.equal(missing.has('A-N|2027-01-05'), false);
-  assert.equal(missing.has('A-T|2027-01-05'), false); // touches 07:00 only
-  assert.equal(missing.has('B-F|2027-01-04'), false); // other area
-  // a gap over more than a day hits every shift and day it overlaps, the 11th up to 19:30 only
-  const long = missingByShiftDay([{ areaId: 'A', from: '2027-01-10T20:00', to: '2027-01-11T19:30', required: 1, planned: 0 }],
-    dataset.shifts, dates);
-  assert.deepEqual([...long.keys()].sort(), ['A-N|2027-01-10', 'A-N|2027-01-11', 'A-T|2027-01-11', 'A-X|2027-01-10']);
+test('a gap belongs to the day of its start: after midnight the next day, a night past midnight the day it starts', () => {
+  const [row] = gapRow(model().rows, 'A');
+  assert.deepEqual(row.cells[D4 + 1].gaps, [gaps[2]]);
+  assert.deepEqual(row.cells[7].gaps, [gaps[3]]); // 2027-01-08
+  assert.equal(row.cells[8].kind, 'empty');
+  assert.deepEqual(gapLine(gaps[3]), { count: 1, from: '19:00', to: '07:00' });
+});
+
+test('each gap shows once; no gap row without missing people; an area with gaps but no shown shift gets one', () => {
+  const { rows } = model();
+  assert.equal(gapRow(rows, 'A').length, 1);
+  assert.equal(gapRow(rows, 'B').length, 0);
+  const shown = gapRow(rows, 'A')[0].cells.flatMap((c) => c.gaps ?? []);
+  assert.equal(shown.length, 4);
+  assert.equal(new Set(shown).size, 4);
+  const withC = { ...dataset, areas: [...dataset.areas, { id: 'C', name: 'Bereich C' }] };
+  const gapC = { areaId: 'C', from: '2027-01-02T08:00', to: '2027-01-02T09:00', required: 1, planned: 0 };
+  const res = buildFunctionRows({ dataset: withC, period, plan, month: '2027-01', gaps: [gapC] });
+  assert.deepEqual(res.rows.map(label), ['[B]', 'B-F#0', '[A]', 'A-T#0', 'A-T#1', 'A-N#0', '[C]', 'C:offen']);
+  // gaps outside the month's days are left out
+  const outside = buildFunctionRows({ dataset, period, plan, month: '2027-01',
+    gaps: [{ areaId: 'A', from: '2026-12-31T19:00', to: '2027-01-01T07:00', required: 1, planned: 0 }] });
+  assert.equal(gapRow(outside.rows, 'A').length, 0);
 });
 
 test('cells carry the roster marks: fixed, conflict with an absence, on request', () => {

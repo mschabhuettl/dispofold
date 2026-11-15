@@ -100,10 +100,10 @@ try {
     await page.locator('.b-sch-event:visible, .b-grid-empty:visible').first().waitFor({ timeout: 30000 });
     await page.waitForTimeout(1000);
     await save('zeitachse', true);
-    // Plan nach Funktion, then the list of who could be asked at the first gap marker (planners only)
+    // Plan nach Funktion, then the list of who could be asked at the first gap cell of a row "offen" (planners only)
     await shot('funktionen', 'funktionen', 'table.functions');
-    // the first marker whose list names somebody (else the first marker, showing that nobody fits)
-    const markers = page.locator('table.functions .gap-marker');
+    // the first gap cell whose list names somebody (else the first one, showing that nobody fits)
+    const markers = page.locator('table.functions tr.gap-row .gap-marker');
     const count = Math.min(await markers.count(), 60);
     for (let i = 0; i < count; i++) {
       await markers.nth(i).click();

@@ -126,6 +126,13 @@ Oben im **Dienstplan** stehen:
   Abwesenheiten. Ein Plan mit harten Verstößen darf so nicht verwendet werden. Meist kommen sie von Hand
   gesetzten oder fixierten Diensten. Rot markierte Zellen zeigen einen Dienst trotz Abwesenheit. Welche Regel
   an welchem Tag verletzt ist, zeigt die Seite **Person**.
+- **Höchststunden im Monat:** Die Stunden einer Person im Monat (Dienste, angerechnete Abwesenheitstage und
+  Ersatzruhe) dürfen das Ziel (Soll mit Ausgleich des Stundenkontos) höchstens um eine Toleranz übersteigen,
+  voreingestellt 10 % des Ziels. Die Toleranz steht unter **Regeln & Gewichte** bei **Höchstens über dem Ziel
+  (%)**; die gesetzlichen Grenzen wie die Höchstarbeitszeit je Woche gelten unabhängig davon. Das Programm plant
+  nie darüber. Ein von Hand gesetzter Dienst darf darüber gehen, zählt dann aber als harter Verstoß und steht auf
+  der Seite **Person** unter **Ganzer Monat**. Die Liste **Wer kann gefragt werden?** lässt Personen aus, die
+  der Dienst über diese Grenze brächte.
 - **Bedarfslücken:** Zeitabschnitte, in denen weniger Personen eingeteilt sind als der Bedarf verlangt. Die
   Zeile **Bedarfslücken** unter dem Plan zeigt sie je Tag, **Ungedeckter Bedarf** die Summe in
   Personenstunden. Lücken sind kein Fehler des Solvers: Reicht das Personal nicht, bleibt die Lücke sichtbar,
@@ -164,19 +171,22 @@ Dienst im Monat und Schichten, deren Zeit ein Bedarf des Bereichs überschneidet
 
 - **Eine Zeile je Position:** Arbeiten an einem Tag zwei Personen in derselben Schicht, stehen sie in zwei
   Zeilen untereinander (nach Namen sortiert). Eine Schicht hat so viele Zeilen, wie an ihrem vollsten Tag
-  Personen eingeteilt sind und fehlen.
+  Personen eingeteilt sind.
 - **In der Zelle** steht das Kürzel der Person, der ganze Name erscheint beim Darüberfahren. Unter **Anzeige**
   lässt sich stattdessen „Nachname Vorname“ wählen; der Browser merkt sich die Wahl. Fixierte Dienste,
   Konflikte und Dienste nur auf Anfrage sind markiert wie im Dienstplan.
-- **„fehlt 1“** (rot) zeigt eine fehlende Besetzung: Eine Bedarfslücke des Bereichs zählt bei jeder Schicht,
-  deren Zeit sie überschneidet (eine Nacht bis zum nächsten Morgen). Fehlen zwei Personen, stehen zwei Marken
-  untereinander.
+- **Zeile „offen“** (rot): Hat ein Bereich im Monat Bedarfslücken, steht unter seinen Schichten eine Zeile
+  „offen“. Jede Lücke steht dort genau einmal, am Tag ihres Beginns (eine Lücke von 19:00 bis 07:00 also am
+  ersten Tag), mit der Zahl der fehlenden Personen und der Uhrzeit, zum Beispiel „1 · 07:00-19:00“. Mehrere
+  Lücken eines Tages stehen untereinander in derselben Zelle.
 - **Ein Klick auf einen Namen** öffnet dieselbe Auswahl wie im Dienstplan (Dienst ändern, frei, fixieren).
-  **Ein Klick auf „fehlt 1“** öffnet die Liste **Wer kann gefragt werden?** für diese Lücke.
+  **Ein Klick auf eine Zelle der Zeile „offen“** öffnet die Liste **Wer kann gefragt werden?** für die Lücken
+  dieses Tages.
 - Mit den Pfeiltasten bewegt man sich wie im Dienstplan durch die Zellen, Enter öffnet die Auswahl.
 - **Drucken** (Druckfunktion des Browsers): A4 quer, der Monat in zwei Tabellen, Tag 1 bis 15 und Tag 16 bis
   zum Monatsende. Jede Hälfte beginnt auf einer neuen Seite; mit vielen Funktionen reicht eine Hälfte über
-  mehrere Seiten, der Tabellenkopf steht dann auf jeder Seite. Fixierte Dienste sind eingerahmt.
+  mehrere Seiten, der Tabellenkopf steht dann auf jeder Seite. Fixierte Dienste sind eingerahmt, die Zeile
+  „offen“ wird mitgedruckt.
 
 ## Dienste nur auf Anfrage
 
@@ -187,10 +197,10 @@ diese Schicht für diese Person nie von selbst ein. Fehlt dadurch Personal, blei
 Die Planung fragt die Person und setzt den Dienst dann von Hand.
 
 - **Wer kann gefragt werden?** Diese Liste steht bei jeder Lücke: im **Dienstplan** nach einem Klick auf die
-  Zahl in der Zeile **Bedarfslücken**, in **Plan nach Funktion** nach einem Klick auf „fehlt 1“ und in der
+  Zahl in der Zeile **Bedarfslücken**, in **Plan nach Funktion** nach einem Klick auf eine Zelle der Zeile „offen“ und in der
   Lückenliste der **Bereichs-Zeitachse**. Sie nennt die Personen, für die eine Schicht des Bereichs in dieser
   Lücke an diesem Tag nur auf Anfrage geht, die an dem Tag frei sind (kein Dienst, keine Abwesenheit, nicht
-  fixiert) und für die der Dienst keine harte Regel verletzt. Je Person stehen Schicht, Datum und Stunden
+  fixiert) und für die der Dienst keine harte Regel verletzt (auch nicht die Höchststunden im Monat). Je Person stehen Schicht, Datum und Stunden
   (geplant von Soll); wer am wenigsten Stunden hat, steht oben. Passt niemand, sagt die Liste das.
 - **Ein Klick auf einen Namen** setzt den Dienst für diese Person und fixiert ihn. Die nächste Planung behält
   ihn bei.
