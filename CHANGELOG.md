@@ -3,6 +3,22 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.5.0 (2026-11-15)
+
+Keine doppelt besetzten Positionen mehr, nur um Sollstunden zu füllen.
+
+- **Überbesetzung zählt jetzt wie fehlender Bedarf auf der mittleren Stufe:** Personen über der Höchstbesetzung
+  (ohne Höchstbesetzung über der Mindestbesetzung) und Dienste ganz ohne Bedarf wiegen schwerer als jede weiche
+  Regel, auch die Sollstunden. Ist der Bedarf gedeckt, bleiben übrige Sollstunden offen, statt Positionen
+  doppelt zu besetzen. Fehlender Bedarf wiegt weiter schwerer als jede mögliche Überbesetzung: Eine Lücke wird
+  gefüllt, wenn jemand frei ist.
+- **Statuszeile:** ungedeckter Bedarf und Überbesetzung getrennt in Personenstunden, auch während der Planung.
+- Von Hand gesetzte und fixe Dienste dürfen überbesetzen; sie erscheinen dann in der mittleren Stufe.
+- Regeln: Die Gewichte von `overstaffing` und `uselessDuty` sind fest. Gespeicherte Werte laden weiter und
+  werden ignoriert.
+- REST-Schnittstelle: Die Analyse liefert `uncoveredHours` und `overstaffedHours`.
+- Betrieb: keine Änderung an Datenbank, `docker-compose.yml` oder `.env`.
+
 ## 0.4.0 (2026-11-15)
 
 Der Solver plant niemanden mehr weit über sein Ziel, und Lücken stehen im Plan nach Funktion einmal je Bereich.
