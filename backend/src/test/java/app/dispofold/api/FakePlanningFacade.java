@@ -122,7 +122,7 @@ public class FakePlanningFacade implements PlanningFacade {
     public PlanAnalysis analyze(PlanningInput input) {
         List<PersonStats> people = input.dataset().people().stream().map(p -> stats(input, p.id())).toList();
         return new PlanAnalysis("0hard/0medium/-" + input.assignments().size() + "soft", 0, List.of(), List.of(),
-                people);
+                people, 0, 0);
     }
 
     private static PersonStats stats(PlanningInput input, String personId) {

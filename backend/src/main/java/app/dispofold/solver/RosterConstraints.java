@@ -37,10 +37,10 @@ public class RosterConstraints implements ConstraintProvider {
         return new Constraint[] {
                 dailyRest(f), weeklyRest(f), maxDutyLength(f), maxWeekHours(f), maxMonthHours(f), averageWeekHours(f),
                 qualification(f), absence(f), employment(f), neverRestriction(f), compRestBalance(f), missingShift(f),
-                demand(f),
+                demand(f), overstaffing(f), uselessDuty(f),
                 targetHours(f), fairNights(f), fairWeekends(f), fairHolidays(f), fairUnpopular(f), wishes(f),
                 blockLength(f), isolatedDayOff(f), forwardRotation(f), splitWeekend(f), compRestUse(f),
-                shiftVariety(f), areaVariety(f), family(f), onRequest(f), overstaffing(f), uselessDuty(f)
+                shiftVariety(f), areaVariety(f), family(f), onRequest(f)
         };
     }
 
@@ -424,24 +424,29 @@ public class RosterConstraints implements ConstraintProvider {
                 .asConstraint(ConstraintCatalog.ON_REQUEST);
     }
 
+    /**
+     * Medium: person minutes above the maximum of a segment, or above the minimum where there is none. Staffing
+     * above the demand is never a way to reach target hours.
+     */
     Constraint overstaffing(ConstraintFactory f) {
         return f.forEach(DemandSegment.class)
                 .join(work(f), equal(DemandSegment::areaId, DutyCell::getAreaId),
                         overlapping(DemandSegment::start, DemandSegment::end, DutyCell::getStart, DutyCell::getEnd))
                 .groupBy((s, c) -> s, countBi())
                 .filter((s, n) -> n > s.upper())
-                .penalize(SOFT, (s, n) -> (n - s.upper()) * s.minutes())
+                .penalize(MEDIUM, (s, n) -> (n - s.upper()) * s.minutes())
                 .justifyWith((s, n, score) -> Hit.of(null, s.day(), "areaId", s.areaId(),
                         "planned", n, "upper", s.upper(), "from", s.from().toString(),
                         "to", s.to().toString()))
                 .asConstraint(ConstraintCatalog.OVERSTAFFING);
     }
 
+    /** Medium: the minutes of a duty that touches no demand of its area at all (overstaffing without a segment). */
     Constraint uselessDuty(ConstraintFactory f) {
         return monthWork(f)
                 .ifNotExists(DemandSegment.class, equal(DutyCell::getAreaId, DemandSegment::areaId),
                         overlapping(DutyCell::getStart, DutyCell::getEnd, DemandSegment::start, DemandSegment::end))
-                .penalize(SOFT)
+                .penalize(MEDIUM, DutyCell::getDurationMinutes)
                 .justifyWith((c, s) -> hit(c, "shiftId", c.getShift().getId()))
                 .asConstraint(ConstraintCatalog.USELESS_DUTY);
     }

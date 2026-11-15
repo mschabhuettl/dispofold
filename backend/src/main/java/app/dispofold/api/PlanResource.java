@@ -106,7 +106,8 @@ public class PlanResource {
             return analysis;
         }
         return new PlanAnalysis(analysis.score(), analysis.hardViolations(), analysis.constraints(), analysis.gaps(),
-                analysis.people().stream().map(PlanResource::forViewer).toList());
+                analysis.people().stream().map(PlanResource::forViewer).toList(), analysis.uncoveredHours(),
+                analysis.overstaffedHours());
     }
 
     /** Key figures without wishes, hours account and time off in lieu (which would reveal the absence type). */

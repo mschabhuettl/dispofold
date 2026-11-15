@@ -122,8 +122,8 @@ final class InitialRoster {
     }
 
     /**
-     * Adds duties for people below their target, where the area is least overstaffed, until the next duty would
-     * overshoot the target by more than half.
+     * Adds duties for people below their target where they still cover open demand, until the next duty would
+     * overshoot the target by more than half. A duty that would only overstaff is never added.
      */
     private void fillToTarget() {
         List<Staff> open = new ArrayList<>(roster.getStaff());
@@ -160,7 +160,11 @@ final class InitialRoster {
                 if (!allowed(cells, d, staff, option, start, end)) {
                     continue;
                 }
-                double score = -surplus(option.getAreaId(), start, end) + blockBonus(cells, d, staff);
+                long gain = gain(option.getAreaId(), start, end);
+                if (gain == 0) {
+                    continue;
+                }
+                double score = 4.0 * gain / option.getDurationMinutes() + blockBonus(cells, d, staff);
                 if (score > bestScore) {
                     bestScore = score;
                     bestCell = cell;
@@ -175,23 +179,6 @@ final class InitialRoster {
         counted.merge(staff, (long) bestCell.getCountedMinutes(), Long::sum);
         cover(bestCell, 1);
         return true;
-    }
-
-    /** Average staffing above the required staffing over the duty, weighted by minutes. */
-    private double surplus(String area, long start, long end) {
-        Area a = segmentsByArea.get(area);
-        if (a == null) {
-            return 100;
-        }
-        double sum = 0;
-        long minutes = 0;
-        for (int i = a.first(start); i < a.segments.length && a.segments[i].start() < end; i++) {
-            DemandSegment s = a.segments[i];
-            long m = Math.min(s.end(), end) - Math.max(s.start(), start);
-            sum += m * (a.covered[i] + 1.0 - s.required()) / Math.max(1, s.required());
-            minutes += m;
-        }
-        return minutes == 0 ? 100 : sum / minutes;
     }
 
     private boolean assignBest(int d, String area) {
@@ -271,6 +258,9 @@ final class InitialRoster {
 
     private long gain(String area, long start, long end) {
         Area a = segmentsByArea.get(area);
+        if (a == null) {
+            return 0;
+        }
         long gain = 0;
         for (int i = a.first(start); i < a.segments.length && a.segments[i].start() < end; i++) {
             DemandSegment s = a.segments[i];

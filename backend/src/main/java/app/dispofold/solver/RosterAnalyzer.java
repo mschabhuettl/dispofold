@@ -44,7 +44,15 @@ public final class RosterAnalyzer {
         for (Staff s : roster.getStaff()) {
             people.add(stats(input, roster, s.getId()));
         }
-        return new PlanAnalysis(score.score().toString(), hardViolations(score), constraints, gaps(roster), people);
+        return new PlanAnalysis(score.score().toString(), hardViolations(score), constraints, gaps(roster), people,
+                personHours(score, ConstraintCatalog.DEMAND),
+                personHours(score, ConstraintCatalog.OVERSTAFFING) + personHours(score, ConstraintCatalog.USELESS_DUTY));
+    }
+
+    /** Person minutes of a medium constraint (its score divided by its fixed weight), in hours. */
+    static double personHours(ScoreExplainer.Explanation score, String constraintId) {
+        ConstraintInfo info = ConstraintCatalog.get(constraintId);
+        return round(-score.total(constraintId).score().mediumScore() / (double) info.defaultWeight() / 60);
     }
 
     public static int hardViolations(ScoreExplainer.Explanation score) {

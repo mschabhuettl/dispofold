@@ -47,20 +47,30 @@ public final class ConstraintCatalog {
     public static final String OVERSTAFFING = "overstaffing";
     public static final String USELESS_DUTY = "uselessDuty";
 
+    /**
+     * Weight of an uncovered person minute against one minute above the demand (weight 1): more than the longest
+     * possible duty in real minutes. A shift lasts less than a day (its end is taken modulo 24 h), plus one hour in
+     * the night the clock goes back.
+     */
+    public static final long DEMAND_WEIGHT = 24 * 60 + 60;
+
     /** Display order: hard, medium, soft. Texts are in the user interface under constraint.<id>. */
     public static final List<ConstraintInfo> ALL = List.of(
             hard(DAILY_REST), hard(WEEKLY_REST), hard(MAX_DUTY), hard(MAX_WEEK), hard(MAX_MONTH), hard(AVERAGE_WEEK),
             hard(QUALIFICATION), hard(ABSENCE), hard(EMPLOYMENT), hard(NEVER), hard(COMP_REST_BALANCE),
             hard(MISSING_SHIFT),
-            new ConstraintInfo(DEMAND, MEDIUM, 1, false),
+            // Medium: staffing against demand, in person minutes. One missing minute weighs more than a whole duty
+            // above the demand (DEMAND_WEIGHT), so a gap is never left open to avoid overstaffing elsewhere; and
+            // staffing above the demand always weighs more than any soft rule, so it never serves target hours.
+            new ConstraintInfo(DEMAND, MEDIUM, DEMAND_WEIGHT, false), new ConstraintInfo(OVERSTAFFING, MEDIUM, 1, false),
+            new ConstraintInfo(USELESS_DUTY, MEDIUM, 1, false),
             soft(TARGET_HOURS, 20), soft(FAIR_NIGHTS, 3), soft(FAIR_WEEKENDS, 3), soft(FAIR_HOLIDAYS, 3),
             soft(FAIR_UNPOPULAR, 2), soft(WISHES, 300), soft(BLOCK_LENGTH, 600), soft(ISOLATED_DAY_OFF, 400),
             soft(FORWARD_ROTATION, 500), soft(SPLIT_WEEKEND, 300), soft(COMP_REST_USE, 500),
             soft(SHIFT_VARIETY, 5), soft(AREA_VARIETY, 1), soft(FAMILY, 800),
             // On-request duties are never chosen by the solver (see RosterBuilder); the constraint only marks
             // duties set by planners, so its weight is not a setting.
-            new ConstraintInfo(ON_REQUEST, SOFT, 1000, false),
-            soft(OVERSTAFFING, 2), soft(USELESS_DUTY, 5000));
+            new ConstraintInfo(ON_REQUEST, SOFT, 1000, false));
 
     private ConstraintCatalog() {
     }

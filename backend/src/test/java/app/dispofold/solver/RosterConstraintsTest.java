@@ -466,7 +466,7 @@ class RosterConstraintsTest {
     void uselessDuty() {
         long start = Times.minute(MON) + 8 * 60;
         DemandSegment segment = segment("s", "AN", MON, start, start + 120, 1, null);
-        VERIFIER.verifyThat(RosterConstraints::uselessDuty).given(segment, cell(A, MON, NIGHT)).penalizesBy(1);
+        VERIFIER.verifyThat(RosterConstraints::uselessDuty).given(segment, cell(A, MON, NIGHT)).penalizesBy(720);
         VERIFIER.verifyThat(RosterConstraints::uselessDuty).given(segment, cell(A, MON, DAY)).penalizesBy(0);
     }
 }
