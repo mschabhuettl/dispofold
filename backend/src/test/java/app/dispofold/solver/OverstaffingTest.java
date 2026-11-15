@@ -75,10 +75,11 @@ class OverstaffingTest {
             assertThat(c.level()).isEqualTo(ConstraintCatalog.MEDIUM);
             assertThat(c.matches()).isPositive();
         });
-        // One missing minute weighs more than the longest duty above the demand: a shift lasts less than a day,
-        // plus one hour in the night the clock goes back.
+        // One missing minute weighs more than all overstaffing a month of 20 000 people can have: every duty lasts
+        // less than a day, plus one hour in the night the clock goes back.
         assertThat(ConstraintCatalog.get(ConstraintCatalog.DEMAND).defaultWeight())
-                .isGreaterThan((24 * 60 - 1 + 60) * ConstraintCatalog.get(ConstraintCatalog.OVERSTAFFING).defaultWeight());
+                .isGreaterThan(20_000L * 31 * (24 * 60 - 1 + 60)
+                        * ConstraintCatalog.get(ConstraintCatalog.OVERSTAFFING).defaultWeight());
         assertThat(ConstraintCatalog.get(ConstraintCatalog.USELESS_DUTY).defaultWeight())
                 .isEqualTo(ConstraintCatalog.get(ConstraintCatalog.OVERSTAFFING).defaultWeight());
     }

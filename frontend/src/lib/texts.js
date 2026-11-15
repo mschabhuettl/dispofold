@@ -747,7 +747,7 @@ export const TEXTS = {
   'constraint.compRestBalance.label': 'Ersatzruhe-Guthaben',
   'constraint.compRestBalance.description': 'Es werden nicht mehr Ersatzruhetage geplant als offen sind.',
   'constraint.demand.label': 'Bedarf gedeckt',
-  'constraint.demand.description': 'Fehlende Besetzung je Bereich und Zeitabschnitt, 1500 je Personenminute (fest). Ist der Bedarf nicht erfüllbar, bleibt die Lücke hier sichtbar; sie wird vor jeder Überbesetzung gefüllt, wenn jemand frei ist.',
+  'constraint.demand.description': 'Fehlende Besetzung je Bereich und Zeitabschnitt, 1 000 000 000 je Personenminute (fest, mehr als jede mögliche Überbesetzung). Ist der Bedarf nicht erfüllbar, bleibt die Lücke hier sichtbar; sie wird vor jeder Überbesetzung gefüllt, wenn jemand frei ist.',
   'constraint.targetHours.label': 'Sollstunden',
   'constraint.targetHours.description': 'Abweichung der geplanten und angerechneten Stunden vom Monatssoll (korrigiert um einen Teil des Stundenkontos). Je Viertelstunde Abweichung, quadratisch.',
   'constraint.fairNights.label': 'Fairness Nachtdienste',

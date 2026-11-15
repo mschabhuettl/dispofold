@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ApiError, createApi, demandFigures, errorMessage } from '../src/lib/api.js';
+import { ApiError, createApi, demandFigures, errorMessage, scoreFigures } from '../src/lib/api.js';
 
 function fakeFetch(status, body, calls = []) {
   return async (path, init) => {
@@ -210,4 +210,11 @@ test('demandFigures reads the person hours from an analysis and is empty without
   assert.deepEqual(demandFigures({ uncoveredHours: 1.5, overstaffedHours: 0 }), { uncovered: 1.5, overstaffed: 0 });
   assert.equal(demandFigures(null), null);
   assert.equal(demandFigures({ gaps: [] }), null);
+});
+
+test('uncovered and overstaffed hours from the medium score', () => {
+  assert.deepEqual(scoreFigures('0hard/-120000000030medium/-5soft'), { uncovered: 2, overstaffed: 0.5 });
+  assert.deepEqual(scoreFigures('0hard/-960medium/-17382081soft'), { uncovered: 0, overstaffed: 16 });
+  assert.deepEqual(scoreFigures('0hard/0medium/-5soft'), { uncovered: 0, overstaffed: 0 });
+  assert.equal(scoreFigures(null), null);
 });

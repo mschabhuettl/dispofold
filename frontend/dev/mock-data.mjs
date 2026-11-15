@@ -161,7 +161,7 @@ export const CONSTRAINTS = [
   ['maxMonthHours', 'HARD', 'Höchststunden im Monat', 'Geplante und angerechnete Stunden höchstens Ziel plus Toleranz.', 1],
   ['absence', 'HARD', 'Abwesenheit', 'Kein Dienst an Tagen mit Urlaub, Krankenstand oder Fortbildung.', 1],
   ['restrictionNever', 'HARD', 'Ausschluss Schicht', 'Schichten, die eine Person nie macht.', 1],
-  ['demand', 'MEDIUM', 'Bedarf gedeckt', 'Fehlende Besetzung in Personenminuten.', 1500],
+  ['demand', 'MEDIUM', 'Bedarf gedeckt', 'Fehlende Besetzung in Personenminuten.', 1000000000],
   ['overstaffing', 'MEDIUM', 'Überbesetzung', 'Besetzung über dem Bedarf, in Personenminuten.', 1],
   ['uselessDuty', 'MEDIUM', 'Dienst ohne Bedarf', 'Ein Dienst, der keinen Bedarf seines Bereichs abdeckt, je Dienstminute.', 1],
   ['targetHours', 'SOFT', 'Sollstunden', 'Geplante plus angerechnete Stunden nahe am Monatssoll inklusive Anteil des Stundenkontos.', 20],

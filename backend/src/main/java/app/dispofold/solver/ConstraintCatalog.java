@@ -48,19 +48,21 @@ public final class ConstraintCatalog {
     public static final String USELESS_DUTY = "uselessDuty";
 
     /**
-     * Weight of an uncovered person minute against one minute above the demand (weight 1): more than the longest
-     * possible duty in real minutes. A shift lasts less than a day (its end is taken modulo 24 h), plus one hour in
-     * the night the clock goes back.
+     * Weight of an uncovered person minute against one minute above the demand (weight 1): more than all duties of
+     * a month can ever overstaff (20 000 people x 31 days x a duty of at most 1499 real minutes is below it), so
+     * covering demand comes first for the whole plan, not only per duty. Because overstaffing stays below this
+     * weight, both parts can be read exactly from the medium score: uncovered minutes = -medium / weight,
+     * overstaffed minutes = -medium % weight.
      */
-    public static final long DEMAND_WEIGHT = 24 * 60 + 60;
+    public static final long DEMAND_WEIGHT = 1_000_000_000L;
 
     /** Display order: hard, medium, soft. Texts are in the user interface under constraint.<id>. */
     public static final List<ConstraintInfo> ALL = List.of(
             hard(DAILY_REST), hard(WEEKLY_REST), hard(MAX_DUTY), hard(MAX_WEEK), hard(MAX_MONTH), hard(AVERAGE_WEEK),
             hard(QUALIFICATION), hard(ABSENCE), hard(EMPLOYMENT), hard(NEVER), hard(COMP_REST_BALANCE),
             hard(MISSING_SHIFT),
-            // Medium: staffing against demand, in person minutes. One missing minute weighs more than a whole duty
-            // above the demand (DEMAND_WEIGHT), so a gap is never left open to avoid overstaffing elsewhere; and
+            // Medium: staffing against demand, in person minutes. One missing minute weighs more than any staffing
+            // above the demand in the whole plan (DEMAND_WEIGHT), so a gap is never left open to avoid it; and
             // staffing above the demand always weighs more than any soft rule, so it never serves target hours.
             new ConstraintInfo(DEMAND, MEDIUM, DEMAND_WEIGHT, false), new ConstraintInfo(OVERSTAFFING, MEDIUM, 1, false),
             new ConstraintInfo(USELESS_DUTY, MEDIUM, 1, false),

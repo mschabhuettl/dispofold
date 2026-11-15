@@ -104,7 +104,7 @@ Einzelheiten:
 
 | Id | Regel | Gewicht (fest) |
 |---|---|---|
-| `demand` | Fehlende Besetzung je Bereich und Zeitabschnitt, in Personenminuten | 1500 je Personenminute |
+| `demand` | Fehlende Besetzung je Bereich und Zeitabschnitt, in Personenminuten | 1 000 000 000 je Personenminute |
 | `overstaffing` | Überbesetzung: Personen über der Höchstbesetzung, ohne Höchstbesetzung über der Mindestbesetzung, in Personenminuten | 1 je Personenminute |
 | `uselessDuty` | Dienst, der keinen Bedarfsabschnitt seines Bereichs berührt, mit seinen ganzen Minuten | 1 je Minute |
 
@@ -112,10 +112,11 @@ Einzelheiten:
   nur um Personen auf ihre Sollstunden zu bringen; die Sollstunden (quadriert) wiegen dort schwerer. Auf der
   mittleren Stufe wiegt jede Minute über dem Bedarf schwerer als alle weichen Regeln zusammen. Ist der Bedarf
   gedeckt, bleiben übrige Sollstunden offen (Personen unter dem Soll), statt Positionen doppelt zu besetzen.
-- Warum fehlender Bedarf 1500 wiegt: Eine fehlende Minute wiegt mehr als ein ganzer Dienst über dem Bedarf
-  (eine Schicht dauert weniger als einen Tag, in der Nacht der Zeitumstellung eine Stunde mehr). Der Solver
-  lässt also nie eine Lücke offen, um anderswo Überbesetzung zu vermeiden; wo eine Lücke nur mit einem Dienst
-  zu füllen ist, der teils überbesetzt, füllt er sie.
+- Warum fehlender Bedarf 1 000 000 000 wiegt: Eine fehlende Minute wiegt mehr als alle Überbesetzung, die ein
+  ganzer Monatsplan haben kann (auch mit 20 000 Personen). Der Solver lässt also nie eine Lücke offen, um
+  Überbesetzung zu vermeiden, auch wenn das Schließen mehrere Dienste verschiebt. Weil die Überbesetzung unter
+  diesem Gewicht bleibt, lassen sich beide Teile genau aus der mittleren Stufe lesen: ungedeckte Minuten =
+  mittlerer Wert / 1 000 000 000, überbesetzte Minuten = der Rest.
 - Von Hand gesetzte und fixe Dienste dürfen überbesetzen; sie erscheinen dann in der mittleren Stufe und in
   der Analyse. Die Statuszeile zeigt ungedeckten Bedarf und Überbesetzung getrennt in Personenstunden.
 - Gespeicherte Gewichte für `overstaffing` und `uselessDuty` (früher weich) werden ignoriert.

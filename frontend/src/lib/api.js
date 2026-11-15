@@ -181,3 +181,17 @@ export function demandFigures(analysis) {
   if (analysis?.uncoveredHours == null || analysis?.overstaffedHours == null) return null;
   return { uncovered: analysis.uncoveredHours, overstaffed: analysis.overstaffedHours };
 }
+
+/** Weight of an uncovered person minute in the medium score; overstaffed minutes (weight 1) always stay below it. */
+const DEMAND_WEIGHT = 1000000000n;
+
+/**
+ * The same figures read from a score like '0hard/-2000000060medium/-5soft' (2 uncovered minutes, 60 overstaffed),
+ * e.g. while solving, when there is no analysis yet; null without a medium part.
+ */
+export function scoreFigures(score) {
+  const m = /(-?\d+)medium/.exec(String(score ?? ''));
+  if (!m) return null;
+  const medium = -BigInt(m[1]);
+  return { uncovered: Number(medium / DEMAND_WEIGHT) / 60, overstaffed: Number(medium % DEMAND_WEIGHT) / 60 };
+}

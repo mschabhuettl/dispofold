@@ -1,5 +1,5 @@
 // Dienstplan: people x days of the month, cell editing, solving with progress polling.
-import { demandFigures } from '../lib/api.js';
+import { demandFigures, scoreFigures } from '../lib/api.js';
 import { tintStyle } from '../lib/colors.js';
 import { dayLabel, monthLabel } from '../lib/dates.js';
 import { append, fmt, guarded, h, toast } from '../lib/dom.js';
@@ -77,7 +77,8 @@ export async function render(root, ctx) {
 
   function drawStatus() {
     const plan = state.plan;
-    const figures = demandFigures(analysis);
+    // while solving there is no analysis: the medium score holds both figures exactly
+    const figures = demandFigures(analysis) ?? scoreFigures(plan.score);
     const gaps = analysis?.gaps?.length ?? null;
     const hard = state.solving ? state.hardViolations : (analysis?.hardViolations ?? state.hardViolations);
     status.className = state.solving ? 'statusbar solving' : 'statusbar';
