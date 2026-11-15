@@ -6,7 +6,7 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
 ## 0.4.0 (2026-11-15)
 
 Der Solver plant niemanden mehr weit über sein Ziel, und Lücken stehen im Plan nach Funktion einmal je Bereich.
-Passt zum Bedarf aus der Historie, den sp5-export jetzt standardmäßig erzeugt.
+Passt zum Bedarf aus der tatsächlichen Besetzung der Vormonate, den der Export jetzt standardmäßig erzeugt.
 
 - **Höchststunden im Monat (harte Regel `maxMonthHours`):** Die angerechneten Stunden einer Person (Dienste,
   angerechnete Abwesenheiten, Ersatzruhe) dürfen das Ziel des Monats um höchstens eine Toleranz überschreiten,
