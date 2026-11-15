@@ -26,7 +26,7 @@ class ScaledTargetTest {
 
     private static Staff staff(String id, int target) {
         return new Staff(id, 40, Set.of("AN"), 480, target, 0,
-                new Staff.Limits(660, 2160, 720, 3600, 2, 4, Integer.MAX_VALUE), Staff.History.NONE, 0,
+                new Staff.Limits(660, 2160, 720, 3600, 2, 4, Integer.MAX_VALUE, Integer.MAX_VALUE), Staff.History.NONE, 0,
                 Staff.Fairness.of(40, 30, true, true), Staff.Average.NONE, Map.of());
     }
 

@@ -68,6 +68,7 @@ Regeln; harte Regeln und der Bedarf haben kein einstellbares Gewicht.
 | `maxDutyLength` | Ein Dienst dauert höchstens 12 h | KV, Durchrechnung | `maxDutyHours` (12) |
 | `maxWeekHours` | Höchstens 60 h Dienst je Kalenderwoche | KV, Durchrechnung | `maxWeekHours` (60) |
 | `maxMonthHours` | Im Monat höchstens das Ziel plus eine Toleranz (Dienste, angerechnete Abwesenheiten und Ersatzruhe) | Betrieb | `maxOverTargetPercent` (10 % des Ziels) |
+| `freeSundays` | Mindestens N Sonntage je Kalendermonat ohne Dienst | Betriebsvereinbarung, anpassbar | `minFreeSundays` (2, 0 = aus) |
 | `averageWeekHours` | Höchstens 46,16 h je Woche im Durchschnitt des Durchrechnungszeitraums | KV, Durchrechnung | `maxAverageWeekHours` (46,16), `averagingWeeks` (52) |
 | `qualification` | Nur Personen, die für den Bereich eingeteilt werden dürfen | Stammdaten | `areaIds` der Person |
 | `absence` | Kein Dienst und keine Ersatzruhe an Abwesenheitstagen | Abwesenheiten | |
@@ -188,6 +189,20 @@ der Erklärung je Person.
   harte Obergrenze bleibt beim echten Ziel. Personenansicht und Analyse zeigen beide Ziele.
 - Die Strafe ist die Abweichung in Viertelstunden (vom Ziel für diesen Plan), quadriert, damit sie sich auf viele Personen verteilt statt
   bei wenigen hängen zu bleiben. Beispiel: 4 h Abweichung sind 16 Viertelstunden, Strafe 256 mal Gewicht.
+
+### Freie Sonntage
+
+- Jede Person hat im Kalendermonat mindestens `minFreeSundays` Sonntage ohne Dienst (Standard 2; Quelle: eine
+  Betriebsvereinbarung für den Schichtdienst; ob sie für jede Leitstelle gilt, entscheidet der Betrieb, deshalb
+  einstellbar, 0 schaltet die Regel aus). Hart: Strafe je Sonntag zu viel.
+- Ein Sonntag ist frei, wenn kein Dienst ihn von 0 bis 24 Uhr berührt. Ein Nachtdienst von Samstag auf Sonntag
+  nimmt den Sonntag also mit, auch wenn er am Morgen endet; so ist der Sonntag wirklich frei. Ein Nachtdienst
+  ab Sonntagabend nimmt ihn ebenfalls.
+- Abwesenheiten (Urlaub, Krankenstand usw.) und Tage außerhalb der Beschäftigung haben keinen Dienst und
+  zählen damit als frei. Wer im Monat ein- oder austritt oder an den meisten Sonntagen abwesend ist, erfüllt
+  die Regel so ohne Sonderfall.
+- Von Hand gesetzte und fixe Dienste dürfen die Regel verletzen; sie erscheint dann als harter Verstoß. Die
+  Liste „Wer kann gefragt werden?“ nennt niemanden, dem der Dienst einen freien Sonntag zu wenig ließe.
 
 ### Gewohnte Verteilung
 

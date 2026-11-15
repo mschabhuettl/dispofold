@@ -236,6 +236,25 @@ final class InitialRoster {
         return staff.getScaledTargetMinutes() - counted.getOrDefault(staff, 0L);
     }
 
+    /** The duty would make the person work on more Sundays of the month than allowed. */
+    private static boolean overSundays(DutyCell[] cells, int d, ShiftOption option, int max) {
+        DutyCell cell = cells[d];
+        ShiftOption old = cell.getShift();
+        cell.setShift(option);
+        long touched = cell.getSundayTouched();
+        cell.setShift(old);
+        if (touched < 0) {
+            return false;
+        }
+        java.util.Set<Long> sundays = new java.util.HashSet<>();
+        for (DutyCell c : cells) {
+            if (c != null && c.getSundayTouched() >= 0) {
+                sundays.add(c.getSundayTouched());
+            }
+        }
+        return !sundays.contains(touched) && sundays.size() >= max;
+    }
+
     /** Continuing a block is good, starting a block right after a single day off is not. */
     private static double blockBonus(DutyCell[] cells, int d, Staff staff) {
         boolean prev = d > 0 && cells[d - 1] != null && cells[d - 1].isWork();
@@ -294,6 +313,9 @@ final class InitialRoster {
             after++;
         }
         if (before + 1 + after > limits.maxBlock()) {
+            return false;
+        }
+        if (limits.maxSundaysWorked() < Integer.MAX_VALUE && overSundays(cells, d, option, limits.maxSundaysWorked())) {
             return false;
         }
         for (Week w : roster.getWeeks()) {

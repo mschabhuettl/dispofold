@@ -124,6 +124,25 @@ public class DutyCell {
         return date;
     }
 
+    /**
+     * The Sunday of the month whose calendar day (00:00 to 24:00) this duty touches, as epoch day, or -1: a duty on
+     * a Sunday of the month, or a duty on the Saturday before that runs past midnight (a night into Sunday morning).
+     */
+    public long getSundayTouched() {
+        if (!isWork()) {
+            return -1;
+        }
+        java.time.DayOfWeek d = date.getDayOfWeek();
+        if (d == java.time.DayOfWeek.SUNDAY) {
+            return inMonth ? getDay() : -1;
+        }
+        boolean nextDayInMonth = inMonth ? !monthEnd : date.plusDays(1).getDayOfMonth() == 1;
+        if (d == java.time.DayOfWeek.SATURDAY && nextDayInMonth && getEnd() > midnight + DAY_MINUTES) {
+            return getDay() + 1;
+        }
+        return -1;
+    }
+
     public long getDay() {
         return date.toEpochDay();
     }

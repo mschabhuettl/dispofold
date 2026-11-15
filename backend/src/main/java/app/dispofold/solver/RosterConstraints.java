@@ -1,6 +1,7 @@
 package app.dispofold.solver;
 
 import static ai.timefold.solver.core.api.score.stream.ConstraintCollectors.count;
+import static ai.timefold.solver.core.api.score.stream.ConstraintCollectors.countDistinct;
 import static ai.timefold.solver.core.api.score.stream.ConstraintCollectors.countBi;
 import static ai.timefold.solver.core.api.score.stream.ConstraintCollectors.loadBalance;
 import static ai.timefold.solver.core.api.score.stream.ConstraintCollectors.sum;
@@ -36,7 +37,7 @@ public class RosterConstraints implements ConstraintProvider {
     @Override
     public Constraint[] defineConstraints(ConstraintFactory f) {
         return new Constraint[] {
-                dailyRest(f), weeklyRest(f), maxDutyLength(f), maxWeekHours(f), maxMonthHours(f), averageWeekHours(f),
+                dailyRest(f), weeklyRest(f), maxDutyLength(f), maxWeekHours(f), maxMonthHours(f), freeSundays(f), averageWeekHours(f),
                 qualification(f), absence(f), employment(f), neverRestriction(f), compRestBalance(f), missingShift(f),
                 demand(f), overstaffing(f), uselessDuty(f),
                 targetHours(f), fairNights(f), fairWeekends(f), fairHolidays(f), fairUnpopular(f), wishes(f),
@@ -113,6 +114,22 @@ public class RosterConstraints implements ConstraintProvider {
                 .justifyWith((s, w, minutes, score) -> Hit.of(s.getId(), weekStart(w), "minutes", minutes,
                         "weekStart", weekStart(w).toString()))
                 .asConstraint(ConstraintCatalog.MAX_WEEK);
+    }
+
+    /**
+     * Each person keeps at least the required number of Sundays of the month free (works agreement, adjustable):
+     * no duty touches the Sunday from 00:00 to 24:00. Sundays with an absence or outside the employment have no
+     * duty, so they count as free. Penalty: Sundays worked above the allowed number.
+     */
+    Constraint freeSundays(ConstraintFactory f) {
+        return work(f)
+                .filter(c -> c.getSundayTouched() >= 0)
+                .groupBy(DutyCell::getStaff, countDistinct(DutyCell::getSundayTouched))
+                .filter((s, n) -> n > s.getLimits().maxSundaysWorked())
+                .penalize(HARD, (s, n) -> n - s.getLimits().maxSundaysWorked())
+                .justifyWith((s, n, score) -> Hit.of(s.getId(), null, "sundays", n, "maxSundays",
+                        s.getLimits().maxSundaysWorked()))
+                .asConstraint(ConstraintCatalog.FREE_SUNDAYS);
     }
 
     /**

@@ -73,7 +73,7 @@ class ShiftMixTest {
     @Test
     void deviationIsSquaredInTenthsOfADuty() {
         Staff s = new Staff("A", 40, java.util.Set.of("AN"), 480, 0, 0,
-                new Staff.Limits(660, 2160, 720, 3600, 2, 4, Integer.MAX_VALUE), Staff.History.NONE, 0,
+                new Staff.Limits(660, 2160, 720, 3600, 2, 4, Integer.MAX_VALUE, Integer.MAX_VALUE), Staff.History.NONE, 0,
                 Staff.Fairness.of(40, 30, true, true), Staff.Average.NONE, Map.of());
         s.setMix(new ShiftMix(Map.of(ShiftCategory.DAY, 0.9, ShiftCategory.NIGHT, 0.1), Map.of()));
         ShiftOption day = new ShiftOption("D", "AN", 7 * 60, 720, ShiftCategory.DAY, false, false, false);

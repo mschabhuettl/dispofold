@@ -137,6 +137,11 @@ Oben im **Dienstplan** stehen:
   Abwesenheiten. Ein Plan mit harten Verstößen darf so nicht verwendet werden. Meist kommen sie von Hand
   gesetzten oder fixierten Diensten. Rot markierte Zellen zeigen einen Dienst trotz Abwesenheit. Welche Regel
   an welchem Tag verletzt ist, zeigt die Seite **Person**.
+- **Freie Sonntage:** Jede Person hat im Kalendermonat mindestens zwei Sonntage ohne Dienst. Die Zahl steht
+  unter **Regeln & Gewichte** bei **Freie Sonntage je Monat**; 0 schaltet die Regel aus. Ein Sonntag ist nur
+  frei, wenn kein Dienst ihn berührt, auch kein Nachtdienst von Samstag auf Sonntag; Urlaub und andere
+  Abwesenheiten zählen als frei. Von Hand gesetzte Dienste dürfen die Regel verletzen und zählen dann als harter
+  Verstoß.
 - **Höchststunden im Monat:** Die Stunden einer Person im Monat (Dienste, angerechnete Abwesenheitstage und
   Ersatzruhe) dürfen das Ziel (Soll mit Ausgleich des Stundenkontos) höchstens um eine Toleranz übersteigen,
   voreingestellt 10 % des Ziels. Die Toleranz steht unter **Regeln & Gewichte** bei **Höchstens über dem Ziel

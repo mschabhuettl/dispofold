@@ -33,9 +33,10 @@ public final class Staff {
      * Per-person limits from {@link app.dispofold.model.Rules}, in minutes.
      *
      * @param maxMonth counted minutes of the month allowed at most: the target plus the tolerance
+     * @param maxSundaysWorked Sundays of the month with work allowed at most: Sundays minus the free ones required
      */
     public record Limits(int dailyRest, int weeklyRest, int maxDuty, int maxWeek, int minBlock, int maxBlock,
-            int maxMonth) {
+            int maxMonth, int maxSundaysWorked) {
     }
 
     /** Sums over the history months counted for fairness; {@code months} is the number of those months. */

@@ -161,6 +161,7 @@ export const CONSTRAINTS = [
   ['weeklyRest', 'HARD', 'Wöchentliche Ruhezeit', 'Mindestens 36 Stunden zusammenhängende Ruhe je Kalenderwoche.', 1],
   ['maxWeekHours', 'HARD', 'Höchstarbeitszeit Woche', 'Höchstens 60 Stunden je Kalenderwoche (KV, Durchrechnung).', 1],
   ['maxMonthHours', 'HARD', 'Höchststunden im Monat', 'Geplante und angerechnete Stunden höchstens Ziel plus Toleranz.', 1],
+  ['freeSundays', 'HARD', 'Freie Sonntage im Monat', 'Mindestens so viele Sonntage ohne Dienst wie eingestellt.', 1],
   ['absence', 'HARD', 'Abwesenheit', 'Kein Dienst an Tagen mit Urlaub, Krankenstand oder Fortbildung.', 1],
   ['restrictionNever', 'HARD', 'Ausschluss Schicht', 'Schichten, die eine Person nie macht.', 1],
   ['demand', 'MEDIUM', 'Bedarf gedeckt', 'Fehlende Besetzung in Personenminuten.', 1000000000],
@@ -184,5 +185,5 @@ export const CONSTRAINTS = [
 export const DEFAULT_RULES = {
   minDailyRestHours: 11, minWeeklyRestHours: 36, maxDutyHours: 12, maxWeekHours: 60, maxAverageWeekHours: 46.16,
   minBlock: 2, maxBlock: 4, maxWishesPerPerson: 6, holidayWorkEarnsCompRest: true, nightStart: '22:00', nightEnd: '06:00',
-  nightMinHours: 2, maxOverTargetPercent: 10, accountCarryShare: 0.25, historyMonths: 3, weights: {},
+  nightMinHours: 2, maxOverTargetPercent: 10, minFreeSundays: 2, accountCarryShare: 0.25, historyMonths: 3, weights: {},
 };

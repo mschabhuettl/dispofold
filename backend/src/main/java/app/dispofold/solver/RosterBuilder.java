@@ -196,7 +196,8 @@ public final class RosterBuilder {
                 (int) Math.round(Math.max(Rules.MIN_DAILY_REST_HOURS, rules.minDailyRestHours()) * 60),
                 (int) Math.round(rules.minWeeklyRestHours() * 60), (int) Math.round(rules.maxDutyHours() * 60),
                 (int) Math.round(rules.maxWeekHours() * 60), rules.minBlock(), rules.maxBlock(),
-                (int) Math.max(0, Math.round(target * (1 + rules.overTargetPercent() / 100))));
+                (int) Math.max(0, Math.round(target * (1 + rules.overTargetPercent() / 100))),
+                rules.freeSundays() == 0 ? Integer.MAX_VALUE : Math.max(0, sundays() - rules.freeSundays()));
         Staff.History h = history(history, month, rules.historyMonths());
         boolean nights = false;
         boolean unpopular = false;
@@ -212,6 +213,15 @@ public final class RosterBuilder {
                 compRestBalance, limits, h, wishCount, fairness, average(history), previousCounts);
         staff.setMix(p.shiftMix());
         return staff;
+    }
+
+    /** Sundays of the month. */
+    int sundays() {
+        int n = 0;
+        for (LocalDate d = month.atDay(1); !d.isAfter(month.atEndOfMonth()); d = d.plusDays(1)) {
+            n += d.getDayOfWeek() == DayOfWeek.SUNDAY ? 1 : 0;
+        }
+        return n;
     }
 
     /** Average length of a month in days. */
