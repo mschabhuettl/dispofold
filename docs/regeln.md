@@ -150,7 +150,7 @@ der Erklärung je Person.
 | `compRestUse` | Ersatzruhe abbauen | Bonus je geplantem Ersatzruhetag | 500 |
 | `shiftVariety` | Abwechslung der Dienste | je Paar Dienste gleichen Bereichs und gleicher Kategorie, mit Vormonat | 5 |
 | `areaVariety` | Abwechslung der Bereiche | je Paar Dienste im selben Bereich, mit Vormonat (nur bei mehreren Bereichen) | 1 |
-| `shiftMix` | Gewohnte Verteilung | quadrierte Abweichung in Zehntel-Diensten je Kategorie und Bereich, siehe unten | 200 |
+| `shiftMix` | Gewohnte Verteilung | quadrierte Abweichung in Zehntel-Diensten je Kategorie und Bereich, siehe unten | 100 |
 | `family` | Familienwunsch | je Dienst gegen die Regel | 800 |
 | `onRequest` | Dienst nur auf Anfrage, von Hand gesetzt | je solchem Dienst; Gewicht fest, nicht einstellbar | 1000 |
 
@@ -198,8 +198,9 @@ der Erklärung je Person.
   Dienste der Person. Die Strafe ist die quadrierte Abweichung in Zehntel-Diensten, summiert. Beispiel: Eine
   Person mit 90 % Tag und 10 % Nacht hat 10 Dienste; 9 Tag und 1 Nacht kosten nichts, 5 und 5 kosten
   2 × 40² = 3200 mal Gewicht. Quadriert, damit kleine Abweichungen wenig und eine ganz andere Verteilung viel
-  kosten. Gewicht 200, damit die Verteilung den Plan sichtbar prägt; Bedarf und Überbesetzung (mittlere
-  Stufe) gehen immer vor.
+  kosten. Gewicht 100, damit die Verteilung den Plan sichtbar prägt: Im Demomonat mit klaren Verteilungen für
+  92 Personen sank die Abweichung der Anteile von 0,55 auf 0,30; ein höheres Gewicht (200: 0,26) kostet
+  deutlich mehr Blöcke und Sollstunden. Bedarf und Überbesetzung (mittlere Stufe) gehen immer vor.
 - Wechselwirkung: Wer eine Verteilung je Kategorie hat, zählt nicht für die Fairness der Nachtdienste und nicht
   für die Abwechslung der Dienste, sonst würden diese Regeln die Verteilung wieder einebnen. Wer eine
   Verteilung je Bereich hat, zählt nicht für die Abwechslung der Bereiche. Wochenenden, Feiertage und

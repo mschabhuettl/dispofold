@@ -175,7 +175,7 @@ export const CONSTRAINTS = [
   ['fairNights', 'SOFT', 'Faire Nachtverteilung', 'Nächte gleichmäßig verteilen, mit Historie der Vormonate.', 25],
   ['fairWeekends', 'SOFT', 'Faire Wochenenden', 'Arbeitswochenenden gleichmäßig verteilen.', 25],
   ['fairUnpopular', 'SOFT', 'Unbeliebte Dienste', 'Unbeliebte Dienste gleichmäßig verteilen.', 15],
-  ['shiftMix', 'SOFT', 'Gewohnte Verteilung', 'Dienste folgen den gewohnten Anteilen je Schichtart und Bereich.', 200],
+  ['shiftMix', 'SOFT', 'Gewohnte Verteilung', 'Dienste folgen den gewohnten Anteilen je Schichtart und Bereich.', 100],
   ['restrictionOnRequest', 'SOFT', 'Nur auf Anfrage', 'Schichten, die eine Person nur nach Rückfrage macht.', 50],
   // on-request duties are never planned automatically, so their weight is not a setting
 ].map(([id, level, label, description, defaultWeight]) => ({ id, level, label, description, defaultWeight,
