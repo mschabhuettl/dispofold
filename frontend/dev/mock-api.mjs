@@ -209,7 +209,7 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
     const label = (id) => { const s = shifts.get(id); return s ? `${s.code} (${s.start}-${s.end})` : id; };
     for (const a of (plan?.assignments ?? []).filter((x) => x.personId === p.id && x.shiftId)) {
       const sh = shifts.get(a.shiftId);
-      hits.push({ constraintId: 'coverage', level: 'MEDIUM', date: a.date, score: 0,
+      hits.push({ constraintId: 'demand', level: 'MEDIUM', date: a.date, score: 0,
         text: `${label(a.shiftId)} deckt Bedarf im Bereich ${sh.areaId}.` });
       if (a.pinned) hits.push({ constraintId: 'pinned', level: 'SOFT', date: a.date, score: 0, text: 'Von Hand fixiert.' });
       if (sh.unpopular) hits.push({ constraintId: 'fairUnpopular', level: 'SOFT', date: a.date, score: -weightOf('fairUnpopular'),
@@ -232,26 +232,30 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
   function analysis(m) {
     const plan = plans.get(m);
     const gaps = [];
+    let overstaffedHours = 0;
+    const hours = (sg) => (parseLocalDateTime(sg.to) - parseLocalDateTime(sg.from)) / 3600000;
     for (const area of dataset.areas) {
       for (const sg of coverage(m, area.id)) {
         if (sg.planned < sg.required) gaps.push({ areaId: area.id, from: sg.from, to: sg.to, required: sg.required, planned: sg.planned });
+        overstaffedHours += Math.max(0, sg.planned - (sg.max ?? sg.required)) * hours(sg);
       }
     }
     const people = dataset.people.map((p) => personStats(m, p));
     const constraints = CONSTRAINTS.map((c) => {
       let matches = 0;
-      if (c.id === 'coverage') matches = gaps.length;
+      if (c.id === 'demand') matches = gaps.length;
       else if (c.level === 'SOFT') matches = people.reduce((s, st) => s + (c.id === 'wishOff' ? st.wishes - st.wishesMet : c.id === 'blockLength' ? st.singleDays : c.id === 'fairUnpopular' ? st.unpopular : 0), 0);
       const w = weightOf(c.id);
-      const score = c.id === 'coverage' ? -gaps.reduce((s, g) => s + (g.required - g.planned) * (parseLocalDateTime(g.to) - parseLocalDateTime(g.from)), 0) : c.level === 'SOFT' ? -matches * w : 0;
+      const score = c.id === 'demand' ? -gaps.reduce((s, g) => s + (g.required - g.planned) * (parseLocalDateTime(g.to) - parseLocalDateTime(g.from)), 0) : c.level === 'SOFT' ? -matches * w : 0;
       return { id: c.id, level: c.level, label: c.label, weight: w, score, matches };
     });
-    return { score: plan?.score ?? null, hardViolations: 0, constraints, gaps, people };
+    const uncoveredHours = gaps.reduce((sum, g) => sum + (g.required - g.planned) * hours(g), 0);
+    return { score: plan?.score ?? null, hardViolations: 0, constraints, gaps, people, uncoveredHours, overstaffedHours };
   }
 
   function scoreFor(m) {
     const a = analysis(m);
-    const medium = a.constraints.find((c) => c.id === 'coverage').score;
+    const medium = a.constraints.find((c) => c.id === 'demand').score;
     const soft = a.constraints.filter((c) => c.level === 'SOFT').reduce((s, c) => s + c.score, 0);
     return `0hard/${medium}medium/${soft}soft`;
   }

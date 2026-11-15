@@ -135,11 +135,16 @@ Oben im **Dienstplan** stehen:
   der Dienst über diese Grenze brächte.
 - **Bedarfslücken:** Zeitabschnitte, in denen weniger Personen eingeteilt sind als der Bedarf verlangt. Die
   Zeile **Bedarfslücken** unter dem Plan zeigt sie je Tag, **Ungedeckter Bedarf** die Summe in
-  Personenstunden. Lücken sind kein Fehler des Solvers: Reicht das Personal nicht, bleibt die Lücke sichtbar,
-  statt dass eine harte Regel verletzt wird. Ein Klick auf die Zahl eines Tages listet die Lücken dieses
+  Personenstunden. Daneben steht **Überbesetzung**: Personenstunden über der Höchstbesetzung (wo keine gesetzt
+  ist, über der Mindestbesetzung) und Dienste, die keinen Bedarf abdecken. Lücken sind kein Fehler des Solvers:
+  Reicht das Personal nicht, bleibt die Lücke sichtbar, statt dass eine harte Regel verletzt wird. Ein Klick auf die Zahl eines Tages listet die Lücken dieses
   Tages mit Bereich, Uhrzeit und fehlender Besetzung, jeweils mit der Liste **Wer kann gefragt werden?** (siehe
   [Dienste nur auf Anfrage](#dienste-nur-auf-anfrage)).
-- **Score:** Die Bewertung in drei Stufen: hart, Bedarf, weich. Einzelheiten in [regeln.md](regeln.md).
+- **Score:** Die Bewertung in drei Stufen: hart, mittel, weich. Mittel umfasst ungedeckten Bedarf und
+  Besetzung über dem Bedarf, beides in der Statuszeile in Personenstunden. Eine fehlende Minute wiegt schwerer als
+  jeder ganze Dienst über dem Bedarf: Ist jemand frei, wird eine Lücke immer zuerst gefüllt. Besetzung über dem
+  Bedarf wiegt schwerer als jede weiche Regel: Wer unter seinem Soll liegt, bleibt darunter, statt dass Stellen
+  doppelt besetzt werden. Einzelheiten in [regeln.md](regeln.md).
 
 Weitere Seiten:
 

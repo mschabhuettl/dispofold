@@ -176,9 +176,8 @@ export function createApi({ fetchImpl = (...a) => globalThis.fetch(...a), onUnau
   };
 }
 
-/** Parses a Timefold score like '0hard/-120medium/-53210soft' (also with 'init' prefix). */
-export function parseScore(score) {
-  const out = { hard: null, medium: null, soft: null };
-  for (const m of String(score ?? '').matchAll(/(-?\d+)(hard|medium|soft)/g)) out[m[2]] = Number(m[1]);
-  return out;
+/** Person hours of uncovered and of overstaffed demand from a plan analysis; null while there is none. */
+export function demandFigures(analysis) {
+  if (analysis?.uncoveredHours == null || analysis?.overstaffedHours == null) return null;
+  return { uncovered: analysis.uncoveredHours, overstaffed: analysis.overstaffedHours };
 }

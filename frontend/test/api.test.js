@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { ApiError, createApi, errorMessage, parseScore } from '../src/lib/api.js';
+import { ApiError, createApi, demandFigures, errorMessage } from '../src/lib/api.js';
 
 function fakeFetch(status, body, calls = []) {
   return async (path, init) => {
@@ -54,11 +54,6 @@ test('network failure', async () => {
   await assert.rejects(api.months(), (e) => e.status === 0 && /nicht erreichbar/.test(e.message));
 });
 
-test('score parsing', () => {
-  assert.deepEqual(parseScore('0hard/-120medium/-53210soft'), { hard: 0, medium: -120, soft: -53210 });
-  assert.deepEqual(parseScore('-2init/-1hard/0medium/0soft'), { hard: -1, medium: 0, soft: 0 });
-  assert.deepEqual(parseScore(null), { hard: null, medium: null, soft: null });
-});
 
 test('update file is sent as raw bytes', async () => {
   const calls = [];
@@ -209,4 +204,10 @@ test('candidates of a gap: area and local date-times as URL-encoded query parame
   assert.deepEqual(await api.candidates('2027-01', { areaId: 'A&B', from: '2027-01-03T07:00', to: '2027-01-03T19:00', required: 2, planned: 1 }), list);
   assert.equal(calls[0].path, '/api/plans/2027-01/candidates?areaId=A%26B&from=2027-01-03T07%3A00&to=2027-01-03T19%3A00');
   assert.equal(calls[0].init.method, 'GET');
+});
+
+test('demandFigures reads the person hours from an analysis and is empty without one', () => {
+  assert.deepEqual(demandFigures({ uncoveredHours: 1.5, overstaffedHours: 0 }), { uncovered: 1.5, overstaffed: 0 });
+  assert.equal(demandFigures(null), null);
+  assert.equal(demandFigures({ gaps: [] }), null);
 });

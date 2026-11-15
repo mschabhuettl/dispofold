@@ -110,6 +110,7 @@ export const TEXTS = {
   'roster.score': 'Score:',
   'roster.hardViolations': 'Harte Verstöße: {count}',
   'roster.uncovered': 'Ungedeckter Bedarf:',
+  'roster.overstaffed': 'Überbesetzung:',
   'roster.personHours': '{hours} Personenstunden',
   'roster.gaps': 'Bedarfslücken: {count}',
   'roster.person': 'Person',
@@ -279,7 +280,7 @@ export const TEXTS = {
   'rules.level.hard.title': 'Harte Regeln',
   'rules.level.hard.help': 'Kollektivvertrag, Qualifikation und Abwesenheiten. Müssen immer eingehalten werden.',
   'rules.level.medium.title': 'Bedarf',
-  'rules.level.medium.help': 'Nicht gedeckter Bedarf in Personenminuten. Wiegt schwerer als jede weiche Regel.',
+  'rules.level.medium.help': 'Nicht gedeckter Bedarf und Besetzung über dem Bedarf, in Personenminuten. Eine fehlende Minute wiegt schwerer als jeder ganze Dienst über dem Bedarf, und beides wiegt schwerer als jede weiche Regel.',
   'rules.level.soft.title': 'Weiche Regeln',
   'rules.level.soft.help': 'Wünsche, Fairness und Dienstblöcke. Das Gewicht bestimmt, wie wichtig eine Regel im Vergleich ist.',
   'rules.always': 'immer einzuhalten',
@@ -746,7 +747,7 @@ export const TEXTS = {
   'constraint.compRestBalance.label': 'Ersatzruhe-Guthaben',
   'constraint.compRestBalance.description': 'Es werden nicht mehr Ersatzruhetage geplant als offen sind.',
   'constraint.demand.label': 'Bedarf gedeckt',
-  'constraint.demand.description': 'Fehlende Besetzung je Bereich und Zeitabschnitt, in Personenminuten. Ist der Bedarf nicht erfüllbar, bleibt die Lücke hier sichtbar.',
+  'constraint.demand.description': 'Fehlende Besetzung je Bereich und Zeitabschnitt, 1500 je Personenminute (fest). Ist der Bedarf nicht erfüllbar, bleibt die Lücke hier sichtbar; sie wird vor jeder Überbesetzung gefüllt, wenn jemand frei ist.',
   'constraint.targetHours.label': 'Sollstunden',
   'constraint.targetHours.description': 'Abweichung der geplanten und angerechneten Stunden vom Monatssoll (korrigiert um einen Teil des Stundenkontos). Je Viertelstunde Abweichung, quadratisch.',
   'constraint.fairNights.label': 'Fairness Nachtdienste',
@@ -778,9 +779,9 @@ export const TEXTS = {
   'constraint.onRequest.label': 'Dienst nur auf Anfrage',
   'constraint.onRequest.description': 'Wird nie automatisch eingeplant. Die Planung fragt die Person und setzt den Dienst von Hand.',
   'constraint.overstaffing.label': 'Überbesetzung',
-  'constraint.overstaffing.description': 'Mehr Personen als die Höchstbesetzung oder, wo keine gesetzt ist, als die Mindestbesetzung, in Personenminuten.',
+  'constraint.overstaffing.description': 'Mehr Personen als die Höchstbesetzung oder, wo keine gesetzt ist, als die Mindestbesetzung, 1 je Personenminute (fest). Wiegt schwerer als jede weiche Regel: Personen unter ihrem Soll bleiben darunter, statt Stellen doppelt zu besetzen.',
   'constraint.uselessDuty.label': 'Dienst ohne Bedarf',
-  'constraint.uselessDuty.description': 'Ein Dienst, der keinen Bedarf seines Bereichs abdeckt.',
+  'constraint.uselessDuty.description': 'Ein Dienst, der keinen Bedarf seines Bereichs abdeckt, 1 je Dienstminute (fest). Zählt wie Überbesetzung.',
 };
 
 /**

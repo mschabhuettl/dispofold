@@ -1,5 +1,5 @@
 // Dienstplan: people x days of the month, cell editing, solving with progress polling.
-import { parseScore } from '../lib/api.js';
+import { demandFigures } from '../lib/api.js';
 import { tintStyle } from '../lib/colors.js';
 import { dayLabel, monthLabel } from '../lib/dates.js';
 import { append, fmt, guarded, h, toast } from '../lib/dom.js';
@@ -77,7 +77,7 @@ export async function render(root, ctx) {
 
   function drawStatus() {
     const plan = state.plan;
-    const score = parseScore(plan.score);
+    const figures = demandFigures(analysis);
     const gaps = analysis?.gaps?.length ?? null;
     const hard = state.solving ? state.hardViolations : (analysis?.hardViolations ?? state.hardViolations);
     status.className = state.solving ? 'statusbar solving' : 'statusbar';
@@ -87,7 +87,8 @@ export async function render(root, ctx) {
       state.solving && h('span', {}, t('roster.runtime'), ' ', h('strong', {}, t('roster.seconds', { n: Math.round(state.elapsedMillis / 1000) }))),
       h('span', {}, t('roster.score'), ' ', h('strong', {}, plan.score ?? '–')),
       h('span', { class: hard > 0 ? 'badge badge-hard' : 'badge' }, t('roster.hardViolations', { count: hard ?? '–' })),
-      score.medium != null && h('span', {}, t('roster.uncovered'), ' ', h('strong', {}, t('roster.personHours', { hours: fmt.num(Math.abs(score.medium) / 60, 1) }))),
+      figures && h('span', { class: figures.uncovered > 0 ? 'badge badge-hard' : '' }, t('roster.uncovered'), ' ', h('strong', {}, t('roster.personHours', { hours: fmt.num(figures.uncovered, 1) }))),
+      figures && h('span', { class: figures.overstaffed > 0 ? 'badge badge-warn' : '' }, t('roster.overstaffed'), ' ', h('strong', {}, t('roster.personHours', { hours: fmt.num(figures.overstaffed, 1) }))),
       gaps != null && h('span', { class: gaps > 0 ? 'badge badge-hard' : 'badge' }, t('roster.gaps', { count: gaps })),
       canEdit && state.solving && h('span.muted', {}, t('roster.lockedWhileSolving')),
       closed() && h('span.muted', {}, t('roster.closedHint')),
