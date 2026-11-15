@@ -3,6 +3,18 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## Unveröffentlicht
+
+- **Höchststunden im Monat (harte Regel `maxMonthHours`):** Die angerechneten Stunden einer Person (Dienste,
+  angerechnete Abwesenheiten, Ersatzruhe) dürfen das Ziel des Monats um höchstens eine Toleranz überschreiten,
+  Standard 10 %, auf der Seite Regeln einstellbar. Bisher füllte der Solver Lücken mit Teilzeitkräften bis zur
+  gesetzlichen Wochengrenze auf. Von Hand gesetzte Dienste darüber erscheinen als harter Verstoß; die Liste
+  „Wer kann gefragt werden?“ nennt niemanden, den der Dienst über die Grenze brächte.
+- **Plan nach Funktion:** Eine Bedarfslücke steht nur noch einmal je Bereich, in der Zeile „offen“ mit Zahl und
+  Uhrzeit, statt bei jeder Schicht, die sie überschneidet.
+- Betrieb: keine Änderung an Datenbank, `docker-compose.yml` oder `.env`. Gespeicherte Regeln ohne die neue
+  Toleranz bekommen 10 %.
+
 ## 0.3.0 (2026-11-15)
 
 „Nur auf Anfrage“ heißt jetzt: Die Planung fragt, das Programm plant es nie selbst ein. Neu ist die Ansicht
