@@ -158,7 +158,7 @@ class DatasetValidatorTest {
         Rules tenHours = new Rules(r.minDailyRestHours(), r.minWeeklyRestHours(), 10, r.maxWeekHours(),
                 r.maxAverageWeekHours(), r.minBlock(), r.maxBlock(), r.maxWishesPerPerson(),
                 r.holidayWorkEarnsCompRest(), r.nightStart(), r.nightEnd(), r.nightMinHours(),
-                r.accountCarryShare(), r.historyMonths(), r.weights(), r.timeZone(), r.averagingWeeks());
+                r.accountCarryShare(), r.historyMonths(), r.weights(), r.timeZone(), r.averagingWeeks(), r.maxOverTargetPercent());
 
         List<Issue> errors = DatasetValidator.validate(d, tenHours).errors();
 

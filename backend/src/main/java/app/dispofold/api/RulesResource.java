@@ -66,7 +66,8 @@ public class RulesResource {
         }
         if (r.minWeeklyRestHours() < 0 || r.maxDutyHours() <= 0 || r.maxWeekHours() <= 0
                 || r.maxAverageWeekHours() <= 0 || r.nightMinHours() < 0 || r.historyMonths() < 0
-                || r.maxWishesPerPerson() < 0 || r.averagingWeeks() < 1) {
+                || r.maxWishesPerPerson() < 0 || r.averagingWeeks() < 1
+                || (r.maxOverTargetPercent() != null && r.maxOverTargetPercent() < 0)) {
             return "rules.values";
         }
         if (r.minBlock() < 1 || r.maxBlock() < r.minBlock()) {

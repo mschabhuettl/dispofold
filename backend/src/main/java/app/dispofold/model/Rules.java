@@ -23,20 +23,28 @@ import java.util.Map;
  * @param timeZone zone of all times, e.g. Europe/Vienna; duty lengths and rest use real minutes across the
  *        changes to and from summer time
  * @param averagingWeeks weeks over which {@code maxAverageWeekHours} is averaged
+ * @param maxOverTargetPercent a person's counted hours of a month may exceed the target by at most this share of
+ *        the target (hard); null in rules saved before it existed means {@link #DEFAULT_OVER_TARGET_PERCENT}
  */
 public record Rules(double minDailyRestHours, double minWeeklyRestHours, double maxDutyHours, double maxWeekHours,
         double maxAverageWeekHours, int minBlock, int maxBlock, int maxWishesPerPerson,
         boolean holidayWorkEarnsCompRest, LocalTime nightStart, LocalTime nightEnd, double nightMinHours,
         double accountCarryShare, int historyMonths, Map<String, Long> weights, String timeZone,
-        int averagingWeeks) {
+        int averagingWeeks, Double maxOverTargetPercent) {
 
     public static final String DEFAULT_TIME_ZONE = "Europe/Vienna";
     /** Planning never goes below this daily rest; a shortened rest is for operations only. */
     public static final double MIN_DAILY_REST_HOURS = 11;
+    public static final double DEFAULT_OVER_TARGET_PERCENT = 10;
+
+    /** {@link #maxOverTargetPercent()} with the default for rules saved without it. */
+    public double overTargetPercent() {
+        return maxOverTargetPercent != null ? maxOverTargetPercent : DEFAULT_OVER_TARGET_PERCENT;
+    }
 
 
     public static Rules defaults() {
         return new Rules(11, 36, 12, 60, 46.16, 2, 4, 6, true, LocalTime.of(22, 0), LocalTime.of(6, 0), 2, 0.25, 3,
-                Map.of(), DEFAULT_TIME_ZONE, 52);
+                Map.of(), DEFAULT_TIME_ZONE, 52, DEFAULT_OVER_TARGET_PERCENT);
     }
 }

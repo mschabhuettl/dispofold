@@ -35,7 +35,7 @@ public class RosterConstraints implements ConstraintProvider {
     @Override
     public Constraint[] defineConstraints(ConstraintFactory f) {
         return new Constraint[] {
-                dailyRest(f), weeklyRest(f), maxDutyLength(f), maxWeekHours(f), averageWeekHours(f),
+                dailyRest(f), weeklyRest(f), maxDutyLength(f), maxWeekHours(f), maxMonthHours(f), averageWeekHours(f),
                 qualification(f), absence(f), employment(f), neverRestriction(f), compRestBalance(f), missingShift(f),
                 demand(f),
                 targetHours(f), fairNights(f), fairWeekends(f), fairHolidays(f), fairUnpopular(f), wishes(f),
@@ -112,6 +112,22 @@ public class RosterConstraints implements ConstraintProvider {
                 .justifyWith((s, w, minutes, score) -> Hit.of(s.getId(), weekStart(w), "minutes", minutes,
                         "weekStart", weekStart(w).toString()))
                 .asConstraint(ConstraintCatalog.MAX_WEEK);
+    }
+
+    /**
+     * Counted minutes of the month (duties, credited absences, compensatory rest) above the target plus the
+     * tolerance. Without it, demand (medium) would always win over the target hours (soft) and fill part-timers up
+     * to the legal weekly limit.
+     */
+    Constraint maxMonthHours(ConstraintFactory f) {
+        return f.forEachIncludingUnassigned(DutyCell.class)
+                .filter(DutyCell::isInMonth)
+                .groupBy(DutyCell::getStaff, sum(DutyCell::getCountedMinutes))
+                .filter((s, minutes) -> minutes > s.getLimits().maxMonth())
+                .penalize(HARD, (s, minutes) -> minutes - s.getLimits().maxMonth())
+                .justifyWith((s, minutes, score) -> Hit.of(s.getId(), null, "minutes", minutes,
+                        "maxMinutes", s.getLimits().maxMonth(), "targetMinutes", s.getTargetMinutes()))
+                .asConstraint(ConstraintCatalog.MAX_MONTH);
     }
 
     /**

@@ -284,7 +284,8 @@ final class InitialRoster {
     private boolean allowed(DutyCell[] cells, int d, Staff staff, ShiftOption option, long start, long end) {
         Staff.Limits limits = staff.getLimits();
         // The maximum duty length is checked against the nominal shift length, like the hard rule.
-        if (option.getDurationMinutes() > limits.maxDuty()) {
+        if (option.getDurationMinutes() > limits.maxDuty()
+                || counted.getOrDefault(staff, 0L) + (end - start) > limits.maxMonth()) {
             return false;
         }
         for (int i = Math.max(0, d - 2); i <= Math.min(days - 1, d + 2); i++) {

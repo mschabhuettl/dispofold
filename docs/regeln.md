@@ -66,6 +66,7 @@ Regeln; harte Regeln und der Bedarf haben kein einstellbares Gewicht.
 | `weeklyRest` | Mindestens 36 h ununterbrochene Ruhe je Kalenderwoche | KV, Ruhezeit | `minWeeklyRestHours` (36) |
 | `maxDutyLength` | Ein Dienst dauert höchstens 12 h | KV, Durchrechnung | `maxDutyHours` (12) |
 | `maxWeekHours` | Höchstens 60 h Dienst je Kalenderwoche | KV, Durchrechnung | `maxWeekHours` (60) |
+| `maxMonthHours` | Im Monat höchstens das Ziel plus eine Toleranz (Dienste, angerechnete Abwesenheiten und Ersatzruhe) | Betrieb | `maxOverTargetPercent` (10 % des Ziels) |
 | `averageWeekHours` | Höchstens 46,16 h je Woche im Durchschnitt des Durchrechnungszeitraums | KV, Durchrechnung | `maxAverageWeekHours` (46,16), `averagingWeeks` (52) |
 | `qualification` | Nur Personen, die für den Bereich eingeteilt werden dürfen | Stammdaten | `areaIds` der Person |
 | `absence` | Kein Dienst und keine Ersatzruhe an Abwesenheitstagen | Abwesenheiten | |
@@ -151,6 +152,15 @@ der Erklärung je Person.
   × Stundenkonto (Standard 0,25). Plusstunden senken also das Ziel, Minusstunden erhöhen es. Das Stundenkonto
   am Monatsbeginn ist das Konto nach dem Vormonat aus der Historie, sonst der Wert der Person im Import.
 - Stundenkonto nach dem Monat = vorher + geplant + Soll-Senkung - Soll - abgebuchte Stunden.
+- Obergrenze (`maxMonthHours`, hart): Die angerechneten Stunden des Monats (Dienste, angerechnete
+  Abwesenheiten und Ersatzruhe) dürfen das Ziel um höchstens `maxOverTargetPercent` Prozent des Ziels
+  überschreiten (Standard 10 %, auf der Seite Regeln einstellbar, 0 erlaubt). Abwesenheiten zählen mit, senken
+  also, was für Dienste bleibt. Strafe: Minuten darüber. Warum hart: Ungedeckter Bedarf (mittlere Stufe) wiegt
+  immer schwerer als die Sollstunden (weich); ohne Obergrenze füllt der Solver Lücken mit Teilzeitkräften bis
+  zur gesetzlichen Wochengrenze auf. Die gesetzlichen Grenzen gelten weiter. Ein von Hand gesetzter oder fixer
+  Dienst darf die Grenze überschreiten, erscheint dann aber als harter Verstoß; die Liste „Wer kann gefragt
+  werden?“ nennt niemanden, den der Dienst über die Grenze brächte. Regeln, die vor dieser Grenze gespeichert
+  wurden, bekommen den Standard.
 - Die Strafe ist die Abweichung in Viertelstunden, quadriert, damit sie sich auf viele Personen verteilt statt
   bei wenigen hängen zu bleiben. Beispiel: 4 h Abweichung sind 16 Viertelstunden, Strafe 256 mal Gewicht.
 

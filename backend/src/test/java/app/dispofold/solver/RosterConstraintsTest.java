@@ -54,7 +54,7 @@ class RosterConstraintsTest {
     /** Fairness weight 1000 per duty for 30 available days at 40 h. */
     static Staff staff(String id, Set<String> areas, int target, int compRest, Staff.History history,
             int wishes, Staff.Fairness fairness, Map<String, Integer> previous) {
-        return new Staff(id, 40, areas, 480, target, compRest, new Staff.Limits(660, 2160, 720, 3600, 2, 4),
+        return new Staff(id, 40, areas, 480, target, compRest, new Staff.Limits(660, 2160, 720, 3600, 2, 4, Integer.MAX_VALUE),
                 history, wishes, fairness, Staff.Average.NONE, previous);
     }
 
@@ -137,7 +137,7 @@ class RosterConstraintsTest {
     void averageWeekHours() {
         // 50 weeks with 2,300 h history, 1 week of 60 h now: 2,360 h over 51 weeks allowed at 46 h = 2,346 h.
         Staff.Average average = new Staff.Average(2300 * 60, 51, true, 46 * 60);
-        Staff s = new Staff("W", 40, Set.of("AN"), 480, 0, 0, new Staff.Limits(660, 2160, 720, 3600, 2, 4),
+        Staff s = new Staff("W", 40, Set.of("AN"), 480, 0, 0, new Staff.Limits(660, 2160, 720, 3600, 2, 4, Integer.MAX_VALUE),
                 Staff.History.NONE, 0, Staff.Fairness.of(40, 30, true, true), average, Map.of());
         List<Object> cells = new ArrayList<>();
         for (int d = 0; d < 5; d++) {
@@ -146,7 +146,7 @@ class RosterConstraintsTest {
         VERIFIER.verifyThat(RosterConstraints::averageWeekHours).given(cells.toArray())
                 .penalizesBy((2300 + 60 - 2346) * 60);
         // Without a complete history the average is only shown.
-        Staff partial = new Staff("X", 40, Set.of("AN"), 480, 0, 0, new Staff.Limits(660, 2160, 720, 3600, 2, 4),
+        Staff partial = new Staff("X", 40, Set.of("AN"), 480, 0, 0, new Staff.Limits(660, 2160, 720, 3600, 2, 4, Integer.MAX_VALUE),
                 Staff.History.NONE, 0, Staff.Fairness.of(40, 30, true, true),
                 new Staff.Average(2300 * 60, 51, false, 46 * 60), Map.of());
         VERIFIER.verifyThat(RosterConstraints::averageWeekHours).given(cell(partial, MON, DAY)).penalizesBy(0);
@@ -239,6 +239,19 @@ class RosterConstraintsTest {
                 .penalizesBy(2304);
         VERIFIER.verifyThat(RosterConstraints::targetHours)
                 .given(cell(b, MON, DAY), cell(b, MON.plusDays(1), DAY)).penalizesBy(0);
+    }
+
+    @Test
+    void maxMonthHoursCountsDutiesAndCreditedDays() {
+        Staff c = new Staff("C", 40, Set.of("AN"), 480, 600, 0, new Staff.Limits(660, 2160, 720, 3600, 2, 4, 800),
+                Staff.History.NONE, 0, Staff.Fairness.of(40, 30, true, true), Staff.Average.NONE, Map.of());
+        DutyCell absent = cell(c, MON.plusDays(1), null);
+        absent.setAbsence("U", true);
+        absent.setWorkday(true);
+        // 12 h duty and an 8 h credited absence day: 1200 minutes, 400 above the 800 allowed.
+        VERIFIER.verifyThat(RosterConstraints::maxMonthHours).given(cell(c, MON, DAY), absent).penalizesBy(400);
+        VERIFIER.verifyThat(RosterConstraints::maxMonthHours).given(cell(c, MON, DAY), cell(c, MON.plusDays(1), null))
+                .penalizesBy(0);
     }
 
     @Test

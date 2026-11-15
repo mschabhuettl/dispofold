@@ -25,8 +25,13 @@ public final class Staff {
     private final Average average;
     private final Map<String, Integer> previous;
 
-    /** Per-person limits from {@link app.dispofold.model.Rules}, in minutes. */
-    public record Limits(int dailyRest, int weeklyRest, int maxDuty, int maxWeek, int minBlock, int maxBlock) {
+    /**
+     * Per-person limits from {@link app.dispofold.model.Rules}, in minutes.
+     *
+     * @param maxMonth counted minutes of the month allowed at most: the target plus the tolerance
+     */
+    public record Limits(int dailyRest, int weeklyRest, int maxDuty, int maxWeek, int minBlock, int maxBlock,
+            int maxMonth) {
     }
 
     /** Sums over the history months counted for fairness; {@code months} is the number of those months. */

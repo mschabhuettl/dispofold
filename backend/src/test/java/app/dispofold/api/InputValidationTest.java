@@ -45,14 +45,23 @@ class InputValidationTest {
         assertThat(RulesResource.problem(ok)).isNull();
         // Planning never goes below 11 h daily rest.
         assertThat(RulesResource.problem(new Rules(9, 36, 12, 60, 46.16, 2, 4, 6, true, ok.nightStart(),
-                ok.nightEnd(), 2, 0.25, 3, Map.of(), Rules.DEFAULT_TIME_ZONE, 52))).isEqualTo("rules.minDailyRest");
+                ok.nightEnd(), 2, 0.25, 3, Map.of(), Rules.DEFAULT_TIME_ZONE, 52, 10.0))).isEqualTo("rules.minDailyRest");
         assertThat(RulesResource.problem(new Rules(11, 36, 12, 60, 46.16, 2, 4, 6, true, ok.nightStart(),
-                ok.nightEnd(), 2, 0.25, 3, Map.of(), "Mars/Base", 52))).isEqualTo("rules.timeZone");
+                ok.nightEnd(), 2, 0.25, 3, Map.of(), "Mars/Base", 52, 10.0))).isEqualTo("rules.timeZone");
         assertThat(RulesResource.problem(new Rules(11, 36, 12, 60, 46.16, 2, 4, 6, true, null, LocalTime.of(6, 0),
-                2, 0.25, 3, Map.of(), Rules.DEFAULT_TIME_ZONE, 52))).isNotNull();
+                2, 0.25, 3, Map.of(), Rules.DEFAULT_TIME_ZONE, 52, 10.0))).isNotNull();
         assertThat(RulesResource.problem(new Rules(11, 36, 12, 60, 46.16, 2, 4, 6, true, ok.nightStart(),
-                ok.nightEnd(), 2, 0.25, 3, Map.of("wishes", -1L), Rules.DEFAULT_TIME_ZONE, 52))).isNotNull();
+                ok.nightEnd(), 2, 0.25, 3, Map.of("wishes", -1L), Rules.DEFAULT_TIME_ZONE, 52, 10.0))).isNotNull();
         assertThat(RulesResource.problem(new Rules(11, 36, 0, 60, 46.16, 2, 4, 6, true, ok.nightStart(),
-                ok.nightEnd(), 2, 0.25, 3, Map.of(), Rules.DEFAULT_TIME_ZONE, 52))).isNotNull();
+                ok.nightEnd(), 2, 0.25, 3, Map.of(), Rules.DEFAULT_TIME_ZONE, 52, 10.0))).isNotNull();
+        // The tolerance above the target may be 0, not negative; rules saved before it existed have none.
+        assertThat(RulesResource.problem(new Rules(11, 36, 12, 60, 46.16, 2, 4, 6, true, ok.nightStart(),
+                ok.nightEnd(), 2, 0.25, 3, Map.of(), Rules.DEFAULT_TIME_ZONE, 52, -1.0))).isEqualTo("rules.values");
+        assertThat(RulesResource.problem(new Rules(11, 36, 12, 60, 46.16, 2, 4, 6, true, ok.nightStart(),
+                ok.nightEnd(), 2, 0.25, 3, Map.of(), Rules.DEFAULT_TIME_ZONE, 52, 0.0))).isNull();
+        Rules old = new Rules(11, 36, 12, 60, 46.16, 2, 4, 6, true, ok.nightStart(), ok.nightEnd(), 2, 0.25, 3,
+                Map.of(), Rules.DEFAULT_TIME_ZONE, 52, null);
+        assertThat(RulesResource.problem(old)).isNull();
+        assertThat(old.overTargetPercent()).isEqualTo(Rules.DEFAULT_OVER_TARGET_PERCENT);
     }
 }

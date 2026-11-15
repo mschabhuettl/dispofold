@@ -154,7 +154,8 @@ public final class RosterBuilder {
         Staff.Limits limits = new Staff.Limits(
                 (int) Math.round(Math.max(Rules.MIN_DAILY_REST_HOURS, rules.minDailyRestHours()) * 60),
                 (int) Math.round(rules.minWeeklyRestHours() * 60), (int) Math.round(rules.maxDutyHours() * 60),
-                (int) Math.round(rules.maxWeekHours() * 60), rules.minBlock(), rules.maxBlock());
+                (int) Math.round(rules.maxWeekHours() * 60), rules.minBlock(), rules.maxBlock(),
+                (int) Math.max(0, Math.round(target * (1 + rules.overTargetPercent() / 100))));
         Staff.History h = history(history, month, rules.historyMonths());
         boolean nights = false;
         boolean unpopular = false;
