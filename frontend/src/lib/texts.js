@@ -372,6 +372,9 @@ export const TEXTS = {
   'help.import.finalize': 'Schreibt die Zahlen des Monats in die Historie (für Fairness und Wünsche der Folgemonate), dazu Stundenkonto und Ersatzruhe danach. Danach ist der Monat nur lesbar.',
   'help.import.reopen': 'Öffnet einen abgeschlossenen Monat wieder, um Eingaben oder Plan zu ändern. Beim nächsten Abschluss werden seine Zahlen neu geschrieben.',
 
+  // correction 37, small items: Zeitachse links, own help per field, "offen" row summary
+  'functions.gapMore': '+{count} weitere',
+
   // shared
   'common.loading': 'Lädt …',
   'common.save': 'Speichern',

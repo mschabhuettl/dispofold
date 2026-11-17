@@ -100,6 +100,10 @@ try {
         // viewers print what they see: the same codes as on screen (absences only as "ABW"), no absence type codes
         const printed = new Set(await page.locator('.print-only table .cell-code').allTextContents());
         const screen = new Set(await page.locator('.roster-wrap .cell-code').allTextContents());
+        // a cell of the "offen" row summarises many gaps on screen ("+N weitere"); its title names them all
+        for (const title of await page.locator('.roster-wrap tr.gap-row .cell-btn[title]').evaluateAll((b) => b.map((x) => x.title))) {
+          for (const line of title.match(/\d+ · \d\d:\d\d-\d\d:\d\d/g) ?? []) screen.add(line);
+        }
         const codes = await page.evaluate(async () => (await (await fetch('/api/dataset')).json()).absenceTypes
           .filter((a) => !a.compensatoryRest).map((a) => a.code));
         const extra = [...printed].filter((c) => !screen.has(c));

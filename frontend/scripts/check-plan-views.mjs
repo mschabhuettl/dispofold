@@ -235,8 +235,29 @@ try {
   const gapRow = await belowHeader(page, 'tr.sticky-gaps th.person');
   check('gap row sticky', gapRow.position === 'sticky' && gapRow.scrolled > 0 && Math.abs(gapRow.offset) < 2 && gapRow.onTop, JSON.stringify(gapRow));
 
+  // a day with many gaps in the first area: twelve short windows of demand on that date only
+  const manyGapsDay = `${month}-15`;
+  await page.evaluate(async ([m, day]) => {
+    const dataset = await (await fetch('/api/dataset')).json();
+    const area = dataset.areas[0].id;
+    const windows = Array.from({ length: 12 }, (_, i) => ({ areaId: area, date: day, from: `${String(2 * i).padStart(2, '0')}:00`,
+      to: `${String(2 * i).padStart(2, '0')}:30`, min: 9 }));
+    dataset.demand = [...dataset.demand, ...windows];
+    dataset.periods = [await (await fetch(`/api/periods/${m}`)).json()];
+    await fetch('/api/import/dataset?replace=true', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...dataset, version: 2 }) });
+  }, [month, manyGapsDay]);
+
   // Plan nach Funktion: menu without closing, legend state shared, "offen" row of the area at the top sticks
   await open(page, 'funktionen');
+  // the "offen" row stays low on a day with many gaps: a few lines and "+N weitere", every gap in the title
+  const manyGaps = await page.evaluate((day) => {
+    const row = document.querySelector('.roster-wrap tbody tr.gap-row');
+    const cell = row.querySelector(`[data-cell$="|${day}"]`);
+    return { height: row.getBoundingClientRect().height, lines: cell.querySelectorAll('.cell-code').length,
+      text: cell.textContent, title: cell.title };
+  }, manyGapsDay);
+  check('"offen" row capped on a day with many gaps', manyGaps.height < 80 && /\+\d+ weitere/.test(manyGaps.text)
+    && (manyGaps.title.match(/\d+ · \d\d:\d\d-\d\d:\d\d/g) ?? []).length >= 12, JSON.stringify(manyGaps));
   const fnItems = await menuItems(page);
   check('function view menu', ['Drucken', 'Export XLSX', 'Export CSV', 'Export JSON'].every((x) => fnItems.includes(x))
     && !fnItems.includes('Monat abschließen'), fnItems.join(', '));
