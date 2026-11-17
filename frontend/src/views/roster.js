@@ -1,26 +1,23 @@
 // Dienstplan: people x days of the month, cell editing, solving with progress polling.
 import { demandFigures, scoreFigures } from '../lib/api.js';
+import { constraintLabel, hitText } from '../lib/codes.js';
 import { tintStyle } from '../lib/colors.js';
 import { dayLabel, monthLabel } from '../lib/dates.js';
 import { append, fmt, guarded, h, toast } from '../lib/dom.js';
 import { NAME_MODES, personLabel, printParts } from '../lib/functions-model.js';
-import { NEUTRAL_ABSENCE, buildGrid, cellRequest, cellsEditable } from '../lib/grid-model.js';
-import { printHeader } from '../lib/print.js';
+import { NEUTRAL_ABSENCE, buildGrid, cellRequest, cellsEditable, personName } from '../lib/grid-model.js';
+import { chipCount, planHeadline, problemConstraints } from '../lib/plan-status.js';
+import { printHeader, printStatus } from '../lib/print.js';
 import { needsRulesForCategories, onRequestTest } from '../lib/restrictions.js';
 import { t } from '../lib/texts.js';
 import { gapsWithCandidates } from './candidate-list.js';
-import { cellChoice, createPopover, dayClass, dayHeader, lightThemeWhilePrinting, printButton, rovingGrid } from './grid-shared.js';
+import { cellChoice, createPopover, dayClass, dayHeader, legendBox, lightThemeWhilePrinting, rovingGrid, stickyHeights } from './grid-shared.js';
+import { closeMonth, exportItems, outputMenu, printItem } from './plan-output.js';
 
 const POLL_INTERVAL_MS = 2000;
+/** Person explanations loaded at a time for the list behind a chip (each one analyses the plan on the server). */
+const HIT_REQUESTS = 4;
 const NAME_LABELS = { short: t('functions.names.short'), full: t('functions.names.full') };
-const STATUS = {
-  EMPTY: t('roster.status.empty'),
-  SOLVING: t('roster.status.solving'),
-  SOLVED: t('roster.status.solved'),
-  STOPPED: t('roster.status.stopped'),
-  FAILED: t('roster.status.failed'),
-  CLOSED: t('roster.status.closed'),
-};
 
 export async function render(root, ctx) {
   const { api, month, canEdit } = ctx;
@@ -59,6 +56,9 @@ export async function render(root, ctx) {
   const btnSolve = h('button.btn.btn-primary', { type: 'button', onclick: solve }, t('roster.solve'));
   const btnStop = h('button.btn.btn-secondary', { type: 'button', onclick: stop }, t('roster.stop'));
   const btnUnpin = h('button.btn.btn-secondary', { type: 'button', onclick: unpin }, t('roster.unpinAll'));
+  const scoreText = h('span', {});
+  const sticky = stickyHeights();
+  let personHits = null; // { analysis, promise } of the list behind the chips, loaded on the first click
 
   root.classList.add('roster-view', 'print-view');
   append(root, [
@@ -76,18 +76,23 @@ export async function render(root, ctx) {
           try { localStorage.setItem('roster-names', nameMode); } catch { /* no storage */ }
           drawTable();
         } }, NAME_MODES.map((m) => h('option', { value: m, selected: m === nameMode }, NAME_LABELS[m])))),
-      printButton(),
       h('span.spacer', {}),
-      canEdit && [
-        h('div.field', {}, h('label', { for: 'seed' }, t('roster.seed')), seedInput),
-        h('div.field', {}, h('label', { for: 'limit' }, t('roster.timeLimit')), limitInput),
-        h('div.field', {}, h('label', { for: 'move-limit' }, t('roster.moveLimit')), moveLimitInput),
-        h('label.check-inline', { title: t('roster.coldStartHelp') }, coldStartInput, ' ', t('roster.coldStart')),
-        btnSolve, btnStop, btnUnpin,
-      ]),
+      outputMenu(() => [printItem(), canEdit && exportItems(api, month, state.solving),
+        // planners close the month here as well as under Import/Export
+        canEdit && !closed() && h('button', { type: 'button', disabled: state.solving, onclick: () => closeMonth(ctx) }, t('import.finalize'))])),
+    canEdit && h('div.toolbar.plan-actions', {},
+      h('div.btn-row', {}, btnSolve, btnStop, btnUnpin),
+      // solver options and the raw score: rarely needed, collapsed
+      h('details.advanced', {}, h('summary', {}, t('roster.advanced')),
+        h('div.advanced-body', {},
+          h('div.field', {}, h('label', { for: 'seed' }, t('roster.seed')), seedInput),
+          h('div.field', {}, h('label', { for: 'limit' }, t('roster.timeLimit')), limitInput),
+          h('div.field', {}, h('label', { for: 'move-limit' }, t('roster.moveLimit')), moveLimitInput),
+          h('label.check-inline', { title: t('roster.coldStartHelp') }, coldStartInput, ' ', t('roster.coldStart')),
+          h('span.score', {}, t('roster.score'), ' ', scoreText)))),
     !dataset.people.length && h('p.alert', {}, t('common.noMasterdata')),
     status,
-    legend(dataset, canEdit),
+    legendBox(legend(dataset, canEdit)),
     table,
     print,
   ]);
@@ -96,26 +101,30 @@ export async function render(root, ctx) {
     const plan = state.plan;
     // while solving there is no analysis: the medium score holds both figures exactly
     const figures = demandFigures(analysis) ?? scoreFigures(plan.score);
-    const gaps = analysis?.gaps?.length ?? null;
     const hard = state.solving ? state.hardViolations : (analysis?.hardViolations ?? state.hardViolations);
-    status.className = state.solving ? 'statusbar solving' : 'statusbar';
+    const headline = planHeadline({ solving: state.solving, seconds: Math.round(state.elapsedMillis / 1000),
+      planned: plan.assignments.length > 0, hard, gaps: state.solving ? null : (analysis?.gaps?.length ?? null),
+      uncoveredHours: figures?.uncovered ?? null });
+    const score = `${t('roster.score')} ${plan.score ?? '–'}`;
+    scoreText.textContent = plan.score ?? '–';
+    status.className = `statusbar status-${headline.level}`;
     status.replaceChildren();
     append(status, [
-      h('span', {}, t('roster.statusLabel'), ' ', h('strong', {}, STATUS[plan.status] ?? plan.status)),
-      state.solving && h('span', {}, t('roster.runtime'), ' ', h('strong', {}, t('roster.seconds', { n: Math.round(state.elapsedMillis / 1000) }))),
-      h('span', {}, t('roster.score'), ' ', h('strong', {}, plan.score ?? '–')),
-      h('span', { class: hard > 0 ? 'badge badge-hard' : 'badge' }, t('roster.hardViolations', { count: hard ?? '–' })),
-      figures && h('span', { class: figures.uncovered > 0 ? 'badge badge-hard' : '' }, t('roster.uncovered'), ' ', h('strong', {}, t('roster.personHours', { hours: fmt.num(figures.uncovered, 1) }))),
-      figures && h('span', { class: figures.overstaffed > 0 ? 'badge badge-warn' : '' }, t('roster.overstaffed'), ' ', h('strong', {}, t('roster.personHours', { hours: fmt.num(figures.overstaffed, 1) }))),
-      analysis?.singleDaysOff != null && h('span.badge', { title: t('roster.singleDaysOffHelp') }, t('roster.singleDaysOff', { count: analysis.singleDaysOff })),
-      analysis?.blockDays != null && h('span.badge', { title: t('roster.blockDaysHelp') }, t('roster.blockDays', { count: analysis.blockDays })),
-      gaps != null && h('span', { class: gaps > 0 ? 'badge badge-hard' : 'badge' }, t('roster.gaps', { count: gaps })),
-      canEdit && state.solving && h('span.muted', {}, t('roster.lockedWhileSolving')),
-      closed() && h('span.muted', {}, t('roster.closedHint')),
-      // the plan no longer matches its inputs or the previous month: plan again
-      state.stale && h('span.badge.badge-warn', { title: t('roster.staleHelp') }, t('roster.stale')),
-      (state.previousMonthChanged || analysis?.previousMonthChanged)
-        && h('span.badge.badge-warn', { title: t('roster.previousChangedHelp') }, t('roster.previousChanged')),
+      // the raw score only as a tooltip here (and as text under "Erweitert")
+      h('p.plan-headline', { class: `headline-${headline.level}`, title: score }, headline.text),
+      !state.solving && chips(),
+      h('div.status-details', {},
+        h('span', {}, t('roster.statusLabel'), ' ', h('strong', {}, printStatus(plan.status))),
+        plan.status === 'FAILED' && h('span.badge.badge-hard', {}, t('roster.failed')),
+        figures?.overstaffed > 0 && h('span', {}, t('roster.overstaffed'), ' ', t('roster.personHours', { hours: fmt.num(figures.overstaffed, 1) })),
+        analysis?.singleDaysOff != null && h('span', { title: t('roster.singleDaysOffHelp') }, t('roster.singleDaysOff', { count: analysis.singleDaysOff })),
+        analysis?.blockDays != null && h('span', { title: t('roster.blockDaysHelp') }, t('roster.blockDays', { count: analysis.blockDays })),
+        canEdit && state.solving && h('span', {}, t('roster.lockedWhileSolving')),
+        closed() && h('span', {}, t('roster.closedHint')),
+        // the plan no longer matches its inputs or the previous month: plan again
+        state.stale && h('span.badge.badge-warn', { title: t('roster.staleHelp') }, t('roster.stale')),
+        (state.previousMonthChanged || analysis?.previousMonthChanged)
+          && h('span.badge.badge-warn', { title: t('roster.previousChangedHelp') }, t('roster.previousChanged'))),
     ]);
     if (canEdit) {
       btnSolve.disabled = state.solving || closed();
@@ -123,6 +132,67 @@ export async function render(root, ctx) {
       btnUnpin.disabled = state.solving || closed() || !plan.assignments.length;
     }
     print.querySelector('.print-header')?.replaceChildren(printHeader(title, plan.status));
+  }
+
+  /** Chips of the rules to look at (hard rules with matches, soft rules with a high share); a click lists who and when. */
+  function chips() {
+    const list = problemConstraints(analysis?.constraints);
+    if (!list.length) return null;
+    return h('div.chips', { role: 'group', 'aria-label': t('roster.problems') }, list.map((c) => {
+      const label = constraintLabel(c);
+      const count = chipCount(c);
+      const info = { label, count };
+      const name = count == null ? t('roster.chipCompare', info) : c.level === 'HARD' ? t('roster.chipHard', info) : t('roster.chipSoft', info);
+      return h('button.chip', { type: 'button', class: c.level === 'HARD' ? 'chip-hard' : null, 'aria-haspopup': 'dialog',
+        'aria-label': name, onclick: (e) => openHits(e.currentTarget, c, label) },
+      label, count != null && [' ', h('span.chip-count', {}, String(count))]);
+    }));
+  }
+
+  /**
+   * Who and when for one rule: the penalties of that rule among the hits of every person's explanation (the
+   * analysis has only totals per rule). Loaded once per analysis, a few people at a time; viewers get only the
+   * hits the server shows them.
+   */
+  function openHits(anchor, c, label) {
+    const box = h('div.hit-list', {}, h('p.muted', {}, t('common.loading')));
+    const el = popover.open(anchor, label, box);
+    // the list loads later: focus the dialog so that Escape works meanwhile
+    el.tabIndex = -1;
+    el.focus();
+    if (personHits?.analysis !== analysis) personHits = { analysis, promise: loadHits() };
+    const loading = personHits;
+    loading.promise.then((all) => {
+      const failed = all.filter((x) => !x.hits).length;
+      // a failed request is tried again at the next click
+      if (failed && personHits === loading) personHits = null;
+      const rows = all.flatMap(({ person, hits }) => (hits ?? []).filter((x) => x.constraintId === c.id && x.score < 0).map((hit) => ({ person, hit })));
+      if (!box.isConnected) return;
+      box.replaceChildren();
+      append(box, [
+        failed > 0 && h('p.alert.alert-error', {}, t('roster.chipFailed', { count: failed })),
+        rows.length
+          ? h('ul', {}, rows.map(({ person, hit }) => h('li', {},
+            h('button', { type: 'button', onclick: () => ctx.navigate(`person/${encodeURIComponent(person.id)}`) },
+              h('span.candidate-name', {}, personName(person)), h('span', {}, hit.date ? dayLabel(hit.date) : t('roster.chipMonth')),
+              h('span.hit-text.muted', {}, hitText(hit))))))
+          : h('p.muted', {}, t('roster.chipNone'))]);
+    });
+  }
+
+  /** Hits of every person, sorted by name; hits is null where the request failed. */
+  async function loadHits() {
+    const people = [...dataset.people].sort((a, b) => personName(a).localeCompare(personName(b), 'de'));
+    const out = new Array(people.length);
+    let next = 0;
+    const worker = async () => {
+      while (next < people.length) {
+        const i = next++;
+        out[i] = { person: people[i], hits: (await api.person(month, people[i].id).catch(() => null))?.hits ?? null };
+      }
+    };
+    await Promise.all(Array.from({ length: HIT_REQUESTS }, worker));
+    return out;
   }
 
   function drawTable() {
@@ -139,9 +209,13 @@ export async function render(root, ctx) {
       h('th.person', { scope: 'col' }, t('roster.person')),
       grid.days.map(dayHeader),
       h('th', { scope: 'col' }, t('roster.hoursShort')));
-    const body = [];
+    // the gap row first: it sticks below the day header while the grid scrolls
+    const body = [h('tr.gap-row.sticky-gaps', { 'data-row': '0' },
+      h('th.person', { scope: 'row' }, t('roster.gapsRow')),
+      grid.days.map((d, i) => h('td.cell', { class: dayClass(d) }, gapCell(d, gapDays.get(d.date), i))),
+      h('td.sum', {}, ''))];
     let group = null;
-    let rowIndex = 0;
+    let rowIndex = 1;
     for (const row of grid.rows) {
       const first = row.person.areaIds[0];
       if (!areaId && first !== group) {
@@ -156,12 +230,10 @@ export async function render(root, ctx) {
         row.cells.map((c, i) => h('td.cell', { class: dayClass(grid.days[i]) }, cellContent(row, c, grid.days[i], r, i))),
         h('td.sum', {}, fmt.num(row.hours, 1))));
     }
-    body.push(h('tr', {},
-      h('th.person', { scope: 'row' }, t('roster.gapsRow')),
-      grid.days.map((d) => h('td.cell', { class: dayClass(d) }, gapCell(d, gapDays.get(d.date)))),
-      h('td.sum', {}, '')));
-    table.replaceChildren(h('table.roster', { role: 'grid', 'aria-readonly': editable() ? null : 'true' }, h('caption.visually-hidden', {}, title),
-      h('thead', {}, head), h('tbody', {}, body)));
+    const tableEl = h('table.roster', { role: 'grid', 'aria-readonly': editable() ? null : 'true' }, h('caption.visually-hidden', {}, title),
+      h('thead', {}, head), h('tbody', {}, body));
+    table.replaceChildren(tableEl);
+    sticky.watch(tableEl);
     print.replaceChildren(h('p.print-header', {}, printHeader(title, state.plan.status)), legend(dataset, canEdit),
       ...printParts(grid.days).map((days) => printTable(grid, days, gapDays)));
     // one tab stop: the last used cell, else the first; keep keyboard focus on the same cell after a redraw
@@ -209,13 +281,15 @@ export async function render(root, ctx) {
       h('tbody', {}, body));
   }
 
-  /** Gap count of a day; planners open the day's gaps with who could be asked. */
-  function gapCell(d, count) {
-    if (!count) return '';
-    const title = t('roster.gapCount', { count });
-    if (!editable()) return h('strong.text-danger', { title }, String(count));
-    return h('button.gap-btn.text-danger', { type: 'button', title, 'aria-label': t('roster.gapButton', { count, day: dayLabel(d.date) }),
-      'aria-haspopup': 'dialog', onclick: (e) => openGaps(e.currentTarget, d.date) }, String(count));
+  /** Gap count of a day, row 0 of the arrow key grid; planners open the day's gaps with who could be asked. */
+  function gapCell(d, count, c) {
+    const open = editable() && count > 0;
+    const label = open ? t('roster.gapButton', { count, day: dayLabel(d.date) }) : t('roster.gapDay', { count: count ?? 0, day: dayLabel(d.date) });
+    // always focusable for arrow navigation; read-only cells do nothing on Enter or click
+    return h('button', { type: 'button', class: count ? 'cell-btn gap-btn' : 'cell-btn', title: count ? t('roster.gapCount', { count }) : null,
+      'aria-label': label, 'aria-haspopup': open ? 'dialog' : null, 'aria-disabled': open ? null : 'true', tabindex: '-1',
+      'data-cell': `gaps|${d.date}`, 'data-r': '0', 'data-c': String(c),
+      onclick: (e) => { if (editable() && count) openGaps(e.currentTarget, d.date); } }, count ? String(count) : '');
   }
 
   function cellContent(row, cell, day, r, c) {
@@ -335,6 +409,7 @@ export async function render(root, ctx) {
   return () => {
     disposed = true;
     stopPrintTheme();
+    sticky.stop();
     clearTimeout(timer);
     timer = null;
     closePopover();
@@ -360,6 +435,7 @@ function legend(dataset, canEdit) {
     h('span', {}, h('span.cell-code.strong.hard', {}, 'K/A1'), ' ', t('roster.legend.conflict')),
     canEdit && h('span', {}, h('span.cell-code.on-request', {}, 'A1'), ' ', t('roster.legend.onRequest')),
     !canEdit && h('span', {}, h('span.cell-code.strong.absence.outlined', {}, NEUTRAL_ABSENCE), ` ${t('grid.absent')}`),
-    (dataset.absenceTypes ?? []).filter((type) => !type.compensatoryRest).map((type) =>
+    // viewers see every absence as "ABW": the absence types only for planners
+    canEdit && (dataset.absenceTypes ?? []).filter((type) => !type.compensatoryRest).map((type) =>
       h('span', {}, h('span.cell-code.strong.absence.tinted', { style: tintStyle(type.color) }, type.code), ` ${type.name}`)));
 }

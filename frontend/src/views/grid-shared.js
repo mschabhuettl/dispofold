@@ -1,4 +1,5 @@
-// Pieces shared by the roster and the function view: day header, popover shell, cell choices, keyboard navigation.
+// Pieces shared by the roster and the function view: day header, popover shell, cell choices, keyboard navigation,
+// legend box, sticky rows.
 import { tintStyle } from '../lib/colors.js';
 import { WEEKDAY_SHORT } from '../lib/dates.js';
 import { h } from '../lib/dom.js';
@@ -125,10 +126,39 @@ export function rovingGrid(container) {
   };
 }
 
-/** The "Drucken" button of the plan views: the browser's print dialog with the print layout of the view. */
-export function printButton() {
-  return h('button.btn.btn-secondary', { type: 'button', title: t('print.buttonHelp'), 'data-print': '', onclick: () => window.print() },
-    t('print.button'));
+/** The legend on screen: collapsed until opened; open or closed is remembered for both plan views. */
+export function legendBox(legend) {
+  let open = false;
+  try { open = localStorage.getItem('plan-legend') === 'open'; } catch { /* no storage */ }
+  const box = h('details.legend-box', { open }, h('summary', {}, t('roster.legend')), legend);
+  box.addEventListener('toggle', () => {
+    try { localStorage.setItem('plan-legend', box.open ? 'open' : 'closed'); } catch { /* no storage */ }
+  });
+  return box;
+}
+
+/**
+ * Rows that stick below the day header need its height, and below a group row that one's too: kept as the CSS
+ * variables --head-h and --group-h of the table, also when the layout changes (the view is attached after the first
+ * draw, fonts load later). onMeasure runs after each measurement. watch(table) after every redraw, stop() at the end.
+ */
+export function stickyHeights(onMeasure = () => {}) {
+  let table = null;
+  const observer = new ResizeObserver(() => {
+    if (!table?.isConnected) return;
+    table.style.setProperty('--head-h', `${table.tHead.getBoundingClientRect().height}px`);
+    const group = table.querySelector('tbody tr.group');
+    if (group) table.style.setProperty('--group-h', `${group.getBoundingClientRect().height}px`);
+    onMeasure();
+  });
+  return {
+    watch(el) {
+      observer.disconnect();
+      table = el;
+      observer.observe(el.tHead);
+    },
+    stop: () => observer.disconnect(),
+  };
 }
 
 /**

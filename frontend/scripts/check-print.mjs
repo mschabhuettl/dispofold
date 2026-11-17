@@ -1,5 +1,5 @@
 // Playwright check of the print layouts of "Dienstplan" (#/plan) and "Plan nach Funktion" (#/funktionen): the
-// "Drucken" button exists, and with print media the app chrome is hidden, a header line names month, status and print
+// "Drucken" item of the "Ausgabe" menu exists, and with print media the app chrome is hidden, a header line names month, status and print
 // date, and the month is split into days 1-15 and 16 to the end, each starting a new page. Also for the viewer role.
 // Demo data of the dev server (mock API). With an output folder as argument, it also saves a PDF of each layout.
 //   npm run build && node scripts/check-print.mjs [output folder]     (Chromium via `npx playwright install chromium`)
@@ -56,7 +56,10 @@ try {
       await page.emulateMedia({ media: 'screen' });
       await page.goto(`${base}/#/${view}`);
       await page.locator('.roster-wrap table').waitFor();
+      // "Drucken" is in the "Ausgabe" menu
+      await page.getByRole('button', { name: 'Ausgabe' }).click();
       check(`${name}: button "Drucken"`, await page.locator('button[data-print]').filter({ hasText: 'Drucken' }).isVisible());
+      await page.keyboard.press('Escape');
       check(`${name}: print layout hidden on screen`, await page.locator('.print-only').isHidden());
       await page.emulateMedia({ media: 'print' });
       for (const chrome of ['.sidebar', '.topbar', '.toolbar', '.roster-wrap', '.print-view > h1']) {

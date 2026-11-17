@@ -8,7 +8,8 @@ import { printHeader } from '../lib/print.js';
 import { needsRulesForCategories, onRequestTest } from '../lib/restrictions.js';
 import { t } from '../lib/texts.js';
 import { gapsWithCandidates } from './candidate-list.js';
-import { cellChoice, createPopover, dayClass, dayHeader, lightThemeWhilePrinting, printButton, rovingGrid } from './grid-shared.js';
+import { cellChoice, createPopover, dayClass, dayHeader, legendBox, lightThemeWhilePrinting, rovingGrid, stickyHeights } from './grid-shared.js';
+import { exportItems, outputMenu, printItem } from './plan-output.js';
 
 const NAME_LABELS = { short: t('functions.names.short'), full: t('functions.names.full') };
 
@@ -45,24 +46,50 @@ export async function render(root, ctx) {
     state.solving && h('p.alert', {}, t('roster.lockedWhileSolving')),
     state.plan.status === 'CLOSED' && h('p.alert', {}, t('roster.closedHint')),
     h('div.toolbar', {}, h('div.field', {}, h('label', { for: 'fn-names' }, t('functions.names')), nameSelect), h('span.spacer', {}),
-      printButton()),
-    legend(canEdit),
+      outputMenu(() => [printItem(), canEdit && exportItems(api, month, state.solving)])),
+    legendBox(legend(canEdit)),
     table,
     print,
   ]);
+
+  /**
+   * On screen each area is a row group with its "offen" row right below the area name; the area at the top of the
+   * grid keeps both under the day header (class stuck). Only that one: sticky rows of earlier areas would stay
+   * stuck too, and a taller "offen" row would show below a shorter one.
+   */
+  function stickArea() {
+    const el = table.querySelector('table');
+    if (!el) return;
+    const line = table.getBoundingClientRect().top + table.clientTop + el.tHead.getBoundingClientRect().height + 1;
+    const bodies = [...el.tBodies];
+    const current = bodies.findLast((b) => b.getBoundingClientRect().top <= line) ?? bodies[0];
+    for (const b of bodies) b.classList.toggle('stuck', b === current);
+  }
+  const sticky = stickyHeights(stickArea);
+  table.addEventListener('scroll', stickArea, { passive: true });
 
   function draw() {
     const active = document.activeElement?.dataset?.cell ?? null;
     popover.close();
     const model = buildFunctionRows({ dataset, period, plan: state.plan, month, gaps: analysis?.gaps ?? [], onRequest });
+    // print keeps the model's order (the "offen" row last in its area); the screen moves it up to the area name
+    const areas = [];
+    for (const row of model.rows) {
+      if (row.type === 'group') areas.push([row]);
+      else if (row.type === 'gaps') areas.at(-1).splice(1, 0, row);
+      else areas.at(-1).push(row);
+    }
     let r = 0;
-    const body = model.rows.map((row) => (row.type === 'group'
+    const bodies = areas.map((rows) => h('tbody', {}, rows.map((row) => (row.type === 'group'
       ? h('tr.group', {}, h('th', { colspan: model.days.length + 1, scope: 'colgroup' }, row.area.name))
-      : row.type === 'gaps' ? gapRow(row, r++, model.days) : positionRow(row, r++, model.days)));
-    table.replaceChildren(h('table.roster.functions', { class: nameMode === 'full' ? 'full-names' : null, role: 'grid', 'aria-readonly': editable() ? null : 'true' },
+      : row.type === 'gaps' ? gapRow(row, r++, model.days) : positionRow(row, r++, model.days)))));
+    const tableEl = h('table.roster.functions', { class: nameMode === 'full' ? 'full-names' : null, role: 'grid', 'aria-readonly': editable() ? null : 'true' },
       h('caption.visually-hidden', {}, title),
       h('thead', {}, h('tr', {}, h('th.person', { scope: 'col' }, t('functions.function')), model.days.map(dayHeader))),
-      h('tbody', {}, body)));
+      bodies);
+    table.replaceChildren(tableEl);
+    sticky.watch(tableEl);
+    stickArea();
     const key = focusKey ?? active;
     focusKey = null;
     nav.restore(key);
@@ -191,6 +218,7 @@ export async function render(root, ctx) {
     disposed = true;
     popover.close();
     stopPrintTheme();
+    sticky.stop();
   };
 }
 

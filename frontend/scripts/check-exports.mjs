@@ -1,5 +1,6 @@
 // Playwright check: the three exports (XLSX, CSV, JSON) save a file through the blob download path.
-// Starts the dev server (mock API) on a free port, logs in, loads demo data, plans and clicks every export button.
+// Starts the dev server (mock API) on a free port, logs in, loads demo data, plans and clicks every export button,
+// under Import/Export and in the "Ausgabe" menu of the Dienstplan.
 //   npm run build && node scripts/check-exports.mjs     (Chromium via `npx playwright install chromium`)
 import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -35,16 +36,22 @@ try {
     await fetch(`/api/plans/${m}/solve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"seed":1,"timeLimitSeconds":1}' });
   }, month);
   await page.waitForTimeout(1500);
-  await page.goto(`${base}/#/import`);
-  for (const format of ['xlsx', 'csv', 'json']) {
-    const button = page.getByRole('button', { name: format.toUpperCase(), exact: true });
-    const [download] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }), button.click()]);
-    const path = await download.path();
-    const size = readFileSync(path).length;
-    const ok = download.suggestedFilename() === `dienstplan-${month}.${format}` && size > 0 && download.url().startsWith('blob:');
-    console.log(`${ok ? 'ok  ' : 'FAIL'} ${format}: ${download.suggestedFilename()}, ${size} bytes, from ${download.url().slice(0, 5)}`);
-    if (format === 'json') JSON.parse(readFileSync(path, 'utf8'));
-    if (!ok) failed = true;
+  for (const view of ['import', 'plan']) {
+    await page.goto(`${base}/#/${view}`);
+    for (const format of ['xlsx', 'csv', 'json']) {
+      let button = page.getByRole('button', { name: format.toUpperCase(), exact: true });
+      if (view === 'plan') {
+        await page.getByRole('button', { name: 'Ausgabe' }).click();
+        button = page.locator('#output-menu').getByRole('button', { name: `Export ${format.toUpperCase()}` });
+      }
+      const [download] = await Promise.all([page.waitForEvent('download', { timeout: 15000 }), button.click()]);
+      const path = await download.path();
+      const size = readFileSync(path).length;
+      const ok = download.suggestedFilename() === `dienstplan-${month}.${format}` && size > 0 && download.url().startsWith('blob:');
+      console.log(`${ok ? 'ok  ' : 'FAIL'} ${view} ${format}: ${download.suggestedFilename()}, ${size} bytes, from ${download.url().slice(0, 5)}`);
+      if (format === 'json') JSON.parse(readFileSync(path, 'utf8'));
+      if (!ok) failed = true;
+    }
   }
 } finally {
   await browser.close();

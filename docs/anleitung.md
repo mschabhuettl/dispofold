@@ -111,12 +111,13 @@ möglich), fragt das Programm beim Speichern nach:
 
 Unter **Dienstplan**:
 
-1. **Planen** startet den Solver. Er rechnet im Hintergrund, Laufzeit und Score sind oben sichtbar. Während
+1. **Planen** startet den Solver. Er rechnet im Hintergrund, die Laufzeit steht oben in der Statuszeile. Während
    der Planung ist der Plan gesperrt: Zellen, Export und Monatsabschluss gehen erst danach.
 2. Die Planung endet von selbst nach der Schrittzahl, spätestens nach dem Zeitlimit. **Stopp** beendet sie
    früher. Der beste Stand bis dahin bleibt erhalten.
 
-Einstellungen neben **Planen** (alle optional; ein leeres Feld nimmt den voreingestellten Wert):
+Einstellungen unter **Erweitert** neben **Planen**, **Stopp** und **Fixierungen lösen** (zugeklappt; alle optional, ein
+leeres Feld nimmt den voreingestellten Wert; dort steht auch der Score):
 
 - **Startwert (Seed):** voreingestellt 1. Gleiche Daten, gleicher Ausgangsplan, gleicher Startwert und gleiche
   Schrittzahl ergeben denselben Plan, sofern die Planung vor dem Zeitlimit endet. Weil eine neue Planung auf
@@ -131,7 +132,17 @@ Die voreingestellten Werte legt im Serverbetrieb die IT fest (siehe [betrieb.md]
 
 ## Das Ergebnis lesen
 
-Oben im **Dienstplan** stehen:
+Oben im **Dienstplan** steht die Statuszeile:
+
+- **Überschrift** in Farbe: grün „Plan verwendbar: keine Regelverstöße, keine Lücken“, gelb die Zahl der Lücken
+  mit den fehlenden Personenstunden, rot die Zahl der Regelverstöße (harte Verstöße). Der Score erscheint beim
+  Darüberfahren und unter **Erweitert**.
+- **Regeln mit Treffern** darunter: je harte Regel mit Verstößen und je weiche Regel mit einem großen Anteil am
+  weichen Score (mindestens 10 %, höchstens die fünf größten) ein Knopf mit der Zahl der Treffer. Ein Klick
+  listet Person und Tag mit einer kurzen Erklärung; ein Klick auf einen Eintrag öffnet die Seite **Person**.
+- **Legende:** über dem Plan, zugeklappt; ein Klick öffnet sie, der Browser merkt sich die Wahl.
+
+Die Begriffe im Einzelnen:
 
 - **Harte Verstöße:** Muss 0 sein. Harte Regeln sind Ruhezeiten, Höchstarbeitszeiten, Qualifikation und
   Abwesenheiten. Ein Plan mit harten Verstößen darf so nicht verwendet werden. Meist kommen sie von Hand
@@ -158,8 +169,8 @@ Oben im **Dienstplan** stehen:
   (Soll 129,2 h)“); **Was bedeuten Soll und Ziel?** erklärt beide. Die Zeile **Warum dieser Dienst?** nennt beide
   Ziele. Für Lesende ist das Ziel ausgeblendet, weil es das Stundenkonto enthält.
 - **Bedarfslücken:** Zeitabschnitte, in denen weniger Personen eingeteilt sind als der Bedarf verlangt. Die
-  Zeile **Bedarfslücken** unter dem Plan zeigt sie je Tag, **Ungedeckter Bedarf** die Summe in
-  Personenstunden. Daneben steht **Überbesetzung**: Personenstunden über der Höchstbesetzung (wo keine gesetzt
+  Zeile **Bedarfslücken** direkt unter den Tagen zeigt sie je Tag und bleibt beim Scrollen stehen; die
+  Überschrift nennt ihre Zahl und die Summe in Personenstunden. In der Statuszeile steht **Überbesetzung**: Personenstunden über der Höchstbesetzung (wo keine gesetzt
   ist, über der Mindestbesetzung) und Dienste, die keinen Bedarf abdecken. Lücken sind kein Fehler des Solvers:
   Reicht das Personal nicht, bleibt die Lücke sichtbar, statt dass eine harte Regel verletzt wird. Ein Klick auf die Zahl eines Tages listet die Lücken dieses
   Tages mit Bereich, Uhrzeit und fehlender Besetzung, jeweils mit der Liste **Wer kann gefragt werden?** (siehe
@@ -168,8 +179,8 @@ Oben im **Dienstplan** stehen:
   **Einzelne freie Tage** zählt freie Tage, die zwischen zwei Diensten liegen (wenig Erholung). **Blocktage
   abweichend** zählt die Tage, um die Dienstblöcke kürzer oder länger sind als bevorzugt. Beide sollen klein
   sein; sie sind keine Fehler, sondern Maß für die Güte des Plans.
-- **Score:** Die Bewertung in drei Stufen: hart, mittel, weich. Mittel umfasst ungedeckten Bedarf und
-  Besetzung über dem Bedarf, beides in der Statuszeile in Personenstunden. Eine fehlende Minute wiegt schwerer als
+- **Score:** Die Bewertung in drei Stufen: hart, mittel, weich (unter **Erweitert**). Mittel umfasst ungedeckten
+  Bedarf und Besetzung über dem Bedarf, beides in der Statuszeile in Personenstunden. Eine fehlende Minute wiegt schwerer als
   jeder ganze Dienst über dem Bedarf: Ist jemand frei, wird eine Lücke immer zuerst gefüllt. Besetzung über dem
   Bedarf wiegt schwerer als jede weiche Regel: Wer unter seinem Soll liegt, bleibt darunter, statt dass Stellen
   doppelt besetzt werden. Einzelheiten in [regeln.md](regeln.md).
@@ -212,8 +223,8 @@ Dienst im Monat und Schichten, deren Zeit ein Bedarf des Bereichs überschneidet
 - **In der Zelle** steht das Kürzel der Person, der ganze Name erscheint beim Darüberfahren. Unter **Anzeige**
   lässt sich stattdessen „Nachname Vorname“ wählen; der Browser merkt sich die Wahl. Fixierte Dienste,
   Konflikte und Dienste nur auf Anfrage sind markiert wie im Dienstplan.
-- **Zeile „offen“** (rot): Hat ein Bereich im Monat Bedarfslücken, steht unter seinen Schichten eine Zeile
-  „offen“. Jede Lücke steht dort genau einmal, am Tag ihres Beginns (eine Lücke von 19:00 bis 07:00 also am
+- **Zeile „offen“** (rot): Hat ein Bereich im Monat Bedarfslücken, steht direkt unter seinem Namen eine Zeile
+  „offen“. Beim Scrollen bleiben Name und Zeile „offen“ des obersten Bereichs unter den Tagen stehen. Jede Lücke steht dort genau einmal, am Tag ihres Beginns (eine Lücke von 19:00 bis 07:00 also am
   ersten Tag), mit der Zahl der fehlenden Personen und der Uhrzeit, zum Beispiel „1 · 07:00-19:00“. Mehrere
   Lücken eines Tages stehen untereinander in derselben Zelle.
 - **Ein Klick auf einen Namen** öffnet dieselbe Auswahl wie im Dienstplan (Dienst ändern, frei, fixieren).
@@ -228,7 +239,7 @@ Dienst im Monat und Schichten, deren Zeit ein Bedarf des Bereichs überschneidet
 
 ![Druckansicht Plan nach Funktion](screenshots/druck-funktionen.png)
 
-**Dienstplan** und **Plan nach Funktion** haben oben rechts den Knopf **Drucken**. Er öffnet den Druckdialog
+**Dienstplan** und **Plan nach Funktion** haben oben rechts das Menü **Ausgabe** mit **Drucken**. Er öffnet den Druckdialog
 des Browsers (im Desktop-Programm den Druckdialog des Systems) mit einer eigenen Druckansicht; die Druckfunktion
 des Browsers (Strg+P) liefert dasselbe. Im Dialog lässt sich auch „Als PDF speichern“ wählen.
 
@@ -298,8 +309,10 @@ bitte neu planen.
 
 ## Monatsabschluss
 
-Unter **Import/Export**, **Monat abschließen**. Vorher sollte der Plan fertig sein: keine harten Verstöße,
-Lücken geklärt.
+Unter **Import/Export**, **Monat abschließen**, oder im **Dienstplan** im Menü **Ausgabe**. Vorher sollte der Plan
+fertig sein: keine harten Verstöße, Lücken geklärt. Der Dialog prüft das in einer Liste: Regelverstöße, offene
+Lücken, Plan veraltet. Ist ein Punkt offen, lässt sich der Monat erst nach dem Häkchen **Trotzdem abschließen**
+abschließen.
 
 - **Was gespeichert wird:** Je Person die Kennzahlen des Monats (Nächte, Wochenenden, Feiertage, unbeliebte
   Dienste, Wünsche), die geplanten Stunden, das Stundenkonto nach dem Monat und die Ersatzruhe nach dem Monat
@@ -321,7 +334,8 @@ im Format von [datenformat.md](datenformat.md). Die Datei lässt sich später wi
 personenbezogene Daten (auch Stundenkonten, Einschränkungen und Familienregeln) und ist entsprechend sicher
 aufzubewahren.
 
-Ebenfalls unter **Import/Export**, **Plan exportieren**, als XLSX (Excel), CSV oder JSON. Im Programmfenster der Desktop-Version
+Ebenfalls unter **Import/Export**, **Plan exportieren**, als XLSX (Excel), CSV oder JSON, oder im Menü **Ausgabe** der
+beiden Planansichten. Im Programmfenster der Desktop-Version
 landet die Datei im Ordner Downloads, eine Meldung nennt den Namen.
 
 - Nur die Rolle Planung kann exportieren. Während einer Planung ist der Export gesperrt.
