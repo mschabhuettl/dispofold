@@ -48,7 +48,7 @@ try {
   await page.goto(`${base}/#/regeln`);
   await page.locator('#restart-status:not([hidden])').waitFor({ timeout: 5000 });
   check('restart status shown', true, await page.locator('#restart-status').textContent());
-  await page.locator('.rule-row').first().waitFor({ timeout: 20000 });
+  await page.locator('#h-goals').waitFor({ timeout: 20000 });
   check('view loaded after the restart', await page.locator('#restart-status').isHidden());
   check('no error toast during the restart', await page.locator('#toast.error:not([hidden])').count() === 0);
 

@@ -1,6 +1,6 @@
 // Playwright check: forms save stored decimals unchanged. A person with weekly hours 46.15 and an hours account
-// of 12.25, and rules with decimal parameters, are opened and saved without a change (the hours account share is
-// shown in percent and saved as a fraction); the browser must not reject
+// of 12.25, and rules with decimal parameters, are opened and saved without a change, with the law fields locked and
+// again after "Ändern" (the hours account share is shown in percent and saved as a fraction); the browser must not reject
 // the values (step) and the saved values must be the stored ones. Demo data of the dev server (mock API).
 //   npm run build && node scripts/check-forms.mjs     (Chromium via `npx playwright install chromium`)
 import { spawn } from 'node:child_process';
@@ -41,7 +41,7 @@ try {
     const rules = await (await fetch('/api/rules')).json();
     await fetch('/api/rules', { method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ...rules, minDailyRestHours: 11.25, maxWeekHours: 48.5, maxAverageWeekHours: 38.25,
-        accountCarryShare: 0.33, maxOverTargetPercent: 12.5 }) });
+        accountCarryShare: 0.33, maxOverTargetPercent: 12.5, averagingWeeks: 26, nightDistribution: 'EVEN' }) });
     return changed;
   });
 
@@ -65,19 +65,25 @@ try {
 
   // The rules: decimal parameters save unchanged as well.
   await page.goto(`${base}/#/regeln`);
-  await page.locator('.rule-row').first().waitFor();
-  const rulesForm = page.locator('form:has(.rule-row)');
+  await page.locator('#h-goals').waitFor();
+  const rulesForm = page.locator('form:has(#h-goals)');
   check('rules form valid', await rulesForm.evaluate((f) => f.checkValidity()),
     await rulesForm.evaluate((f) => [...f.querySelectorAll(':invalid')].map((x) => `${x.id}: ${x.validationMessage}`).join('; ')));
-  const [rulesPut] = await Promise.all([
+  const savedRules = async () => (await Promise.all([
     page.waitForRequest((r) => r.method() === 'PUT' && r.url().endsWith('/api/rules'), { timeout: 5000 }),
     rulesForm.locator('button.btn-primary').click(),
-  ]);
-  const rules = rulesPut.postDataJSON();
-  check('rules saved unchanged', rules.minDailyRestHours === 11.25 && rules.maxWeekHours === 48.5
-    && rules.maxAverageWeekHours === 38.25 && rules.accountCarryShare === 0.33 && rules.maxOverTargetPercent === 12.5,
-  JSON.stringify([rules.minDailyRestHours, rules.maxWeekHours, rules.maxAverageWeekHours, rules.accountCarryShare,
-    rules.maxOverTargetPercent]));
+  ]))[0].postDataJSON();
+  const unchanged = (rules) => rules.minDailyRestHours === 11.25 && rules.maxWeekHours === 48.5 && rules.maxAverageWeekHours === 38.25
+    && rules.accountCarryShare === 0.33 && rules.maxOverTargetPercent === 12.5 && rules.averagingWeeks === 26 && rules.nightDistribution === 'EVEN';
+  const shown = (rules) => JSON.stringify([rules.minDailyRestHours, rules.maxWeekHours, rules.maxAverageWeekHours, rules.accountCarryShare,
+    rules.maxOverTargetPercent, rules.averagingWeeks, rules.nightDistribution]);
+  const locked = await savedRules();
+  check('rules saved unchanged', unchanged(locked), shown(locked));
+  await page.getByRole('button', { name: 'Ändern' }).click();
+  check('law field shows the decimal', await page.inputValue('#param-maxAverageWeekHours') === '38.25', await page.inputValue('#param-maxAverageWeekHours'));
+  check('rules form valid after Ändern', await rulesForm.evaluate((f) => f.checkValidity()));
+  const unlocked = await savedRules();
+  check('rules saved unchanged after Ändern', unchanged(unlocked), shown(unlocked));
   // The hours account share is shown and typed in percent, stored as a fraction.
   check('account share shown in percent', await page.inputValue('#param-accountCarryShare') === '33', await page.inputValue('#param-accountCarryShare'));
   await page.fill('#param-accountCarryShare', '25');

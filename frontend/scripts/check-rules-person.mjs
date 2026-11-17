@@ -1,8 +1,13 @@
-// Playwright check of "Regeln & Gewichte" and the person page. Rules: the save bar stays in view while scrolling,
-// an edit marks the page unsaved and leaving it asks (dismiss stays, accept leaves), weights are number fields with
-// their default and a reset to it, and a rule text takes its number from the parameter field. Person: one hour tile
-// "x h von Ziel y h (Soll z h)" (viewers without Ziel) and "Warum dieser Dienst?" in words, without scores.
-// Demo data of the dev server (mock API). With an output folder as argument, it also saves screenshots of both pages.
+// Playwright check of "Regeln & Gewichte" and the person page. Rules: three sections (Planungsziele, Gesetz und
+// Betriebsvereinbarung, Erweitert collapsed with every weight); the night setting round-trips and warns in HABIT
+// when the usual distribution has weight 0; a Wichtigkeit sets the group's weights to 0.5 / 1 / 2 x default, a weight
+// set by hand shows "angepasst"; the law fields are locked until "Ändern"; fields the page does not know are saved
+// unchanged. The save bar stays in view while scrolling, an edit marks the page unsaved and leaving it asks (dismiss
+// stays, accept leaves), weights are number fields with their default and a reset to it, and a rule text takes its
+// number from the parameter field. Person: one hour tile "x h von Ziel y h (Soll z h)" (viewers without Ziel) and
+// "Warum dieser Dienst?" in words, without scores.
+// Demo data of the dev server (mock API); the quality rules of /api/constraints are replaced by those of the backend
+// catalogue (the mock has older ids). With an output folder as argument, it also saves screenshots of both pages.
 //   npm run build && node scripts/check-rules-person.mjs [output folder]     (Chromium via `npx playwright install chromium`)
 import { spawn } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
@@ -22,6 +27,14 @@ await new Promise((resolve) => server.stdout.on('data', (d) => { if (String(d).i
 const base = `http://localhost:${port}`;
 if (out) mkdirSync(out, { recursive: true });
 
+/** The quality rules of the backend catalogue (ConstraintCatalog) with their default weights. */
+const QUALITY = [
+  ['targetHours', 20], ['fairNights', 3], ['fairWeekends', 3], ['fairHolidays', 3], ['fairUnpopular', 2], ['wishes', 300],
+  ['blockLength', 6000], ['isolatedDayOff', 10000], ['forwardRotation', 500], ['splitWeekend', 300], ['compRestUse', 500],
+  ['shiftVariety', 5], ['areaVariety', 1], ['shiftMix', 100], ['family', 800],
+].map(([id, defaultWeight]) => ({ id, level: 'SOFT', defaultWeight, tunable: true }))
+  .concat({ id: 'onRequest', level: 'SOFT', defaultWeight: 1000, tunable: false });
+
 let failed = false;
 const check = (name, ok, detail = '') => {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? `: ${detail}` : ''}`);
@@ -33,6 +46,10 @@ try {
   const login = async (user) => {
     const context = await browser.newContext({ viewport: { width: 1600, height: 1000 }, colorScheme: 'light' });
     await context.addInitScript((m) => sessionStorage.setItem('month', m), month);
+    await context.route('**/api/constraints', async (route) => {
+      const mock = await (await route.fetch()).json();
+      await route.fulfill({ json: [...mock.filter((c) => c.level !== 'SOFT'), ...QUALITY] });
+    });
     const page = await context.newPage();
     page.on('pageerror', (e) => check('no page error', false, e.message));
     await page.goto(`${base}/login.html`);
@@ -50,17 +67,77 @@ try {
   }, month);
   await page.waitForTimeout(1500);
 
-  // Rules: the save bar stays in view at the bottom and at the top of the page.
-  await page.goto(`${base}/#/regeln`);
-  await page.locator('.rule-row').first().waitFor();
+  const isPut = (r) => r.request().method() === 'PUT' && r.url().endsWith('/api/rules');
   const bar = page.locator('.save-bar');
+  const save = () => bar.locator('button.btn-primary').click();
+  /** The body of the PUT /api/rules that a save sends, once the page has taken the answer. */
+  const putBody = async () => {
+    const [response] = await Promise.all([page.waitForResponse(isPut), save()]);
+    await page.waitForFunction(() => !document.querySelector('.save-bar').textContent.includes('Nicht gespeichert'));
+    return response.request().postDataJSON();
+  };
+  const importance = (group, label) => page.locator(`.goal[data-group="${group}"] label`).filter({ hasText: new RegExp(`^${label}$`) });
+  const checkedLevel = (group) => page.locator(`.goal[data-group="${group}"] .importance input:checked`).getAttribute('value');
+  const nightMode = () => page.locator('input[name=nightDistribution]:checked').getAttribute('value');
+  const advanced = page.locator('details.rules-advanced');
+  /** Opens the rules page, loaded again from the server; with unlock, also the law fields. */
+  const openRules = async (unlock = false) => {
+    if (page.url().endsWith('#/regeln')) await page.reload();
+    else await page.goto(`${base}/#/regeln`);
+    await page.locator('#h-goals').waitFor();
+    if (unlock) await page.getByRole('button', { name: 'Ändern' }).click();
+  };
+
+  // Rules saved by an older version: no night setting, and a field this version does not know.
+  await page.evaluate(async () => {
+    const { nightDistribution, ...old } = await (await fetch('/api/rules')).json();
+    await fetch('/api/rules', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...old, futureSetting: 'x' }) });
+  });
+  await openRules();
+  check('three sections', await page.locator('#h-goals').textContent() === 'Planungsziele'
+    && await page.locator('#h-law').textContent() === 'Gesetz und Betriebsvereinbarung' && await page.locator('#h-advanced').textContent() === 'Erweitert');
+  check('Erweitert is collapsed', !(await advanced.evaluate((d) => d.open)) && !(await page.locator('.rule-row').first().isVisible()));
+  check('old rules show the night setting HABIT', await nightMode() === 'HABIT');
+  const levels = await Promise.all(['blocks', 'wishes', 'fairness', 'hours', 'family'].map(checkedLevel));
+  check('every goal has a Wichtigkeit at normal', levels.every((l) => l === 'normal'), levels.join());
+  check('no "angepasst" at default weights', await page.locator('.importance label[data-level="custom"]:visible').count() === 0);
+  if (out) await page.screenshot({ path: join(out, 'rules.png') });
+
+  // Law and works agreement: text, fields locked until "Ändern".
+  const lawText = page.locator('.law-text');
+  check('law values as text', (await lawText.textContent()).includes('täglich mindestens 11 Stunden'), await lawText.textContent());
+  check('law fields locked', !(await page.locator('#param-minDailyRestHours').isVisible()) && !(await page.locator('#param-maxWeekHours').isVisible()));
+  const change = page.getByRole('button', { name: 'Ändern' });
+  check('Ändern is collapsed', await change.getAttribute('aria-expanded') === 'false');
+  await change.click();
+  check('Ändern unlocks the law fields', await page.locator('#param-minDailyRestHours').isEditable() && await page.locator('#param-averagingWeeks').isVisible()
+    && await page.locator('#param-minFreeSundays').isVisible() && !(await lawText.isVisible()));
+  check('the first law field has the focus', await page.evaluate(() => document.activeElement?.id) === 'param-minDailyRestHours');
+  if (out) {
+    await page.locator('#h-law').evaluate((el) => el.scrollIntoView());
+    await page.screenshot({ path: join(out, 'rules-law.png') });
+  }
+
+  // Erweitert: every tunable weight with its default and reset, the night window, the rule catalogue.
+  await advanced.locator('summary').click();
+  const catalogue = await page.evaluate(async () => (await (await fetch('/api/constraints')).json()));
+  const tunable = catalogue.filter((c) => c.tunable).map((c) => c.id);
+  const inAdvanced = await advanced.locator('input[id^="w-"]').evaluateAll((els) => els.map((e) => e.id.slice(2)));
+  check('Erweitert has every weight', tunable.length > 10 && tunable.every((id) => inAdvanced.includes(id)), inAdvanced.join(' '));
+  check('Erweitert has the night window', await advanced.locator('#param-nightStart').isVisible() && await advanced.locator('#param-nightMinHours').isVisible());
+  check('Erweitert lists every rule', await advanced.locator('.rule-row').count() === catalogue.length);
+  if (out) {
+    await page.locator('#h-advanced').evaluate((el) => el.scrollIntoView());
+    await page.screenshot({ path: join(out, 'rules-advanced.png') });
+  }
+
+  // The save bar stays in view at the bottom and at the top of the page.
   const inView = () => bar.evaluate((el) => { const r = el.getBoundingClientRect(); return r.top >= 0 && r.bottom <= innerHeight && r.height > 0; });
   check('rules page scrolls', await page.evaluate(() => document.scrollingElement.scrollHeight > innerHeight + 200));
   await page.evaluate(() => scrollTo(0, document.scrollingElement.scrollHeight));
   check('save bar in view at the bottom', await inView());
   await page.evaluate(() => scrollTo(0, 0));
   check('save bar in view at the top', await inView());
-  if (out) await page.screenshot({ path: join(out, 'rules.png') });
   check('save bar not marked unsaved at first', (await bar.textContent()).includes('Nicht gespeichert') === false);
 
   // Weights: number fields with their default and a reset, no sliders.
@@ -92,31 +169,89 @@ try {
   await page.click('#nav a[data-path="person"]');
   await page.waitForTimeout(300);
   check('leaving asks', dialogs.length === 1, dialogs.join());
-  check('dismiss stays on the rules page', page.url().endsWith('#/regeln') && await page.locator('.rule-row').count() > 0, page.url());
+  check('dismiss stays on the rules page', page.url().endsWith('#/regeln') && await page.locator('#h-goals').count() > 0, page.url());
   check('dismiss keeps the edit', await page.inputValue('#param-minDailyRestHours') === '9.5');
   page.once('dialog', (d) => { dialogs.push(d.message()); d.accept(); });
   await page.click('#nav a[data-path="person"]');
   await page.locator('#person-select').waitFor();
   check('accept leaves the rules page', dialogs.length === 2 && page.url().endsWith('#/person'), page.url());
   // the edit was not saved, and a page without edits leaves without asking
-  await page.goto(`${base}/#/regeln`);
-  await page.locator('.rule-row').first().waitFor();
+  await openRules();
   check('discarded edit not saved', await page.inputValue('#param-minDailyRestHours') === '11');
   page.once('dialog', (d) => { dialogs.push(d.message()); d.accept(); });
   await page.click('#nav a[data-path="fairness"]');
   await page.waitForURL((u) => u.hash === '#/fairness');
   check('no question without edits', dialogs.length === 2);
-  // an edit made while a save is under way stays unsaved
-  await page.goto(`${base}/#/regeln`);
-  await page.locator('.rule-row').first().waitFor();
+
+  // Wichtigkeit: weniger / normal / mehr = 0.5 / 1 / 2 x the default weights of the group, on save.
+  await openRules();
+  const defaults = Object.fromEntries(catalogue.map((c) => [c.id, c.defaultWeight]));
+  await importance('blocks', 'mehr').click();
+  await importance('fairness', 'weniger').click();
+  check('Wichtigkeit marks the page unsaved', (await bar.textContent()).includes('Nicht gespeichert'));
+  check('Wichtigkeit fills the weight fields', await page.inputValue('#w-blockLength') === String(defaults.blockLength * 2), await page.inputValue('#w-blockLength'));
+  const first = await putBody();
+  const w = first.weights;
+  check('mehr doubles the group weights', w.blockLength === defaults.blockLength * 2 && w.isolatedDayOff === defaults.isolatedDayOff * 2, JSON.stringify(w));
+  check('weniger halves the group weights', ['fairNights', 'fairWeekends', 'fairHolidays', 'fairUnpopular'].every((id) => w[id] === Math.round(defaults[id] * 0.5)), JSON.stringify(w));
+  check('other weights keep their default', ['targetHours', 'wishes', 'family', 'shiftMix', 'forwardRotation'].every((id) => w[id] === defaults[id]), JSON.stringify(w));
+  check('old rules save HABIT', first.nightDistribution === 'HABIT', first.nightDistribution);
+  check('unknown fields saved unchanged', first.futureSetting === 'x', JSON.stringify(first).slice(0, 200));
+  await openRules();
+  check('levels shown after loading', await checkedLevel('blocks') === 'more' && await checkedLevel('fairness') === 'less' && await checkedLevel('hours') === 'normal');
+  await importance('blocks', 'normal').click();
+  await importance('fairness', 'normal').click();
+  const normal = (await putBody()).weights;
+  check('normal restores the defaults', ['blockLength', 'isolatedDayOff', 'fairNights', 'fairUnpopular'].every((id) => normal[id] === defaults[id]), JSON.stringify(normal));
+
+  // A weight set by hand shows "angepasst"; choosing a level overwrites it.
+  await advanced.locator('summary').click();
+  await page.fill('#w-wishes', String(defaults.wishes + 50));
+  const custom = page.locator('.goal[data-group="wishes"] label[data-level="custom"]');
+  check('a hand-set weight shows angepasst', await custom.isVisible() && await checkedLevel('wishes') === 'custom');
+  if (out) {
+    await page.locator('.goal[data-group="wishes"]').evaluate((el) => el.scrollIntoView({ block: 'center' }));
+    await page.screenshot({ path: join(out, 'rules-custom.png') });
+  }
+  check('angepasst is saved as set', (await putBody()).weights.wishes === defaults.wishes + 50);
+  await openRules();
+  check('angepasst after loading', await checkedLevel('wishes') === 'custom');
+  await importance('wishes', 'mehr').click();
+  check('a level overwrites the hand-set weight', await page.inputValue('#w-wishes') === String(defaults.wishes * 2) && !(await custom.isVisible()));
+  await importance('wishes', 'normal').click();
+
+  // The night setting round-trips; HABIT with weight 0 for the usual distribution warns.
+  const warning = page.locator('.goal .alert');
+  check('no night warning at first', await warning.count() === 0);
+  await advanced.locator('summary').click();
+  await page.fill('#w-shiftMix', '0');
+  check('weight 0 in HABIT warns', await warning.count() === 1 && (await warning.textContent()).includes('keine Regel für Nachtdienste'));
+  if (out) {
+    await page.evaluate(() => scrollTo(0, 0));
+    await page.screenshot({ path: join(out, 'rules-night-warning.png') });
+  }
+  await page.getByLabel('Gleichmäßig: Nachtdienste fair auf alle verteilen').check();
+  check('no warning in EVEN', await warning.count() === 0);
+  const even = await putBody();
+  check('the night setting is saved', even.nightDistribution === 'EVEN' && even.weights.shiftMix === 0, even.nightDistribution);
+  await openRules();
+  check('the night setting is loaded', await nightMode() === 'EVEN');
+  await page.getByLabel('Wie bisher: jede Person behält ihren gewohnten Nachtanteil').check();
+  check('back to HABIT warns again', await warning.isVisible());
+  await advanced.locator('summary').click();
+  await page.locator('.rule-row:has(#w-shiftMix)').getByRole('button', { name: /zurücksetzen/ }).click();
+  check('reset of the weight ends the warning', await warning.count() === 0);
+  check('HABIT is saved', (await putBody()).nightDistribution === 'HABIT');
+
+  // An edit made while a save is under way stays unsaved.
+  await openRules(true);
   await page.route('**/api/rules', async (route) => {
     if (route.request().method() === 'PUT') await new Promise((r) => setTimeout(r, 500));
     await route.continue();
   });
-  const isPut = (r) => r.request().method() === 'PUT' && r.url().endsWith('/api/rules');
   await page.fill('#param-minDailyRestHours', '12');
   const slowSave = page.waitForResponse(isPut);
-  await bar.locator('button.btn-primary').click();
+  await save();
   await page.fill('#param-minDailyRestHours', '13');
   await slowSave;
   await page.waitForTimeout(100);
@@ -124,12 +259,12 @@ try {
   await page.unroute('**/api/rules');
   // after saving there is nothing to ask either
   await page.fill('#param-minDailyRestHours', '11');
-  await Promise.all([page.waitForResponse(isPut), bar.locator('button.btn-primary').click()]);
+  await Promise.all([page.waitForResponse(isPut), save()]);
   await page.waitForTimeout(100);
   check('saving clears the note', !(await bar.textContent()).includes('Nicht gespeichert'));
   await page.click('#nav a[data-path="fairness"]');
   await page.waitForURL((u) => u.hash === '#/fairness');
-  check('no question after saving', dialogs.length === 2);
+  check('no question after saving', dialogs.length === 2, dialogs.join(' | '));
 
   // Person page: one hour tile, no scores in "Warum dieser Dienst?".
   await page.goto(`${base}/#/person/${encodeURIComponent(personId)}`);
@@ -163,10 +298,14 @@ try {
   await viewer.locator('#h-hours').waitFor();
   const viewerTile = (await viewer.locator('.kpi-hours .value').textContent()).trim();
   check('viewer hour tile without Ziel', /^\d+(,\d)? h \(Soll \d+(,\d)? h\)$/.test(viewerTile), viewerTile);
-  // Viewers read the rules: texts with the stored numbers, no save bar.
+  // Viewers read the rules: texts with the stored numbers, no save bar, nothing to change.
   await viewer.goto(`${base}/#/regeln`);
-  await viewer.locator('.rule-row').first().waitFor();
+  await viewer.locator('#h-goals').waitFor();
   check('viewer rules without save bar', await viewer.locator('.save-bar').count() === 0);
+  check('viewer without Ändern', await viewer.getByRole('button', { name: 'Ändern' }).count() === 0);
+  check('viewer law text with the stored number', (await viewer.locator('.law-text').textContent()).includes('täglich mindestens 11 Stunden'));
+  check('viewer cannot choose', await viewer.locator('.goal input').count() > 0 && await viewer.locator('.goal input:not([disabled])').count() === 0);
+  await viewer.locator('details.rules-advanced summary').click();
   check('viewer rule text with the stored number',
     (await viewer.locator('.rule-row').filter({ hasText: 'Tägliche Ruhezeit' }).first().textContent()).includes('mindestens 11 Stunden'));
 } finally {

@@ -117,7 +117,7 @@ try {
     }
     await shot('person', `person/${encodeURIComponent(someone)}`, '.hits-day, .alert');
     await shot('fairness', 'fairness', '.spread svg');
-    await shot('regeln', 'regeln', '.rule-row');
+    await shot('regeln', 'regeln', '#h-goals');
     // Stammdaten with the form of the first person open (planners edit master data there)
     await shot('stammdaten', 'stammdaten', '[data-table="people"]');
     await page.locator('[data-table="people"] [data-kind="people"]').first().click();
