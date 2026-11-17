@@ -106,12 +106,26 @@ try {
   await page.click('#nav a[data-path="fairness"]');
   await page.waitForURL((u) => u.hash === '#/fairness');
   check('no question without edits', dialogs.length === 2);
-  // after saving there is nothing to ask either
+  // an edit made while a save is under way stays unsaved
   await page.goto(`${base}/#/regeln`);
   await page.locator('.rule-row').first().waitFor();
+  await page.route('**/api/rules', async (route) => {
+    if (route.request().method() === 'PUT') await new Promise((r) => setTimeout(r, 500));
+    await route.continue();
+  });
+  const isPut = (r) => r.request().method() === 'PUT' && r.url().endsWith('/api/rules');
+  await page.fill('#param-minDailyRestHours', '12');
+  const slowSave = page.waitForResponse(isPut);
+  await bar.locator('button.btn-primary').click();
+  await page.fill('#param-minDailyRestHours', '13');
+  await slowSave;
+  await page.waitForTimeout(100);
+  check('an edit during the save stays unsaved', (await bar.textContent()).includes('Nicht gespeichert'));
+  await page.unroute('**/api/rules');
+  // after saving there is nothing to ask either
   await page.fill('#param-minDailyRestHours', '11');
-  await Promise.all([page.waitForRequest((r) => r.method() === 'PUT' && r.url().endsWith('/api/rules')), bar.locator('button.btn-primary').click()]);
-  await page.locator('#toast:not([hidden])').waitFor();
+  await Promise.all([page.waitForResponse(isPut), bar.locator('button.btn-primary').click()]);
+  await page.waitForTimeout(100);
   check('saving clears the note', !(await bar.textContent()).includes('Nicht gespeichert'));
   await page.click('#nav a[data-path="fairness"]');
   await page.waitForURL((u) => u.hash === '#/fairness');

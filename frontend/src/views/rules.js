@@ -41,6 +41,7 @@ export async function render(root, ctx) {
   if (!canEdit) root.append(h('p.alert', {}, t('rules.readonly')));
 
   let dirty = false;
+  let edits = 0; // counts changes, so that a save does not clear an edit made while it was under way
   const status = h('span.muted', { role: 'status' });
   const saveBar = canEdit && h('div.save-bar', {}, h('button.btn.btn-primary', { type: 'button', onclick: save }, t('common.save')), status);
   const descriptions = [];
@@ -87,6 +88,7 @@ export async function render(root, ctx) {
 
   function changed() {
     dirty = true;
+    edits++;
     status.textContent = t('rules.unsaved');
     for (const [c, el] of descriptions) el.textContent = constraintDescription(c, params);
   }
@@ -106,7 +108,8 @@ export async function render(root, ctx) {
   async function save() {
     if (!form.reportValidity()) return;
     const body = { ...params, weights: weightsToSave(constraints, weights, rules.weights) };
-    if (await guarded(async () => { await api.saveRules(body); return true; }, t('rules.saved'))) {
+    const sent = edits;
+    if (await guarded(async () => { await api.saveRules(body); return true; }, t('rules.saved')) && edits === sent) {
       dirty = false;
       status.textContent = '';
     }
