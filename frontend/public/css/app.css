@@ -330,7 +330,7 @@ tr.gap-row th.person { color: var(--danger); font-weight: 600; }
 .score-pos { color: var(--success); }
 
 /* Rules */
-.rule-row { display: grid; grid-template-columns: 1fr 15rem; gap: 1rem; padding: .5rem 0; border-bottom: 1px solid var(--border); }
+.rule-row { display: grid; grid-template-columns: 1fr 19rem; gap: 1rem; padding: .5rem 0; border-bottom: 1px solid var(--border); }
 .rule-row .weight { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
 .rule-row .weight input[type=number] { width: 5.5rem; }
 .rule-row .weight .muted { font-size: .8rem; }
@@ -338,6 +338,7 @@ tr.gap-row th.person { color: var(--danger); font-weight: 600; }
   position: sticky; bottom: 0; z-index: 5; display: flex; gap: 1rem; align-items: center; margin-top: 1rem;
   padding: .6rem 0; background: var(--bg); border-top: 1px solid var(--border);
 }
+html:has(.save-bar) { scroll-padding-bottom: 4rem; } /* a focused field is not hidden behind the bar */
 .params { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: .6rem 1.5rem; }
 .params .field { display: flex; flex-direction: column; gap: .15rem; }
 .params .field span { font-size: .85rem; color: var(--text-muted); font-weight: 400; }

@@ -318,7 +318,7 @@ export const TEXTS = {
   'rules.valueWithHelp': '{value} ({help})',
   'rules.saved': 'Regeln gespeichert',
   'rules.unsaved': 'Nicht gespeichert',
-  'rules.resetWeight': 'Standard',
+  'rules.resetWeight': 'Zurücksetzen',
   'rules.resetWeightLabel': 'Gewicht {label} auf Standard {weight} zurücksetzen',
   'rules.param.minDailyRestHours.label': 'Tägliche Ruhezeit (h)',
   'rules.param.minDailyRestHours.help': 'KV, Ruhezeit',

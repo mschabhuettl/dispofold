@@ -99,7 +99,7 @@ export async function render(root, ctx) {
     const reset = () => { number.value = c.defaultWeight; weights[c.id] = c.defaultWeight; changed(); };
     return h('div.weight', {}, h('label.visually-hidden', { for: id }, t('rules.weightLabel', { label: constraintLabel(c) })), number,
       h('span.muted', {}, t('rules.default', { weight: c.defaultWeight })),
-      h('button.btn.btn-secondary', { type: 'button', onclick: reset,
+      h('button.btn.btn-secondary.btn-small', { type: 'button', onclick: reset,
         'aria-label': t('rules.resetWeightLabel', { label: constraintLabel(c), weight: c.defaultWeight }) }, t('rules.resetWeight')));
   }
 
