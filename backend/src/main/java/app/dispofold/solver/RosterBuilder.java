@@ -239,9 +239,38 @@ public final class RosterBuilder {
         }
         s.setMix(mix);
         s.setNightsOutsideMix(even);
-        if (!even && s.hasCategoryMix()) {
+        if (neverNights(p, restrictions)) {
+            s.setNightExclusion(Staff.NIGHTS_NEVER);
+        } else if (!even && s.hasCategoryMix()) {
             s.setNightExclusion(Staff.NIGHTS_MIX);
         }
+    }
+
+    /**
+     * The person never does nights: a NEVER restriction for every day of the week and the whole month covers each
+     * night shift of the person's areas (by category or shift by shift), or a family rule "keine Nacht" covers all
+     * weekdays (none given counts as all).
+     */
+    boolean neverNights(Person p, List<Restriction> restrictions) {
+        for (FamilyRule r : list(p.familyRules())) {
+            if (r.noNights() && (r.weekdays() == null || r.weekdays().isEmpty()
+                    || r.weekdays().containsAll(List.of(1, 2, 3, 4, 5, 6, 7)))) {
+                return true;
+            }
+        }
+        Set<String> never = new HashSet<>();
+        for (Restriction r : restrictions) {
+            if (r.kind() == RestrictionKind.NEVER && r.weekday() == 0 && r.appliesOn(month.atDay(1))
+                    && r.appliesOn(month.atEndOfMonth())) {
+                for (ShiftOption o : options.values()) {
+                    if (o.getId().equals(r.shiftId()) || (r.shiftId() == null && o.getCategory() == r.category())) {
+                        never.add(o.getId());
+                    }
+                }
+            }
+        }
+        return options.values().stream().filter(o -> o.isNight() && list(p.areaIds()).contains(o.getAreaId()))
+                .noneMatch(o -> !never.contains(o.getId()));
     }
 
     /** Sundays of the month. */
