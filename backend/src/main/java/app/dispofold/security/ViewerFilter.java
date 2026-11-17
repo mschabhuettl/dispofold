@@ -22,7 +22,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * {@code /api/plans/{month}/analysis}, {@code /api/plans/{month}/people/{id}} and {@code /api/plans/{month}/hits}
  * are redacted here: wishes, restrictions and family rules are empty, every absence has the type {@code ABW}
  * ("abwesend"), wish counts (also in the history) are 0, personal balances (hours account, compensatory rest,
- * credited and charged absence hours) and the night comparison (who is in it, why not, the loads) are null and
+ * credited and charged absence hours), the usual mix, the id in the source system (personnel number) and the night
+ * comparison (who is in it, why not, the loads) are null and
  * constraint results about wishes, family rules, restrictions and absences are left out. Exports are planner
  * only (PlanResource).
  */
@@ -88,6 +89,7 @@ public class ViewerFilter implements ContainerResponseFilter {
         for (JsonNode p : d.path("people")) {
             ((ObjectNode) p).putArray("familyRules");
             ((ObjectNode) p).putNull("shiftMix");
+            ((ObjectNode) p).putNull("externalId");
             blank(p, PERSON_BALANCES);
         }
         empty(d, "restrictions");
