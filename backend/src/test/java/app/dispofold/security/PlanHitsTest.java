@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import app.dispofold.api.TestData;
 import app.dispofold.model.Person;
+import app.dispofold.model.PlanAssignment;
 import io.quarkus.test.junit.QuarkusTest;
 import io.restassured.http.ContentType;
 import io.restassured.http.Cookie;
@@ -46,8 +47,13 @@ class PlanHitsTest {
                 .post("/api/plans/" + MONTH + "/solve").then().statusCode(202);
         await().atMost(Duration.ofSeconds(60)).pollInterval(Duration.ofMillis(500)).until(() -> !given()
                 .cookie(planner).get("/api/plans/" + MONTH).then().extract().<Boolean> path("solving"));
+        // a duty on the absence day of P0001: a hit with the absence type, which viewers must not get
+        given().cookie(planner).contentType(ContentType.JSON)
+                .body(mapper.writeValueAsString(new PlanAssignment("P0001", MONTH.atDay(3), "AN-T", false, true)))
+                .put("/api/plans/" + MONTH + "/cells").then().statusCode(200);
 
         Map<String, List<Map<String, Object>>> all = hits(planner, "");
+        assertThat(all).containsKey("absence");
         // the planner sees constraints that viewers do not, so the viewer check below has something to catch
         assertThat(all.keySet()).anyMatch(ViewerFilter.HIDDEN_CONSTRAINTS::contains);
         same(all, personHits(planner));
