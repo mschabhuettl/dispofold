@@ -34,6 +34,9 @@ test('a person round-trips through the form; empty inputs become null', () => {
   assert.throws(() => fromForm('people', { ...values, exitDate: '2026-01-01' }, person), /Austritt/);
   assert.throws(() => fromForm('people', { ...values, lastName: '' }, person), /Nachname/);
   assert.throws(() => fromForm('people', { ...values, familyRules: [{ weekdays: [], noNights: true }] }, person), /Wochentag/);
+  // the usual distribution names an area by its name
+  const mixValues = { ...values, areaIds: ['AN'], shiftMix: { categories: {}, areas: { AN: '120' } } };
+  assert.throws(() => fromForm('people', mixValues, person, (id) => ({ AN: 'Notrufannahme' })[id]), (e) => e.message.includes('„Notrufannahme“') && !e.message.includes('„AN“'));
 });
 
 test('new people and shifts are sent without id, areas and absence types with their code', () => {

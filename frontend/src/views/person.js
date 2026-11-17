@@ -263,7 +263,8 @@ function editor(root, ctx, initial, personId, nightDistribution) {
     const values = readValues();
     let item;
     try {
-      item = fromForm('people', values, base);
+      const areaName = (id) => dataset.areas.find((a) => a.id === id)?.name ?? id;
+      item = fromForm('people', values, base, areaName);
     } catch (err) {
       showProblem(err);
       return;
