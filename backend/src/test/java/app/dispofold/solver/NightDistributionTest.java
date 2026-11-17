@@ -212,6 +212,59 @@ class NightDistributionTest {
     }
 
     @Test
+    void neverNightsIgnoresTheNightShareInBothModes() {
+        FamilyRule noNights = new FamilyRule(List.of(1, 2, 3, 4, 5, 6, 7), null, null, true, null);
+        for (NightDistribution mode : NightDistribution.values()) {
+            // By restriction and by family rule: early and day 45 % each become 50 % each of the duties that are not
+            // nights, as in EVEN; the area mix stays.
+            for (PlanningInput in : List.of(
+                    input(mode, mix(PERSON, MIX), List.of(never(PERSON, null, ShiftCategory.NIGHT, 0))),
+                    input(mode, p -> family(PERSON, noNights).apply(mix(PERSON, MIX).apply(p)), List.of()))) {
+                Staff s = staff(in, PERSON);
+                assertThat(s.getMix().categoriesOrEmpty()).as(mode.name())
+                        .containsOnlyKeys(ShiftCategory.EARLY, ShiftCategory.DAY)
+                        .allSatisfy((k, v) -> assertThat(v).isEqualTo(0.5, offset(1e-9)));
+                assertThat(s.getMix().areasOrEmpty()).isEqualTo(MIX.areas());
+                assertThat(s.isNightsOutsideMix()).isTrue();
+                assertThat(s.getNightExclusion()).isEqualTo(Staff.NIGHTS_NEVER);
+                assertThat(s.hasCategoryMix()).isTrue();
+            }
+            // A mix of only nights: no category mix remains, so shift variety applies again.
+            Staff nights = staff(input(mode, mix(PERSON, new ShiftMix(Map.of(ShiftCategory.NIGHT, 1.0), Map.of())),
+                    List.of(never(PERSON, null, ShiftCategory.NIGHT, 0))), PERSON);
+            assertThat(nights.hasCategoryMix()).as(mode.name()).isFalse();
+            assertThat(nights.isNightsOutsideMix()).isTrue();
+        }
+        // Unchanged: out of the pool for the mix (HABIT) and in the pool (HABIT without a mix, EVEN).
+        Staff habitMix = staff(input(NightDistribution.HABIT, mix(PERSON, MIX), List.of()), PERSON);
+        assertThat(habitMix.getMix()).isEqualTo(MIX);
+        assertThat(habitMix.isNightsOutsideMix()).isFalse();
+        assertThat(habitMix.getNightExclusion()).isEqualTo(Staff.NIGHTS_MIX);
+        Staff habitPool = staff(input(NightDistribution.HABIT, p -> p, List.of()), PERSON);
+        assertThat(habitPool.isInNightPool()).isTrue();
+        assertThat(habitPool.getMix()).isNull();
+        assertThat(habitPool.isNightsOutsideMix()).isFalse();
+        Staff evenPool = staff(input(NightDistribution.EVEN, mix(PERSON, MIX), List.of()), PERSON);
+        assertThat(evenPool.isInNightPool()).isTrue();
+        assertThat(evenPool.isNightsOutsideMix()).isTrue();
+        // Never nights in HABIT: nights planned anyway (a family rule is soft) do not count against the mix.
+        Staff s = staff(input(NightDistribution.HABIT, p -> family(PERSON, noNights).apply(mix(PERSON, MIX).apply(p)),
+                List.of()), PERSON);
+        ShiftOption early = new ShiftOption("F", "AN", 6 * 60, 480, ShiftCategory.EARLY, false, false, false);
+        ShiftOption day = new ShiftOption("D", "AN", 7 * 60, 720, ShiftCategory.DAY, false, false, false);
+        ShiftOption night = new ShiftOption("N", "DR", 19 * 60, 720, ShiftCategory.NIGHT, true, false, false);
+        List<DutyCell> cells = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            cells.add(RosterConstraintsTest.cell(s, LocalDate.of(2027, 1, 1 + i), i < 4 ? early : i < 8 ? day : night));
+        }
+        // 4 early, 4 day (area AN), 2 nights (area DR): the categories match, the area mix 80:20 counts all duties.
+        assertThat(RosterConstraints.mixDeviation(s, cells)).isZero();
+        // The same duties for the person out of the pool for the mix: the nights count, 1 expected instead of 2,
+        // early and day 4.5 expected instead of 4.
+        assertThat(RosterConstraints.mixDeviation(habitMix, cells)).isEqualTo(10 * 10 + 2 * 5 * 5);
+    }
+
+    @Test
     void aFamilyRuleWithoutNightsOnAllWeekdaysTakesThePersonOut() {
         for (NightDistribution mode : NightDistribution.values()) {
             // P0014 has "keine Nacht" on Thursdays only.

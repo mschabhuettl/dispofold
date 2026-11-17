@@ -219,14 +219,17 @@ public final class RosterBuilder {
     }
 
     /**
-     * The usual mix the rules see and the night pool. In EVEN the night share of the category mix is left out and the
-     * other shares are scaled to sum to 1; they then apply to the duties that are not nights. A person who never does
-     * nights is out of the night comparison in both modes; in HABIT so is a person with a category mix.
+     * The usual mix the rules see and the night pool. In EVEN, and in both modes for a person who never does nights,
+     * the night share of the category mix is left out and the other shares are scaled to sum to 1; they then apply to
+     * the duties that are not nights. A person who never does nights is out of the night comparison in both modes; in
+     * HABIT so is a person with a category mix.
      */
     void nights(Staff s, Person p, List<Restriction> restrictions) {
         ShiftMix mix = p.shiftMix();
         boolean even = rules.nightMode() == NightDistribution.EVEN;
-        if (even && mix != null && mix.categoriesOrEmpty().containsKey(ShiftCategory.NIGHT)) {
+        boolean never = neverNights(p, restrictions);
+        boolean outside = even || never;
+        if (outside && mix != null && mix.categoriesOrEmpty().containsKey(ShiftCategory.NIGHT)) {
             Map<ShiftCategory, Double> rest = new LinkedHashMap<>(mix.categoriesOrEmpty());
             rest.remove(ShiftCategory.NIGHT);
             double sum = rest.values().stream().mapToDouble(Double::doubleValue).sum();
@@ -238,8 +241,8 @@ public final class RosterBuilder {
             mix = new ShiftMix(rest, mix.areas());
         }
         s.setMix(mix);
-        s.setNightsOutsideMix(even);
-        if (neverNights(p, restrictions)) {
+        s.setNightsOutsideMix(outside);
+        if (never) {
             s.setNightExclusion(Staff.NIGHTS_NEVER);
         } else if (!even && s.hasCategoryMix()) {
             s.setNightExclusion(Staff.NIGHTS_MIX);

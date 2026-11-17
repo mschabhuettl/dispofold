@@ -408,8 +408,9 @@ public class RosterConstraints implements ConstraintProvider {
 
     /** Same area and category again and again, counting the previous month too. */
     /**
-     * Not for people with usual shares per category: their mix decides the categories. In EVEN that is the mix without
-     * the night share (see RosterBuilder), so a person whose mix was only nights is in it.
+     * Not for people with usual shares per category: their mix decides the categories. In EVEN, and for a person who
+     * never does nights, that is the mix without the night share (see RosterBuilder), so a person whose mix was only
+     * nights is in it.
      */
     Constraint shiftVariety(ConstraintFactory f) {
         return monthWork(f)
@@ -453,8 +454,9 @@ public class RosterConstraints implements ConstraintProvider {
     }
 
     /**
-     * The category part compares with all duties of the person, or in EVEN (night share left out, the other shares
-     * scaled to sum to 1) with the duties that are not of category NIGHT; the area part always with all duties.
+     * The category part compares with all duties of the person, or in EVEN and for a person who never does nights
+     * (night share left out, the other shares scaled to sum to 1) with the duties that are not of category NIGHT; the
+     * area part always with all duties.
      */
     static long mixDeviation(Staff s, java.util.List<DutyCell> cells) {
         java.util.Map<Object, Integer> planned = new java.util.HashMap<>();
