@@ -343,7 +343,7 @@ landet die Datei im Ordner Downloads, eine Meldung nennt den Namen.
 
 - Nur die Rolle Planung kann exportieren. Während einer Planung ist der Export gesperrt.
 - Hat der Plan Regelverstöße, endet der Dateiname auf `-mit-verstoessen`. In XLSX heißt das Blatt
-  „Dienstplan mit Verstößen“ und trägt den Hinweis „Achtung: … harte Regelverstöße, Plan nicht verwendbar“ (Text der Exportdatei); in
+  „Dienstplan mit Verstößen“ und trägt den Hinweis „Achtung: … Regelverstöße, Plan nicht verwendbar“ (Text der Exportdatei); in
   CSV steht dieser Hinweis in der ersten Zeile.
 - **Plan importieren** auf derselben Seite ersetzt den Plan des Monats durch einen früher exportierten Plan im
   JSON-Format.

@@ -74,7 +74,7 @@ public class PlanExporter {
 
     /** Line in front of the data when the plan breaks hard rules. */
     public static String violationMark(int hardViolations) {
-        return "Achtung: " + hardViolations + " harte Regelverstöße, Plan nicht verwendbar";
+        return "Achtung: " + hardViolations + " Regelverstöße, Plan nicht verwendbar";
     }
 
     /**

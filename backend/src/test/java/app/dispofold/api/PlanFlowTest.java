@@ -219,7 +219,7 @@ class PlanFlowTest {
         // The plan breaks hard rules: the export is marked.
         given().get("/api/plans/" + MONTH + "/export?format=csv").then().statusCode(200)
                 .header("Content-Disposition", containsString("mit-verstoessen"))
-                .body(containsString("harte Regelverstöße"));
+                .body(containsString(" Regelverstöße, Plan nicht verwendbar"));
     }
 
     @Test
