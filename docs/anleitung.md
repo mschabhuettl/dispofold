@@ -57,7 +57,7 @@ Planung pflegt sie hier, ein neuer Import ist dafür nicht nötig:
   Prozent je Schichtart (Früh, Tag, Spät, Nacht) und je Bereich der Person, zum Beispiel Tag 90 % und Nacht 10 %.
   Die Werte stammen aus dem Datensatz, den ein Export aus der Historie liefert (Feld `shiftMix`, siehe
   [datenformat.md](datenformat.md)); im Formular lassen sie sich ändern. Eine ausgefüllte Gruppe muss zusammen
-  100 % ergeben, eine leere Gruppe heißt keine Vorgabe. **Verteilung entfernen** leert alle Felder, nach dem
+  100 % ergeben, eine leere Gruppe heißt keine Verteilung. **Verteilung entfernen** leert alle Felder, nach dem
   Speichern hat die Person keine gewohnte Verteilung mehr. Die Tabelle zeigt sie kurz an („Tag 90 %, Nacht 10 %“);
   die Felder je Bereich nennen den Bereich mit Namen und Kürzel.
   Beim Planen versucht die Regel „Gewohnte Verteilung“, die Dienste je Schichtart und Bereich an diese Anteile

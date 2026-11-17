@@ -449,7 +449,7 @@ export const TEXTS = {
   'masterdata.family.add': 'Familienregel hinzufügen',
   'masterdata.family.remove': 'Familienregel entfernen',
   'masterdata.col.shiftMix': 'Gewohnte Verteilung',
-  'masterdata.shiftMix.help': 'Anteile der Dienste in Prozent je Schichtart und je Bereich. Eine ausgefüllte Gruppe muss zusammen 100 % ergeben; leer lassen heißt keine Vorgabe.',
+  'masterdata.shiftMix.help': 'Anteile der Dienste in Prozent je Schichtart und je Bereich. Eine ausgefüllte Gruppe muss zusammen 100 % ergeben; leer lassen heißt keine Verteilung.',
   'masterdata.shiftMix.nightNote': 'Wer Anteile je Schichtart hat (auch einen Nachtanteil), ist nicht im Nachtausgleich („Fairness Nachtdienste“) und nicht in der „Abwechslung Dienste“, solange die gewohnte Verteilung besteht; die Nächte folgen dann dem Nachtanteil.',
   'masterdata.shiftMix.categories': 'Schichtarten',
   'masterdata.shiftMix.areas': 'Bereiche',
