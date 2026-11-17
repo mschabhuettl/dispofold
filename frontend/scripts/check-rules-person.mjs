@@ -138,7 +138,9 @@ try {
   check('each day is summed up in words', summaries.length > 0 && summaries.every((x) => /^\((verletzt keine Regel|\d+ Regelverstö)/.test(x)), summaries.slice(0, 3).join('|'));
   if (out) {
     await page.evaluate(() => { document.getElementById('toast').hidden = true; }); // the note of the save above
-    await page.screenshot({ path: join(out, 'person.png'), fullPage: true });
+    await page.screenshot({ path: join(out, 'person-full.png'), fullPage: true });
+    await page.locator('#h-hours').evaluate((el) => el.scrollIntoView());
+    await page.screenshot({ path: join(out, 'person.png') });
   }
 
   // Viewers get no goal: the tile shows only Soll.
@@ -147,6 +149,12 @@ try {
   await viewer.locator('#h-hours').waitFor();
   const viewerTile = (await viewer.locator('.kpi-hours .value').textContent()).trim();
   check('viewer hour tile without Ziel', /^\d+(,\d)? h \(Soll \d+(,\d)? h\)$/.test(viewerTile), viewerTile);
+  // Viewers read the rules: texts with the stored numbers, no save bar.
+  await viewer.goto(`${base}/#/regeln`);
+  await viewer.locator('.rule-row').first().waitFor();
+  check('viewer rules without save bar', await viewer.locator('.save-bar').count() === 0);
+  check('viewer rule text with the stored number',
+    (await viewer.locator('.rule-row').filter({ hasText: 'Tägliche Ruhezeit' }).first().textContent()).includes('mindestens 11 Stunden'));
 } finally {
   await browser.close();
   server.kill();

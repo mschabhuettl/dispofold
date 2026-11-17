@@ -154,7 +154,7 @@ Oben im **Dienstplan** stehen:
   Abwesenheitstage) schrumpft um denselben Anteil. So muss niemand Stunden über den Bedarf hinaus sammeln, und
   der Plan kann zusammenhängende Dienstblöcke bevorzugen und einzelne freie Tage zwischen Diensten vermeiden.
   Die harte Obergrenze (Höchststunden im Monat) rechnet weiter mit dem echten Ziel. Die Seite **Person** zeigt
-  in einer Kachel die geplanten Stunden gegen das Ziel für diesen Plan und das Soll („28 h von Ziel 112,9 h
+  in einer Kachel die geplanten Stunden gegen das Ziel für diesen Plan und das Soll („28,0 h von Ziel 112,9 h
   (Soll 129,2 h)“); **Was bedeuten Soll und Ziel?** erklärt beide. Die Zeile **Warum dieser Dienst?** nennt beide
   Ziele. Für Lesende ist das Ziel ausgeblendet, weil es das Stundenkonto enthält.
 - **Bedarfslücken:** Zeitabschnitte, in denen weniger Personen eingeteilt sind als der Bedarf verlangt. Die

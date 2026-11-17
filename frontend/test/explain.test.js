@@ -15,6 +15,7 @@ test('hits are grouped by date with month-level hits first', () => {
 
 test('the hits of a day are summed up in words and counts, without scores', () => {
   assert.deepEqual(hitSummary([]), ['verletzt keine Regel']);
+  assert.deepEqual(hitSummary([{ constraintId: 'averageWeekHours', level: 'HARD', score: 0 }]), ['verletzt keine Regel']);
   assert.deepEqual(hitSummary([
     { constraintId: 'demand', level: 'MEDIUM', score: 0 },
     { constraintId: 'wishOff', level: 'SOFT', score: 0 },

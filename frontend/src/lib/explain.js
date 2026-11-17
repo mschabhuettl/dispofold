@@ -23,7 +23,7 @@ const isWish = (hit) => /^wish/.test(hit.constraintId);
  */
 export function hitSummary(hits) {
   const count = (f) => hits.filter(f).length;
-  const violations = count((x) => x.level === 'HARD');
+  const violations = count((x) => x.level === 'HARD' && x.score < 0); // like hitEffect: a hard hit without penalty is a hint
   const out = [violations ? t('person.summary.violations', { count: violations }) : t('person.summary.noViolation')];
   const demandOff = count((x) => x.level === 'MEDIUM' && x.score < 0);
   if (demandOff) out.push(t('person.summary.demandOff', { count: demandOff }));
