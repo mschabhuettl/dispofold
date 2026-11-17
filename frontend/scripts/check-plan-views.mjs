@@ -137,25 +137,30 @@ try {
   check('score as tooltip', (await headline.getAttribute('title')).includes(state.plan.score));
   check('score under Erweitert', (await advanced.locator('.score').textContent()).includes(state.plan.score));
   check('gaps shown once', (visible.match(/Lücke/g) ?? []).length <= 1, visible.replace(/\n/g, ' | '));
-  // "Einzelne freie Tage" once: as chip when the rule has one (it lists who and when), else as figure
+  // "Einzelne freie Tage" and the block days once: as chip when the rule has one (it lists who and when), else as figure
   const singleDays = async (withChip) => {
     await page.route(`**/api/plans/${month}/analysis`, async (route) => {
       const a = await (await route.fetch()).json();
-      const others = a.constraints.filter((c) => c.id !== 'isolatedDayOff');
-      a.constraints = withChip ? [...others, { id: 'isolatedDayOff', level: 'SOFT', weight: 1, score: -1000000, matches: 7 }] : others;
+      const others = a.constraints.filter((c) => c.id !== 'isolatedDayOff' && c.id !== 'blockLength');
+      a.constraints = withChip ? [...others, { id: 'isolatedDayOff', level: 'SOFT', weight: 1, score: -1000000, matches: 7 },
+        { id: 'blockLength', level: 'SOFT', weight: 1, score: -1000000, matches: 9 }] : others;
       a.singleDaysOff = 7;
+      a.blockDays = 9;
       await route.fulfill({ json: a });
     });
     await page.reload();
     await page.locator('.roster-wrap table').waitFor();
     await page.unroute(`**/api/plans/${month}/analysis`);
     const line = await page.locator('.statusbar').innerText();
-    return { count: (line.match(/Einzelne freie Tage/g) ?? []).length, chip: await page.locator('.chips .chip').filter({ hasText: 'Einzelne freie Tage' }).count() };
+    return { count: (line.match(/Einzelne freie Tage/g) ?? []).length, chip: await page.locator('.chips .chip').filter({ hasText: 'Einzelne freie Tage' }).count(),
+      blockFigure: (line.match(/Tage außerhalb der Blocklänge/g) ?? []).length, blockChip: await page.locator('.chips .chip').filter({ hasText: 'Dienstblöcke' }).count() };
   };
   const withChip = await singleDays(true);
   check('"Einzelne freie Tage" once with its chip', withChip.count === 1 && withChip.chip === 1, JSON.stringify(withChip));
+  check('block days once with their chip', withChip.blockFigure === 0 && withChip.blockChip === 1, JSON.stringify(withChip));
   const withoutChip = await singleDays(false);
   check('"Einzelne freie Tage" once without a chip', withoutChip.count === 1 && withoutChip.chip === 0, JSON.stringify(withoutChip));
+  check('block days once without a chip', withoutChip.blockFigure === 1 && withoutChip.blockChip === 0, JSON.stringify(withoutChip));
   await page.reload();
   await page.locator('.roster-wrap table').waitFor();
 

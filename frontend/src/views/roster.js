@@ -113,8 +113,10 @@ export async function render(root, ctx) {
     const staleReasons = [state.stale && t('roster.staleHelp'),
       (state.previousMonthChanged || analysis?.previousMonthChanged) && t('roster.previousChangedHelp')].filter(Boolean);
     status.className = `statusbar status-${headline.level}`;
-    // "Einzelne freie Tage" once: its chip (with who and when) replaces the figure
-    const singleDaysChip = !state.solving && problemConstraints(analysis?.constraints).some((c) => c.id === 'isolatedDayOff');
+    // "Einzelne freie Tage" and the block days once: their chips (with who and when) replace the figures
+    const chipFor = (id) => !state.solving && problemConstraints(analysis?.constraints).some((c) => c.id === id);
+    const singleDaysChip = chipFor('isolatedDayOff');
+    const blockDaysChip = chipFor('blockLength');
     const focused = status.contains(document.activeElement) ? document.activeElement : null;
     status.replaceChildren();
     append(status, [
@@ -129,7 +131,7 @@ export async function render(root, ctx) {
           help('help.plan.overstaffed', t('roster.overstaffed'))),
         analysis?.singleDaysOff != null && !singleDaysChip && h('span', {}, t('roster.singleDaysOff', { count: analysis.singleDaysOff }),
           info(t('help.plan.singleDaysOff'), t('roster.singleDaysOff', { count: analysis.singleDaysOff }))),
-        analysis?.blockDays != null && h('span', {}, t('roster.blockDays', { count: analysis.blockDays }),
+        analysis?.blockDays != null && !blockDaysChip && h('span', {}, t('roster.blockDays', { count: analysis.blockDays }),
           info(t('help.plan.blockDays'), t('roster.blockDays', { count: analysis.blockDays }))),
         canEdit && state.solving && h('span', {}, t('roster.lockedWhileSolving')),
         closed() && h('span', {}, canEdit ? t('roster.closedHint') : t('common.closedReadonly')),
