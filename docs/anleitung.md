@@ -81,8 +81,8 @@ Stammdaten, Updates), zeigen die Auswahl nicht.
 
 Unter jedem Seitentitel sagt ein kurzer Text, wozu die Seite da ist. Ein **i** neben einer Regel, einer
 Einstellung, einer Zahl oder einem Formularfeld öffnet eine Erklärung: was die Zahl zählt oder was ein höherer
-oder niedrigerer Wert bewirkt. Das **i** geht mit Klick, Tippen oder Tastatur (Tab, dann Enter); Escape oder ein
-Klick daneben schließt die Erklärung.
+oder niedrigerer Wert bewirkt. Das **i** geht mit Klick, Tippen oder Tastatur (Tab, dann Enter oder Leertaste);
+Escape oder ein Klick daneben schließt die Erklärung.
 
 ## Typischer Ablauf
 
@@ -244,7 +244,7 @@ Auswahl:
 - Einen Dienst, **frei** oder **Ersatzruhe** wählen. Eine von Hand gesetzte Zelle ist danach **fixiert**: Die
   nächste Planung behält sie bei.
 - **Fixieren** oder **Fixierung lösen** schaltet die Fixierung einer Zelle um, ohne den Dienst zu ändern.
-- Eine Vorgabe aus den **Eingaben** bleibt fixiert und wird nur dort entfernt.
+- Eine Vorgabe aus den **Eingaben** bleibt auch beim Lösen der Fixierungen bestehen und wird nur dort entfernt.
 - Abwesenheiten werden nicht im Plan geändert, sondern unter **Eingaben**.
 
 Ein von Hand gesetzter Dienst kann eine Regel verletzen. Dann steigen die **Regelverstöße**; die Überschrift wird
