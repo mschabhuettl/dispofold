@@ -19,11 +19,10 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 /**
  * Viewers (role {@code viewer} without {@code planner}) see the roster but no personal wishes, restrictions, family
  * rules or absence reasons (health data). Their answers of {@code GET /api/dataset}, {@code /api/periods/{month}},
- * {@code /api/plans/{month}/analysis} and {@code /api/plans/{month}/people/{id}} are redacted here: wishes,
- * restrictions and family rules are empty, every absence has the type {@code ABW} ("abwesend"), wish counts (also
- * in the history) are 0, personal balances (hours account, compensatory rest, credited and charged absence hours)
- * are null
- * and constraint results about wishes, family rules, restrictions and absences are left out. Exports are planner
+ * {@code /api/plans/{month}/analysis}, {@code /api/plans/{month}/people/{id}} and {@code /api/plans/{month}/hits}
+ * are redacted here: wishes, restrictions and family rules are empty, every absence has the type {@code ABW}
+ * ("abwesend"), wish counts (also in the history) are 0, personal balances (hours account, compensatory rest,
+ * credited and charged absence hours) are null and constraint results about wishes, family rules, restrictions and absences are left out. Exports are planner
  * only (PlanResource).
  */
 @Provider
@@ -47,6 +46,7 @@ public class ViewerFilter implements ContainerResponseFilter {
     private static final Pattern PERIOD = Pattern.compile("api/periods/[^/]+");
     private static final Pattern ANALYSIS = Pattern.compile("api/plans/[^/]+/analysis");
     private static final Pattern PERSON = Pattern.compile("api/plans/[^/]+/people/[^/]+");
+    private static final Pattern HITS = Pattern.compile("api/plans/[^/]+/hits");
 
     @Inject
     ObjectMapper mapper;
@@ -70,6 +70,8 @@ public class ViewerFilter implements ContainerResponseFilter {
             node = analysis(tree(response));
         } else if (PERSON.matcher(path).matches()) {
             node = explanation(tree(response));
+        } else if (HITS.matcher(path).matches()) {
+            node = hits(tree(response));
         } else {
             return;
         }
@@ -116,12 +118,25 @@ public class ViewerFilter implements ContainerResponseFilter {
     static JsonNode explanation(JsonNode e) {
         stats(e.path("stats"));
         removeHidden(e.path("hits"), "constraintId");
-        for (JsonNode hit : e.path("hits")) {
+        removeTypeCodes(e.path("hits"));
+        return e;
+    }
+
+    /** The hits of a plan by constraint id. */
+    static JsonNode hits(JsonNode h) {
+        if (h instanceof ObjectNode groups) {
+            groups.remove(HIDDEN_CONSTRAINTS);
+            groups.forEach(ViewerFilter::removeTypeCodes);
+        }
+        return h;
+    }
+
+    private static void removeTypeCodes(JsonNode hits) {
+        for (JsonNode hit : hits) {
             if (hit.path("params") instanceof ObjectNode params) {
                 params.remove("typeCode");
             }
         }
-        return e;
     }
 
     private static void stats(JsonNode stats) {

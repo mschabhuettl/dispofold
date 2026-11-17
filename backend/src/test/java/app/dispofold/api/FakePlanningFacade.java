@@ -143,6 +143,15 @@ public class FakePlanningFacade implements PlanningFacade {
     }
 
     @Override
+    public Map<String, List<ConstraintHit>> hits(PlanningInput input) {
+        Map<String, List<ConstraintHit>> hits = new java.util.LinkedHashMap<>();
+        for (Person p : input.dataset().people()) {
+            hits.put(p.id(), explain(input, p.id()).hits());
+        }
+        return hits;
+    }
+
+    @Override
     public List<Candidate> candidates(PlanningInput input, String areaId, LocalDateTime from, LocalDateTime to) {
         return List.of();
     }

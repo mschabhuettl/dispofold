@@ -1,6 +1,8 @@
 package app.dispofold.api;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -26,9 +28,11 @@ import app.dispofold.api.PlanService.SolveRequest;
 import app.dispofold.export.PlanExporter;
 import app.dispofold.model.Candidate;
 import app.dispofold.model.ConstraintHit;
+import app.dispofold.model.ConstraintInfo;
 import app.dispofold.model.CoverageSegment;
 import app.dispofold.model.HistoryEntry;
 import app.dispofold.model.PersonExplanation;
+import app.dispofold.model.PersonHit;
 import app.dispofold.model.PersonStats;
 import app.dispofold.model.Plan;
 import app.dispofold.model.PlanAnalysis;
@@ -141,13 +145,44 @@ public class PlanResource {
         if (identity.hasRole("planner")) {
             return explanation;
         }
-        List<ConstraintHit> hits = explanation.hits().stream().filter(h -> !PRIVATE_HITS.contains(h.code()))
+        return new PersonExplanation(forViewer(explanation.stats()), viewerHits(explanation.hits()));
+    }
+
+    static List<ConstraintHit> viewerHits(List<ConstraintHit> hits) {
+        return hits.stream().filter(h -> !PRIVATE_HITS.contains(h.code()))
                 .map(h -> "hit.absence".equals(h.code())
                         ? new ConstraintHit(h.constraintId(), h.level(), h.date(), h.score(), h.code(),
                                 Map.of("typeCode", "ABW"))
                         : h)
                 .toList();
-        return new PersonExplanation(forViewer(explanation.stats()), hits);
+    }
+
+    /**
+     * The hits of every person by constraint id (in catalogue order, only constraints with hits) from one analysis,
+     * as {@link #explain} gives them; {@code constraint} keeps only that constraint.
+     */
+    @GET
+    @Path("hits")
+    public Map<String, List<PersonHit>> hits(@PathParam("month") String month,
+            @QueryParam("constraint") String constraint) {
+        PlanningInput input = plans.input(ApiErrors.month(month));
+        Map<String, List<PersonHit>> groups = new LinkedHashMap<>();
+        for (ConstraintInfo c : plans.facade().constraintCatalog()) {
+            if (constraint == null || c.id().equals(constraint)) {
+                groups.put(c.id(), new ArrayList<>());
+            }
+        }
+        boolean planner = identity.hasRole("planner");
+        plans.facade().hits(input).forEach((personId, hits) -> {
+            for (ConstraintHit h : planner ? hits : viewerHits(hits)) {
+                List<PersonHit> group = groups.get(h.constraintId());
+                if (group != null) {
+                    group.add(new PersonHit(personId, h));
+                }
+            }
+        });
+        groups.values().removeIf(List::isEmpty);
+        return groups;
     }
 
     @GET

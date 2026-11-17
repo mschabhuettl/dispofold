@@ -3,9 +3,11 @@ package app.dispofold.planning;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import app.dispofold.model.Candidate;
+import app.dispofold.model.ConstraintHit;
 import app.dispofold.model.ConstraintInfo;
 import app.dispofold.model.CoverageSegment;
 import app.dispofold.model.PersonExplanation;
@@ -37,6 +39,9 @@ public interface PlanningFacade {
 
     /** Key figures and all constraint matches of one person. */
     PersonExplanation explain(PlanningInput input, String personId);
+
+    /** The constraint matches of every person by person id, as {@link #explain} gives them, from one analysis. */
+    Map<String, List<ConstraintHit>> hits(PlanningInput input);
 
     /** Demand against staffing of one area for every segment of the month. */
     List<CoverageSegment> coverage(PlanningInput input, String areaId);

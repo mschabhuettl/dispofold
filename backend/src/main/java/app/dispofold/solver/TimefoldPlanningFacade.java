@@ -2,6 +2,7 @@ package app.dispofold.solver;
 
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,6 +15,7 @@ import jakarta.annotation.PreDestroy;
 import jakarta.enterprise.context.ApplicationScoped;
 
 import app.dispofold.model.Candidate;
+import app.dispofold.model.ConstraintHit;
 import app.dispofold.model.ConstraintInfo;
 import app.dispofold.model.CoverageSegment;
 import app.dispofold.model.PersonExplanation;
@@ -186,6 +188,17 @@ public class TimefoldPlanningFacade implements PlanningFacade {
         Roster roster = new RosterBuilder(input, true).build();
         return new PersonExplanation(RosterAnalyzer.stats(input, roster, personId),
                 RosterAnalyzer.hits(analyzeScore(roster), roster, personId));
+    }
+
+    @Override
+    public Map<String, List<ConstraintHit>> hits(PlanningInput input) {
+        Roster roster = new RosterBuilder(input, true).build();
+        ScoreExplainer.Explanation score = analyzeScore(roster);
+        Map<String, List<ConstraintHit>> hits = new LinkedHashMap<>();
+        for (Staff s : roster.getStaff()) {
+            hits.put(s.getId(), RosterAnalyzer.hits(score, roster, s.getId()));
+        }
+        return hits;
     }
 
     @Override

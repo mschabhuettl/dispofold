@@ -66,6 +66,10 @@ class ViewerFilterTest {
         given().cookie(viewer).get("/api/plans/" + MONTH + "/people/P0001").then().statusCode(200)
                 .body("stats.wishes", equalTo(0)).body("stats.wishesMet", equalTo(0)).body("hits", empty())
                 .body("stats.personId", equalTo("P0001"));
+        given().cookie(planner).get("/api/plans/" + MONTH + "/hits").then().statusCode(200)
+                .body("wishes.personId", hasItem("P0001"));
+        given().cookie(viewer).get("/api/plans/" + MONTH + "/hits").then().statusCode(200)
+                .body("size()", equalTo(0));
         List<Map<String, Object>> people = given().cookie(viewer).get("/api/plans/" + MONTH + "/analysis").then()
                 .statusCode(200).extract().path("people");
         assertThat(people).isNotEmpty().allSatisfy(p -> assertThat(p).containsEntry("wishes", 0)
@@ -97,14 +101,15 @@ class ViewerFilterTest {
                 .containsPattern("\"accountAfter\":(?!null)");
         for (String path : new String[] { "/api/dataset", "/api/periods/" + MONTH, "/api/plans/" + MONTH,
                 "/api/plans/" + MONTH + "/analysis", "/api/plans/" + MONTH + "/people/P0004",
-                "/api/plans/" + MONTH + "/coverage/" + area, "/api/months" }) {
+                "/api/plans/" + MONTH + "/hits", "/api/plans/" + MONTH + "/coverage/" + area, "/api/months" }) {
             String body = given().cookie(viewer).get(path).then().statusCode(200).extract().asString();
             clean(body);
         }
         // Other spellings of the same paths: either not found or redacted as well.
         int served = 0;
         for (String path : new String[] { "/api/dataset/", "//api/dataset", "/api/periods/" + MONTH + "/",
-                "/api/plans/" + MONTH + "/analysis/", "/api/plans/" + MONTH + "/people/P0004/" }) {
+                "/api/plans/" + MONTH + "/analysis/", "/api/plans/" + MONTH + "/people/P0004/",
+                "/api/plans/" + MONTH + "/hits/" }) {
             var r = given().cookie(viewer).get(path);
             assertThat(r.statusCode()).as(path).isIn(200, 404);
             if (r.statusCode() == 200) {
@@ -113,6 +118,13 @@ class ViewerFilterTest {
             }
         }
         assertThat(served).as("some spellings reach the resources").isPositive();
+    }
+
+    @Test
+    void hitsWithoutHiddenConstraintsAndAbsenceTypes() throws Exception {
+        var hits = new com.fasterxml.jackson.databind.ObjectMapper().readTree("{\"absence\": [{\"params\": "
+                + "{\"typeCode\": \"K\"}}], \"dailyRest\": [{\"params\": {\"typeCode\": \"K\", \"hours\": 9}}]}");
+        assertThat(ViewerFilter.hits(hits)).hasToString("{\"dailyRest\":[{\"params\":{\"hours\":9}}]}");
     }
 
     @Test
