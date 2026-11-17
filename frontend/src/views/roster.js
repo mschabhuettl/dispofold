@@ -183,7 +183,7 @@ export async function render(root, ctx) {
           ? h('ul', {}, rows.map(({ person, hit }) => h('li', {},
             h('button', { type: 'button', onclick: () => ctx.navigate(`person/${encodeURIComponent(person.id)}`) },
               h('span.candidate-name', {}, personName(person)), h('span', {}, hit.date ? dayLabel(hit.date) : t('roster.chipMonth')),
-              h('span.hit-text.muted', {}, hitText(hit))))))
+              h('span.hit-text.muted', {}, hitText(hit, areaName))))))
           : h('p.muted', {}, t('roster.chipNone'))]);
     });
   }

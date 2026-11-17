@@ -41,6 +41,7 @@ export async function render(root, ctx) {
 
 /** Rule violations, overstaffing and quality, with a grouping and three filters. */
 function problemSection(dataset, analysis, problems) {
+  const areaName = new Map(dataset.areas.map((a) => [a.id, a.name]));
   const section = h('section.check-section', { id: 'check-problems' }, h('h2', {}, t('check.problems.title'), info(t('help.check.problems'), t('check.problems.title'))),
     h('p.muted', {}, t('check.problems.help')));
   if (!problems || !analysis) return append(section, [h('p.alert.alert-error', {}, t('check.problems.failed'))]);
@@ -64,7 +65,7 @@ function problemSection(dataset, analysis, problems) {
     list.replaceChildren(h('p.muted', {}, t('check.problems.count', { count: shown.length })),
       ...groupProblems(shown, by).map((g, i) => fold(shown.length <= FOLD || i === 0,
         [groupLabel(by, g), ' ', h('span.muted', {}, `(${g.entries.length})`)],
-        h('ul.check-list', {}, g.entries.map((e) => entryItem(e, by))))));
+        h('ul.check-list', {}, g.entries.map((e) => entryItem(e, by, areaName))))));
   }
   draw();
   return section;
@@ -78,7 +79,7 @@ function groupLabel(by, g) {
 }
 
 /** One entry: level, what the group heading does not say (rule, day), the person (link), the text. */
-function entryItem(e, by) {
+function entryItem(e, by, areaName) {
   const { hit, person } = e;
   const level = hit.level === 'HARD' ? 'badge-hard' : hit.level === 'MEDIUM' ? 'badge-warn' : null;
   return h('li', { 'data-rule': hit.constraintId, 'data-level': hit.level },
@@ -88,7 +89,7 @@ function entryItem(e, by) {
     person ? h('a', { href: `#/person/${encodeURIComponent(person.id)}` }, personName(person))
       : h('a', { href: '#/zeitachse' }, t('check.toTimeline')),
     by !== 'day' && h('span', {}, groupKey(e, 'day') ? dayLabel(hit.date) : t('roster.chipMonth')),
-    h('span.hit-text', {}, hitText(hit)));
+    h('span.hit-text', {}, hitText(hit, areaName)));
 }
 
 /** Open demand of the month by day: area, time, missing count, the functions of the area and who could be asked. */

@@ -134,7 +134,7 @@ function figures(explanation, person, areaNames, constraintLabels, nightDistribu
         h('h3', {}, g.date ? dayLabel(g.date) : t('person.wholeMonth'), ' ', h('span.muted', {}, `(${hitSummary(g.hits).join(', ')})`)),
         g.hits.map((hit) => h('div.hit', {},
           h('span', { class: hit.level === 'HARD' ? 'badge badge-hard' : 'badge' }, LEVEL[hit.level] ?? hit.level),
-          h('span', {}, h('strong', {}, constraintLabels.get(hit.constraintId) ?? constraintLabel({ id: hit.constraintId })), ': ', hitText(hit)),
+          h('span', {}, h('strong', {}, constraintLabels.get(hit.constraintId) ?? constraintLabel({ id: hit.constraintId })), ': ', hitText(hit, areaNames)),
           h('span', { class: `effect ${hit.score < 0 ? 'score-neg' : hit.score > 0 ? 'score-pos' : ''}` }, hitEffect(hit))))))
         : h('p.muted', {}, t('person.noHits'))),
   ].filter(Boolean);
