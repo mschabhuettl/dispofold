@@ -184,7 +184,8 @@ export async function render(root, ctx) {
         }))))));
   }
 
-  const stopPrintTheme = lightThemeWhilePrinting();
+  const stopPrintTheme = lightThemeWhilePrinting(() => print.querySelector('.print-header')
+    ?.replaceChildren(printHeader(title, state.plan.status)));
   draw();
   return () => {
     disposed = true;

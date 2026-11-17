@@ -194,7 +194,9 @@ export async function render(root, ctx) {
           const style = cell.color ? tintStyle(cell.color) : null;
           const cls = [style && 'tinted', cell.kind === 'absence' && 'absence strong', cell.kind === 'compRest' && 'comp-rest',
             cell.pinned && 'pinned', cell.conflict && 'strong hard', cell.onRequest && 'on-request'].filter(Boolean).join(' ');
-          return h('td.cell', { class: dayClass(d) }, cell.code ? h('span.cell-code', { class: cls || null, style }, cell.code) : '');
+          // a free day that was pinned keeps its frame, as on screen
+          return h('td.cell', { class: dayClass(d) },
+            cell.code || cell.pinned ? h('span.cell-code', { class: cls || null, style }, cell.code || '·') : '');
         }),
         h('td.sum', {}, fmt.num(row.hours, 1))));
     }
@@ -325,7 +327,8 @@ export async function render(root, ctx) {
     }
   }
 
-  const stopPrintTheme = lightThemeWhilePrinting();
+  const stopPrintTheme = lightThemeWhilePrinting(() => print.querySelector('.print-header')
+    ?.replaceChildren(printHeader(title, state.plan.status)));
   drawTable();
   drawStatus();
   if (state.solving) timer = setTimeout(poll, POLL_INTERVAL_MS);

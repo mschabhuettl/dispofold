@@ -131,10 +131,17 @@ export function printButton() {
     t('print.button'));
 }
 
-/** Prints on white paper: the light theme while the print dialog is open. Returns the function that removes it. */
-export function lightThemeWhilePrinting() {
+/**
+ * Prints on white paper: the light theme while the print dialog is open; `refresh` runs before every print (for
+ * example the print date of the header line). Returns the function that removes it.
+ */
+export function lightThemeWhilePrinting(refresh = () => {}) {
   let theme = null;
-  const before = () => { theme = document.documentElement.dataset.theme; document.documentElement.dataset.theme = 'light'; };
+  const before = () => {
+    refresh();
+    theme = document.documentElement.dataset.theme;
+    document.documentElement.dataset.theme = 'light';
+  };
   const after = () => { if (theme) document.documentElement.dataset.theme = theme; };
   window.addEventListener('beforeprint', before);
   window.addEventListener('afterprint', after);

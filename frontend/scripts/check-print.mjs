@@ -44,6 +44,12 @@ try {
           body: '{"seed":1,"timeLimitSeconds":1}' });
       }, month);
       await page.waitForTimeout(1500);
+      // a free day pinned by hand: the first person, 2 January
+      await page.evaluate(async (m) => {
+        const p = (await (await fetch('/api/dataset')).json()).people[0];
+        await fetch(`/api/plans/${m}/cells`, { method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ personId: p.id, date: `${m}-02`, shiftId: null, compRest: false, pinned: true }) });
+      }, month);
     }
     for (const [view, table] of [['plan', 'table.plan-print'], ['funktionen', 'table.functions-print']]) {
       const name = `${user} ${view}`;
@@ -56,6 +62,8 @@ try {
       for (const chrome of ['.sidebar', '.topbar', '.toolbar', '.roster-wrap', '.print-view > h1']) {
         check(`${name}: ${chrome} not printed`, await page.locator(chrome).first().isHidden());
       }
+      // the print date is set when printing starts (a view left open over midnight)
+      await page.evaluate(() => { document.querySelector('.print-only .print-header').textContent = 'alt'; window.dispatchEvent(new Event('beforeprint')); });
       const header = await page.locator('.print-only .print-header').textContent();
       check(`${name}: header line`, /Jänner 2027 · Status: Entwurf · gedruckt am \d\d\.\d\d\.\d{4}$/.test(header), header);
       check(`${name}: legend printed after the header`, await page.locator('.print-only > .print-header + .legend').isVisible());
@@ -68,6 +76,11 @@ try {
       check(`${name}: rows in both halves`, halves.every((x) => x.rows > 1 && x.rows === halves[0].rows), JSON.stringify(halves));
       if (view === 'plan') {
         // the same people and groups in print as on screen, the name display respected
+        if (user === 'planung') {
+          const onScreen = await page.locator('.roster-wrap .cell-free.cell-pinned').count();
+          const printed = await page.locator(`${table} .cell-code.pinned`).filter({ hasText: /^·$/ }).count();
+          check(`${name}: pinned free day framed`, onScreen >= 1 && printed === onScreen, `${printed} / ${onScreen}`);
+        }
         const screenRows = await page.locator('.roster-wrap tbody tr').count();
         check(`${name}: rows as on screen`, halves[0].rows === screenRows, `${halves[0].rows} / ${screenRows}`);
         const first = await page.locator(`${table} tbody tr:not(.group) th.person`).first().textContent();
