@@ -1,4 +1,5 @@
-// Fairness-Übersicht: sortable table of per-person metrics plus dot strips showing the spread per metric.
+// Fairness-Übersicht: sortable table of per-person metrics plus dot strips showing the spread per metric. Planners see
+// the loads the fairness rules compare first; the mean line of a load is the mean the rule compares against.
 import { monthLabel } from '../lib/dates.js';
 import { fmt, h, svg } from '../lib/dom.js';
 import { fairnessRows, metricSpreads, metricsFor, nightOutside, nightReasonText, sortRows } from '../lib/fairness.js';
@@ -14,15 +15,13 @@ export async function render(root, ctx) {
     root.append(h('p.alert', {}, t('common.noPlan')));
     return;
   }
-  let normalize = true;
   let sortKey = 'name';
   let ascending = true;
   const charts = h('div', {});
   const tableHost = h('div', { style: { overflowX: 'auto' } });
 
   root.append(
-    h('div.toolbar', {}, h('label', {}, h('input', { type: 'checkbox', checked: normalize, onchange: (e) => { normalize = e.target.checked; draw(); } }),
-      ' ', t('fairness.normalize'))),
+    ctx.canEdit && h('p.fairness-measure', {}, t('fairness.measure')),
     h('h2', {}, t('fairness.spreadHeading')),
     h('p.muted', {}, t('fairness.spreadHelp')),
     charts,
@@ -32,7 +31,7 @@ export async function render(root, ctx) {
   );
 
   function draw() {
-    const rows = fairnessRows(analysis.people, dataset.people, normalize);
+    const rows = fairnessRows(analysis.people, dataset.people);
     const spreads = metricSpreads(rows);
     charts.replaceChildren(h('div.grid-2', {}, metrics.map((m) => spreadStrip(m, rows, spreads[m.id]))));
     const sorted = sortRows(rows, sortKey, ascending);
@@ -43,7 +42,7 @@ export async function render(root, ctx) {
       h('thead', {}, h('tr', {}, th('name', t('fairness.person'), false), metrics.map((m) => th(m.id, m.label, true)))),
       h('tbody', {}, sorted.map((r) => h('tr', {},
         h('th', { scope: 'row' }, h('a', { href: `#/person/${encodeURIComponent(r.person.id)}` }, personName(r.person))),
-        metrics.map((m) => h('td.num', {}, format(m, r.values[m.id]), m.id === 'nights' && nightMark(r.stats))))))));
+        metrics.map((m) => h('td.num', {}, format(m, r.values[m.id]), m.id === 'nightLoad' && nightMark(r.stats))))))));
   }
   draw();
 }

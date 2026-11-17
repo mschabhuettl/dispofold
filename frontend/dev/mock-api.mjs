@@ -197,7 +197,43 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
       historyNights: sum('nights'), historyWeekends: sum('weekendsWorked'), historyHolidays: sum('holidays'),
       historyUnpopular: sum('unpopular'), historyWishes: sum('wishes'), historyWishesMet: sum('wishesMet'),
       ...nightComparison(m, p),
+      ...fairnessLoads(m, p),
     };
+  }
+
+  /**
+   * Like the backend: weekends, holidays and unpopular duties of this and the history months per 30 available days
+   * at 40 h; null when not compared (no available day, or unpopular duties without such a shift in the areas).
+   */
+  function fairnessLoads(m, p) {
+    const shifts = shiftsById();
+    const hol = holidaySet();
+    const absent = (periods.get(m)?.absences ?? []).filter((a) => a.personId === p.id).length;
+    const hist = dataset.history.filter((h) => h.personId === p.id);
+    const days = monthDates(m).length - absent + hist.length * 30;
+    const duties = (plans.get(m)?.assignments ?? []).filter((a) => a.personId === p.id && shifts.get(a.shiftId));
+    const dates = new Set(duties.map((a) => a.date));
+    const weekends = monthDates(m).filter((d) => weekday(d) === 6 && (dates.has(d) || dates.has(addDays(d, 1)))).length;
+    const load = (count, histKey) => (monthDates(m).length > absent
+      ? Math.round(((count + hist.reduce((s, h) => s + h[histKey], 0)) * 30 * 40) / (p.weeklyHours || 40) / days * 100) / 100 : null);
+    const unpopular = duties.filter((a) => shifts.get(a.shiftId).unpopular).length;
+    const canUnpopular = dataset.shifts.some((s) => s.unpopular && p.areaIds.includes(s.areaId));
+    return { weekendLoad: load(weekends, 'weekendsWorked'), holidayLoad: load(duties.filter((a) => hol.has(a.date)).length, 'holidays'),
+      unpopularLoad: canUnpopular || unpopular ? load(unpopular, 'unpopular') : null };
+  }
+
+  /** Overstaffing above a maximum, a match of no person (like the backend's overstaffing). */
+  function overstaffing(m) {
+    const out = [];
+    for (const area of dataset.areas) {
+      for (const sg of coverage(m, area.id)) {
+        if (sg.max == null || sg.planned <= sg.max) continue;
+        out.push({ personId: null, constraintId: 'overstaffing', level: 'MEDIUM', date: sg.from.slice(0, 10),
+          score: -(sg.planned - sg.max) * (parseLocalDateTime(sg.to) - parseLocalDateTime(sg.from)), code: 'hit.overstaffing',
+          params: { areaId: area.id, planned: sg.planned, upper: sg.max, from: sg.from.slice(11, 16), to: sg.to.slice(11, 16) } });
+      }
+    }
+    return out;
   }
 
   /** Like the backend: why a person is outside the night comparison ('NEVER', 'MIX'), null when in it. */
@@ -357,7 +393,7 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
   /** Personal figures viewers do not get: wishes 0, hours account and compensatory rest null. */
   const redactStats = (s) => ({ ...s, wishes: 0, wishesMet: 0, historyWishes: 0, historyWishesMet: 0, accountBefore: null, goalHours: null, scaledGoalHours: null,
     accountAfter: null, compRestBalanceAfter: null, compRestEarned: null, chargedHours: null, creditedHours: null,
-    nightPool: null, nightReason: null, nightLoad: null, nightMean: null });
+    nightPool: null, nightReason: null, nightLoad: null, nightMean: null, weekendLoad: null, holidayLoad: null, unpopularLoad: null });
 
   /** True while the mock program "restarts" after an update. */
   handle.restarting = () => Date.now() < downUntil;
@@ -519,6 +555,14 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
           }
         }
         return json(groups);
+      }
+      if (c === 'problems') {
+        if (role !== 'planner') return err(403, 'Nur für Planung', 'auth.forbidden');
+        const out = [];
+        for (const p of dataset.people) {
+          for (const hit of hitsOf(m, p, personStats(m, p))) if (hit.score < 0) out.push({ personId: p.id, ...hit });
+        }
+        return json([...out, ...overstaffing(m)]);
       }
       if (c === 'coverage') return json(coverage(m, d));
       if (c === 'candidates') {

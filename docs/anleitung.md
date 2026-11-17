@@ -208,10 +208,12 @@ Weitere Seiten:
   keine Regel, 1 Wunsch erfüllt“), darunter welche Regeln gegriffen haben, mit ihrer Gruppe (**Regelverstoß**,
   **Bedarf**, **Qualität**) und ob es ein Verstoß, ein Nachteil oder ein Vorteil ist.
 - **Fairness-Übersicht:** Alle Personen nebeneinander, je Kennzahl mit Minimum, Mittelwert und Maximum, auch über
-  die Vormonate (Historie). Mit **Auf 40 Wochenstunden normiert** werden Teilzeitkräfte vergleichbar. Bei der
-  Fairness zählt die Abweichung vom Mittelwert: Ein Treffer in der Erklärung erscheint nur bei Personen über dem
-  Mittelwert. Personen außerhalb des Nachtausgleichs sind markiert, mit dem Grund (gewohnte Verteilung oder nie
-  Nacht). Die Seite **Person** zeigt in der Kachel **Nächte**, ob die Person ihrer gewohnten Verteilung folgt, nie
+  die Vormonate (Historie). Vorne steht die **Belastung** bei Nächten, Wochenenden, Feiertagen und unbeliebten
+  Diensten, so wie die Fairness-Regeln vergleichen: Dienste dieses Monats und der Vormonate je 30 verfügbare Tage bei
+  40 Wochenstunden; damit sind Teilzeitkräfte und Personen mit langer Abwesenheit vergleichbar (nur für die Planung
+  sichtbar). Bei der Fairness zählt die Abweichung vom Mittelwert: Ein Treffer in der Erklärung erscheint nur bei
+  Personen über dem Mittelwert. Personen außerhalb des Nachtausgleichs sind markiert, mit dem Grund (gewohnte
+  Verteilung oder nie Nacht). Die Seite **Person** zeigt in der Kachel **Nächte**, ob die Person ihrer gewohnten Verteilung folgt, nie
   Nacht macht oder im Nachtausgleich ist, dann mit ihrer Belastung und dem Mittel aller Verglichenen.
 - **Regeln & Gewichte:** drei Abschnitte.
   - **Planungsziele:** oben die Einstellung **Nachtdienste**: „Wie bisher“ (jede Person behält ihren gewohnten

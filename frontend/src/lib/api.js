@@ -164,6 +164,8 @@ export function createApi({ fetchImpl = (...a) => globalThis.fetch(...a), onUnau
     coverage: (month, areaId) => request('GET', `/api/plans/${m(month)}/coverage/${encodeURIComponent(areaId)}`),
     /** Planners only: who could be asked in a gap {areaId, from, to} (local date-times as in the analysis). */
     candidates: (month, gap) => request('GET', `/api/plans/${m(month)}/candidates?areaId=${k(gap.areaId)}&from=${k(gap.from)}&to=${k(gap.to)}`),
+    /** Planners only: every penalty of the plan [{ personId (null: no person), ...hit }] for the problem list. */
+    problems: (month) => request('GET', `/api/plans/${m(month)}/problems`),
     finalize: (month) => request('POST', `/api/plans/${m(month)}/finalize`),
     reopen: (month) => request('POST', `/api/plans/${m(month)}/reopen`),
     importPlan: (month, plan) => request('POST', `/api/plans/${m(month)}/import`, plan),
