@@ -145,7 +145,14 @@ export function createApi({ fetchImpl = (...a) => globalThis.fetch(...a), onUnau
     saveRestrictions: (personId, list, revision) => request('PUT', `/api/dataset/people/${k(personId)}/restrictions`, list, revision),
     exportDataset: () => download('/api/dataset/export', 'dispofold-datensatz.json'),
     importDemo: (replaceChanged) => request('POST', `/api/import/demo${replace(replaceChanged)}`),
-    importDataset: (dataset, replaceChanged) => request('POST', `/api/import/dataset${replace(replaceChanged)}`, dataset),
+    /** keep: carry the master data changed in Dispofold since the last import over to the new dataset */
+    importDataset: (dataset, replaceChanged, keep = false) => request('POST', `/api/import/dataset${keep ? '?keep=true' : replace(replaceChanged)}`, dataset),
+    /** Dry run of an import with keep: { changed, kept, conflicts: [{ personId, areaId, field }], notes } */
+    importPreview: (dataset) => request('POST', '/api/import/preview', dataset),
+    /** Changes since the last import: { file, notes, count }; 409 corrections.noBaseline without a stored import */
+    correctionsFile: () => request('GET', '/api/data/corrections'),
+    /** Pseudonymised { dataset, plan, key, people }; 409 anonymize.leak when a name would remain */
+    anonymized: (month) => request('GET', `/api/data/anonymized?month=${m(month)}`),
     rules: () => request('GET', '/api/rules'),
     saveRules: (rules) => request('PUT', '/api/rules', rules),
     constraints: () => request('GET', '/api/constraints'),

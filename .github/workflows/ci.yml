@@ -128,6 +128,9 @@ jobs:
       - name: Night setting on the person and fairness pages (browser)
         working-directory: frontend
         run: node scripts/check-night.mjs
+      - name: Daten page, corrections file, import keeping changes, anonymised export (browser)
+        working-directory: frontend
+        run: node scripts/check-data.mjs
 
   desktop-shell:
     # Unit tests of the program window (protocol, proof, proxy rules).

@@ -1,7 +1,9 @@
-// Import/Export: dataset upload, demo data, plan export/import, finalize month.
+// Daten: dataset import (optionally keeping the changes made in Dispofold), exports, corrections file, anonymised
+// export, demo data, plan import, finalize month.
 import { monthLabel } from '../lib/dates.js';
 import { guarded, h, saveBlob, toast } from '../lib/dom.js';
 import { messageText } from '../lib/codes.js';
+import { CORRECTIONS_FILE, anonymizedFiles, conflictText, correctionsBlob, noteText, shortNames } from '../lib/data-files.js';
 import { t } from '../lib/texts.js';
 import { EXPORT_FORMATS, closeMonth, exportPlanFile } from './plan-output.js';
 
@@ -11,28 +13,32 @@ export async function render(root, ctx) {
   const state = await api.planState(month).catch(() => null);
   const solving = Boolean(state?.solving);
   const closed = state?.plan?.status === 'CLOSED';
+  const current = canEdit ? await ctx.dataset().catch(() => null) : null;
+
+  const list = (items) => h('ul', {}, items.map((x) => h('li', {}, x)));
+  const errorAlert = (e) => h('div.alert.alert-error', { role: 'alert' }, h('strong', {}, e.message),
+    e.body?.errors?.length ? list(e.body.errors.map(messageText)) : null,
+    e.body?.warnings?.length ? [h('p', {}, h('strong', {}, t('import.warnings', { count: e.body.warnings.length }))),
+      list(e.body.warnings.map(messageText))] : null);
 
   /**
    * Runs an import (load(replace) calls the API). A rejected import lists all its errors ({ code, params }), not
-   * only the first. Master data changed in Dispofold since the last import are only replaced after asking.
+   * only the first. Master data changed in Dispofold since the last import are only replaced after asking; an
+   * uploaded dataset (data) can keep them instead.
    */
-  const runImport = async (load, replace = false) => {
+  const runImport = async (load, replace = false, data = null) => {
     try {
       return await load(replace);
     } catch (e) {
       if (e.code === 'import.masterChanged') {
         result.replaceChildren(h('div.alert', { role: 'alert' }, h('strong', {}, t('import.masterChanged.title')), ' ', t('import.masterChanged.text'),
           h('div.toolbar', {}, button(t('import.datasetExport'), exportDataset),
-            button(t('import.masterChanged.replace'), async () => showSummary(await runImport(load, true)), true),
+            data && button(t('data.import.keepRun'), () => previewKeep(data), true),
+            button(t('import.masterChanged.replace'), async () => showSummary(await runImport(load, true)), !data),
             button(t('common.cancel'), async () => result.replaceChildren()))));
         return undefined;
       }
-      const errors = e.body?.errors ?? [];
-      const warnings = e.body?.warnings ?? [];
-      result.replaceChildren(h('div.alert.alert-error', { role: 'alert' }, h('strong', {}, e.message),
-        errors.length ? h('ul', {}, errors.map((x) => h('li', {}, messageText(x)))) : null,
-        warnings.length ? [h('p', {}, h('strong', {}, t('import.warnings', { count: warnings.length }))),
-          h('ul', {}, warnings.map((w) => h('li', {}, messageText(w))))] : null));
+      result.replaceChildren(errorAlert(e));
       return undefined;
     }
   };
@@ -41,12 +47,32 @@ export async function render(root, ctx) {
     if (file) saveBlob(file.blob, file.filename);
   };
 
+  /** Dry run of an import keeping the changes: what is carried over, conflicts and what is lost, then import. */
+  const previewKeep = async (data) => {
+    let preview;
+    try {
+      preview = await api.importPreview(data);
+    } catch (e) {
+      result.replaceChildren(errorAlert(e));
+      return;
+    }
+    const names = shortNames(current, data);
+    result.replaceChildren(h('div.alert', { id: 'import-preview' }, h('strong', {}, t('data.preview.title')),
+      h('p', {}, preview.changed ? t('data.preview.kept', { count: preview.kept }) : t('data.preview.none')),
+      preview.conflicts.length ? [h('p', {}, t('data.preview.conflicts')), list(preview.conflicts.map((c) => conflictText(c, names)))] : null,
+      preview.notes.length ? [h('p', {}, t('data.preview.notes')), list(preview.notes.map((n) => noteText(n, names)))] : null,
+      h('div.toolbar', {},
+        button(t('data.preview.import'), async () => showSummary(await runImport(() => api.importDataset(data, false, true))), true),
+        button(t('common.cancel'), async () => result.replaceChildren()))));
+  };
+
   const showSummary = (s) => {
     if (!s) return;
     ctx.invalidateDataset();
 
     result.replaceChildren(h('div.alert', {},
       h('strong', {}, t('import.summaryTitle', { source: s.source })), t('import.summary', { people: s.people, areas: s.areas, shifts: s.shifts, months: s.months.join(', ') || '–' }),
+      s.kept ? h('p', {}, t('data.import.kept', { count: s.kept })) : null,
       s.warnings?.length ? [h('p', {}, h('strong', {}, t('import.warnings', { count: s.warnings.length }))), h('ul', {}, s.warnings.map((w) => h('li', {}, messageText(w))))] : null,
       s.months?.length && !s.months.includes(month) ? h('p', {}, button(t('import.switchMonth', { month: monthLabel(s.months[0]) }), () => ctx.setMonth(s.months[0]))) : null));
   };
@@ -60,6 +86,7 @@ export async function render(root, ctx) {
   });
 
   const datasetFile = h('input', { id: 'dataset-file', type: 'file', accept: '.json,application/json' });
+  const keep = h('input', { id: 'dataset-keep', type: 'checkbox', checked: Boolean(current?.changedSinceImport) });
   const planFile = h('input', { id: 'plan-file', type: 'file', accept: '.json,application/json' });
   const busy = (btn, fn) => async () => {
     btn.disabled = true;
@@ -75,14 +102,17 @@ export async function render(root, ctx) {
 
   if (canEdit) {
     root.append(
-      h('section.section', { 'aria-labelledby': 'h-import' }, h('h2', { id: 'h-import' }, t('import.dataset.import')),
+      h('section.section', { 'aria-labelledby': 'h-import' }, h('h2', { id: 'h-import' }, t('data.import.heading')),
         h('p.muted', {}, t('import.dataset.help')),
         h('div.toolbar', {},
           h('div.field', {}, h('label', { for: 'dataset-file' }, t('import.dataset.label')), datasetFile),
+          h('label.check-inline', {}, keep, t('data.import.keep')),
           button(t('import.dataset.import'), async () => {
             const data = await guarded(() => readJson(datasetFile));
-            if (data && !confirm(t('import.dataset.confirm'))) return;
-            if (data) showSummary(await runImport((replace) => api.importDataset(data, replace)));
+            if (!data) return;
+            if (keep.checked) return previewKeep(data);
+            if (!confirm(t('import.dataset.confirm'))) return;
+            showSummary(await runImport((replace) => api.importDataset(data, replace), false, data));
           }, true)),
         // demo data are for trying the program out: collapsed
         h('details.advanced', {}, h('summary', {}, t('roster.advanced')),
@@ -96,14 +126,57 @@ export async function render(root, ctx) {
 
   // exports are for planners only (viewers get 403) and blocked while a solve runs
   if (canEdit) {
-    root.append(h('section.section', { 'aria-labelledby': 'h-dataset-export' }, h('h2', { id: 'h-dataset-export' }, t('import.datasetExport')),
+    const correctionsResult = h('div', { 'aria-live': 'polite' });
+    const anonymizeResult = h('div', { 'aria-live': 'polite' });
+    root.append(h('section.section', { 'aria-labelledby': 'h-export' }, h('h2', { id: 'h-export' }, t('data.export.heading')),
+      h('p.muted', {}, t('data.export.intro')),
+      h('div.toolbar', {}, button(t('import.datasetExport'), exportDataset)),
       h('p.muted', {}, t('import.datasetExport.help')),
-      h('div.toolbar', {}, button(t('import.datasetExport'), exportDataset))));
-    root.append(h('section.section', { 'aria-labelledby': 'h-export' }, h('h2', { id: 'h-export' }, t('import.export.heading', { month: monthLabel(month) })),
+      h('h3', {}, t('import.export.heading', { month: monthLabel(month) })),
       solving && h('p.muted', {}, t('import.export.solving')),
       h('div.toolbar', {}, EXPORT_FORMATS.map((f) => (solving
         ? h('button.btn.btn-secondary', { type: 'button', disabled: true }, f.toUpperCase())
         : button(f.toUpperCase(), () => exportPlanFile(api, month, f)))))));
+
+    root.append(h('section.section', { 'aria-labelledby': 'h-corrections' }, h('h2', { id: 'h-corrections' }, t('data.corrections.heading')),
+      h('p.muted', {}, t('data.corrections.intro')),
+      h('div.toolbar', {}, button(t('data.corrections.export'), async () => {
+        let r;
+        try {
+          r = await api.correctionsFile();
+        } catch (e) {
+          correctionsResult.replaceChildren(errorAlert(e));
+          return;
+        }
+        if (r.count) saveBlob(correctionsBlob(r.file), CORRECTIONS_FILE);
+        const names = shortNames(current);
+        correctionsResult.replaceChildren(h('div.alert', {},
+          h('p', {}, r.count ? t('data.corrections.done', { count: r.count }) : t('data.corrections.none')),
+          r.notes.length ? [h('p', {}, t('data.corrections.notes')), list(r.notes.map((n) => noteText(n, names)))] : null));
+      })),
+      correctionsResult));
+
+    root.append(h('section.section', { 'aria-labelledby': 'h-anonymize' }, h('h2', { id: 'h-anonymize' }, t('data.anonymize.heading')),
+      h('p.muted', {}, t('data.anonymize.intro', { month: monthLabel(month) })),
+      h('div.toolbar', {}, solving ? h('button.btn.btn-secondary', { type: 'button', disabled: true }, t('data.anonymize.run'))
+        : button(t('data.anonymize.run'), async () => {
+          let r;
+          try {
+            r = await api.anonymized(month);
+          } catch (e) {
+            anonymizeResult.replaceChildren(errorAlert(e));
+            return;
+          }
+          const files = anonymizedFiles(r, month);
+          const save = (f) => async () => saveBlob(f.blob, f.name);
+          anonymizeResult.replaceChildren(h('div.alert', {},
+            h('p', {}, t('data.anonymize.ready', { count: r.people })),
+            h('div.toolbar', {}, button(t('data.anonymize.dataset'), save(files.dataset), true),
+              button(t('data.anonymize.plan'), save(files.plan), true)),
+            h('p', {}, h('strong', {}, t('data.anonymize.keyWarning'))),
+            h('div.toolbar', {}, button(t('data.anonymize.key'), save(files.key)))));
+        })),
+      anonymizeResult));
   }
 
   if (canEdit) {
