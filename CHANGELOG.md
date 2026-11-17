@@ -3,6 +3,36 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.10.0 (2026-11-17)
+
+Eine Einstellung für die Nachtdienste und eine einfachere Seite Regeln & Gewichte.
+
+- **Nachtdienste:** neue Einstellung oben auf der Seite Regeln. „Wie bisher“ (Standard, Verhalten wie bisher):
+  Personen mit gewohnter Verteilung behalten ihren Nachtanteil und sind nicht im Nachtausgleich. „Gleichmäßig“:
+  der Nachtanteil der gewohnten Verteilung zählt nicht, alle sind im Nachtausgleich; die übrigen Anteile (Früh,
+  Tag, Spät) gelten weiter für die Dienste außer Nächten, die Anteile je Bereich bleiben.
+- **Nie Nacht:** In beiden Einstellungen ist nicht im Nachtausgleich und wird für fehlende Nächte nicht bestraft,
+  wer eine Einschränkung „nie“ auf alle Nachtschichten seiner Bereiche hat (für jeden Tag) oder eine Familienregel
+  „keine Nacht“ an allen sieben Wochentagen. Im Demomonat sinkt dadurch die Zahl der Verglichenen bei „Wie
+  bisher“ etwas.
+- **Sichtbar:** Die Seite Person zeigt in der Kachel „Nächte“, ob die Person ihrer Verteilung folgt, nie Nacht
+  macht oder im Nachtausgleich ist (mit Belastung und Mittel); die Fairness-Übersicht markiert, wer nicht
+  verglichen wird. Bei „Wie bisher“ und Gewicht 0 der gewohnten Verteilung warnt die Regelseite, dass Personen mit
+  Verteilung dann keine Regel für Nächte haben.
+- **Regeln & Gewichte** in drei Abschnitten:
+  - Planungsziele: Nachtdienste, Dienstblöcke (von ... bis ... Tagen), Wünsche (höchstens ... je Person),
+    Faire Verteilung (über die letzten ... Monate), Stunden treffen (höchstens ... % über dem Ziel, Stundenkonto
+    ausgleichen ... % je Monat), Familienregeln; je mit **Wichtigkeit** weniger, normal, mehr (halbe, Standard-,
+    doppelte Gewichte). Von Hand gesetzte Gewichte zeigen „angepasst“.
+  - Gesetz und Betriebsvereinbarung: Ruhezeiten, Höchstwerte je Dienst, Woche und Monat, Wochenschnitt, freie
+    Sonntage, Feiertagsarbeit; als Text, „Ändern“ schaltet die Felder frei.
+  - Erweitert (zugeklappt): alle Gewichte einzeln, das Nachtfenster, die übrigen Regeln und der ganze
+    Regelkatalog.
+- Gespeicherte Regeln älterer Versionen laden unverändert; ohne Einstellung gilt „Wie bisher“.
+- **Schnittstelle:** `rules.nightDistribution` (`HABIT`, `EVEN`); in den Kennzahlen je Person `nightPool`,
+  `nightReason`, `nightLoad`, `nightMean` (für die Rolle Lesen leer).
+- Betrieb: keine Änderung an Datenbank, `docker-compose.yml` oder `.env`.
+
 ## 0.9.0 (2026-11-17)
 
 Einfachere Oberfläche: was am Plan nicht stimmt, steht oben; ein Name je Begriff. Die Planungsergebnisse sind
