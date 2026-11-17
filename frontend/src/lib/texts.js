@@ -83,6 +83,8 @@ export const TEXTS = {
   'check.data.mixCategory.todo': 'Den Anteil entfernen oder die Bereiche der Person prüfen.',
   'check.data.nightIgnored': '{name}: Der Nachtanteil der gewohnten Verteilung zählt nicht, weil Nachtdienste gleichmäßig verteilt werden.',
   'check.data.nightIgnored.todo': 'Nichts zu tun, wenn das so gewollt ist; sonst unter Regeln „Wie bisher“ wählen.',
+  'check.data.nightNever': '{name}: Der Nachtanteil der gewohnten Verteilung zählt nicht, weil die Person nie Nacht macht. Die übrigen Anteile gelten für die Dienste außer Nächten.',
+  'check.data.nightNever.todo': 'Nichts zu tun, wenn das so gewollt ist; sonst den Nachtanteil in den Stammdaten entfernen oder die Sperre für Nächte aufheben.',
   'check.data.noNights': '{name} bekommt keine Nachtdienste: Die gewohnte Verteilung hat keinen Nachtanteil, und die Person ist nicht im Nachtausgleich.',
   'check.data.noNights.todo': 'Soll die Person Nächte machen, einen Nachtanteil eintragen oder unter Regeln „Gleichmäßig“ wählen.',
   'fairness.measure': 'Belastung wie in den Fairness-Regeln: Dienste dieses Monats und der Vormonate je 30 verfügbare Tage bei 40 Wochenstunden, verglichen mit dem Mittel aller, die solche Dienste machen können.',

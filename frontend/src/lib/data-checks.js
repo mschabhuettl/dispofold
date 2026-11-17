@@ -78,9 +78,12 @@ export function dataChecks(dataset, { month, rules = null }) {
     // the night note of the person form, where it changes what the person gets
     const nightShare = mix.categories?.NIGHT ?? 0;
     const hasCategories = Object.keys(mix.categories ?? {}).length > 0;
-    if (nightDistribution === 'EVEN' && nightShare > 0) add('nightIgnored', 'info', { personId: p.id }, { name }, 'rules');
-    else if (nightDistribution !== 'EVEN' && hasCategories && nightShare === 0 && !noNightsRule(p)
-      && plannableShifts(dataset, p, month, rules).some((s) => shiftCategory(s, rules) === 'NIGHT')) add('noNights', 'info', { personId: p.id }, { name });
+    const plannable = plannableShifts(dataset, p, month, rules);
+    const neverNights = noNightsRule(p) || !plannable.some((s) => shiftCategory(s, rules) === 'NIGHT');
+    // never nights beats the night share in both modes (only where the areas have night shifts at all)
+    if (nightShare > 0 && neverNights && own.some((s) => shiftCategory(s, rules) === 'NIGHT')) add('nightNever', 'info', { personId: p.id }, { name });
+    else if (nightDistribution === 'EVEN' && nightShare > 0) add('nightIgnored', 'info', { personId: p.id }, { name }, 'rules');
+    else if (nightDistribution !== 'EVEN' && hasCategories && nightShare === 0 && !neverNights) add('noNights', 'info', { personId: p.id }, { name });
   }
 
   for (const a of dataset.areas) {
@@ -98,6 +101,7 @@ const TEXT = {
   mixArea: (p) => t('check.data.mixArea', p),
   mixCategory: (p) => t('check.data.mixCategory', p),
   nightIgnored: (p) => t('check.data.nightIgnored', p),
+  nightNever: (p) => t('check.data.nightNever', p),
   noNights: (p) => t('check.data.noNights', p),
 };
 
@@ -110,5 +114,6 @@ const TODO = {
   mixArea: () => t('check.data.mixArea.todo'),
   mixCategory: () => t('check.data.mixCategory.todo'),
   nightIgnored: () => t('check.data.nightIgnored.todo'),
+  nightNever: () => t('check.data.nightNever.todo'),
   noNights: () => t('check.data.noNights.todo'),
 };
