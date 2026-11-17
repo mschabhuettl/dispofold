@@ -43,6 +43,25 @@ class RosterAnalyzerTest {
         assertThat(FACADE.explain(input, "P0004").hits()).noneMatch(h -> h.code().equals("hit.fairNights"));
     }
 
+    /** Duties for the fairness comparisons: nights (unpopular), a weekend with the holiday on its Sunday. */
+    static PlanningInput fairnessInput() {
+        Dataset d = TestData.dataset(MONTH);
+        List<PlanAssignment> cells = List.of(new PlanAssignment("P0002", MONTH.atDay(2), "DR-N", false, true),
+                new PlanAssignment("P0002", MONTH.atDay(3), "DR-N", false, true),
+                new PlanAssignment("P0002", MONTH.atDay(4), "DR-N", false, true),
+                new PlanAssignment("P0004", MONTH.atDay(7), "AN-T", false, true),
+                new PlanAssignment("P0004", MONTH.atDay(8), "AN-T", false, true),
+                new PlanAssignment("P0003", MONTH.atDay(8), "DR-T", false, true),
+                new PlanAssignment("P0001", MONTH.atDay(14), "AN-T", false, true));
+        return new PlanningInput(d, d.periods().get(0), Rules.defaults(), cells);
+    }
+
+    /** Recorded before the fairness loads were added to the figures: the analysis does not change the scoring. */
+    @Test
+    void theScoreOfAFixedPlanIsUnchanged() {
+        assertThat(FACADE.analyze(fairnessInput()).score()).isEqualTo("-1hard/-61200000000000medium/-48739236soft");
+    }
+
     @Test
     void timeOffInLieuIsBookedAgainstTheAccount() {
         Dataset d = TestData.dataset(MONTH);
