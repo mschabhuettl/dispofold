@@ -20,7 +20,8 @@
     "check:problems": "node scripts/build.mjs && node scripts/check-problems.mjs",
     "check:people": "node scripts/build.mjs && node scripts/check-people.mjs",
     "check:inputs": "node scripts/build.mjs && node scripts/check-inputs.mjs",
-    "check:data": "node scripts/build.mjs && node scripts/check-data.mjs"
+    "check:data": "node scripts/build.mjs && node scripts/check-data.mjs",
+    "check:help": "node scripts/build.mjs && node scripts/check-help.mjs"
   },
   "dependencies": {
     "@bryntum/core-community": "8.0.0",

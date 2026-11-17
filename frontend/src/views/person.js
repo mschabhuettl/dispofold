@@ -10,6 +10,7 @@ import { constraintLabel, hitText } from '../lib/codes.js';
 import { CATEGORIES, conflictDecision, fromForm, inUseQuestion, itemLabel, restrictionFromForm, restrictionText, toForm } from '../lib/masterdata-edit.js';
 import { areaRestriction, setAreaRestriction } from '../lib/restrictions.js';
 import { nightStatus } from '../lib/fairness.js';
+import { info } from '../lib/info.js';
 import { MIX_CATEGORIES, mixRows, nightNote, sharePercent } from '../lib/shift-mix.js';
 import { t } from '../lib/texts.js';
 import { control, employmentText, problemAlert, readForm } from './masterdata.js';
@@ -92,44 +93,43 @@ async function renderList(root, ctx) {
 /** The figures of the month and "Warum dieser Dienst?"; personal ones (hours account, wishes, balances) for planners only. */
 function figures(explanation, person, areaNames, constraintLabels, nightDistribution, canEdit) {
   const s = explanation.stats;
-  const kpi = (label, value) => h('div.kpi', {}, h('div.label', {}, label), h('div.value', {}, value));
+  // every tile with its help: what the number counts
+  const kpi = (label, value, help) => h('div.kpi', {}, h('div.label', {}, label, info(help, label)), h('div.value', {}, value));
   const hours = (v) => `${fmt.num(v, 1)} h`;
   // Ziel: the goal the soft rule aims at in this plan; personal (hours account), so null for viewers. Soll: the contract target.
   const goal = s.scaledGoalHours ?? s.goalHours;
-  const help = h('p.kpi-help', { id: 'hours-help', hidden: true }, t('person.kpi.hoursHelp'));
-  const info = h('button.btn-link', { type: 'button', 'aria-expanded': 'false', 'aria-controls': 'hours-help',
-    onclick: () => { help.hidden = !help.hidden; info.setAttribute('aria-expanded', String(!help.hidden)); } }, t('person.kpi.hoursInfo'));
-  const hoursTile = h('div.kpi.kpi-hours', { title: t('person.kpi.hoursHelp') }, h('div.label', {}, t('person.kpi.hours')),
+  const hoursTile = h('div.kpi.kpi-hours', {}, h('div.label', {}, t('person.kpi.hours'), info(t('help.figure.hours'), t('person.kpi.hoursInfo'), 'hours-help')),
     h('div.value', {}, goal != null
       ? t('person.kpi.hoursOfGoal', { planned: fmt.num(s.plannedHours, 1), goal: fmt.num(goal, 1), target: fmt.num(s.targetHours, 1) })
-      : t('person.kpi.hoursOfTarget', { planned: fmt.num(s.plannedHours, 1), target: fmt.num(s.targetHours, 1) })), info, help);
+      : t('person.kpi.hoursOfTarget', { planned: fmt.num(s.plannedHours, 1), target: fmt.num(s.targetHours, 1) })));
   return [
     h('section.section', { 'aria-labelledby': 'h-hours' }, h('h2', { id: 'h-hours' }, t('person.section.hours')),
       h('div.kpis', {},
-        hoursTile, canEdit && kpi(t('person.kpi.credited'), hours(s.creditedHours)),
+        hoursTile, canEdit && kpi(t('person.kpi.credited'), hours(s.creditedHours), t('help.figure.creditedHours')),
         // the hours account is personal: planners only (viewers get null from the server)
-        canEdit && kpi(t('person.kpi.accountBefore'), hours(s.accountBefore)), canEdit && kpi(t('person.kpi.accountAfter'), hours(s.accountAfter)),
-        kpi(t('person.kpi.duties'), fmt.num(s.duties)),
-        s.availableDays != null && kpi(t('person.kpi.availableDays'), fmt.num(s.availableDays)),
-        canEdit && s.chargedHours != null && kpi(t('person.kpi.charged'), hours(s.chargedHours)),
+        canEdit && kpi(t('person.kpi.accountBefore'), hours(s.accountBefore), t('help.figure.accountBefore')), canEdit && kpi(t('person.kpi.accountAfter'), hours(s.accountAfter), t('help.figure.accountAfter')),
+        kpi(t('person.kpi.duties'), fmt.num(s.duties), t('help.figure.duties')),
+        s.availableDays != null && kpi(t('person.kpi.availableDays'), fmt.num(s.availableDays), t('help.figure.availableDays')),
+        canEdit && s.chargedHours != null && kpi(t('person.kpi.charged'), hours(s.chargedHours), t('help.figure.chargedHours')),
         // the 52-week average is only binding when the history covers the whole period
-        s.averageWeekHours != null && kpi(s.averageComplete ? t('person.kpi.averageWeek') : t('person.kpi.averageWeekPartial'), hours(s.averageWeekHours)))),
+        s.averageWeekHours != null && kpi(s.averageComplete ? t('person.kpi.averageWeek') : t('person.kpi.averageWeekPartial'), hours(s.averageWeekHours), t('help.figure.averageWeekHours')))),
     h('section.section', { 'aria-labelledby': 'h-load' }, h('h2', { id: 'h-load' }, t('person.section.load')),
       h('div.kpis', {},
-        nightsTile(s, person.shiftMix), kpi(t('person.kpi.weekendsWorked'), fmt.num(s.weekendsWorked)), kpi(t('person.kpi.weekendsOff'), fmt.num(s.weekendsOff)),
-        kpi(t('person.kpi.holidays'), fmt.num(s.holidays)), kpi(t('person.kpi.unpopular'), fmt.num(s.unpopular)), kpi(t('person.kpi.singleDays'), fmt.num(s.singleDays)),
+        nightsTile(s, person.shiftMix), kpi(t('person.kpi.weekendsWorked'), fmt.num(s.weekendsWorked), t('help.figure.weekendsWorked')), kpi(t('person.kpi.weekendsOff'), fmt.num(s.weekendsOff), t('help.figure.weekendsOff')),
+        kpi(t('person.kpi.holidays'), fmt.num(s.holidays), t('help.figure.holidays')), kpi(t('person.kpi.unpopular'), fmt.num(s.unpopular), t('help.figure.unpopular')), kpi(t('person.kpi.singleDays'), fmt.num(s.singleDays), t('help.figure.singleDays')),
         // wishes are personal: planners only
-        canEdit && kpi(t('person.kpi.wishesMet'), t('common.outOf', { value: s.wishesMet, total: s.wishes })),
-        kpi(t('person.kpi.compRestPlanned'), fmt.num(s.compRestPlanned)),
+        canEdit && kpi(t('person.kpi.wishesMet'), t('common.outOf', { value: s.wishesMet, total: s.wishes }), t('help.figure.wishesMet')),
+        kpi(t('person.kpi.compRestPlanned'), fmt.num(s.compRestPlanned), t('help.figure.compRestPlanned')),
         // compensatory-rest balance and the hours account are personal: planners only (viewers get null)
-        canEdit && kpi(t('person.kpi.compRestEarned'), fmt.num(s.compRestEarned)),
-        canEdit && kpi(t('person.kpi.compRestOpenAfter'), fmt.num(s.compRestBalanceAfter)))),
+        canEdit && kpi(t('person.kpi.compRestEarned'), fmt.num(s.compRestEarned), t('help.figure.compRestEarned')),
+        canEdit && kpi(t('person.kpi.compRestOpenAfter'), fmt.num(s.compRestBalanceAfter), t('help.figure.compRestBalanceAfter')))),
     mixSection(s.plannedMix, person.shiftMix, areaNames, nightDistribution),
     h('section.section', { 'aria-labelledby': 'h-hist' }, h('h2', { id: 'h-hist' }, t('person.section.history')),
       h('div.kpis', {},
-        kpi(t('person.kpi.nights'), fmt.num(s.historyNights)), kpi(t('person.kpi.weekends'), fmt.num(s.historyWeekends)), kpi(t('person.kpi.holidays'), fmt.num(s.historyHolidays)),
-        kpi(t('person.kpi.unpopular'), fmt.num(s.historyUnpopular)), canEdit && kpi(t('person.kpi.wishesMet'), t('common.outOf', { value: s.historyWishesMet, total: s.historyWishes })))),
-    h('section.section', { 'aria-labelledby': 'h-why' }, h('h2', { id: 'h-why' }, t('person.section.why')),
+        kpi(t('person.kpi.nights'), fmt.num(s.historyNights), t('help.figure.historyNights')), kpi(t('person.kpi.weekends'), fmt.num(s.historyWeekends), t('help.figure.historyWeekends')), kpi(t('person.kpi.holidays'), fmt.num(s.historyHolidays), t('help.figure.historyHolidays')),
+        kpi(t('person.kpi.unpopular'), fmt.num(s.historyUnpopular), t('help.figure.historyUnpopular')), canEdit && kpi(t('person.kpi.wishesMet'), t('common.outOf', { value: s.historyWishesMet, total: s.historyWishes }), t('help.figure.historyWishesMet')))),
+    h('section.section', { 'aria-labelledby': 'h-why' }, h('h2', { id: 'h-why' }, t('person.section.why'),
+      info(t('help.person.why'), t('person.section.why'))),
       explanation.hits.length ? groupHitsByDate(explanation.hits).map((g) => h('div.hits-day', {},
         h('h3', {}, g.date ? dayLabel(g.date) : t('person.wholeMonth'), ' ', h('span.muted', {}, `(${hitSummary(g.hits).join(', ')})`)),
         g.hits.map((hit) => h('div.hit', {},
@@ -143,15 +143,15 @@ function figures(explanation, person, areaNames, constraintLabels, nightDistribu
 /** Nights of the month and the night comparison (planners only: who is outside it tells the mix or restrictions). */
 function nightsTile(s, usual) {
   const status = nightStatus(s, usual);
-  return h('div.kpi.kpi-nights', { title: status && s.nightPool ? t('person.kpi.nightsHelp') : null },
-    h('div.label', {}, t('person.kpi.nights')), h('div.value', {}, fmt.num(s.nights)), status && h('p.kpi-help', {}, status));
+  return h('div.kpi.kpi-nights', {}, h('div.label', {}, t('person.kpi.nights'), info(t('help.figure.nights'), t('person.kpi.nights'))), h('div.value', {}, fmt.num(s.nights)), status && h('p.kpi-help', {}, status));
 }
 
 /** Planned against usual share of the duties per category and area; nothing to show without either. */
 function mixSection(planned, usual, areaNames, nightDistribution) {
   const rows = mixRows(planned, usual, (id) => areaNames.get(id) ?? id);
   if (!rows.length) return null;
-  return h('section.section', { 'aria-labelledby': 'h-mix' }, h('h2', { id: 'h-mix' }, t('person.section.mix')),
+  return h('section.section', { 'aria-labelledby': 'h-mix' }, h('h2', { id: 'h-mix' }, t('person.section.mix'),
+    info(t('help.figure.plannedMix'), t('person.section.mix'))),
     Object.keys(usual?.categories ?? {}).length > 0 && h('p.muted', {}, nightNote(nightDistribution)),
     h('table.data', {}, h('thead', {}, h('tr', {}, h('th', {}, t('person.mix.group')), h('th.num', {}, t('person.mix.planned')), h('th.num', {}, t('person.mix.usual')))),
       h('tbody', {}, rows.map((r) => h('tr', {}, h('td', {}, r.name), h('td.num', {}, sharePercent(r.planned)), h('td.num', {}, sharePercent(r.usual)))))));
@@ -173,20 +173,20 @@ function editor(root, ctx, initial, personId, nightDistribution) {
     baseRestrictions = key == null ? [] : (dataset.restrictions ?? []).filter((r) => r.personId === key);
   };
   rebase();
-  const master = [{ name: 'firstName', label: t('masterdata.col.firstName'), required: true }, { name: 'lastName', label: t('masterdata.col.lastName'), required: true },
-    { name: 'shortName', label: t('masterdata.col.shortName') },
-    { name: 'weeklyHours', label: t('masterdata.col.weeklyHours'), type: 'number', step: 'any', min: 0, required: true },
-    { name: 'hoursAccount', label: t('masterdata.col.account'), type: 'number', step: 'any', required: true },
-    { name: 'compRestBalance', label: t('masterdata.col.compRestOpen'), type: 'number', step: 1, min: 0, required: true },
-    { name: 'externalId', label: t('masterdata.col.externalId') }];
-  const employment = [{ name: 'entryDate', label: t('masterdata.entryDate'), type: 'date' }, { name: 'exitDate', label: t('masterdata.exitDate'), type: 'date' }];
-  const areaField = () => ({ name: 'areaIds', label: t('masterdata.col.areas'), type: 'checks', options: dataset.areas.map((a) => [a.id, `${a.name} (${a.id})`]) });
+  const master = [{ name: 'firstName', label: t('masterdata.col.firstName'), help: t('help.field.people.firstName'), required: true }, { name: 'lastName', label: t('masterdata.col.lastName'), help: t('help.field.people.lastName'), required: true },
+    { name: 'shortName', label: t('masterdata.col.shortName'), help: t('help.field.people.shortName') },
+    { name: 'weeklyHours', label: t('masterdata.col.weeklyHours'), help: t('help.field.people.weeklyHours'), type: 'number', step: 'any', min: 0, required: true },
+    { name: 'hoursAccount', label: t('masterdata.col.account'), help: t('help.field.people.hoursAccount'), type: 'number', step: 'any', required: true },
+    { name: 'compRestBalance', label: t('masterdata.col.compRestOpen'), help: t('help.field.people.compRestBalance'), type: 'number', step: 1, min: 0, required: true },
+    { name: 'externalId', label: t('masterdata.col.externalId'), help: t('help.field.people.externalId') }];
+  const employment = [{ name: 'entryDate', label: t('masterdata.entryDate'), help: t('help.field.people.entryDate'), type: 'date' }, { name: 'exitDate', label: t('masterdata.exitDate'), help: t('help.field.people.exitDate'), type: 'date' }];
+  const areaField = () => ({ name: 'areaIds', label: t('masterdata.col.areas'), help: t('help.field.people.areaIds'), type: 'checks', options: dataset.areas.map((a) => [a.id, `${a.name} (${a.id})`]) });
   const addFields = () => [
-    { name: 'target', label: t('masterdata.restriction.target'), type: 'select', options: [...CATEGORIES.map((c) => [`category:${c}`, t('masterdata.restriction.category', { category: CATEGORY[c] })]),
+    { name: 'target', label: t('masterdata.restriction.target'), help: t('help.field.restrictions.target'), type: 'select', options: [...CATEGORIES.map((c) => [`category:${c}`, t('masterdata.restriction.category', { category: CATEGORY[c] })]),
       ...dataset.shifts.map((s) => [`shift:${s.id}`, `${s.code} ${s.name}`])] },
-    { name: 'weekday', label: t('masterdata.restriction.weekday'), type: 'select', options: [['0', t('masterdata.restriction.everyDay')], ...WEEKDAY_OPTIONS] },
-    { name: 'kind', label: t('masterdata.restriction.kind'), type: 'select', options: [['NEVER', t('masterdata.restriction.never')], ['ON_REQUEST', t('masterdata.restriction.onRequest')]] },
-    { name: 'validFrom', label: t('masterdata.restriction.validFrom'), type: 'date' }, { name: 'validTo', label: t('masterdata.restriction.validTo'), type: 'date' }];
+    { name: 'weekday', label: t('masterdata.restriction.weekday'), help: t('help.field.restrictions.weekday'), type: 'select', options: [['0', t('masterdata.restriction.everyDay')], ...WEEKDAY_OPTIONS] },
+    { name: 'kind', label: t('masterdata.restriction.kind'), help: t('help.field.restrictions.kind'), type: 'select', options: [['NEVER', t('masterdata.restriction.never')], ['ON_REQUEST', t('masterdata.restriction.onRequest')]] },
+    { name: 'validFrom', label: t('masterdata.restriction.validFrom'), help: t('help.field.restrictions.validFrom'), type: 'date' }, { name: 'validTo', label: t('masterdata.restriction.validTo'), help: t('help.field.restrictions.validTo'), type: 'date' }];
   const section = h('section.section', { 'aria-labelledby': 'h-edit' }, h('h2', { id: 'h-edit' }, key == null ? t('people.section.new') : t('people.section.edit')));
   let form;
   let local; // the restrictions as edited, saved as a whole
@@ -218,7 +218,8 @@ function editor(root, ctx, initial, personId, nightDistribution) {
         } }, AREA_KINDS.map(([v, label]) => h('option', { value: v, selected: v === state }, label)),
         state === 'MIXED' && h('option', { value: 'MIXED', disabled: true, selected: true }, t('people.area.mixed'))));
     }));
-    const restrictionsBlock = h('div', { style: wide }, h('strong', {}, t('masterdata.col.restrictions')), h('p.muted', {}, t('people.restrictions.help')),
+    const restrictionsBlock = h('div', { style: wide }, h('strong', {}, t('masterdata.col.restrictions')),
+      info(t('help.field.people.restrictions'), t('masterdata.col.restrictions')), h('p.muted', {}, t('people.restrictions.help')),
       switches, items,
       h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '.4rem .8rem', alignItems: 'end' } },
         add.map((f) => control(f, f.type === 'date' ? '' : f.options[0][0])),
@@ -397,7 +398,7 @@ function familyEditor(rules) {
     return el;
   };
   const lines = h('div', {}, rules.map(line));
-  return h('div', { style: wide }, h('strong', {}, t('masterdata.col.familyRules')), lines,
+  return h('div', { style: wide }, h('strong', {}, t('masterdata.col.familyRules')), info(t('help.field.people.familyRules'), t('masterdata.col.familyRules')), lines,
     h('button.btn.btn-secondary.btn-small', { type: 'button', onclick: () => lines.append(line({ weekdays: [], latestEnd: '', earliestStart: '', noNights: false, note: '' })) },
       t('masterdata.family.add')));
 }
@@ -420,7 +421,7 @@ function mixEditor(dataset, mix, nightDistribution) {
     dataset.areas.map((a) => field({ 'data-mix-area': a.id }, 'data-mix-area', a.id, `${a.name} (${a.id})`, mix?.areas?.[a.id] ?? '')));
   const clear = h('button.btn.btn-secondary.btn-small', { type: 'button',
     onclick: () => inputs.querySelectorAll('input').forEach((i) => { i.value = ''; }) }, t('masterdata.shiftMix.remove'));
-  return h('div', { style: wide }, h('strong', {}, t('masterdata.col.shiftMix')), h('p.muted', {}, t('masterdata.shiftMix.help'), ' ', nightNote(nightDistribution)),
+  return h('div', { style: wide }, h('strong', {}, t('masterdata.col.shiftMix')), info(t('help.field.people.shiftMix'), t('masterdata.col.shiftMix')), h('p.muted', {}, t('masterdata.shiftMix.help'), ' ', nightNote(nightDistribution)),
     inputs, clear);
 }
 

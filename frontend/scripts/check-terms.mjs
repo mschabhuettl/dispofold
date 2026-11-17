@@ -90,7 +90,7 @@ try {
   check('planner menu', (await page.locator('#nav').innerText()).split('\n').join(' | ') === 'Dienstplan | Prüfen | Eingaben | Personen | Einstellungen',
     await page.locator('#nav').innerText());
   // the month picker shows on month pages only
-  for (const [path, shown] of [['plan', true], ['eingaben', true], ['regeln', false], ['stammdaten', false], ['import', false]]) {
+  for (const [path, shown] of [['plan', true], ['eingaben', true], ['regeln', false], ['stammdaten', false], ['import', true]]) {
     await open(page, path);
     check(`month picker on ${path}: ${shown}`, await page.locator('.month-picker').isVisible() === shown);
   }

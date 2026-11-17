@@ -7,6 +7,7 @@ import { append, fmt, guarded, h, toast } from '../lib/dom.js';
 import { NAME_MODES, personLabel, printParts } from '../lib/functions-model.js';
 import { NEUTRAL_ABSENCE, buildGrid, cellRequest, cellsEditable, personName } from '../lib/grid-model.js';
 import { chipCount, planHeadline, problemConstraints } from '../lib/plan-status.js';
+import { info } from '../lib/info.js';
 import { printHeader, printStatus } from '../lib/print.js';
 import { needsRulesForCategories, onRequestTest } from '../lib/restrictions.js';
 import { t } from '../lib/texts.js';
@@ -56,6 +57,10 @@ export async function render(root, ctx) {
   const btnUnpin = h('button.btn.btn-secondary', { type: 'button', onclick: unpin }, t('roster.unpinAll'));
   const scoreText = h('span', {});
   const sticky = stickyHeights();
+  // help buttons of the status line, made once: it is drawn again every few seconds while solving, an open help
+  // and the focus on its button stay
+  const helps = {};
+  const help = (key, label) => (helps[key] ??= info(t(key), label));
   let ruleHits = null; // { analysis, lists: rule id -> promise } of the lists behind the chips, loaded on the first click
 
   root.classList.add('roster-view', 'print-view');
@@ -83,11 +88,11 @@ export async function render(root, ctx) {
       // solver options and the raw score: rarely needed, collapsed
       h('details.advanced', {}, h('summary', {}, t('roster.advanced')),
         h('div.advanced-body', {},
-          h('div.field', {}, h('label', { for: 'seed' }, t('roster.seed')), seedInput),
-          h('div.field', {}, h('label', { for: 'limit' }, t('roster.timeLimit')), limitInput),
-          h('div.field', {}, h('label', { for: 'move-limit' }, t('roster.moveLimit')), moveLimitInput),
-          h('label.check-inline', { title: t('roster.coldStartHelp') }, coldStartInput, ' ', t('roster.coldStart')),
-          h('span.score', {}, t('roster.score'), ' ', scoreText)))),
+          h('div.field', {}, h('div.with-info', {}, h('label', { for: 'seed' }, t('roster.seed')), info(t('help.solve.seed'), t('roster.seed'))), seedInput),
+          h('div.field', {}, h('div.with-info', {}, h('label', { for: 'limit' }, t('roster.timeLimit')), info(t('help.solve.timeLimit'), t('roster.timeLimit'))), limitInput),
+          h('div.field', {}, h('div.with-info', {}, h('label', { for: 'move-limit' }, t('roster.moveLimit')), info(t('help.solve.moveLimit'), t('roster.moveLimit'))), moveLimitInput),
+          h('div.check-inline', {}, h('label.check-inline', {}, coldStartInput, ' ', t('roster.coldStart')), info(t('help.solve.coldStart'), t('roster.coldStart'))),
+          h('span.score', {}, t('roster.score'), ' ', scoreText, info(t('help.solve.score'), t('roster.score')))))),
     !dataset.people.length && h('p.alert', {}, canEdit ? t('common.noMasterdata') : t('common.noMasterdataReadonly')),
     status,
     legendBox(legend(dataset, canEdit)),
@@ -108,22 +113,28 @@ export async function render(root, ctx) {
     const staleReasons = [state.stale && t('roster.staleHelp'),
       (state.previousMonthChanged || analysis?.previousMonthChanged) && t('roster.previousChangedHelp')].filter(Boolean);
     status.className = `statusbar status-${headline.level}`;
+    const focused = status.contains(document.activeElement) ? document.activeElement : null;
     status.replaceChildren();
     append(status, [
       // the raw score only as a tooltip here (and as text under "Erweitert")
-      h('p.plan-headline', { class: `headline-${headline.level}`, title: score }, headline.text),
+      h('div.with-info', {}, h('p.plan-headline', { class: `headline-${headline.level}`, title: score }, headline.text),
+        help('help.plan.headline', t('help.plan.headlineLabel'))),
       !state.solving && chips(),
       h('div.status-details', {},
-        h('span', {}, t('roster.statusLabel'), ' ', h('strong', {}, printStatus(plan.status))),
+        h('span', {}, t('roster.statusLabel'), ' ', h('strong', {}, printStatus(plan.status)), help('help.plan.status', t('roster.statusLabel'))),
         plan.status === 'FAILED' && h('span.badge.badge-hard', {}, t('roster.failed')),
-        figures?.overstaffed > 0 && h('span', {}, t('roster.overstaffed'), ' ', t('roster.personHours', { hours: fmt.num(figures.overstaffed, 1) })),
-        analysis?.singleDaysOff != null && h('span', { title: t('roster.singleDaysOffHelp') }, t('roster.singleDaysOff', { count: analysis.singleDaysOff })),
-        analysis?.blockDays != null && h('span', { title: t('roster.blockDaysHelp') }, t('roster.blockDays', { count: analysis.blockDays })),
+        figures?.overstaffed > 0 && h('span', {}, t('roster.overstaffed'), ' ', t('roster.personHours', { hours: fmt.num(figures.overstaffed, 1) }),
+          help('help.plan.overstaffed', t('roster.overstaffed'))),
+        analysis?.singleDaysOff != null && h('span', {}, t('roster.singleDaysOff', { count: analysis.singleDaysOff }),
+          info(t('help.plan.singleDaysOff'), t('roster.singleDaysOff', { count: analysis.singleDaysOff }))),
+        analysis?.blockDays != null && h('span', {}, t('roster.blockDays', { count: analysis.blockDays }),
+          info(t('help.plan.blockDays'), t('roster.blockDays', { count: analysis.blockDays }))),
         canEdit && state.solving && h('span', {}, t('roster.lockedWhileSolving')),
         closed() && h('span', {}, canEdit ? t('roster.closedHint') : t('common.closedReadonly')),
         // the plan no longer matches its inputs or the previous month: plan again (the reasons as tooltip)
         staleReasons.length > 0 && h('span.badge.badge-warn', { title: staleReasons.join(' ') }, t('closeMonth.stale'))),
     ]);
+    if (focused?.isConnected && document.activeElement !== focused) focused.focus();
     if (canEdit) {
       btnSolve.disabled = state.solving || closed();
       btnStop.disabled = !state.solving;
@@ -144,7 +155,7 @@ export async function render(root, ctx) {
       return h('button.chip', { type: 'button', class: c.level === 'HARD' ? 'chip-hard' : null, 'aria-haspopup': 'dialog',
         'aria-label': name, onclick: (e) => openHits(e.currentTarget, c, label) },
       label, count != null && [' ', h('span.chip-count', {}, String(count))]);
-    }));
+    }), info(t('help.plan.chips'), t('roster.problems')));
   }
 
   /**

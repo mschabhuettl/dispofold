@@ -5,6 +5,7 @@ import { append, guarded, h, toast } from '../lib/dom.js';
 import { absenceName, personName } from '../lib/grid-model.js';
 import { absenceRanges, addAbsenceRange, mergePeriod } from '../lib/period-merge.js';
 import { messageText } from '../lib/codes.js';
+import { info } from '../lib/info.js';
 import { t } from '../lib/texts.js';
 
 const WISH_KINDS = { OFF: t('inputs.wish.off'), DUTY: t('inputs.wish.duty'), SHIFT: t('inputs.wish.shift'), NOT_SHIFT: t('inputs.wish.notShift') };
@@ -68,10 +69,11 @@ export async function render(root, ctx) {
   root.append(h('h1', {}, t('inputs.title', { month: monthLabel(month) })),
     canEdit ? h('div', {}, h('div.toolbar', {}, saveBtn, h('span.muted', { id: 'dirty-note' }, '')), problems)
       : h('p.alert', {}, closed ? (ctx.canEdit ? t('inputs.closed') : t('common.closedReadonly')) : t('inputs.readonly')),
-    h('div.toolbar', {}, h('div.field', {}, h('label', { for: 'inputs-filter' }, t('inputs.filter')), filter)),
-    section(t('inputs.section.absences'), 'absences', canEdit && addForm('abs', [
+    h('div.toolbar', {}, h('div.field', {}, h('div.with-info', {}, h('label', { for: 'inputs-filter' }, t('inputs.filter')),
+      info(t('help.field.inputs.filter'), t('inputs.filter'))), filter)),
+    section(t('inputs.section.absences'), 'absences', t('help.field.inputs.absences'), canEdit && addForm('abs', [
       [t('inputs.person'), personSelect('abs-person')], [t('inputs.from'), dateSelect('abs-from')], [t('inputs.to'), dateSelect('abs-to')],
-      [t('inputs.type'), h('select', { id: 'abs-type' }, dataset.absenceTypes.map((type) => h('option', { value: type.code }, `${type.code} ${type.name}`)))],
+      [t('inputs.type'), h('select', { id: 'abs-type' }, dataset.absenceTypes.map((type) => h('option', { value: type.code }, `${type.code} ${type.name}`))), t('help.field.inputs.absenceType')],
     ], () => {
       const range = { personId: val('abs-person'), from: val('abs-from'), to: val('abs-to'), typeCode: val('abs-type') };
       if (range.to < range.from) {
@@ -82,26 +84,28 @@ export async function render(root, ctx) {
       changed();
     })),
     // '' instead of false: root.append would print "false"
-    !showWishes ? '' : section(t('inputs.section.wishes'), 'wishes', canEdit && addForm('wish', [
+    !showWishes ? '' : section(t('inputs.section.wishes'), 'wishes', t('help.field.inputs.wishes'), canEdit && addForm('wish', [
       [t('inputs.person'), personSelect('wish-person')], [t('inputs.date'), dateSelect('wish-date')],
-      [t('inputs.type'), h('select', { id: 'wish-kind' }, Object.entries(WISH_KINDS).map(([k, v]) => h('option', { value: k }, v)))],
-      [t('inputs.wishShift'), shiftSelect('wish-shift', false, 'wish-person')],
+      [t('inputs.type'), h('select', { id: 'wish-kind' }, Object.entries(WISH_KINDS).map(([k, v]) => h('option', { value: k }, v))), t('help.field.inputs.wishKind')],
+      [t('inputs.wishShift'), shiftSelect('wish-shift', false, 'wish-person'), t('help.field.inputs.wishShift')],
     ], () => {
       const kind = val('wish-kind');
       add('wishes', { personId: val('wish-person'), date: val('wish-date'), kind, shiftId: kind === 'SHIFT' || kind === 'NOT_SHIFT' ? val('wish-shift') : null });
     }), h('p.muted', {}, t('inputs.wishLimit', { limit }))),
-    section(t('inputs.section.fixed'), 'fixed', canEdit && addForm('fix', [
+    section(t('inputs.section.fixed'), 'fixed', t('help.field.inputs.fixed'), canEdit && addForm('fix', [
       [t('inputs.person'), personSelect('fix-person')], [t('inputs.date'), dateSelect('fix-date')], [t('inputs.duty'), shiftSelect('fix-shift', true, 'fix-person')],
     ], () => add('fixed', { personId: val('fix-person'), date: val('fix-date'), shiftId: val('fix-shift') || null }))),
   );
 
-  function section(title, key, form, note) {
+  function section(title, key, help, form, note) {
     const id = `h-${key}`;
-    return h('section.section', { 'aria-labelledby': id }, h('h2', { id }, title), note, form, sections[key]);
+    return h('section.section', { 'aria-labelledby': id }, h('h2', { id }, title, info(help, title)), note, form, sections[key]);
   }
 
+  /** Fields: [label, control, help (optional)]. */
   function addForm(prefix, fields, onAdd) {
-    return h('div.toolbar', {}, fields.map(([label, control]) => h('div.field', {}, h('label', { for: control.id }, label), control)),
+    return h('div.toolbar', {}, fields.map(([label, control, help]) => h('div.field', {},
+      help ? h('div.with-info', {}, h('label', { for: control.id }, label), info(help, label)) : h('label', { for: control.id }, label), control)),
       h('button.btn.btn-secondary', { type: 'button', onclick: onAdd }, t('inputs.add')));
   }
 

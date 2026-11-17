@@ -3,7 +3,8 @@
 import { guarded, h } from '../lib/dom.js';
 import { constraintDescription, constraintLabel } from '../lib/codes.js';
 import { CUSTOM, GROUPS, applyLevel, groupLevel, nightDistribution, nightRuleMissing } from '../lib/rule-groups.js';
-import { formatParams, t } from '../lib/texts.js';
+import { info } from '../lib/info.js';
+import { formatParams, hasText, t } from '../lib/texts.js';
 
 const LEVELS = [
   ['SOFT', t('rules.level.soft.title'), t('rules.level.soft.help')],
@@ -32,6 +33,10 @@ const PARAMS = [
   ['historyMonths', t('rules.param.historyMonths.label'), t('rules.param.historyMonths.help'), 'number', 1],
 ];
 const PARAM = Object.fromEntries(PARAMS.map((p) => [p[0], p]));
+/** Help per parameter: what it does and what raising or lowering it changes. */
+const PARAM_HELP = Object.fromEntries(PARAMS.map(([key]) => [key, t(`help.param.${key}`)]));
+const GOAL_HELP = { blocks: t('help.goal.blocks'), wishes: t('help.goal.wishes'), fairness: t('help.goal.fairness'), hours: t('help.goal.hours'),
+  family: t('help.goal.family') };
 
 /** Planning goals: group (lib/rule-groups.js), title and sentences whose placeholders are parameter fields. */
 const GOALS = [
@@ -73,13 +78,13 @@ export async function render(root, ctx) {
   const goalOf = Object.fromEntries(GOALS.map(([group, title]) => [group, title]));
   form.append(h('section.section', { 'aria-labelledby': 'h-goals' }, h('h2', { id: 'h-goals' }, t('rules.goals.title')),
     h('p.muted', {}, t('rules.goals.help')),
-    h('div.goal', {}, h('fieldset.night', {}, h('legend', {}, h('strong', {}, t('rules.night.title'))),
+    h('div.goal', {}, h('fieldset.night', {}, h('legend', {}, h('strong', {}, t('rules.night.title')), info(t('help.param.nightDistribution'), t('rules.night.title'))),
       NIGHT_MODES.map(([mode, label]) => h('label.choice', {},
         h('input', { type: 'radio', name: 'nightDistribution', value: mode, checked: params.nightDistribution === mode, disabled: !canEdit,
           oninput: () => { params.nightDistribution = mode; } }), ' ', label))), nightWarning),
     GOALS.map(([group, title, texts]) => {
       const importance = importanceControl(group, title);
-      return h('div.goal', { 'data-group': group }, h('div', {}, h('h3', {}, title), texts.map((text) => h('p', {}, sentence(text)))), importance);
+      return h('div.goal', { 'data-group': group }, h('div', {}, h('h3', {}, title, info(GOAL_HELP[group], title)), texts.map((text) => h('p', {}, sentence(text)))), importance);
     })));
 
   // 2. Law and works agreement: text until "Ändern"
@@ -103,7 +108,7 @@ export async function render(root, ctx) {
     advanced.append(h('section', { 'aria-labelledby': `lvl-${level}` },
       h('h3', { id: `lvl-${level}` }, title), h('p.muted', {}, help),
       list.map((c) => h('div.rule-row', {},
-        h('div', {}, h('strong', { title: c.id === 'targetHours' ? t('person.kpi.hoursHelp') : null }, constraintLabel(c)), description(c),
+        h('div', {}, h('strong', {}, constraintLabel(c)), hasText(`help.constraint.${c.id}`) && info(t(`help.constraint.${c.id}`), constraintLabel(c)), description(c),
           groupName(c) && h('div.muted', {}, t('rules.inGoal', { goal: groupName(c) }))),
         level === 'SOFT' && !c.tunable ? h('div.muted', {}, t('rules.weightFixed', { weight: c.defaultWeight }))
           : level === 'SOFT' ? (canEdit ? weightControl(c) : h('div', {}, t('rules.weight', { weight: weights[c.id] }), h('div.muted', { style: { fontSize: '.8rem' } }, t('rules.default', { weight: c.defaultWeight })))) : h('div.muted', {}, level === 'HARD' ? t('rules.always') : t('rules.weight', { weight: weights[c.id] }))))));
@@ -122,14 +127,15 @@ export async function render(root, ctx) {
 
   /** A text with {key} placeholders as parameter fields (viewers: the values). */
   function sentence(text) {
-    return text.split(/\{(\w+)\}/).map((part, i) => (i % 2 ? (canEdit ? [h('label.visually-hidden', { for: `param-${part}` }, PARAM[part][1]), paramInput(part)]
-      : h('strong', {}, shown(part))) : part));
+    return text.split(/\{(\w+)\}/).map((part, i) => (i % 2 ? [canEdit ? [h('label.visually-hidden', { for: `param-${part}` }, PARAM[part][1]), paramInput(part)]
+      : h('strong', {}, shown(part)), info(PARAM_HELP[part], PARAM[part][1])] : part));
   }
 
   /** Wichtigkeit of a goal: weniger, normal, mehr, and "angepasst" while weights set by hand differ. */
   function importanceControl(group, title) {
     if (groupLevel(group, constraints, weights) === null) return null;
-    return h('fieldset.importance', {}, h('legend', {}, t('rules.importance'), h('span.visually-hidden', {}, ` ${title}`)),
+    return h('fieldset.importance', {}, h('legend', {}, t('rules.importance'), h('span.visually-hidden', {}, ` ${title}`),
+      info(t('help.rules.importance'), `${t('rules.importance')} ${title}`)),
       IMPORTANCE.map(([level, label]) => {
         const input = h('input', { type: 'radio', name: `importance-${group}`, value: level, disabled: !canEdit,
           oninput: () => {
@@ -159,12 +165,13 @@ export async function render(root, ctx) {
   /** A labelled field with its help; viewers get the value as text. */
   function paramField(key) {
     const [, label, help, type] = PARAM[key];
-    if (!canEdit) return h('div.field', {}, h('strong', {}, label), h('span', {}, help ? t('rules.valueWithHelp', { value: shown(key), help }) : shown(key)));
+    const more = info(PARAM_HELP[key], label);
+    if (!canEdit) return h('div.field', {}, h('div.with-info', {}, h('strong', {}, label), more), h('span', {}, help ? t('rules.valueWithHelp', { value: shown(key), help }) : shown(key)));
     if (type === 'bool') {
-      return h('div.field', {}, h('label', {}, h('input', { id: `param-${key}`, type: 'checkbox', checked: Boolean(params[key]),
-        oninput: (e) => { params[key] = e.target.checked; } }), ' ', label), help && h('span', {}, help));
+      return h('div.field', {}, h('div.with-info', {}, h('label', {}, h('input', { id: `param-${key}`, type: 'checkbox', checked: Boolean(params[key]),
+        oninput: (e) => { params[key] = e.target.checked; } }), ' ', label), more), help && h('span', {}, help));
     }
-    return h('div.field', {}, h('label', { for: `param-${key}` }, label), paramInput(key), help && h('span', {}, help));
+    return h('div.field', {}, h('div.with-info', {}, h('label', { for: `param-${key}` }, label), more), paramInput(key), help && h('span', {}, help));
   }
 
   /** The description with the numbers of the current parameters; refreshed while they are edited. */

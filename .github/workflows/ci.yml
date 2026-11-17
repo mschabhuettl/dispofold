@@ -140,6 +140,9 @@ jobs:
       - name: Daten page, corrections file, import keeping changes, anonymised export (browser)
         working-directory: frontend
         run: node scripts/check-data.mjs
+      - name: Help buttons by click, keyboard and touch (browser)
+        working-directory: frontend
+        run: node scripts/check-help.mjs
 
   desktop-shell:
     # Unit tests of the program window (protocol, proof, proxy rules).

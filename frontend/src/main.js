@@ -31,9 +31,13 @@ const ROUTES = [
   { path: 'person', group: 'people', label: t('nav.person'), view: person, month: true, viewer: 'people' },
   { path: 'regeln', group: 'settings', label: t('nav.rules'), tab: t('nav.tab.rules'), view: rules },
   { path: 'stammdaten', group: 'settings', label: t('nav.masterdata'), tab: t('nav.tab.masterdata'), view: masterdata },
-  { path: 'import', group: 'settings', label: t('nav.import'), tab: t('nav.tab.data'), view: importExport },
+  { path: 'import', group: 'settings', label: t('nav.import'), tab: t('nav.tab.data'), view: importExport, month: true },
 ];
 const SETTINGS_ROUTE = { path: 'einstellungen', group: 'settings', label: t('nav.settings'), tab: t('nav.tab.updates'), view: settings };
+/** The intro under the title of each page, by path. */
+const INTROS = { plan: t('help.page.plan'), funktionen: t('help.page.funktionen'), zeitachse: t('help.page.zeitachse'),
+  pruefen: t('help.page.pruefen'), fairness: t('help.page.fairness'), eingaben: t('help.page.eingaben'), person: t('help.page.person'),
+  regeln: t('help.page.regeln'), stammdaten: t('help.page.stammdaten'), import: t('help.page.import'), einstellungen: t('help.page.einstellungen') };
 const GROUPS = { plan: t('nav.group.plan'), check: t('nav.group.check'), inputs: t('nav.group.inputs'), people: t('nav.group.people'),
   fairness: t('nav.group.fairness'), settings: t('nav.group.settings') };
 
@@ -141,6 +145,14 @@ async function render() {
       if (typeof result === 'function') result();
       return;
     }
+    // the short intro of the page under its title, again after a view draws itself anew
+    const intro = h('p.page-intro.muted', {}, INTROS[route.path]);
+    const placeIntro = () => {
+      const title = container.querySelector('h1');
+      if (title && title.nextElementSibling !== intro) title.after(intro);
+    };
+    placeIntro();
+    new MutationObserver(placeIntro).observe(container, { childList: true });
     main.replaceChildren(...tabs(route), container);
     if (typeof result === 'function') cleanup = result;
   } catch (e) {

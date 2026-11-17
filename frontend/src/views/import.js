@@ -4,6 +4,7 @@ import { monthLabel } from '../lib/dates.js';
 import { guarded, h, saveBlob, toast } from '../lib/dom.js';
 import { messageText } from '../lib/codes.js';
 import { CORRECTIONS_FILE, anonymizedFiles, conflictText, correctionsBlob, noteText, shortNames } from '../lib/data-files.js';
+import { info } from '../lib/info.js';
 import { t } from '../lib/texts.js';
 import { EXPORT_FORMATS, closeMonth, exportPlanFile } from './plan-output.js';
 
@@ -102,11 +103,11 @@ export async function render(root, ctx) {
 
   if (canEdit) {
     root.append(
-      h('section.section', { 'aria-labelledby': 'h-import' }, h('h2', { id: 'h-import' }, t('data.import.heading')),
+      h('section.section', { 'aria-labelledby': 'h-import' }, h('h2', { id: 'h-import' }, t('data.import.heading'), info(t('help.import.dataset'), t('data.import.heading'))),
         h('p.muted', {}, t('import.dataset.help')),
         h('div.toolbar', {},
           h('div.field', {}, h('label', { for: 'dataset-file' }, t('import.dataset.label')), datasetFile),
-          h('label.check-inline', {}, keep, t('data.import.keep')),
+          h('label.check-inline', {}, keep, t('data.import.keep')), info(t('help.import.keep'), t('data.import.keep')),
           button(t('import.dataset.import'), async () => {
             const data = await guarded(() => readJson(datasetFile));
             if (!data) return;
@@ -120,7 +121,7 @@ export async function render(root, ctx) {
             button(t('import.demo'), async () => {
               if (!confirm(t('import.demo.confirm'))) return;
               showSummary(await runImport((replace) => api.importDemo(replace)));
-            })))),
+            }), info(t('help.import.demo'), t('import.demo'))))),
     );
   }
 
@@ -130,15 +131,15 @@ export async function render(root, ctx) {
     const anonymizeResult = h('div', { 'aria-live': 'polite' });
     root.append(h('section.section', { 'aria-labelledby': 'h-export' }, h('h2', { id: 'h-export' }, t('data.export.heading')),
       h('p.muted', {}, t('data.export.intro')),
-      h('div.toolbar', {}, button(t('import.datasetExport'), exportDataset)),
+      h('div.toolbar', {}, button(t('import.datasetExport'), exportDataset), info(t('help.import.datasetExport'), t('import.datasetExport'))),
       h('p.muted', {}, t('import.datasetExport.help')),
-      h('h3', {}, t('import.export.heading', { month: monthLabel(month) })),
+      h('h3', {}, t('import.export.heading', { month: monthLabel(month) }), info(t('help.import.planExport'), t('import.export.heading', { month: monthLabel(month) }))),
       solving && h('p.muted', {}, t('import.export.solving')),
       h('div.toolbar', {}, EXPORT_FORMATS.map((f) => (solving
         ? h('button.btn.btn-secondary', { type: 'button', disabled: true }, f.toUpperCase())
         : button(f.toUpperCase(), () => exportPlanFile(api, month, f)))))));
 
-    root.append(h('section.section', { 'aria-labelledby': 'h-corrections' }, h('h2', { id: 'h-corrections' }, t('data.corrections.heading')),
+    root.append(h('section.section', { 'aria-labelledby': 'h-corrections' }, h('h2', { id: 'h-corrections' }, t('data.corrections.heading'), info(t('help.import.corrections'), t('data.corrections.heading'))),
       h('p.muted', {}, t('data.corrections.intro')),
       h('div.toolbar', {}, button(t('data.corrections.export'), async () => {
         let r;
@@ -156,7 +157,7 @@ export async function render(root, ctx) {
       })),
       correctionsResult));
 
-    root.append(h('section.section', { 'aria-labelledby': 'h-anonymize' }, h('h2', { id: 'h-anonymize' }, t('data.anonymize.heading')),
+    root.append(h('section.section', { 'aria-labelledby': 'h-anonymize' }, h('h2', { id: 'h-anonymize' }, t('data.anonymize.heading'), info(t('help.import.anonymize'), t('data.anonymize.heading'))),
       h('p.muted', {}, t('data.anonymize.intro', { month: monthLabel(month) })),
       h('div.toolbar', {}, solving ? h('button.btn.btn-secondary', { type: 'button', disabled: true }, t('data.anonymize.run'))
         : button(t('data.anonymize.run'), async () => {
@@ -181,7 +182,7 @@ export async function render(root, ctx) {
 
   if (canEdit) {
     root.append(
-      h('section.section', { 'aria-labelledby': 'h-plan-import' }, h('h2', { id: 'h-plan-import' }, t('import.plan.import')),
+      h('section.section', { 'aria-labelledby': 'h-plan-import' }, h('h2', { id: 'h-plan-import' }, t('import.plan.import'), info(t('help.import.planImport'), t('import.plan.import'))),
         h('p.muted', {}, t('import.plan.help')),
         h('div.toolbar', {}, h('div.field', {}, h('label', { for: 'plan-file' }, t('import.plan.label')), planFile),
           button(t('import.plan.import'), async () => {
@@ -194,7 +195,7 @@ export async function render(root, ctx) {
             if (confirm(t('import.plan.confirm', { month: monthLabel(month) }))) await guarded(() => api.importPlan(month, plan), t('import.plan.done'));
           }))),
       closed
-        ? h('section.section', { 'aria-labelledby': 'h-final' }, h('h2', { id: 'h-final' }, t('import.reopen')),
+        ? h('section.section', { 'aria-labelledby': 'h-final' }, h('h2', { id: 'h-final' }, t('import.reopen'), info(t('help.import.reopen'), t('import.reopen'))),
           h('p.muted', {}, t('import.reopen.help', { month: monthLabel(month) })),
           button(t('import.reopen'), async () => {
             if (!confirm(t('import.reopen.confirm', { month: monthLabel(month) }))) return;
@@ -204,7 +205,7 @@ export async function render(root, ctx) {
               ctx.setMonth(month); // draw again with the new status
             }
           }))
-        : h('section.section', { 'aria-labelledby': 'h-final' }, h('h2', { id: 'h-final' }, t('import.finalize')),
+        : h('section.section', { 'aria-labelledby': 'h-final' }, h('h2', { id: 'h-final' }, t('import.finalize'), info(t('help.import.finalize'), t('import.finalize'))),
           h('p.muted', {}, t('import.finalize.help')),
           button(t('import.finalize'), () => closeMonth(ctx), false, solving)),
     );
