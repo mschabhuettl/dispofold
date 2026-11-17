@@ -433,6 +433,7 @@ html:has(.save-bar) { scroll-padding-bottom: 4rem; } /* a focused field is not h
 .importance input:disabled { cursor: not-allowed; }
 .law-text { margin: .3rem 0 .8rem; padding-left: 1.2rem; }
 .law-text li { margin: .15rem 0; }
+#law-fields > p { grid-column: 1 / -1; margin: 0; }
 details.rules-advanced > summary { cursor: pointer; padding: .35rem 0; width: max-content; }
 details.rules-advanced > summary h2 { display: inline; margin: 0; }
 details.rules-advanced section { margin-top: 1.2rem; }
