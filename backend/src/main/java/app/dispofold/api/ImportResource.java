@@ -111,7 +111,12 @@ public class ImportResource {
     public ImportPreview preview(String body) {
         Dataset dataset = parse(body);
         synchronized (Store.DATASET_LOCK) {
-            Kept kept = kept(validated(dataset).dataset());
+            Dataset raw = validated(dataset).dataset();
+            Kept kept = kept(raw);
+            if (kept != null && !kept.changes().isEmpty()) {
+                // rejected like the import would be
+                validated(Corrections.apply(kept.changes(), raw));
+            }
             return kept == null ? new ImportPreview(false, 0, List.of(), List.of())
                     : new ImportPreview(true, kept.changes().count(), kept.conflicts(), kept.changes().notes());
         }

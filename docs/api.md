@@ -33,7 +33,7 @@ Im Docker-Betrieb begrenzt nginx die Anmeldeversuche auf 10 je Minute und Adress
 | `POST` | `/api/import/dataset?replace=true` | lädt ein `Dataset`-Dokument (Body, siehe `docs/datenformat.md`), Antwort `ImportSummary` |
 | `POST` | `/api/import/demo?replace=true` | lädt die mitgelieferten synthetischen Demodaten (150 Personen, Jänner 2027), Antwort `ImportSummary` |
 | `POST` | `/api/import/dataset?keep=true` | Import, der die seit dem letzten Import in Dispofold geänderten Stammdaten übernimmt (siehe unten), Antwort `ImportSummary` |
-| `POST` | `/api/import/preview` | Probelauf von `keep=true` ohne zu speichern (Body: `Dataset`), Antwort `{ "changed": bool, "kept": n, "conflicts": [{ "personId", "areaId", "field" }], "notes": [{ code, params }] }` |
+| `POST` | `/api/import/preview` | Probelauf von `keep=true` ohne zu speichern (Body: `Dataset`), Antwort `{ "changed": bool, "kept": n, "conflicts": [{ "personId", "areaId", "field" }], "notes": [{ code, params }] }`; lehnt wie der Import ab (`import.invalid`), wenn der zusammengeführte Datensatz Fehler hätte |
 | `GET` | `/api/data/corrections` | Änderungen seit dem letzten Import als Korrekturdatei: `{ "file": { "format": "dispofold/corrections", "version": 2, "people": {...}, "demand": {...} }, "notes": [{ code, params }], "count": n }`, nur für `planner` |
 | `GET` | `/api/data/anonymized?month=YYYY-MM` | pseudonymisierter Datensatz (alle Planungsmonate) und Plan des Monats mit getrenntem Schlüssel: `{ "dataset", "plan", "key": "CSV", "people": n }`, nur für `planner` |
 
@@ -251,7 +251,7 @@ Hinweise (`notes`) der Korrekturdatei und des Imports mit `keep=true`, alle mit 
 
 | Code | Status | Parameter |
 |---|---|---|
-| `corrections.personAdded`, `corrections.personMissing`, `corrections.unknownArea`, `corrections.noArea`, `corrections.mixArea`, `corrections.unknownShift`, `corrections.lastPerson` | 200 | `personId` |
+| `corrections.personAdded`, `corrections.personMissing`, `corrections.unknownArea`, `corrections.noArea`, `corrections.mixArea`, `corrections.unknownShift`, `corrections.dates`, `corrections.lastPerson` | 200 | `personId` |
 | `corrections.identity` | 200 | `personId`, `field` |
 | `corrections.master` | 200 | `kind`, `key`, `change` (`added`, `removed`, `changed`) |
 | `corrections.demandArea` | 200 | `areaId` |

@@ -233,6 +233,28 @@ class CorrectionsTest {
     }
 
     @Test
+    void aSkippedAreaChangeLeavesTheTargetsDistributionAndDatesStayInOrder() throws Exception {
+        Dataset oldBase = dataset(baseline());
+        ObjectNode currentJson = baseline();
+        currentJson.withArray("areas").add(MAPPER.readTree("{\"id\": \"NB\", \"name\": \"Neu\", \"color\": \"#000\"}"));
+        person(currentJson, 0).set("areaIds", MAPPER.readTree("[\"DR\", \"NB\"]"));
+        person(currentJson, 1).put("exitDate", "2027-06-30");
+        Dataset current = dataset(currentJson);
+        // the new import: person 0 has a distribution outside the local areas, person 1 enters after that exit
+        ObjectNode incomingJson = baseline();
+        person(incomingJson, 0).set("shiftMix", mix("{\"DAY\": 1.0}", "{\"TS\": 1.0}"));
+        person(incomingJson, 1).put("entryDate", "2027-07-01");
+        Dataset incoming = dataset(incomingJson);
+
+        Changes changes = Corrections.check(Corrections.diff(oldBase, current), incoming);
+        assertThat(changes.people()).isEmpty();
+        assertThat(changes.notes()).contains(new Issue("corrections.unknownArea", Map.of("personId", id(incomingJson, 0))),
+                new Issue("corrections.dates", Map.of("personId", id(incomingJson, 1))));
+        Dataset merged = Corrections.apply(changes, incoming);
+        assertThat(merged.people().get(0).shiftMix()).isEqualTo(incoming.people().get(0).shiftMix());
+    }
+
+    @Test
     void theLastPersonIsNotExcludedAndForeignIdsAreNamed() throws Exception {
         Dataset base = TestData.dataset(YearMonth.of(2033, 3));
         Dataset none = new Dataset(base.format(), base.version(), base.source(), base.areas(), base.shifts(),

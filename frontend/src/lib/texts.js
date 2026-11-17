@@ -100,6 +100,7 @@ export const TEXTS = {
   'error.corrections.noArea': 'Person {personId}: ohne Bereich.',
   'error.corrections.mixArea': 'Person {personId}: die gewohnte Verteilung passt nicht zu den Bereichen.',
   'error.corrections.unknownShift': 'Person {personId}: Einschränkungen mit Schichten, die es im Import nicht gibt.',
+  'error.corrections.dates': 'Person {personId}: Eintritt und Austritt passen mit dem Import nicht zusammen (Austritt vor Eintritt).',
   'error.corrections.lastPerson': 'Person {personId}: die letzte Person kann nicht entfernt werden.',
   'error.corrections.personMissing': 'Person {personId} fehlt im neuen Import, ihre Änderungen entfallen.',
   'error.corrections.demandArea': 'Bedarf im Bereich {areaId}: den Bereich gibt es im Import nicht.',

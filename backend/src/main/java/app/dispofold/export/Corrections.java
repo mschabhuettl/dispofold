@@ -190,9 +190,9 @@ public final class Corrections {
 
     /**
      * The changes the target dataset can take, as the client checks them: known area and shift ids, a non-empty
-     * area list, a usual distribution only over the person's areas (a new area list that leaves a share of the
-     * target's distribution outside it carries the distribution along), the person present, not the last person
-     * excluded, demand only for known areas. Everything left out becomes a note.
+     * area list, entry not after exit, a usual distribution only over the person's areas (a new area list that
+     * leaves a share of the target's distribution outside it carries the distribution along), the person present,
+     * not the last person excluded, demand only for known areas. Everything left out becomes a note.
      */
     public static Changes check(Changes changes, Dataset target) {
         List<Issue> notes = new ArrayList<>(changes.notes());
@@ -223,8 +223,9 @@ public final class Corrections {
             }
             Person p = change.person();
             List<String> fields = new ArrayList<>(change.fields());
-            if (fields.contains("areaIds") && !fields.contains("shiftMix")
-                    && !list(p.areaIds()).containsAll(mixAreas(t.shiftMix()))) {
+            boolean mixForAreas = fields.contains("areaIds") && !fields.contains("shiftMix")
+                    && !list(p.areaIds()).containsAll(mixAreas(t.shiftMix()));
+            if (mixForAreas) {
                 fields.add(fields.indexOf("areaIds") + 1, "shiftMix");
             }
             if (fields.contains("areaIds")) {
@@ -233,8 +234,22 @@ public final class Corrections {
                 if (ids.isEmpty() || new HashSet<>(ids).size() != ids.size() || !areas.containsAll(ids)
                         || !ids.containsAll(mix)) {
                     fields.remove("areaIds");
+                    if (mixForAreas) {
+                        fields.remove("shiftMix"); // only there for the area change
+                    }
                     notes.add(note(ids.isEmpty() ? "corrections.noArea" : "corrections.unknownArea", "personId", id));
                 }
+            }
+            // Entry not after exit, against the other date the person will have (the client checks the same).
+            if (fields.contains("entryDate") && exitBeforeEntry(p.entryDate(),
+                    fields.contains("exitDate") ? p.exitDate() : t.exitDate())) {
+                fields.remove("entryDate");
+                notes.add(note("corrections.dates", "personId", id));
+            }
+            if (fields.contains("exitDate")
+                    && exitBeforeEntry(fields.contains("entryDate") ? p.entryDate() : t.entryDate(), p.exitDate())) {
+                fields.remove("exitDate");
+                notes.add(note("corrections.dates", "personId", id));
             }
             if (fields.contains("shiftMix")) {
                 List<String> after = fields.contains("areaIds") ? list(p.areaIds()) : list(t.areaIds());
@@ -450,6 +465,10 @@ public final class Corrections {
             return null;
         }
         return new ShiftMix(mix.categoriesOrEmpty(), mix.areasOrEmpty());
+    }
+
+    private static boolean exitBeforeEntry(java.time.LocalDate entry, java.time.LocalDate exit) {
+        return entry != null && exit != null && exit.isBefore(entry);
     }
 
     private static Set<String> mixAreas(ShiftMix mix) {
