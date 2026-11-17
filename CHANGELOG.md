@@ -10,11 +10,12 @@ unverändert.
 
 - **Dienstplan, Kopf:** Planen, Stopp und Fixierungen lösen stehen in einer Zeile. Startwert, Zeitlimit,
   Schrittzahl, Neu beginnen und der Score stehen unter „Erweitert“ (zugeklappt). Drucken, Export (XLSX, CSV,
-  JSON) und Monat abschließen sind im Menü „Ausgabe“, auch in Plan nach Funktion. Die Legende ist zugeklappt
-  und merkt sich ihren Zustand.
+  JSON) und Monat abschließen sind im Menü „Ausgabe“; Plan nach Funktion hat dasselbe Menü mit Drucken und
+  Export. Die Legende ist zugeklappt und merkt sich ihren Zustand.
 - **Statuszeile:** Eine farbige Schlagzeile statt des Scores, z. B. „Plan verwendbar: keine Regelverstöße,
-  keine Lücken“, „3 Lücken (16 Personenstunden)“ oder „2 Regelverstöße“. Darunter je Regel mit Treffern ein
-  Knopf mit der Zahl; ein Klick listet, wen es an welchem Tag betrifft.
+  keine Lücken“, „3 Lücken (16 Personenstunden)“ oder „2 Regelverstöße“. Darunter ein Knopf je verletzter
+  Regel und je Qualitätsregel mit großem Anteil am Score, meist mit der Zahl der Treffer; ein Klick listet, wen
+  es an welchem Tag betrifft.
 - **Lückenzeile:** Die Zeile „Bedarfslücken“ im Dienstplan und die Zeile „offen“ in Plan nach Funktion bleiben
   beim Scrollen oben stehen.
 - **Regeln:** Speichern steht in einer Leiste, die immer sichtbar ist; vor dem Verlassen mit ungespeicherten

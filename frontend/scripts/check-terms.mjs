@@ -1,7 +1,8 @@
 // Playwright check of the terms: every page, for planners and viewers, shows none of the old names (Sollstunden,
 // Fixe Dienste, Eingaben geändert, Schichtmix, Familienwunsch, hart/weich, ...) in its text, tooltips or labels; the
 // plan status reads Entwurf or abgeschlossen. Also: viewers have no Import/Export in the navigation and its address
-// shows the Dienstplan, the people table names the areas, the mix fields have labels, the import page shows no paths.
+// shows the Dienstplan, the people table names the areas, the mix fields have labels, the note on the
+// night fairness is shown in Stammdaten and on the person page, the import page shows no paths.
 // Demo data of the dev server (mock API), month 2027-01 planned.
 //   npm run build && node scripts/check-terms.mjs     (Chromium via `npx playwright install chromium`)
 import { spawn } from 'node:child_process';
@@ -66,7 +67,11 @@ try {
     await fetch(`/api/plans/${m}/solve`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: '{"seed":1,"timeLimitSeconds":1}' });
     const dataset = await (await fetch('/api/dataset')).json();
-    return { personId: dataset.people[0].id, areas: dataset.areas };
+    // one person with shares per shift type, for the note on the night fairness on the person page
+    const p = dataset.people[0];
+    await fetch(`/api/dataset/people/${encodeURIComponent(p.id)}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...p, shiftMix: { categories: { DAY: 0.9, NIGHT: 0.1 }, areas: {} } }) });
+    return { personId: p.id, areas: dataset.areas };
   }, month);
   await page.waitForFunction(async (m) => !(await (await fetch(`/api/plans/${m}`)).json()).solving, month, { polling: 500, timeout: 60000 });
   const routes = await page.locator('#nav a').evaluateAll((as) => as.map((a) => a.dataset.path));
@@ -76,6 +81,9 @@ try {
     await open(page, path === 'person' ? `person/${encodeURIComponent(personId)}` : path);
     await scan(page, `planner ${path}`);
   }
+
+  await open(page, `person/${encodeURIComponent(personId)}`);
+  check('night note on the person page', (await page.locator('section[aria-labelledby="h-mix"]').innerText()).includes('Nachtausgleich'));
 
   // the plan status on screen: Entwurf or abgeschlossen, never "geplant"
   await open(page, 'plan');

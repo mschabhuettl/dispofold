@@ -128,7 +128,7 @@ leer sein. Felder, die im Beispiel `null` sind, dürfen fehlen.
 | history | `compRestUsed`, `compRestEarned` | im Monat genommene und (durch Feiertagsarbeit) erworbene Ersatzruhetage |
 | period | `absences` | Abwesenheiten mit Abwesenheitsart |
 | period | `wishes` | `OFF` (frei), `DUTY` (Dienst), `SHIFT` (diese Schicht), `NOT_SHIFT` (diese Schicht nicht); bei `SHIFT` und `NOT_SHIFT` ist `shiftId` Pflicht |
-| period | `fixed` | Vorgaben; `shiftId: null` fixiert einen freien Tag |
+| period | `fixed` | Vorgaben; `shiftId: null` gibt einen freien Tag vor |
 | period | `previousDuties` | Dienste der letzten Tage des Vormonats (Ruhezeit und Blöcke am Monatsanfang) |
 
 Beispiele für Abwesenheitsarten:
