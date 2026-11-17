@@ -90,7 +90,7 @@ export async function render(root, ctx) {
           h('div.field', {}, h('label', { for: 'move-limit' }, t('roster.moveLimit')), moveLimitInput),
           h('label.check-inline', { title: t('roster.coldStartHelp') }, coldStartInput, ' ', t('roster.coldStart')),
           h('span.score', {}, t('roster.score'), ' ', scoreText)))),
-    !dataset.people.length && h('p.alert', {}, t('common.noMasterdata')),
+    !dataset.people.length && h('p.alert', {}, canEdit ? t('common.noMasterdata') : t('common.noMasterdataReadonly')),
     status,
     legendBox(legend(dataset, canEdit)),
     table,
@@ -107,6 +107,8 @@ export async function render(root, ctx) {
       uncoveredHours: figures?.uncovered ?? null });
     const score = `${t('roster.score')} ${plan.score ?? '–'}`;
     scoreText.textContent = plan.score ?? '–';
+    const staleReasons = [state.stale && t('roster.staleHelp'),
+      (state.previousMonthChanged || analysis?.previousMonthChanged) && t('roster.previousChangedHelp')].filter(Boolean);
     status.className = `statusbar status-${headline.level}`;
     status.replaceChildren();
     append(status, [
@@ -120,11 +122,9 @@ export async function render(root, ctx) {
         analysis?.singleDaysOff != null && h('span', { title: t('roster.singleDaysOffHelp') }, t('roster.singleDaysOff', { count: analysis.singleDaysOff })),
         analysis?.blockDays != null && h('span', { title: t('roster.blockDaysHelp') }, t('roster.blockDays', { count: analysis.blockDays })),
         canEdit && state.solving && h('span', {}, t('roster.lockedWhileSolving')),
-        closed() && h('span', {}, t('roster.closedHint')),
-        // the plan no longer matches its inputs or the previous month: plan again
-        state.stale && h('span.badge.badge-warn', { title: t('roster.staleHelp') }, t('roster.stale')),
-        (state.previousMonthChanged || analysis?.previousMonthChanged)
-          && h('span.badge.badge-warn', { title: t('roster.previousChangedHelp') }, t('roster.previousChanged'))),
+        closed() && h('span', {}, canEdit ? t('roster.closedHint') : t('common.closedReadonly')),
+        // the plan no longer matches its inputs or the previous month: plan again (the reasons as tooltip)
+        staleReasons.length > 0 && h('span.badge.badge-warn', { title: staleReasons.join(' ') }, t('closeMonth.stale'))),
     ]);
     if (canEdit) {
       btnSolve.disabled = state.solving || closed();

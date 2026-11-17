@@ -57,7 +57,7 @@ export async function render(root, ctx) {
 
   root.append(h('h1', {}, t('inputs.title', { month: monthLabel(month) })),
     canEdit ? h('div', {}, h('div.toolbar', {}, saveBtn, h('span.muted', { id: 'dirty-note' }, '')), problems)
-      : h('p.alert', {}, closed ? t('inputs.closed') : t('inputs.readonly')),
+      : h('p.alert', {}, closed ? (ctx.canEdit ? t('inputs.closed') : t('common.closedReadonly')) : t('inputs.readonly')),
     section(t('inputs.section.absences'), 'absences', canEdit && addForm('abs', [
       [t('inputs.person'), personSelect('abs-person')], [t('inputs.date'), dateSelect('abs-date')],
       [t('inputs.type'), h('select', { id: 'abs-type' }, dataset.absenceTypes.map((type) => h('option', { value: type.code }, `${type.code} ${type.name}`)))],

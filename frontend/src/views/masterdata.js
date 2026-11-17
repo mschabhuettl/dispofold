@@ -34,12 +34,12 @@ export async function render(root, ctx) {
     return {
       people: [
         [t('masterdata.col.name'), (p) => h('a', { href: `#/person/${encodeURIComponent(p.id)}` }, personName(p))], [t('masterdata.col.shortName'), (p) => p.shortName ?? ''],
-        [t('masterdata.col.id'), (p) => p.id], [t('masterdata.col.weeklyHours'), (p) => fmt.num(p.weeklyHours, 1), 'num'], [t('masterdata.col.areas'), (p) => p.areaIds.join(', ')],
+        [t('masterdata.col.id'), (p) => p.id], [t('masterdata.col.weeklyHours'), (p) => fmt.num(p.weeklyHours, 1), 'num'], [t('masterdata.col.areas'), (p) => p.areaIds.map((id) => areaName.get(id) ?? id).join(', ')],
         [t('masterdata.col.employment'), employmentText],
         // hours account, compensatory rest, family rules and restrictions are personal: planners only (viewers get null)
         canEdit && [t('masterdata.col.account'), (p) => fmt.num(p.hoursAccount, 1), 'num'], canEdit && [t('masterdata.col.compRestOpen'), (p) => fmt.num(p.compRestBalance), 'num'],
         canEdit && [t('masterdata.col.familyRules'), (p) => (p.familyRules ?? []).map(familyText).join('; ')],
-        [t('masterdata.col.shiftMix'), (p) => mixText(p.shiftMix, (id) => id)],
+        [t('masterdata.col.shiftMix'), (p) => mixText(p.shiftMix, (id) => areaName.get(id) ?? id)],
         canEdit && [t('masterdata.col.restrictions'), (p) => restrictions(p).map((r) => restrictionText(r, shifts)).join('; ')]],
       areas: [[t('masterdata.col.shortName'), (a) => chip(a.color, a.id)], [t('masterdata.col.name'), (a) => a.name]],
       absenceTypes: [[t('masterdata.col.code'), (a) => a.code], [t('masterdata.col.name'), (a) => a.name], [t('masterdata.col.reducesTarget'), (a) => yesNo(a.reducesTarget)],
@@ -66,7 +66,7 @@ export async function render(root, ctx) {
         { name: 'compRestBalance', label: t('masterdata.col.compRestOpen'), type: 'number', step: 1, min: 0, required: true },
         { name: 'externalId', label: t('masterdata.col.externalId') },
         { name: 'entryDate', label: t('masterdata.entryDate'), type: 'date' }, { name: 'exitDate', label: t('masterdata.exitDate'), type: 'date' },
-        { name: 'areaIds', label: t('masterdata.col.areas'), type: 'checks', options: dataset.areas.map((a) => [a.id, a.id]) },
+        { name: 'areaIds', label: t('masterdata.col.areas'), type: 'checks', options: dataset.areas.map((a) => [a.id, `${a.name} (${a.id})`]) },
         { name: 'familyRules', type: 'family' }, { name: 'shiftMix', type: 'mix' }],
       areas: [{ name: 'id', label: t('masterdata.col.shortName'), required: true, readOnly: editing }, { name: 'name', label: t('masterdata.col.name'), required: true },
         { name: 'color', label: t('masterdata.col.color'), placeholder: '#RRGGBB' }],
@@ -118,6 +118,7 @@ export async function render(root, ctx) {
       h('thead', {}, h('tr', {}, cols.map(([label]) => h('th', {}, label)), canEdit && h('th', {}, ''))),
       h('tbody', {}, rows.map(({ item, key }) => h('tr', {}, cols.map(([, cell, cls]) => h(cls ? `td.${cls}` : 'td', {}, cell(item))), canEdit && actions(item, key)))));
     return h('section.section', { 'aria-labelledby': id }, h('h2', { id }, TITLES[kind]),
+      kind === 'people' && h('p.muted', {}, h('strong', {}, t('masterdata.col.shiftMix')), ': ', t('masterdata.shiftMix.nightNote')),
       canEdit && h('div.toolbar', {}, h('button.btn.btn-secondary.btn-small', { type: 'button', 'data-new': kind, onclick: () => openForm(kind, null) }, t('masterdata.new'))),
       h('div', { style: { overflowX: 'auto' } }, table));
   }
@@ -347,14 +348,19 @@ export async function render(root, ctx) {
 
   /** Usual shift mix of the person form: a percentage per category and per area, cleared with one button. */
   function mixEditor(mix) {
-    const field = (wrapper, attr, key, name, value) => h('div.field', wrapper,
-      h('label', {}, t('masterdata.shiftMix.input', { name })), h('input', { type: 'text', inputmode: 'decimal', size: 5, value, [attr]: key }));
+    let n = 0;
+    const field = (wrapper, attr, key, name, value) => {
+      const id = `f-mix-${n++}`;
+      return h('div.field', wrapper, h('label', { for: id }, t('masterdata.shiftMix.input', { name })),
+        h('input', { id, type: 'text', inputmode: 'decimal', size: 5, value, [attr]: key }));
+    };
     const inputs = h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '.4rem .8rem', alignItems: 'end' } },
       MIX_CATEGORIES.map((c) => field({}, 'data-mix-cat', c, CATEGORY[c], mix?.categories?.[c] ?? '')),
-      dataset.areas.map((a) => field({ 'data-mix-area': a.id }, 'data-mix-area', a.id, a.id, mix?.areas?.[a.id] ?? '')));
+      dataset.areas.map((a) => field({ 'data-mix-area': a.id }, 'data-mix-area', a.id, `${a.name} (${a.id})`, mix?.areas?.[a.id] ?? '')));
     const clear = h('button.btn.btn-secondary.btn-small', { type: 'button',
       onclick: () => inputs.querySelectorAll('input').forEach((i) => { i.value = ''; }) }, t('masterdata.shiftMix.remove'));
-    return h('div', { style: { flexBasis: '100%' } }, h('strong', {}, t('masterdata.col.shiftMix')), h('p.muted', {}, t('masterdata.shiftMix.help')), inputs, clear);
+    return h('div', { style: { flexBasis: '100%' } }, h('strong', {}, t('masterdata.col.shiftMix')), h('p.muted', {}, t('masterdata.shiftMix.help'), ' ', t('masterdata.shiftMix.nightNote')),
+      inputs, clear);
   }
 
   draw();
