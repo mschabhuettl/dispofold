@@ -128,6 +128,12 @@ jobs:
       - name: Night setting on the person and fairness pages (browser)
         working-directory: frontend
         run: node scripts/check-night.mjs
+      - name: Personen pages, one person form, area switch, viewers without form (browser)
+        working-directory: frontend
+        run: node scripts/check-people.mjs
+      - name: Eingaben with absence ranges and a person filter (browser)
+        working-directory: frontend
+        run: node scripts/check-inputs.mjs
 
   desktop-shell:
     # Unit tests of the program window (protocol, proof, proxy rules).
