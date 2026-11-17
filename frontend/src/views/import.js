@@ -3,6 +3,7 @@ import { monthLabel } from '../lib/dates.js';
 import { guarded, h, saveBlob, toast } from '../lib/dom.js';
 import { messageText } from '../lib/codes.js';
 import { t } from '../lib/texts.js';
+import { EXPORT_FORMATS, closeMonth, exportPlanFile } from './plan-output.js';
 
 export async function render(root, ctx) {
   const { api, month, canEdit } = ctx;
@@ -98,12 +99,9 @@ export async function render(root, ctx) {
       h('div.toolbar', {}, button(t('import.datasetExport'), exportDataset))));
     root.append(h('section.section', { 'aria-labelledby': 'h-export' }, h('h2', { id: 'h-export' }, t('import.export.heading', { month: monthLabel(month) })),
       solving && h('p.muted', {}, t('import.export.solving')),
-      h('div.toolbar', {}, ['xlsx', 'csv', 'json'].map((f) => (solving
+      h('div.toolbar', {}, EXPORT_FORMATS.map((f) => (solving
         ? h('button.btn.btn-secondary', { type: 'button', disabled: true }, f.toUpperCase())
-        : button(f.toUpperCase(), async () => {
-          const file = await guarded(() => api.exportPlan(month, f));
-          if (file) saveBlob(file.blob, file.filename);
-        }))))));
+        : button(f.toUpperCase(), () => exportPlanFile(api, month, f)))))));
   }
 
   if (canEdit) {
@@ -133,14 +131,7 @@ export async function render(root, ctx) {
           }))
         : h('section.section', { 'aria-labelledby': 'h-final' }, h('h2', { id: 'h-final' }, t('import.finalize')),
           h('p.muted', {}, t('import.finalize.help')),
-          button(t('import.finalize'), async () => {
-            if (!confirm(t('import.finalize.confirm', { month: monthLabel(month) }))) return;
-            const ok = await guarded(() => api.finalize(month));
-            if (ok !== undefined) {
-              toast(t('import.finalize.done', { month: monthLabel(month) }));
-              ctx.setMonth(month); // draw again with the new status
-            }
-          }, false, solving)),
+          button(t('import.finalize'), () => closeMonth(ctx), false, solving)),
     );
   }
 }
