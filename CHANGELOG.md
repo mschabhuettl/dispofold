@@ -3,6 +3,27 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.12.0 (2026-11-17)
+
+Nachträge zur neuen Oberfläche: stärkere Wichtigkeit für die faire Verteilung, „nie Nacht“ geht der gewohnten
+Verteilung vor, dazu kleinere Verbesserungen.
+
+- **Wichtigkeit „Faire Verteilung“:** weniger, normal, mehr setzt die Gewichte der Fairness-Regeln jetzt auf das
+  0,25-, 1- oder 4-Fache ihres Standards (die anderen Ziele bleiben beim 0,5-, 1- oder 2-Fachen). „Normal“ ist
+  unverändert, bestehende Regeln und Pläne ändern sich nicht.
+- **Nie Nacht geht vor:** Wer nie Nacht macht (Sperre aller Nachtschichten für jeden Tag oder Familienregel
+  „keine Nacht“ an allen Wochentagen), dem zählt der Nachtanteil der gewohnten Verteilung in beiden Einstellungen
+  der Nachtdienste nicht; die übrigen Anteile gelten für die Dienste außer Nächten. Personenseite, Fairness und
+  Prüfen sagen es. Pläne solcher Personen können sich bei der nächsten Planung ändern.
+- **Prüfen:** Der Link „Zeitachse“ bei einer Überbesetzung oder Lücke öffnet die Zeitachse auf Bereich und Tag des
+  Eintrags.
+- **Hilfe:** eigene Texte je Feld bei Eingaben, gewohnter Verteilung, Familienregeln und den Gesetzeszeilen.
+- **Dienstplan:** Einzelne freie Tage und Tage außerhalb der Blocklänge stehen in der Statuszeile nur noch einmal;
+  die Zeile „offen“ im Plan nach Funktion zeigt an Tagen mit vielen Lücken einige Zeilen und „+N weitere“ (alle im
+  Tooltip und im Ausdruck).
+- **Personenformular:** Die Meldung zur gewohnten Verteilung nennt den Bereich mit Namen.
+- **Bilder:** Screenshots mit deutschen Datumsfeldern, die Desktop-Bilder mit dem neuen Menü.
+
 ## 0.11.0 (2026-11-17)
 
 Neue Gliederung der Oberfläche, eine Seite zum Prüfen, eine Seite je Person, Korrekturdatei und Anonymisieren auf
