@@ -186,4 +186,5 @@ export const DEFAULT_RULES = {
   minDailyRestHours: 11, minWeeklyRestHours: 36, maxDutyHours: 12, maxWeekHours: 60, maxAverageWeekHours: 46.16,
   minBlock: 2, maxBlock: 4, maxWishesPerPerson: 6, holidayWorkEarnsCompRest: true, nightStart: '22:00', nightEnd: '06:00',
   nightMinHours: 2, maxOverTargetPercent: 10, minFreeSundays: 2, accountCarryShare: 0.25, historyMonths: 3, averagingWeeks: 52, weights: {},
+  nightDistribution: 'HABIT',
 };

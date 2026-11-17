@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fairnessRows, metricSpreads, sortRows, spread, wishRate } from '../src/lib/fairness.js';
+import { fairnessRows, metricSpreads, nightOutside, nightReasonText, nightStatus, sortRows, spread, wishRate } from '../src/lib/fairness.js';
 
 const people = [
   { id: 'P1', firstName: 'A', lastName: 'Alpha', weeklyHours: 40 },
@@ -51,4 +51,25 @@ test('viewers do not get the personal metrics (wishes, hours account, compensato
   const ids = metricsFor(false).map((m) => m.id);
   for (const id of ['wishRate', 'historyWishRate', 'accountAfter', 'compRestBalanceAfter']) assert.ok(!ids.includes(id), id);
   assert.ok(ids.includes('nights') && ids.includes('plannedHours'));
+});
+
+test('the night tile tells whether a person is in the night comparison and why not', () => {
+  const mix = { categories: { DAY: 0.9, NIGHT: 0.1 }, areas: {} };
+  assert.equal(nightStatus({ nightPool: true, nightLoad: 4.236, nightMean: 3.9 }, null), 'im Nachtausgleich: Belastung 4,2, Mittel 3,9');
+  assert.equal(nightStatus({ nightPool: false, nightReason: 'MIX' }, mix), 'folgt gewohnter Verteilung (10 % Nacht)');
+  assert.equal(nightStatus({ nightPool: false, nightReason: 'NEVER' }, null), 'nicht im Nachtausgleich (nie Nacht)');
+  assert.equal(nightStatus({ nightPool: false, nightReason: null }, null), 'nicht im Nachtausgleich');
+  // viewers get none of the figures
+  assert.equal(nightStatus({ nightPool: null, nightReason: null }, null), null);
+  assert.equal(nightStatus({}, null), null);
+});
+
+test('people outside the night comparison are marked with the reason', () => {
+  assert.equal(nightOutside({ nightPool: true }), null);
+  assert.equal(nightOutside({ nightPool: null }), null);
+  assert.equal(nightOutside({ nightPool: false, nightReason: 'MIX' }), 'MIX');
+  assert.equal(nightOutside({ nightPool: false, nightReason: 'NEVER' }), 'NEVER');
+  assert.equal(nightOutside({ nightPool: false, nightReason: null }), 'OUT');
+  assert.equal(nightReasonText('MIX'), 'gewohnte Verteilung');
+  assert.equal(nightReasonText('NEVER'), 'nie Nacht');
 });

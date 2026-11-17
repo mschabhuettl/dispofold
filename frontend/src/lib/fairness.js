@@ -1,4 +1,5 @@
 // Fairness statistics over PersonStats. Pure, no DOM.
+import { sharePercent } from './shift-mix.js';
 import { t } from './texts.js';
 
 /**
@@ -89,4 +90,29 @@ export function sortRows(rows, key, ascending = true) {
     if (vb == null) return -1;
     return (typeof va === 'string' ? va.localeCompare(vb, 'de') : va - vb) * dir;
   });
+}
+
+const decimal = (v) => Number(v).toLocaleString('de-AT', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+/**
+ * Why a person is outside the night comparison: 'MIX' (the usual mix decides the nights), 'NEVER' (never nights) or
+ * 'OUT' (not compared, e.g. no available day); null when inside or when the figures are not given (viewers).
+ */
+export function nightOutside(stats) {
+  if (stats?.nightPool !== false) return null;
+  return stats.nightReason === 'MIX' || stats.nightReason === 'NEVER' ? stats.nightReason : 'OUT';
+}
+
+/** Short reason for the fairness table. */
+export function nightReasonText(reason) {
+  return { MIX: t('fairness.night.mix'), NEVER: t('fairness.night.never'), OUT: t('fairness.night.out') }[reason];
+}
+
+/** Line of the person's night tile; null when the figures are not given (viewers). usual: the person's stored mix. */
+export function nightStatus(stats, usual) {
+  if (stats?.nightPool == null) return null;
+  if (stats.nightPool) return t('person.kpi.nightsPool', { load: decimal(stats.nightLoad), mean: decimal(stats.nightMean) });
+  const reason = nightOutside(stats);
+  if (reason === 'MIX') return t('person.kpi.nightsMix', { percent: sharePercent(usual?.categories?.NIGHT ?? 0) });
+  return reason === 'NEVER' ? t('person.kpi.nightsNever') : t('person.kpi.nightsOut');
 }

@@ -64,3 +64,6 @@ export function mixRows(planned, usual, areaName = (id) => id) {
 
 /** A share as "90 %" (empty for null). */
 export const sharePercent = (share) => (share == null ? '' : t('masterdata.shiftMix.percent', { percent: pct(share) }));
+
+/** How a usual mix affects the nights under the rules' night distribution (missing: HABIT, rules saved before it). */
+export const nightNote = (nightDistribution) => (nightDistribution === 'EVEN' ? t('masterdata.shiftMix.nightNoteEven') : t('masterdata.shiftMix.nightNote'));

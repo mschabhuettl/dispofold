@@ -7,7 +7,7 @@ import { personName } from '../lib/grid-model.js';
 import { messageText } from '../lib/codes.js';
 import { CATEGORIES, DEMAND_DAYS, conflictDecision, familyText, fromForm, inUseQuestion, itemLabel, keyOf, restrictionFromForm,
   restrictionText, toForm } from '../lib/masterdata-edit.js';
-import { MIX_CATEGORIES, mixText } from '../lib/shift-mix.js';
+import { MIX_CATEGORIES, mixText, nightNote } from '../lib/shift-mix.js';
 import { t } from '../lib/texts.js';
 
 const CATEGORY = { EARLY: t('masterdata.category.early'), DAY: t('masterdata.category.day'), LATE: t('masterdata.category.late'), NIGHT: t('masterdata.category.night') };
@@ -22,6 +22,7 @@ const bare = { border: 0, padding: 0, margin: 0 };
 export async function render(root, ctx) {
   const { api, canEdit } = ctx;
   let dataset = await ctx.dataset();
+  const nightDistribution = (await api.rules().catch(() => null))?.nightDistribution;
   const hhmm = (s) => String(s ?? '').slice(0, 5);
   const yesNo = (v) => (v ? t('common.yes') : t('common.no'));
 
@@ -118,7 +119,7 @@ export async function render(root, ctx) {
       h('thead', {}, h('tr', {}, cols.map(([label]) => h('th', {}, label)), canEdit && h('th', {}, ''))),
       h('tbody', {}, rows.map(({ item, key }) => h('tr', {}, cols.map(([, cell, cls]) => h(cls ? `td.${cls}` : 'td', {}, cell(item))), canEdit && actions(item, key)))));
     return h('section.section', { 'aria-labelledby': id }, h('h2', { id }, TITLES[kind]),
-      kind === 'people' && h('p.muted', {}, h('strong', {}, t('masterdata.col.shiftMix')), ': ', t('masterdata.shiftMix.nightNote')),
+      kind === 'people' && h('p.muted', {}, h('strong', {}, t('masterdata.col.shiftMix')), ': ', nightNote(nightDistribution)),
       canEdit && h('div.toolbar', {}, h('button.btn.btn-secondary.btn-small', { type: 'button', 'data-new': kind, onclick: () => openForm(kind, null) }, t('masterdata.new'))),
       h('div', { style: { overflowX: 'auto' } }, table));
   }
@@ -359,7 +360,7 @@ export async function render(root, ctx) {
       dataset.areas.map((a) => field({ 'data-mix-area': a.id }, 'data-mix-area', a.id, `${a.name} (${a.id})`, mix?.areas?.[a.id] ?? '')));
     const clear = h('button.btn.btn-secondary.btn-small', { type: 'button',
       onclick: () => inputs.querySelectorAll('input').forEach((i) => { i.value = ''; }) }, t('masterdata.shiftMix.remove'));
-    return h('div', { style: { flexBasis: '100%' } }, h('strong', {}, t('masterdata.col.shiftMix')), h('p.muted', {}, t('masterdata.shiftMix.help'), ' ', t('masterdata.shiftMix.nightNote')),
+    return h('div', { style: { flexBasis: '100%' } }, h('strong', {}, t('masterdata.col.shiftMix')), h('p.muted', {}, t('masterdata.shiftMix.help'), ' ', nightNote(nightDistribution)),
       inputs, clear);
   }
 

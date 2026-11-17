@@ -1,0 +1,118 @@
+// Playwright check of the night setting (nightDistribution) on the person page and the fairness page. In HABIT a
+// person with a usual night share "folgt gewohnter Verteilung (10 % Nacht)", in EVEN the same person is "im
+// Nachtausgleich: Belastung x, Mittel y"; a person with "keine Nacht" on every day is "nicht im Nachtausgleich (nie
+// Nacht)" in both modes. The fairness page marks people outside the night comparison with the reason; viewers see
+// neither. Demo data of the dev server (mock API).
+//   npm run build && node scripts/check-night.mjs     (Chromium via `npx playwright install chromium`)
+import { spawn } from 'node:child_process';
+import { createServer } from 'node:net';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { chromium } from 'playwright';
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const month = '2027-01';
+const port = await new Promise((resolve) => {
+  const s = createServer().listen(0, () => { const p = s.address().port; s.close(() => resolve(p)); });
+});
+const server = spawn(process.execPath, [join(root, 'scripts', 'dev-server.mjs'), String(port)], { stdio: ['ignore', 'pipe', 'inherit'] });
+await new Promise((resolve) => server.stdout.on('data', (d) => { if (String(d).includes('dev server on')) resolve(); }));
+const base = `http://localhost:${port}`;
+
+let failed = false;
+const check = (name, ok, detail = '') => {
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? `: ${detail}` : ''}`);
+  if (!ok) failed = true;
+};
+
+const browser = await chromium.launch();
+try {
+  const login = async (user) => {
+    const context = await browser.newContext({ viewport: { width: 1600, height: 1000 }, colorScheme: 'light' });
+    await context.addInitScript((m) => sessionStorage.setItem('month', m), month);
+    const page = await context.newPage();
+    page.on('pageerror', (e) => check('no page error', false, e.message));
+    await page.goto(`${base}/login.html`);
+    await page.fill('#j_username', user);
+    await page.fill('#j_password', 'x');
+    await Promise.all([page.waitForURL((u) => !u.pathname.endsWith('login.html')), page.click('button[type=submit]')]);
+    return page;
+  };
+  const page = await login('planung');
+  // Demo data; one person with a usual night share, one without nights on every day, one plain person with nights.
+  const people = await page.evaluate(async (m) => {
+    const put = (path, body) => fetch(path, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    await fetch('/api/import/demo', { method: 'POST' });
+    const dataset = await (await fetch('/api/dataset')).json();
+    const nightAreas = new Set(dataset.shifts.filter((s) => s.category === 'NIGHT').map((s) => s.areaId));
+    const plain = dataset.people.filter((p) => !p.shiftMix && !p.familyRules.length && p.areaIds.some((a) => nightAreas.has(a))
+      && !dataset.restrictions.some((r) => r.personId === p.id));
+    const [never, mix] = plain;
+    await put(`/api/dataset/people/${never.id}`, { ...never, familyRules: [{ weekdays: [1, 2, 3, 4, 5, 6, 7], latestEnd: null,
+      earliestStart: null, noNights: true, note: '' }] });
+    await put(`/api/dataset/people/${mix.id}`, { ...mix, shiftMix: { categories: { DAY: 0.9, NIGHT: 0.1 }, areas: {} } });
+    const rules = await (await fetch('/api/rules')).json();
+    await put('/api/rules', { ...rules, nightDistribution: 'HABIT' });
+    await fetch(`/api/plans/${m}/solve`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: '{"seed":1,"timeLimitSeconds":1}' });
+    return { mix: mix.id, never: never.id, plain: plain[2].id };
+  }, month);
+  await page.waitForTimeout(1500);
+  const setMode = (mode) => page.evaluate(async (m) => {
+    const rules = await (await fetch('/api/rules')).json();
+    await fetch('/api/rules', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...rules, nightDistribution: m }) });
+  }, mode);
+
+  const tile = async (p, id) => {
+    await p.goto(`${base}/#/person/${encodeURIComponent(id)}`);
+    await p.locator('.kpi-nights').waitFor();
+    const help = p.locator('.kpi-nights .kpi-help');
+    return (await help.count()) ? (await help.textContent()).trim() : null;
+  };
+  const marks = async (p) => {
+    await p.goto(`${base}/#/fairness`);
+    await p.locator('table.data tbody tr').first().waitFor();
+    return p.evaluate(() => Object.fromEntries([...document.querySelectorAll('table.data tbody tr')]
+      .map((tr) => [decodeURIComponent(tr.querySelector('a').getAttribute('href').split('/').pop()), tr.querySelector('.night-outside')?.dataset.reason ?? null])));
+  };
+  const pool = /^im Nachtausgleich: Belastung \d+,\d, Mittel \d+,\d$/;
+
+  // HABIT (today): the usual night share decides, the person is outside the comparison.
+  const habitMix = await tile(page, people.mix);
+  check('HABIT: person with a night share follows the mix', habitMix === 'folgt gewohnter Verteilung (10 % Nacht)', habitMix);
+  const habitNever = await tile(page, people.never);
+  check('HABIT: no nights on every day is outside', habitNever === 'nicht im Nachtausgleich (nie Nacht)', habitNever);
+  const habitPlain = await tile(page, people.plain);
+  check('HABIT: person without a mix is in the comparison', pool.test(habitPlain ?? ''), habitPlain);
+  let marked = await marks(page);
+  check('HABIT: fairness marks the mix', marked[people.mix] === 'MIX', marked[people.mix]);
+  check('HABIT: fairness marks never nights', marked[people.never] === 'NEVER', marked[people.never]);
+  check('HABIT: fairness does not mark the others', marked[people.plain] === null, marked[people.plain]);
+  check('fairness explains the marks', (await page.locator('main').textContent()).includes('nicht im Nachtausgleich, weil'));
+
+  // EVEN: the night share is ignored, the person is in the comparison; never nights stays outside.
+  await setMode('EVEN');
+  const evenMix = await tile(page, people.mix);
+  check('EVEN: person with a night share is in the comparison', pool.test(evenMix ?? ''), evenMix);
+  check('EVEN: the mix note says the night share is ignored', (await page.locator('#h-mix').locator('..').textContent()).includes('Nachtanteil wird nicht beachtet'));
+  const evenNever = await tile(page, people.never);
+  check('EVEN: no nights on every day stays outside', evenNever === 'nicht im Nachtausgleich (nie Nacht)', evenNever);
+  marked = await marks(page);
+  check('EVEN: fairness no longer marks the mix', marked[people.mix] === null, marked[people.mix]);
+  check('EVEN: fairness marks never nights', marked[people.never] === 'NEVER', marked[people.never]);
+  await page.goto(`${base}/#/stammdaten`);
+  await page.locator('[data-table=people]').waitFor();
+  check('EVEN: master data note follows the mode', (await page.locator('main').textContent()).includes('Nachtanteil wird nicht beachtet'));
+  await setMode('HABIT');
+
+  // Viewers learn neither the mix nor the reason.
+  const viewer = await login('ansicht');
+  check('viewer: no night status in the tile', await tile(viewer, people.mix) === null && await tile(viewer, people.never) === null);
+  marked = await marks(viewer);
+  check('viewer: no marks on the fairness page', Object.values(marked).every((r) => r === null));
+} finally {
+  await browser.close();
+  server.kill();
+}
+if (failed) process.exit(1);
+console.log('night setting checked');

@@ -1,7 +1,7 @@
 // Fairness-Übersicht: sortable table of per-person metrics plus dot strips showing the spread per metric.
 import { monthLabel } from '../lib/dates.js';
 import { fmt, h, svg } from '../lib/dom.js';
-import { fairnessRows, metricSpreads, metricsFor, sortRows } from '../lib/fairness.js';
+import { fairnessRows, metricSpreads, metricsFor, nightOutside, nightReasonText, sortRows } from '../lib/fairness.js';
 import { personName } from '../lib/grid-model.js';
 import { t } from '../lib/texts.js';
 
@@ -27,6 +27,7 @@ export async function render(root, ctx) {
     h('p.muted', {}, t('fairness.spreadHelp')),
     charts,
     h('h2', { style: { marginTop: '1.5rem' } }, t('fairness.tableHeading')),
+    analysis.people.some(nightOutside) && h('p.muted', {}, t('fairness.nightHelp')),
     tableHost,
   );
 
@@ -42,9 +43,17 @@ export async function render(root, ctx) {
       h('thead', {}, h('tr', {}, th('name', t('fairness.person'), false), metrics.map((m) => th(m.id, m.label, true)))),
       h('tbody', {}, sorted.map((r) => h('tr', {},
         h('th', { scope: 'row' }, h('a', { href: `#/person/${encodeURIComponent(r.person.id)}` }, personName(r.person))),
-        metrics.map((m) => h('td.num', {}, format(m, r.values[m.id]))))))));
+        metrics.map((m) => h('td.num', {}, format(m, r.values[m.id]), m.id === 'nights' && nightMark(r.stats))))))));
   }
   draw();
+}
+
+/** Marks a person outside the night comparison, with the reason (planners only: viewers get no reason). */
+function nightMark(stats) {
+  const reason = nightOutside(stats);
+  if (!reason) return null;
+  const text = nightReasonText(reason);
+  return [' ', h('span.badge.night-outside', { title: t('fairness.night.title', { reason: text }), 'data-reason': reason }, text)];
 }
 
 function format(metric, v) {

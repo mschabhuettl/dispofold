@@ -196,7 +196,39 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
       compRestBalanceAfter: p.compRestBalance + compRestEarned - compRestPlanned, singleDays,
       historyNights: sum('nights'), historyWeekends: sum('weekendsWorked'), historyHolidays: sum('holidays'),
       historyUnpopular: sum('unpopular'), historyWishes: sum('wishes'), historyWishesMet: sum('wishesMet'),
+      ...nightComparison(m, p),
     };
+  }
+
+  /** Like the backend: why a person is outside the night comparison ('NEVER', 'MIX'), null when in it. */
+  function nightExclusion(m, p) {
+    const dates = monthDates(m);
+    const nights = dataset.shifts.filter((x) => x.category === 'NIGHT' && p.areaIds.includes(x.areaId));
+    const never = (x) => dataset.restrictions.some((r) => r.personId === p.id && r.kind === 'NEVER' && !r.weekday
+      && (!r.validFrom || r.validFrom <= dates[0]) && (!r.validTo || r.validTo >= dates.at(-1))
+      && (r.shiftId ? r.shiftId === x.id : r.category === x.category));
+    const everyDay = (f) => !f.weekdays?.length || [1, 2, 3, 4, 5, 6, 7].every((d) => f.weekdays.map(Number).includes(d));
+    if ((p.familyRules ?? []).some((f) => f.noNights && everyDay(f)) || nights.every(never)) return 'NEVER';
+    if ((rules.nightDistribution ?? 'HABIT') === 'HABIT' && Object.keys(p.shiftMix?.categories ?? {}).length) return 'MIX';
+    return null;
+  }
+
+  /** Night load as the solver compares it: nights of this and the history months per 30 available days at 40 h. */
+  function nightComparison(m, p) {
+    const shifts = shiftsById();
+    const absences = periods.get(m)?.absences ?? [];
+    const load = (q) => {
+      const hist = dataset.history.filter((h) => h.personId === q.id);
+      const nights = (plans.get(m)?.assignments ?? []).filter((a) => a.personId === q.id && shifts.get(a.shiftId)?.category === 'NIGHT').length
+        + hist.reduce((s, h) => s + h.nights, 0);
+      const days = monthDates(m).length - absences.filter((a) => a.personId === q.id).length + (hist.length * 365.25) / 12;
+      return (nights * 30 * 40) / (q.weeklyHours || 40) / days;
+    };
+    const loads = dataset.people.filter((q) => !nightExclusion(m, q)).map(load);
+    const round = (x) => Math.round(x * 100) / 100;
+    const reason = nightExclusion(m, p);
+    return { nightPool: !reason, nightReason: reason, nightLoad: reason ? null : round(load(p)),
+      nightMean: loads.length ? round(loads.reduce((a, b) => a + b, 0) / loads.length) : null };
   }
 
   function weightOf(id) {
@@ -324,7 +356,8 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
 
   /** Personal figures viewers do not get: wishes 0, hours account and compensatory rest null. */
   const redactStats = (s) => ({ ...s, wishes: 0, wishesMet: 0, historyWishes: 0, historyWishesMet: 0, accountBefore: null, goalHours: null, scaledGoalHours: null,
-    accountAfter: null, compRestBalanceAfter: null, compRestEarned: null, chargedHours: null, creditedHours: null });
+    accountAfter: null, compRestBalanceAfter: null, compRestEarned: null, chargedHours: null, creditedHours: null,
+    nightPool: null, nightReason: null, nightLoad: null, nightMean: null });
 
   /** True while the mock program "restarts" after an update. */
   handle.restarting = () => Date.now() < downUntil;

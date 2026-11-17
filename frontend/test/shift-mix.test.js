@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mixFromForm, mixRows, mixText, mixToForm, sharePercent } from '../src/lib/shift-mix.js';
+import { mixFromForm, mixRows, mixText, mixToForm, nightNote, sharePercent } from '../src/lib/shift-mix.js';
 import { fromForm, toForm } from '../src/lib/masterdata-edit.js';
 
 const empty = { categories: {}, areas: {} };
@@ -56,4 +56,11 @@ test('texts and rows', () => {
       { group: 'categories', key: 'NIGHT', name: 'Nacht', planned: null, usual: 0.1 },
       { group: 'areas', key: 'AN', name: 'B AN', planned: 1, usual: null }]);
   assert.deepEqual(mixRows(null, null), []);
+});
+
+test('the note on nights follows the night distribution; rules saved before it mean HABIT', () => {
+  assert.match(nightNote('HABIT'), /nicht im Nachtausgleich/);
+  assert.equal(nightNote(undefined), nightNote('HABIT'));
+  assert.equal(nightNote(null), nightNote('HABIT'));
+  assert.match(nightNote('EVEN'), /Nachtanteil wird nicht beachtet/);
 });

@@ -5,7 +5,8 @@ import { groupHitsByDate, hitEffect, hitSummary } from '../lib/explain.js';
 import { personName } from '../lib/grid-model.js';
 import { constraintLabel, hitText } from '../lib/codes.js';
 import { familyText, restrictionText } from '../lib/masterdata-edit.js';
-import { mixRows, sharePercent } from '../lib/shift-mix.js';
+import { nightStatus } from '../lib/fairness.js';
+import { mixRows, nightNote, sharePercent } from '../lib/shift-mix.js';
 import { t } from '../lib/texts.js';
 
 const LEVEL = { HARD: t('person.level.hard'), MEDIUM: t('person.level.medium'), SOFT: t('person.level.soft') };
@@ -46,6 +47,7 @@ export async function render(root, ctx, [personId]) {
     return;
   }
   const s = explanation.stats;
+  const nightDistribution = (await api.rules().catch(() => null))?.nightDistribution;
   const kpi = (label, value) => h('div.kpi', {}, h('div.label', {}, label), h('div.value', {}, value));
   const hours = (v) => `${fmt.num(v, 1)} h`;
   // Ziel: the goal the soft rule aims at in this plan; personal (hours account), so null for viewers. Soll: the contract target.
@@ -70,7 +72,7 @@ export async function render(root, ctx, [personId]) {
         s.averageWeekHours != null && kpi(s.averageComplete ? t('person.kpi.averageWeek') : t('person.kpi.averageWeekPartial'), hours(s.averageWeekHours)))),
     h('section.section', { 'aria-labelledby': 'h-load' }, h('h2', { id: 'h-load' }, t('person.section.load')),
       h('div.kpis', {},
-        kpi(t('person.kpi.nights'), fmt.num(s.nights)), kpi(t('person.kpi.weekendsWorked'), fmt.num(s.weekendsWorked)), kpi(t('person.kpi.weekendsOff'), fmt.num(s.weekendsOff)),
+        nightsTile(s, person.shiftMix), kpi(t('person.kpi.weekendsWorked'), fmt.num(s.weekendsWorked)), kpi(t('person.kpi.weekendsOff'), fmt.num(s.weekendsOff)),
         kpi(t('person.kpi.holidays'), fmt.num(s.holidays)), kpi(t('person.kpi.unpopular'), fmt.num(s.unpopular)), kpi(t('person.kpi.singleDays'), fmt.num(s.singleDays)),
         // wishes are personal: planners only
         ctx.canEdit && kpi(t('person.kpi.wishesMet'), t('common.outOf', { value: s.wishesMet, total: s.wishes })),
@@ -78,7 +80,7 @@ export async function render(root, ctx, [personId]) {
         // compensatory-rest balance and the hours account are personal: planners only (viewers get null)
         ctx.canEdit && kpi(t('person.kpi.compRestEarned'), fmt.num(s.compRestEarned)),
         ctx.canEdit && kpi(t('person.kpi.compRestOpenAfter'), fmt.num(s.compRestBalanceAfter)))),
-    mixSection(s.plannedMix, person.shiftMix, areaNames),
+    mixSection(s.plannedMix, person.shiftMix, areaNames, nightDistribution),
     h('section.section', { 'aria-labelledby': 'h-hist' }, h('h2', { id: 'h-hist' }, t('person.section.history')),
       h('div.kpis', {},
         kpi(t('person.kpi.nights'), fmt.num(s.historyNights)), kpi(t('person.kpi.weekends'), fmt.num(s.historyWeekends)), kpi(t('person.kpi.holidays'), fmt.num(s.historyHolidays)),
@@ -94,12 +96,19 @@ export async function render(root, ctx, [personId]) {
   );
 }
 
+/** Nights of the month and the night comparison (planners only: who is outside it tells the mix or restrictions). */
+function nightsTile(s, usual) {
+  const status = nightStatus(s, usual);
+  return h('div.kpi.kpi-nights', { title: status && s.nightPool ? t('person.kpi.nightsHelp') : null },
+    h('div.label', {}, t('person.kpi.nights')), h('div.value', {}, fmt.num(s.nights)), status && h('p.kpi-help', {}, status));
+}
+
 /** Planned against usual share of the duties per category and area; nothing to show without either. */
-function mixSection(planned, usual, areaNames) {
+function mixSection(planned, usual, areaNames, nightDistribution) {
   const rows = mixRows(planned, usual, (id) => areaNames.get(id) ?? id);
   if (!rows.length) return null;
   return h('section.section', { 'aria-labelledby': 'h-mix' }, h('h2', { id: 'h-mix' }, t('person.section.mix')),
-    Object.keys(usual?.categories ?? {}).length > 0 && h('p.muted', {}, t('masterdata.shiftMix.nightNote')),
+    Object.keys(usual?.categories ?? {}).length > 0 && h('p.muted', {}, nightNote(nightDistribution)),
     h('table.data', {}, h('thead', {}, h('tr', {}, h('th', {}, t('person.mix.group')), h('th.num', {}, t('person.mix.planned')), h('th.num', {}, t('person.mix.usual')))),
       h('tbody', {}, rows.map((r) => h('tr', {}, h('td', {}, r.name), h('td.num', {}, sharePercent(r.planned)), h('td.num', {}, sharePercent(r.usual)))))));
 }
