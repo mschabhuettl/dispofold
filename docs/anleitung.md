@@ -344,10 +344,10 @@ Die Seite listet alles, was am Plan des gewählten Monats nicht stimmt, in drei 
   nach** ordnet die Liste nach **Regel**, **Person** oder **Tag**; die drei Auswahlen daneben zeigen nur eine
   Regel, eine Person oder einen Tag. Jede Gruppe klappt mit einem Klick auf ihre Überschrift auf und zu; bei
   langen Listen ist nur die erste offen. Ein Eintrag nennt die Gruppe (**Regelverstoß**, **Bedarf**,
-  **Qualität**), die Person (ein Klick öffnet ihre Seite) oder bei Bedarfseinträgen die **Zeitachse**, den Tag
-  und eine kurze Erklärung.
-- **Offener Bedarf:** die Lücken nach Tagen, je Lücke Bereich, Uhrzeit, wie viele Personen fehlen und welche
-  Funktionen des Bereichs in diese Zeit fallen. **Auf Anfrage verfügbar** klappt die Personen auf, die man fragen
+  **Qualität**), die Person (ein Klick öffnet ihre Seite) oder bei Bedarfseinträgen die **Zeitachse** (sie öffnet
+  sich auf Bereich und Tag des Eintrags), den Tag und eine kurze Erklärung.
+- **Offener Bedarf:** die Lücken nach Tagen, je Lücke Bereich, Uhrzeit, wie viele Personen fehlen, welche
+  Funktionen des Bereichs in diese Zeit fallen und ein Link zur **Zeitachse** auf Bereich und Tag. **Auf Anfrage verfügbar** klappt die Personen auf, die man fragen
   kann, siehe [Dienste nur auf Anfrage](#dienste-nur-auf-anfrage). Während einer Planung und in einem
   abgeschlossenen Monat fehlt dieser Knopf.
 - **Stammdaten:** unabhängig vom Plan, was in den Stammdaten fehlt oder nicht zusammenpasst, zum Beispiel eine

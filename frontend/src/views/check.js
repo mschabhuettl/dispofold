@@ -87,10 +87,13 @@ function entryItem(e, by, areaName) {
     by !== 'rule' && h('strong', {}, constraintLabel({ id: hit.constraintId })),
     // the link stays when grouped by person: the heading is no link
     person ? h('a', { href: `#/person/${encodeURIComponent(person.id)}` }, personName(person))
-      : h('a', { href: '#/zeitachse' }, t('check.toTimeline')),
+      : h('a', { href: timelineLink(hit.params?.areaId, hit.date) }, t('check.toTimeline')),
     by !== 'day' && h('span', {}, groupKey(e, 'day') ? dayLabel(hit.date) : t('roster.chipMonth')),
     h('span.hit-text', {}, hitText(hit, areaName)));
 }
+
+/** The Zeitachse on the area and day of an entry, where it names them. */
+const timelineLink = (areaId, date) => (areaId && date ? `#/zeitachse/${encodeURIComponent(areaId)}/${date}` : '#/zeitachse');
 
 /** Open demand of the month by day: area, time, missing count, the functions of the area and who could be asked. */
 function gapSection(ctx, dataset, analysis, ask) {
@@ -119,7 +122,8 @@ function gapItem(ctx, dataset, areaName, g, ask) {
   const whole = parseLocalDateTime(g.to) - parseLocalDateTime(g.from) >= 1440;
   const codes = dataset.shifts.filter((s) => s.areaId === g.areaId && (whole || windowOverlapsShift(window, s))).map((s) => s.code);
   const item = h('li.gap-item', {}, h('strong', {}, gapLabel(g, areaName.get(g.areaId))),
-    codes.length > 0 && h('span.muted', {}, t('check.gaps.functions', { codes: codes.join(', ') })));
+    codes.length > 0 && h('span.muted', {}, t('check.gaps.functions', { codes: codes.join(', ') })),
+    h('a', { href: timelineLink(g.areaId, g.from.slice(0, 10)) }, t('check.toTimeline')));
   // loaded on demand: one request per gap
   const toggle = h('button.btn-link', { type: 'button', 'aria-expanded': 'false', onclick: () => {
     const open = item.querySelector('.candidates');

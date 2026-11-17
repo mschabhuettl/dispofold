@@ -1,8 +1,9 @@
 // Playwright check of the Prüfen page and the fairness measure. On the demo data with some duties freed, one duty
 // too many and some master data changed, planners see the problem list (grouped and filtered), the open demand by
-// day with who could be asked, and the master data checks with what to do and a link; viewers have no Prüfen (its
-// address shows the Dienstplan) and no problem list from the API. The fairness page shows planners the loads the
-// fairness rules compare, with the measure in one sentence and without the old 40 h toggle; viewers get no loads.
+// day with who could be asked, links to the Zeitachse on the area and day of an entry, and the master data checks
+// with what to do and a link; viewers have no Prüfen (its address shows the Dienstplan) and no problem list from the
+// API. The fairness page shows planners the loads the fairness rules compare, with the measure in one sentence and
+// without the old 40 h toggle; viewers get no loads.
 // Demo data of the dev server (mock API).
 //   npm run build && node scripts/check-problems.mjs     (Chromium via `npx playwright install chromium`)
 import { spawn } from 'node:child_process';
@@ -86,7 +87,7 @@ try {
   const headings = await problems.locator('.check-group > summary').allTextContents();
   check('grouped by person, the overstaffing is under "ohne Person"', headings.some((x) => x.startsWith('ohne Person')), headings.at(-1));
   check('grouped by person, the entries keep their links', (await problems.locator('li a[href^="#/person/"]').count()) > 0
-    && (await problems.locator('li[data-rule=overstaffing] a[href="#/zeitachse"]').count()) > 0);
+    && (await problems.locator('li[data-rule=overstaffing] a[href^="#/zeitachse/"]').count()) > 0);
   await page.selectOption('#check-filter-rule', 'overstaffing');
   const rules = await problems.locator('.check-list > li').evaluateAll((li) => li.map((x) => x.dataset.rule));
   check('the rule filter keeps only that rule', rules.length > 0 && rules.every((r) => r === 'overstaffing'), rules.join());
@@ -112,7 +113,29 @@ try {
   check('closed month: no "Auf Anfrage verfügbar"', (await page.locator('#check-gaps li.gap-item button').count()) === 0);
   await page.evaluate((m) => fetch(`/api/plans/${m}/reopen`, { method: 'POST' }), month);
 
+  // Zeitachse links: an overstaffing and a gap open the Zeitachse on their area and day
+  const timelineAt = async (link) => {
+    const href = await link.getAttribute('href');
+    await link.click();
+    await page.locator('#tl-date').waitFor();
+    return { href, area: await page.locator('#tl-area').inputValue(), date: await page.locator('#tl-date').inputValue(),
+      mode: await page.locator('#tl-mode').inputValue() };
+  };
+  await page.goto(`${base}/#/pruefen`);
+  await page.selectOption('#check-filter-rule', 'overstaffing');
+  const over = await timelineAt(page.locator('#check-problems li[data-rule=overstaffing] a', { hasText: 'Zeitachse' }).first());
+  check('Zeitachse link of the overstaffing opens its area and day', over.area === 'LF' && over.date === `${month}-20` && over.mode === 'day',
+    JSON.stringify(over));
+  await page.goto(`${base}/#/pruefen`);
+  const gapLink = page.locator('#check-gaps li.gap-item a', { hasText: 'Zeitachse' }).first();
+  await gapLink.waitFor();
+  const [, gapArea, gapDate] = (await gapLink.getAttribute('href')).match(/^#\/zeitachse\/([^/]+)\/(\d{4}-\d{2}-\d{2})$/) ?? [];
+  const gapTl = await timelineAt(gapLink);
+  check('Zeitachse link of a gap opens its area and day', gapArea && gapTl.area === gapArea && gapTl.date === gapDate, JSON.stringify(gapTl));
+
   // Master data checks
+  await page.goto(`${base}/#/pruefen`);
+  await page.locator('#check-data').waitFor();
   const data = page.locator('#check-data');
   const kinds = await data.locator('.check-list > li').evaluateAll((li) => li.map((x) => x.dataset.kind));
   for (const kind of ['noArea', 'mixSum', 'areaNoDemand']) check(`master data check ${kind}`, kinds.includes(kind), kinds.join());
