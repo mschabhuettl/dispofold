@@ -378,7 +378,7 @@ export const TEXTS = {
   'help.field.inputs.absencePerson': 'Für wen die Abwesenheit gilt. Ist oben eine Person gewählt, steht sie hier schon.',
   'help.field.inputs.absenceFrom': 'Erster Tag der Abwesenheit, ein Tag des Planungsmonats.',
   'help.field.inputs.absenceTo': 'Letzter Tag der Abwesenheit; er zählt mit. Für einen einzelnen Tag dasselbe Datum wie bei „Von“.',
-  'help.field.inputs.wishPerson': 'Wessen Wunsch es ist. Wie viele Wünsche je Person zählen, steht unter der Liste.',
+  'help.field.inputs.wishPerson': 'Wessen Wunsch es ist. Wie viele Wünsche je Person zählen, steht über den Feldern.',
   'help.field.inputs.wishDate': 'Der Tag, für den der Wunsch gilt. Je Person und Tag gibt es einen Wunsch; ein neuer ersetzt den alten.',
   'help.field.inputs.fixedPerson': 'Wer die Vorgabe bekommt. Ist oben eine Person gewählt, steht sie hier schon.',
   'help.field.inputs.fixedDate': 'Der Tag der Vorgabe. Je Person und Tag gibt es eine Vorgabe; eine neue ersetzt die alte.',
