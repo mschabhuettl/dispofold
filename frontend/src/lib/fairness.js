@@ -1,5 +1,5 @@
 // Fairness statistics over PersonStats. Pure, no DOM.
-import { sharePercent } from './shift-mix.js';
+import { nightShareIgnored, sharePercent } from './shift-mix.js';
 import { t } from './texts.js';
 
 /**
@@ -114,5 +114,6 @@ export function nightStatus(stats, usual) {
   if (stats.nightPool) return t('person.kpi.nightsPool', { load: decimal(stats.nightLoad), mean: decimal(stats.nightMean) });
   const reason = nightOutside(stats);
   if (reason === 'MIX') return t('person.kpi.nightsMix', { percent: sharePercent(usual?.categories?.NIGHT ?? 0) });
+  if (nightShareIgnored(stats, usual)) return t('mix.never.tile', { percent: sharePercent(usual.categories.NIGHT) });
   return reason === 'NEVER' ? t('person.kpi.nightsNever') : t('person.kpi.nightsOut');
 }

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mixFromForm, mixRows, mixText, mixToForm, nightNote, sharePercent } from '../src/lib/shift-mix.js';
+import { mixFromForm, mixNightNote, mixRows, mixText, mixToForm, nightNote, nightShareIgnored, sharePercent } from '../src/lib/shift-mix.js';
 import { fromForm, toForm } from '../src/lib/masterdata-edit.js';
 
 const empty = { categories: {}, areas: {} };
@@ -63,4 +63,21 @@ test('the note on nights follows the night distribution; rules saved before it m
   assert.equal(nightNote(undefined), nightNote('HABIT'));
   assert.equal(nightNote(null), nightNote('HABIT'));
   assert.match(nightNote('EVEN'), /Nachtanteil wird nicht beachtet/);
+});
+
+test('never nights: the night share of the usual mix does not count, in both night distributions', () => {
+  const mix = { categories: { DAY: 0.9, NIGHT: 0.1 }, areas: {} };
+  const never = { nightPool: false, nightReason: 'NEVER' };
+  assert.equal(nightShareIgnored(never, mix), true);
+  // without a night share, out of the pool for the mix, in the pool, or for viewers (no reason): nothing to say
+  assert.equal(nightShareIgnored(never, { categories: { DAY: 1 }, areas: {} }), false);
+  assert.equal(nightShareIgnored(never, null), false);
+  assert.equal(nightShareIgnored({ nightPool: false, nightReason: 'MIX' }, mix), false);
+  assert.equal(nightShareIgnored({ nightPool: true, nightReason: null }, mix), false);
+  assert.equal(nightShareIgnored({ nightPool: null, nightReason: null }, mix), false);
+  for (const mode of ['HABIT', 'EVEN', undefined]) {
+    assert.equal(mixNightNote(mode, never, mix), 'Die Person macht keine Nachtdienste: Der Nachtanteil der gewohnten Verteilung zählt nicht. Die übrigen Anteile je Schichtart gelten für die Dienste außer Nächten.');
+    assert.equal(mixNightNote(mode, { nightPool: false, nightReason: 'MIX' }, mix), nightNote(mode));
+    assert.equal(mixNightNote(mode, { nightPool: null, nightReason: null }, mix), nightNote(mode));
+  }
 });

@@ -373,6 +373,12 @@ export const TEXTS = {
   'help.import.finalize': 'Schreibt die Zahlen des Monats in die Historie (für Fairness und Wünsche der Folgemonate), dazu Stundenkonto und Ersatzruhe danach. Danach ist der Monat nur lesbar.',
   'help.import.reopen': 'Öffnet einen abgeschlossenen Monat wieder, um Eingaben oder Plan zu ändern. Beim nächsten Abschluss werden seine Zahlen neu geschrieben.',
 
+  // correction 37 item 2: never nights beats the night share of the usual mix
+  'mix.never.note': 'Die Person macht keine Nachtdienste: Der Nachtanteil der gewohnten Verteilung zählt nicht. Die übrigen Anteile je Schichtart gelten für die Dienste außer Nächten.',
+  'mix.never.tile': 'nicht im Nachtausgleich (nie Nacht); der Nachtanteil der gewohnten Verteilung ({percent}) zählt nicht',
+  'mix.never.title': 'nicht im Nachtausgleich: nie Nacht; der Nachtanteil der gewohnten Verteilung zählt nicht, weil die Person keine Nachtdienste macht',
+  'mix.never.help': 'Wer nie Nacht macht, dem zählt der Nachtanteil der gewohnten Verteilung nicht; die übrigen Anteile gelten für die Dienste außer Nächten.',
+
   // shared
   'common.loading': 'Lädt …',
   'common.save': 'Speichern',

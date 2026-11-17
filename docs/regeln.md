@@ -230,8 +230,8 @@ Eine Einstellung der Regeln, `nightDistribution`:
 
 - `HABIT` (Standard, „Wie bisher: jede Person behält ihren gewohnten Nachtanteil“): Wer eine Verteilung je
   Kategorie hat (auch einen Nachtanteil oder keinen), ist nicht im Nachtausgleich; die Nächte folgen dem
-  Nachtanteil der Verteilung. Regeln, die vor der Einstellung gespeichert wurden (ohne das Feld), gelten als
-  `HABIT` und planen unverändert.
+  Nachtanteil der Verteilung. Ausnahme: wer nie Nacht macht (siehe unten). Regeln, die vor der Einstellung
+  gespeichert wurden (ohne das Feld), gelten als `HABIT` und planen unverändert.
 - `EVEN` („Gleichmäßig: Nachtdienste fair auf alle verteilen“): Nur der Nachtanteil der Verteilung zählt nicht.
   Die übrigen Anteile (Früh, Tag, Spät) werden auf zusammen 100 % hochgerechnet und gelten für die Dienste
   der Person, die nicht der Kategorie Nacht angehören: verglichen wird je Kategorie die Zahl der geplanten
@@ -249,14 +249,18 @@ Eine Einstellung der Regeln, `nightDistribution`:
     nicht;
   - eine Familienregel „keine Nacht“ gilt an allen Wochentagen 1 bis 7 (eine Regel ohne Wochentage wirkt wie die
     Regel `family` selbst an keinem Tag).
-  „Nie Nacht“ geht vor der gewohnten Verteilung.
+  „Nie Nacht“ geht vor der gewohnten Verteilung: Für eine solche Person zählt in beiden Fällen der Nachtanteil
+  ihrer Verteilung nicht, genau wie bei `EVEN`. Die übrigen Anteile werden auf zusammen 100 % hochgerechnet und
+  gelten für die Dienste außer Nächten, auch für die Abwechslung Dienste. Beispiel: 90 % Tag und 10 % Nacht wird
+  100 % Tag. Wer im Nachtausgleich ist oder bei `HABIT` wegen seiner Verteilung nicht, bleibt unverändert.
 - Demomonat mit klaren Verteilungen für 92 von 150 Personen, je 300 s: `HABIT` vergleicht 41 Personen (Nächte je
   Person 0 bis 10, Mittel 1,5), `EVEN` 120 (0 bis 13, Mittel 2,3); die Strafe der Verteilung sinkt von rund
   10,0 auf 4,5 Millionen, Einzeldienste 152 und 145, Bedarf in beiden Fällen gedeckt.
 - Die Personenansicht zeigt bei den Nächten „folgt gewohnter Verteilung (10 % Nacht)“, „im Nachtausgleich:
   Belastung x, Mittel y“ (die Last der Fairness Nachtdienste, siehe unten, als Nächte je 30 verfügbare Tage)
-  oder „nicht im Nachtausgleich (nie Nacht)“. Die Seite Fairness markiert, wer nicht verglichen wird, und
-  warum. Für Ansichtsrollen bleibt beides leer, weil es die Verteilung, Sperren oder Familienregeln verraten
+  oder „nicht im Nachtausgleich (nie Nacht)“. Hat eine Person, die nie Nacht macht, einen Nachtanteil, sagen
+  die Kachel der Nächte und der Hinweis bei der Verteilung, dass dieser Anteil nicht zählt. Die Seite Fairness
+  markiert, wer nicht verglichen wird, und warum, ebenso den nicht gezählten Nachtanteil. Für Ansichtsrollen bleibt beides leer, weil es die Verteilung, Sperren oder Familienregeln verraten
   würde.
 
 ### Fairness

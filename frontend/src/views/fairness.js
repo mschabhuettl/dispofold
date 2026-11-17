@@ -5,6 +5,7 @@ import { fmt, h, svg } from '../lib/dom.js';
 import { fairnessRows, metricSpreads, metricsFor, nightOutside, nightReasonText, sortRows } from '../lib/fairness.js';
 import { personName } from '../lib/grid-model.js';
 import { info } from '../lib/info.js';
+import { nightShareIgnored } from '../lib/shift-mix.js';
 import { t } from '../lib/texts.js';
 
 export async function render(root, ctx) {
@@ -27,7 +28,8 @@ export async function render(root, ctx) {
     h('p.muted', {}, t('fairness.spreadHelp')),
     charts,
     h('h2', { style: { marginTop: '1.5rem' } }, t('fairness.tableHeading')),
-    analysis.people.some(nightOutside) ? h('p.muted', {}, t('fairness.nightHelp')) : '',
+    analysis.people.some(nightOutside) ? h('p.muted', {}, t('fairness.nightHelp'),
+      fairnessRows(analysis.people, dataset.people).some((r) => nightShareIgnored(r.stats, r.person.shiftMix)) ? [' ', t('mix.never.help')] : '') : '',
     tableHost,
   );
 
@@ -43,17 +45,18 @@ export async function render(root, ctx) {
       h('thead', {}, h('tr', {}, th('name', t('fairness.person'), false), metrics.map((m) => th(m.id, m.label, true, t(`help.figure.${m.id}`))))),
       h('tbody', {}, sorted.map((r) => h('tr', {},
         h('th', { scope: 'row' }, h('a', { href: `#/person/${encodeURIComponent(r.person.id)}` }, personName(r.person))),
-        metrics.map((m) => h('td.num', {}, format(m, r.values[m.id]), m.id === 'nightLoad' && nightMark(r.stats))))))));
+        metrics.map((m) => h('td.num', {}, format(m, r.values[m.id]), m.id === 'nightLoad' && nightMark(r.stats, r.person.shiftMix))))))));
   }
   draw();
 }
 
-/** Marks a person outside the night comparison, with the reason (planners only: viewers get no reason). */
-function nightMark(stats) {
+/** Marks a person outside the night comparison, with the reason (planners only: viewers get no reason). usual: the stored mix. */
+function nightMark(stats, usual) {
   const reason = nightOutside(stats);
   if (!reason) return null;
   const text = nightReasonText(reason);
-  return [' ', h('span.badge.night-outside', { title: t('fairness.night.title', { reason: text }), 'data-reason': reason }, text)];
+  const title = nightShareIgnored(stats, usual) ? t('mix.never.title') : t('fairness.night.title', { reason: text });
+  return [' ', h('span.badge.night-outside', { title, 'data-reason': reason }, text)];
 }
 
 function format(metric, v) {

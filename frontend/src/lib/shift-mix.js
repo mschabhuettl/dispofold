@@ -67,3 +67,12 @@ export const sharePercent = (share) => (share == null ? '' : t('masterdata.shift
 
 /** How a usual mix affects the nights under the rules' night distribution (missing: HABIT, rules saved before it). */
 export const nightNote = (nightDistribution) => (nightDistribution === 'EVEN' ? t('masterdata.shiftMix.nightNoteEven') : t('masterdata.shiftMix.nightNote'));
+
+/**
+ * The person never does nights (stats.nightReason 'NEVER', planners only) and the usual mix has a night share: in both
+ * night distributions that share does not count, the other shares apply to the duties that are not nights.
+ */
+export const nightShareIgnored = (stats, usual) => stats?.nightReason === 'NEVER' && (usual?.categories?.NIGHT ?? 0) > 0;
+
+/** The night note of the person's mix section: the never-nights note where it applies, else the one of the mode. */
+export const mixNightNote = (nightDistribution, stats, usual) => (nightShareIgnored(stats, usual) ? t('mix.never.note') : nightNote(nightDistribution));

@@ -62,6 +62,9 @@ test('the night tile tells whether a person is in the night comparison and why n
   assert.equal(nightStatus({ nightPool: true, nightLoad: 4.236, nightMean: 3.9 }, null), 'im Nachtausgleich: Belastung 4,2, Mittel 3,9');
   assert.equal(nightStatus({ nightPool: false, nightReason: 'MIX' }, mix), 'folgt gewohnter Verteilung (10 % Nacht)');
   assert.equal(nightStatus({ nightPool: false, nightReason: 'NEVER' }, null), 'nicht im Nachtausgleich (nie Nacht)');
+  // never nights wins over the night share of the usual mix: it does not count
+  assert.equal(nightStatus({ nightPool: false, nightReason: 'NEVER' }, mix), 'nicht im Nachtausgleich (nie Nacht); der Nachtanteil der gewohnten Verteilung (10 %) zählt nicht');
+  assert.equal(nightStatus({ nightPool: false, nightReason: 'NEVER' }, { categories: { DAY: 1 }, areas: {} }), 'nicht im Nachtausgleich (nie Nacht)');
   assert.equal(nightStatus({ nightPool: false, nightReason: null }, null), 'nicht im Nachtausgleich');
   // viewers get none of the figures
   assert.equal(nightStatus({ nightPool: null, nightReason: null }, null), null);

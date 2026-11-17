@@ -171,7 +171,10 @@ public final class Staff {
         this.nightExclusion = nightExclusion;
     }
 
-    /** The category shares count among the duties that are not of category NIGHT (night distribution EVEN). */
+    /**
+     * The category shares count among the duties that are not of category NIGHT (night distribution EVEN, or a person
+     * who never does nights).
+     */
     public boolean isNightsOutsideMix() {
         return nightsOutsideMix;
     }
