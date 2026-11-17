@@ -135,7 +135,7 @@ export async function render(root, ctx) {
   function importanceControl(group, title) {
     if (groupLevel(group, constraints, weights) === null) return null;
     return h('fieldset.importance', {}, h('legend', {}, t('rules.importance'), h('span.visually-hidden', {}, ` ${title}`),
-      info(t('help.rules.importance'), `${t('rules.importance')} ${title}`)),
+      info(t(group === 'fairness' ? 'help.rules.importance.fairness' : 'help.rules.importance'), `${t('rules.importance')} ${title}`)),
       IMPORTANCE.map(([level, label]) => {
         const input = h('input', { type: 'radio', name: `importance-${group}`, value: level, disabled: !canEdit,
           oninput: () => {

@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CUSTOM, GROUPS, applyLevel, groupConstraints, groupLevel, levelWeight, nightDistribution, nightRuleMissing } from '../src/lib/rule-groups.js';
+import { CUSTOM, GROUPS, applyLevel, groupConstraints, groupLevel, levelWeight, levels, nightDistribution, nightRuleMissing } from '../src/lib/rule-groups.js';
 
 /** The soft part of the backend catalogue (ConstraintCatalog), with the default weights. */
 const CATALOGUE = [
@@ -21,20 +21,29 @@ test('the groups name tunable constraints of the catalogue, each in one group on
 test('Wichtigkeit is 0.5, 1 or 2 times the default weight, rounded to whole numbers', () => {
   const block = CATALOGUE.find((c) => c.id === 'blockLength');
   assert.deepEqual(['less', 'normal', 'more'].map((l) => levelWeight(block, l)), [3000, 6000, 12000]);
-  const nights = CATALOGUE.find((c) => c.id === 'fairNights');
-  assert.deepEqual(['less', 'normal', 'more'].map((l) => levelWeight(nights, l)), [2, 3, 6]); // 1.5 rounds up
+  const hours = CATALOGUE.find((c) => c.id === 'targetHours');
+  assert.deepEqual(['less', 'normal', 'more'].map((l) => levelWeight(hours, l)), [10, 20, 40]);
   assert.equal(levelWeight({ defaultWeight: 15 }, 'less'), 8);
+});
+
+test('Faire Verteilung uses 0.25, 1 and 4 times the default weight', () => {
+  const nights = CATALOGUE.find((c) => c.id === 'fairNights');
+  const unpopular = CATALOGUE.find((c) => c.id === 'fairUnpopular');
+  assert.deepEqual(['less', 'normal', 'more'].map((l) => levelWeight(nights, l)), [1, 3, 12]); // 0.75 rounds up
+  assert.deepEqual(['less', 'normal', 'more'].map((l) => levelWeight(unpopular, l)), [1, 2, 8]);
+  assert.deepEqual(levels('fairness'), { less: 0.25, normal: 1, more: 4 });
+  assert.deepEqual(levels('blocks'), { less: 0.5, normal: 1, more: 2 });
 });
 
 test('choosing a level overwrites the weights of the group and nothing else', () => {
   const weights = { ...defaults(), fairNights: 17, shiftMix: 0 };
   applyLevel('fairness', 'more', CATALOGUE, weights);
-  assert.deepEqual([weights.fairNights, weights.fairWeekends, weights.fairHolidays, weights.fairUnpopular], [6, 6, 6, 4]);
+  assert.deepEqual([weights.fairNights, weights.fairWeekends, weights.fairHolidays, weights.fairUnpopular], [12, 12, 12, 8]);
   assert.equal(weights.shiftMix, 0);
   assert.equal(weights.blockLength, 6000);
   assert.equal(groupLevel('fairness', CATALOGUE, weights), 'more');
   applyLevel('fairness', 'less', CATALOGUE, weights);
-  assert.deepEqual([weights.fairNights, weights.fairUnpopular], [2, 1]);
+  assert.deepEqual([weights.fairNights, weights.fairUnpopular], [1, 1]);
   assert.equal(groupLevel('fairness', CATALOGUE, weights), 'less');
 });
 

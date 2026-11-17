@@ -500,7 +500,8 @@ Die Regeln gelten für alle Monate und wirken ab der nächsten Planung. Drei Abs
   Monat), **Faire Verteilung** (Wochenenden, Feiertage, unbeliebte Dienste und Nächte, über die letzten ...
   Monate), **Stunden treffen** (höchstens ... % über dem Ziel, Stundenkonto ausgleichen ... % je Monat) und
   **Familienregeln**, jedes mit einer **Wichtigkeit**: **weniger**, **normal** oder **mehr** setzt die Gewichte
-  der Regeln dieses Ziels auf das 0,5-, 1- oder 2-Fache ihres Standards. Wurde ein Gewicht des Ziels unter
+  der Regeln dieses Ziels auf das 0,5-, 1- oder 2-Fache ihres Standards, bei der fairen Verteilung auf das
+  0,25-, 1- oder 4-Fache. Wurde ein Gewicht des Ziels unter
   **Erweitert** von Hand geändert, steht dort **angepasst**; die Wahl einer Wichtigkeit überschreibt diese
   Gewichte wieder.
 - **Gesetz und Betriebsvereinbarung:** Ruhezeiten, Höchstdauer eines Dienstes, Höchstarbeitszeit je Woche,

@@ -12,6 +12,10 @@ export const GROUPS = {
 
 /** Wichtigkeit: level -> factor on the default weight. */
 export const LEVELS = { less: 0.5, normal: 1, more: 2 };
+/** Stronger factors for "Faire Verteilung": 0.5 and 2 did not move the fairness figures beyond noise. */
+export const FAIRNESS_LEVELS = { less: 0.25, normal: 1, more: 4 };
+/** The factors of a group. */
+export const levels = (group) => (group === 'fairness' ? FAIRNESS_LEVELS : LEVELS);
 /** Weights set by hand that are no level. */
 export const CUSTOM = 'custom';
 
@@ -20,8 +24,9 @@ export function groupConstraints(group, constraints) {
   return constraints.filter((c) => c.tunable && GROUPS[group].includes(c.id));
 }
 
-/** The weight of a constraint at a level; weights are whole numbers. */
-export const levelWeight = (c, level) => Math.round(c.defaultWeight * LEVELS[level]);
+/** The weight of a constraint at a level, with the factors of its group; weights are whole numbers. */
+export const levelWeight = (c, level) =>
+  Math.round(c.defaultWeight * levels(Object.keys(GROUPS).find((g) => GROUPS[g].includes(c.id)))[level]);
 
 /** The level that all weights of the group match, else CUSTOM; null for a group without constraints. */
 export function groupLevel(group, constraints, weights) {

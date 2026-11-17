@@ -99,7 +99,7 @@ test('every rules setting has a help text that says what raising or lowering it 
 });
 
 test('Wichtigkeit and every planning goal have a help text', () => {
-  assert.deepEqual(missing(['help.rules.importance', ...Object.keys(GROUPS).map((g) => `help.goal.${g}`)]), []);
+  assert.deepEqual(missing(['help.rules.importance', 'help.rules.importance.fairness', ...Object.keys(GROUPS).map((g) => `help.goal.${g}`)]), []);
 });
 
 test('every solver option of the Dienstplan has a help text', () => {

@@ -171,7 +171,7 @@ try {
   await page.waitForURL((u) => u.hash === '#/eingaben');
   check('no question without edits', dialogs.length === 2);
 
-  // Wichtigkeit: weniger / normal / mehr = 0.5 / 1 / 2 x the default weights of the group, on save.
+  // Wichtigkeit: weniger / normal / mehr = 0.5 / 1 / 2 x the default weights of the group (fairness: 0.25 / 1 / 4), on save.
   await openRules();
   const defaults = Object.fromEntries(catalogue.map((c) => [c.id, c.defaultWeight]));
   await importance('blocks', 'mehr').click();
@@ -181,12 +181,17 @@ try {
   const first = await putBody();
   const w = first.weights;
   check('mehr doubles the group weights', w.blockLength === defaults.blockLength * 2 && w.isolatedDayOff === defaults.isolatedDayOff * 2, JSON.stringify(w));
-  check('weniger halves the group weights', ['fairNights', 'fairWeekends', 'fairHolidays', 'fairUnpopular'].every((id) => w[id] === Math.round(defaults[id] * 0.5)), JSON.stringify(w));
+  check('weniger quarters the fairness weights', ['fairNights', 'fairWeekends', 'fairHolidays', 'fairUnpopular'].every((id) => w[id] === Math.round(defaults[id] * 0.25)), JSON.stringify(w));
   check('other weights keep their default', ['targetHours', 'wishes', 'family', 'shiftMix', 'forwardRotation'].every((id) => w[id] === defaults[id]), JSON.stringify(w));
   check('old rules save HABIT', first.nightDistribution === 'HABIT', first.nightDistribution);
   check('unknown fields saved unchanged', first.futureSetting === 'x', JSON.stringify(first).slice(0, 200));
   await openRules();
   check('levels shown after loading', await checkedLevel('blocks') === 'more' && await checkedLevel('fairness') === 'less' && await checkedLevel('hours') === 'normal');
+  await importance('fairness', 'mehr').click();
+  const more = (await putBody()).weights;
+  check('mehr quadruples the fairness weights', ['fairNights', 'fairWeekends', 'fairHolidays', 'fairUnpopular'].every((id) => more[id] === defaults[id] * 4), JSON.stringify(more));
+  await openRules();
+  check('fairness mehr shown after loading', await checkedLevel('fairness') === 'more');
   await importance('blocks', 'normal').click();
   await importance('fairness', 'normal').click();
   const normal = (await putBody()).weights;
