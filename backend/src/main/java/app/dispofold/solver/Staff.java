@@ -9,6 +9,11 @@ import java.util.Set;
  */
 public final class Staff {
 
+    /** Not in the night comparison: the usual category mix decides the nights (night distribution HABIT). */
+    public static final String NIGHTS_MIX = "MIX";
+    /** Not in the night comparison: the person never does nights (no night shift, restrictions, family rules). */
+    public static final String NIGHTS_NEVER = "NEVER";
+
     /** Fairness loads are counts per {@value #FAIR_DAYS} available days of a 40 h person, in thousandths. */
     public static final double FAIR_DAYS = 30;
 
@@ -26,6 +31,10 @@ public final class Staff {
     private final Map<String, Integer> previous;
     /** Usual shares per category and area, or null (see {@link app.dispofold.model.ShiftMix}). */
     private app.dispofold.model.ShiftMix mix;
+    /** Why the person is not in the night comparison ({@link #NIGHTS_MIX}, {@link #NIGHTS_NEVER}), null: in it. */
+    private String nightExclusion;
+    /** The category shares of the mix are without the night share and apply to the duties that are not nights. */
+    private boolean nightsOutsideMix;
     /** Target the soft rule aims at: the target scaled to the work the demand needs (see RosterBuilder). */
     private int scaledTargetMinutes;
 
@@ -144,9 +153,31 @@ public final class Staff {
         this.mix = mix;
     }
 
-    /** The person has usual shares per category: they replace night fairness and shift variety. */
+    /** The person has usual shares per category: they replace shift variety (and, in HABIT, night fairness). */
     public boolean hasCategoryMix() {
         return mix != null && !mix.categoriesOrEmpty().isEmpty();
+    }
+
+    /** In the night comparison {@code fairNights} (when the person can do nights at all, see {@link Fairness}). */
+    public boolean isInNightPool() {
+        return nightExclusion == null;
+    }
+
+    public String getNightExclusion() {
+        return nightExclusion;
+    }
+
+    public void setNightExclusion(String nightExclusion) {
+        this.nightExclusion = nightExclusion;
+    }
+
+    /** The category shares count among the duties that are not of category NIGHT (night distribution EVEN). */
+    public boolean isNightsOutsideMix() {
+        return nightsOutsideMix;
+    }
+
+    public void setNightsOutsideMix(boolean nightsOutsideMix) {
+        this.nightsOutsideMix = nightsOutsideMix;
     }
 
     /** The person has usual shares per area: they replace area variety. */

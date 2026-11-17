@@ -39,6 +39,16 @@ final class Fixtures {
         }
     }
 
+    /** The default rules with this night distribution. */
+    static Rules rules(app.dispofold.model.NightDistribution mode) {
+        Rules r = Rules.defaults();
+        return new Rules(r.minDailyRestHours(), r.minWeeklyRestHours(), r.maxDutyHours(), r.maxWeekHours(),
+                r.maxAverageWeekHours(), r.minBlock(), r.maxBlock(), r.maxWishesPerPerson(),
+                r.holidayWorkEarnsCompRest(), r.nightStart(), r.nightEnd(), r.nightMinHours(), r.accountCarryShare(),
+                r.historyMonths(), r.weights(), r.timeZone(), r.averagingWeeks(), r.maxOverTargetPercent(),
+                r.minFreeSundays(), mode);
+    }
+
     static PlanningInput input(String name) {
         Dataset d = dataset(name);
         return new PlanningInput(d, d.periods().get(0), Rules.defaults(), List.of());

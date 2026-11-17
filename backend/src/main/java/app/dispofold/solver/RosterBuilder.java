@@ -24,6 +24,7 @@ import app.dispofold.model.FamilyRule;
 import app.dispofold.model.FixedAssignment;
 import app.dispofold.model.HistoryEntry;
 import app.dispofold.model.Holiday;
+import app.dispofold.model.NightDistribution;
 import app.dispofold.model.Period;
 import app.dispofold.model.Person;
 import app.dispofold.model.PlanAssignment;
@@ -32,6 +33,7 @@ import app.dispofold.model.Restriction;
 import app.dispofold.model.RestrictionKind;
 import app.dispofold.model.Rules;
 import app.dispofold.model.ShiftCategory;
+import app.dispofold.model.ShiftMix;
 import app.dispofold.model.ShiftType;
 import app.dispofold.model.Wish;
 import app.dispofold.planning.PlanningInput;
@@ -116,11 +118,13 @@ public final class RosterBuilder {
             List<HistoryEntry> own = history.getOrDefault(p.id(), List.of());
             int balance = compRestBefore(month, p, own);
             List<PreviousDuty> before = previous.getOrDefault(p.id(), List.of());
+            List<Restriction> ownRestrictions = restrictions.getOrDefault(p.id(), List.of());
             Staff s = staff(p, own, counted.size(), Math.max(0, balance - preEnteredCompRest),
                     available(p, absences), previousCounts(before));
+            nights(s, p, ownRestrictions);
             staff.add(s);
             cells.addAll(previousCells(s, before));
-            cells.addAll(monthCells(p, s, restrictions.getOrDefault(p.id(), List.of()), counted, absences,
+            cells.addAll(monthCells(p, s, ownRestrictions, counted, absences,
                     absenceTypes, fixed, assignments));
         }
         cells.forEach(c -> c.setTimes(timeLine));
@@ -211,8 +215,33 @@ public final class RosterBuilder {
                 available == 0 ? 0 : available + h.months() * MONTH_DAYS, nights, unpopular);
         Staff staff = new Staff(p.id(), p.weeklyHours(), Set.copyOf(list(p.areaIds())), credit, target,
                 compRestBalance, limits, h, wishCount, fairness, average(history), previousCounts);
-        staff.setMix(p.shiftMix());
         return staff;
+    }
+
+    /**
+     * The usual mix the rules see and the night pool. In EVEN the night share of the category mix is left out and the
+     * other shares are scaled to sum to 1; they then apply to the duties that are not nights. A person who never does
+     * nights is out of the night comparison in both modes; in HABIT so is a person with a category mix.
+     */
+    void nights(Staff s, Person p, List<Restriction> restrictions) {
+        ShiftMix mix = p.shiftMix();
+        boolean even = rules.nightMode() == NightDistribution.EVEN;
+        if (even && mix != null && mix.categoriesOrEmpty().containsKey(ShiftCategory.NIGHT)) {
+            Map<ShiftCategory, Double> rest = new LinkedHashMap<>(mix.categoriesOrEmpty());
+            rest.remove(ShiftCategory.NIGHT);
+            double sum = rest.values().stream().mapToDouble(Double::doubleValue).sum();
+            if (sum > 0) {
+                rest.replaceAll((k, v) -> v / sum);
+            } else {
+                rest.clear();
+            }
+            mix = new ShiftMix(rest, mix.areas());
+        }
+        s.setMix(mix);
+        s.setNightsOutsideMix(even);
+        if (!even && s.hasCategoryMix()) {
+            s.setNightExclusion(Staff.NIGHTS_MIX);
+        }
     }
 
     /** Sundays of the month. */

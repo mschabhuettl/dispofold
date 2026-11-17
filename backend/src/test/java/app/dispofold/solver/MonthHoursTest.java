@@ -29,7 +29,8 @@ class MonthHoursTest {
         return new Rules(r.minDailyRestHours(), r.minWeeklyRestHours(), r.maxDutyHours(), r.maxWeekHours(),
                 r.maxAverageWeekHours(), r.minBlock(), r.maxBlock(), r.maxWishesPerPerson(),
                 r.holidayWorkEarnsCompRest(), r.nightStart(), r.nightEnd(), r.nightMinHours(), r.accountCarryShare(),
-                r.historyMonths(), r.weights(), r.timeZone(), r.averagingWeeks(), percent, r.minFreeSundays());
+                r.historyMonths(), r.weights(), r.timeZone(), r.averagingWeeks(), percent, r.minFreeSundays(),
+                r.nightDistribution());
     }
 
     /** The small dataset with three times the demand: far more demand than people can cover. */

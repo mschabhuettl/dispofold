@@ -119,7 +119,7 @@ public final class RosterAnalyzer {
 
     /**
      * What one fairness comparison counts for a person in this month; {@code compared} leaves people out like the
-     * rule does (people with a usual category mix are not compared for nights).
+     * rule does (people outside the night pool are not compared for nights).
      */
     private record Counter(String id, java.util.function.Predicate<Staff> compared,
             java.util.function.Predicate<Staff> eligible,
@@ -128,7 +128,7 @@ public final class RosterAnalyzer {
     }
 
     private static final List<Counter> COUNTERS = List.of(
-            new Counter(ConstraintCatalog.FAIR_NIGHTS, s -> !s.hasCategoryMix(), s -> s.getFairness().nights(),
+            new Counter(ConstraintCatalog.FAIR_NIGHTS, Staff::isInNightPool, s -> s.getFairness().nights(),
                     Staff.History::nights,
                     cells -> (int) cells.stream().filter(c -> c.getShift().isNight()).count()),
             new Counter(ConstraintCatalog.FAIR_WEEKENDS, s -> true, s -> true, Staff.History::weekends,
@@ -147,23 +147,10 @@ public final class RosterAnalyzer {
      * of the penalty (by squared deviation).
      */
     static List<ConstraintHit> fairnessHits(ScoreExplainer.Explanation score, Roster roster, String personId) {
-        Map<Staff, List<DutyCell>> work = new HashMap<>();
-        for (DutyCell c : roster.getCells()) {
-            if (c.isInMonth() && c.isWork()) {
-                work.computeIfAbsent(c.getStaff(), k -> new ArrayList<>()).add(c);
-            }
-        }
+        Map<Staff, List<DutyCell>> work = monthWork(roster);
         List<ConstraintHit> hits = new ArrayList<>();
         for (Counter counter : COUNTERS) {
-            Map<Staff, Long> loads = new java.util.LinkedHashMap<>();
-            for (Staff s : roster.getStaff()) {
-                int count = counter.count().apply(work.getOrDefault(s, List.of()));
-                if (s.getFairness().weight() > 0 && counter.compared().test(s)
-                        && (counter.eligible().test(s) || count > 0)) {
-                    loads.put(s, (count + (long) counter.history().applyAsInt(s.getHistory()))
-                            * s.getFairness().weight());
-                }
-            }
+            Map<Staff, Long> loads = loads(counter, roster, work);
             Staff person = loads.keySet().stream().filter(s -> s.getId().equals(personId)).findFirst().orElse(null);
             if (person == null) {
                 continue;
@@ -185,6 +172,37 @@ public final class RosterAnalyzer {
                     java.util.Collections.unmodifiableMap(params)));
         }
         return hits;
+    }
+
+    private static Map<Staff, List<DutyCell>> monthWork(Roster roster) {
+        Map<Staff, List<DutyCell>> work = new HashMap<>();
+        for (DutyCell c : roster.getCells()) {
+            if (c.isInMonth() && c.isWork()) {
+                work.computeIfAbsent(c.getStaff(), k -> new ArrayList<>()).add(c);
+            }
+        }
+        return work;
+    }
+
+    /** The loads of everybody in one fairness comparison, as the rule compares them. */
+    private static Map<Staff, Long> loads(Counter counter, Roster roster, Map<Staff, List<DutyCell>> work) {
+        Map<Staff, Long> loads = new java.util.LinkedHashMap<>();
+        for (Staff s : roster.getStaff()) {
+            int count = counter.count().apply(work.getOrDefault(s, List.of()));
+            if (s.getFairness().weight() > 0 && counter.compared().test(s)
+                    && (counter.eligible().test(s) || count > 0)) {
+                loads.put(s, (count + (long) counter.history().applyAsInt(s.getHistory()))
+                        * s.getFairness().weight());
+            }
+        }
+        return loads;
+    }
+
+    /** Night loads of the people in the night comparison, by person id: nights per 30 available days at 40 h. */
+    static Map<String, Double> nightLoads(Roster roster) {
+        Map<String, Double> loads = new HashMap<>();
+        loads(COUNTERS.get(0), roster, monthWork(roster)).forEach((s, l) -> loads.put(s.getId(), l / 1000.0));
+        return loads;
     }
 
     static long level(HardMediumSoftScore score, String level) {
@@ -336,13 +354,21 @@ public final class RosterAnalyzer {
         Staff.History h = staff.getHistory();
         Staff.Average a = staff.getAverage();
         double average = a.weeks() <= 0 ? 0 : (a.minutes() + plannedMinutes) / 60.0 / a.weeks();
+        Map<String, Double> nightLoads = nightLoads(roster);
+        Double nightLoad = nightLoads.get(personId);
+        String nightReason = nightLoad != null ? null
+                : staff.getNightExclusion() != null ? staff.getNightExclusion()
+                : !staff.getFairness().nights() ? Staff.NIGHTS_NEVER : null;
+        Double nightMean = nightLoads.isEmpty() ? null
+                : round(nightLoads.values().stream().mapToDouble(Double::doubleValue).average().orElse(0));
         return new PersonStats(personId, round(target), round(credited), round(planned), accountBefore,
                 round(accountBefore + planned + credited - target - charged), duties, nights, weekendsWorked.size(),
                 weekendsOff, holidayDuties, unpopular, wishes, wishesMet, compRestPlanned, compRestEarned,
                 balance - compRestPlanned + compRestEarned, singleDays, h.nights(), h.weekends(), h.holidays(),
                 h.unpopular(), h.wishes(), h.wishesMet(), available, round(charged), round(average), a.complete(),
                 round(staff.getTargetMinutes() / 60.0), round(staff.getScaledTargetMinutes() / 60.0),
-                shares(byCategory, byArea, duties));
+                shares(byCategory, byArea, duties), nightLoad != null, nightReason,
+                nightLoad == null ? null : round(nightLoad), nightMean);
     }
 
     private static boolean previousWorked(Roster roster, String personId, YearMonth month) {

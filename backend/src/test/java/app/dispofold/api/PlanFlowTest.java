@@ -386,8 +386,20 @@ class PlanFlowTest {
         given().contentType(ContentType.JSON)
                 .body(rules.replace("\"weights\":{\"wishes\":77,\"rest\":5,\"onRequest\":3}", "\"weights\":{}"))
                 .put("/api/rules").then().statusCode(200);
+        // The night distribution is stored with the rules; rules saved without it (older versions) load unchanged.
+        String plain = given().get("/api/rules").then().body("nightDistribution", equalTo("HABIT")).extract().asString();
+        given().contentType(ContentType.JSON).body(plain.replace("\"HABIT\"", "\"EVEN\"")).put("/api/rules").then()
+                .statusCode(200);
+        given().get("/api/rules").then().body("nightDistribution", equalTo("EVEN"));
+        given().contentType(ContentType.JSON).body(plain.replace("\"HABIT\"", "\"OFTEN\"")).put("/api/rules").then()
+                .statusCode(400);
+        given().contentType(ContentType.JSON).body(plain.replace(",\"nightDistribution\":\"HABIT\"", ""))
+                .put("/api/rules").then().statusCode(200);
+        given().get("/api/rules").then().body("nightDistribution", org.hamcrest.Matchers.nullValue())
+                .body("minDailyRestHours", equalTo(11.0f));
+        given().contentType(ContentType.JSON).body(plain).put("/api/rules").then().statusCode(200);
 
-        String person = given().get("/api/dataset").then().statusCode(200).body("periods.size()", equalTo(0))
+        String person =given().get("/api/dataset").then().statusCode(200).body("periods.size()", equalTo(0))
                 .extract().jsonPath().prettify();
         String p1 = mapper.writeValueAsString(mapper.readTree(person).path("people").get(0));
         String read = mapper.readTree(person).path("revision").asText();

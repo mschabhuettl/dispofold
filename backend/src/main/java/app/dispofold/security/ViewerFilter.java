@@ -22,7 +22,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * {@code /api/plans/{month}/analysis}, {@code /api/plans/{month}/people/{id}} and {@code /api/plans/{month}/hits}
  * are redacted here: wishes, restrictions and family rules are empty, every absence has the type {@code ABW}
  * ("abwesend"), wish counts (also in the history) are 0, personal balances (hours account, compensatory rest,
- * credited and charged absence hours) are null and constraint results about wishes, family rules, restrictions and absences are left out. Exports are planner
+ * credited and charged absence hours) and the night comparison (who is in it, why not, the loads) are null and
+ * constraint results about wishes, family rules, restrictions and absences are left out. Exports are planner
  * only (PlanResource).
  */
 @Provider
@@ -41,7 +42,8 @@ public class ViewerFilter implements ContainerResponseFilter {
     static final Set<String> HISTORY_BALANCES = Set.of("hoursAccountAfter", "compRestBalanceAfter", "compRestUsed",
             "compRestEarned");
     static final Set<String> STATS_BALANCES = Set.of("accountBefore", "accountAfter", "compRestBalanceAfter",
-            "compRestEarned", "chargedHours", "creditedHours", "goalHours", "scaledGoalHours");
+            "compRestEarned", "chargedHours", "creditedHours", "goalHours", "scaledGoalHours", "nightPool",
+            "nightReason", "nightLoad", "nightMean");
 
     private static final Pattern PERIOD = Pattern.compile("api/periods/[^/]+");
     private static final Pattern ANALYSIS = Pattern.compile("api/plans/[^/]+/analysis");

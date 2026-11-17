@@ -258,10 +258,13 @@ public class RosterConstraints implements ConstraintProvider {
     record Load(Staff staff, long load) {
     }
 
-    /** People with usual shares per category are left out: their nights follow their mix (see shiftMix). */
+    /**
+     * People outside the night pool are left out: in HABIT those with usual shares per category, whose nights follow
+     * their mix (see shiftMix), and in both modes those who never do nights (see RosterBuilder).
+     */
     Constraint fairNights(ConstraintFactory f) {
-        return fairness(monthWork(f).filter(c -> c.getShift().isNight() && !c.getStaff().hasCategoryMix())
-                .map(RosterConstraints::load), f, s -> s.getFairness().nights() && !s.hasCategoryMix(),
+        return fairness(monthWork(f).filter(c -> c.getShift().isNight() && c.getStaff().isInNightPool())
+                .map(RosterConstraints::load), f, s -> s.getFairness().nights() && s.isInNightPool(),
                 s -> s.getHistory().nights(), ConstraintCatalog.FAIR_NIGHTS);
     }
 
@@ -404,7 +407,10 @@ public class RosterConstraints implements ConstraintProvider {
     }
 
     /** Same area and category again and again, counting the previous month too. */
-    /** Not for people with usual shares per category: their mix decides the categories. */
+    /**
+     * Not for people with usual shares per category: their mix decides the categories. In EVEN that is the mix without
+     * the night share (see RosterBuilder), so a person whose mix was only nights is in it.
+     */
     Constraint shiftVariety(ConstraintFactory f) {
         return monthWork(f)
                 .filter(c -> !c.getStaff().hasCategoryMix())
@@ -446,6 +452,10 @@ public class RosterConstraints implements ConstraintProvider {
                 .asConstraint(ConstraintCatalog.SHIFT_MIX);
     }
 
+    /**
+     * The category part compares with all duties of the person, or in EVEN (night share left out, the other shares
+     * scaled to sum to 1) with the duties that are not of category NIGHT; the area part always with all duties.
+     */
     static long mixDeviation(Staff s, java.util.List<DutyCell> cells) {
         java.util.Map<Object, Integer> planned = new java.util.HashMap<>();
         for (DutyCell c : cells) {
@@ -455,9 +465,16 @@ public class RosterConstraints implements ConstraintProvider {
         int n = cells.size();
         long sum = 0;
         if (s.hasCategoryMix()) {
+            int counted = n;
+            if (s.isNightsOutsideMix()) {
+                counted -= planned.getOrDefault(app.dispofold.model.ShiftCategory.NIGHT, 0);
+            }
             for (app.dispofold.model.ShiftCategory category : app.dispofold.model.ShiftCategory.values()) {
+                if (s.isNightsOutsideMix() && category == app.dispofold.model.ShiftCategory.NIGHT) {
+                    continue;
+                }
                 double share = s.getMix().categoriesOrEmpty().getOrDefault(category, 0.0);
-                sum += square(Math.round(10 * (planned.getOrDefault(category, 0) - share * n)));
+                sum += square(Math.round(10 * (planned.getOrDefault(category, 0) - share * counted)));
             }
         }
         if (s.hasAreaMix()) {

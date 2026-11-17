@@ -84,7 +84,8 @@ class ViewerFilterTest {
         // Personal balances: absent or null wherever they appear.
         for (String field : new String[] { "hoursAccount", "compRestBalance", "hoursAccountAfter",
                 "compRestBalanceAfter", "compRestUsed", "compRestEarned", "accountBefore", "accountAfter",
-                "chargedHours", "creditedHours", "goalHours", "scaledGoalHours" }) {
+                "chargedHours", "creditedHours", "goalHours", "scaledGoalHours", "nightPool", "nightReason",
+                "nightLoad", "nightMean" }) {
             assertThat(json).as(field).doesNotContainPattern("\"" + field + "\":(?!null)");
         }
     }
@@ -98,7 +99,8 @@ class ViewerFilterTest {
         assertThat(plannerDataset).containsPattern("\"hoursAccount\":(?!null)")
                 .containsPattern("\"compRestBalanceAfter\":(?!null)");
         assertThat(given().cookie(planner).get("/api/plans/" + MONTH + "/analysis").asString())
-                .containsPattern("\"accountAfter\":(?!null)");
+                .containsPattern("\"accountAfter\":(?!null)").containsPattern("\"nightPool\":(?!null)")
+                .containsPattern("\"nightLoad\":(?!null)");
         for (String path : new String[] { "/api/dataset", "/api/periods/" + MONTH, "/api/plans/" + MONTH,
                 "/api/plans/" + MONTH + "/analysis", "/api/plans/" + MONTH + "/people/P0004",
                 "/api/plans/" + MONTH + "/hits", "/api/plans/" + MONTH + "/coverage/" + area, "/api/months" }) {

@@ -116,14 +116,15 @@ public class PlanResource {
 
     /**
      * Key figures without wishes, hours account and time off in lieu (which would reveal the absence type); the
-     * goals are corrected by the hours account, so they are left out too.
+     * goals are corrected by the hours account, so they are left out too. The night comparison is left out: who is
+     * outside it, and why, would tell the usual mix, restrictions or family rules.
      */
     static PersonStats forViewer(PersonStats s) {
         return new PersonStats(s.personId(), s.targetHours(), s.creditedHours(), s.plannedHours(), 0, 0,
                 s.duties(), s.nights(), s.weekendsWorked(), s.weekendsOff(), s.holidays(), s.unpopular(), 0, 0,
                 s.compRestPlanned(), s.compRestEarned(), s.compRestBalanceAfter(), s.singleDays(), s.historyNights(),
                 s.historyWeekends(), s.historyHolidays(), s.historyUnpopular(), 0, 0, s.availableDays(), 0,
-                s.averageWeekHours(), s.averageComplete(), 0, 0, s.plannedMix());
+                s.averageWeekHours(), s.averageComplete(), 0, 0, s.plannedMix(), null, null, null, null);
     }
 
     /**

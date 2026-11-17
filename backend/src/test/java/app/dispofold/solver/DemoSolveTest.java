@@ -24,7 +24,8 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
  * {@code -Dsolver.longTest.fixture} another fixture file, e.g. large-dataset-2027-01.synthetic.json,
  * {@code -Dsolver.longTest.moves} a move limit (reproducible run), {@code -Dsolver.longTest.demandFactor} scales the
  * demand (e.g. 0.6: clearly more people than demand), {@code -Dsolver.longTest.mix=apply} gives two thirds of the
- * people clear usual mixes ({@code measure}: the same mixes only measured, for a comparison).
+ * people clear usual mixes ({@code measure}: the same mixes only measured, for a comparison),
+ * {@code -Dsolver.longTest.night=HABIT|EVEN} the night distribution (default: the default rules, HABIT).
  */
 @EnabledIfSystemProperty(named = "solver.longTest", matches = "true")
 class DemoSolveTest {
@@ -40,6 +41,11 @@ class DemoSolveTest {
         Map<String, ShiftMix> mixes = mixMode.isEmpty() ? Map.of() : clearMixes(input.dataset());
         if (mixMode.equals("apply")) {
             input = withMixes(input, mixes);
+        }
+        String night = System.getProperty("solver.longTest.night", "");
+        if (!night.isEmpty()) {
+            input = new PlanningInput(input.dataset(), input.period(),
+                    Fixtures.rules(app.dispofold.model.NightDistribution.valueOf(night)), input.assignments());
         }
         int seconds = Integer.getInteger("solver.longTest.seconds", 300);
         int unimproved = Integer.getInteger("solver.longTest.unimproved", 0);
@@ -73,6 +79,12 @@ class DemoSolveTest {
             LOG.infof("Mix (%s): %d people with a mix, mean category share deviation %.3f", mixMode, mixes.size(),
                     deviation);
         }
+        LOG.infof("Blocks: %d single days off, %d block days", analysis.singleDaysOff(), analysis.blockDays());
+        LOG.infof("Wishes met: %d of %d", analysis.people().stream().mapToInt(p -> p.wishesMet()).sum(),
+                analysis.people().stream().mapToInt(p -> p.wishes()).sum());
+        logNights("everyone", analysis.people().stream());
+        logNights("without a mix", analysis.people().stream().filter(p -> !mixes.containsKey(p.personId())));
+        logNights("in the night pool", analysis.people().stream().filter(p -> Boolean.TRUE.equals(p.nightPool())));
         analysis.people().stream().max(java.util.Comparator.comparingDouble(DemoSolveTest::overTarget))
                 .ifPresent(p -> LOG.infof("Largest hours over target: %.1f h (%.1f counted, %.1f target)",
                         overTarget(p), p.plannedHours() + p.creditedHours(), p.targetHours()));
@@ -146,6 +158,13 @@ class DemoSolveTest {
             sum += Math.abs(mix.categoriesOrEmpty().getOrDefault(c, 0.0) - p);
         }
         return sum / 2;
+    }
+
+    /** Night duties of the month per person: minimum, mean and maximum. */
+    private static void logNights(String group, java.util.stream.Stream<app.dispofold.model.PersonStats> people) {
+        java.util.IntSummaryStatistics s = people.mapToInt(p -> p.nights()).summaryStatistics();
+        LOG.infof("Nights per person (%s, %d people): min %d, mean %.2f, max %d", group, s.getCount(), s.getMin(),
+                s.getAverage(), s.getMax());
     }
 
     /** Counted hours (duties and credited days) above the target of the month. */

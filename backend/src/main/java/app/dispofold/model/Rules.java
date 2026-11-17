@@ -27,12 +27,15 @@ import java.util.Map;
  *        the target (hard); null in rules saved before it existed means {@link #DEFAULT_OVER_TARGET_PERCENT}
  * @param minFreeSundays Sundays of each calendar month without work per person (hard; works agreement, adjustable,
  *        0 switches it off); null in rules saved before it existed means {@link #DEFAULT_FREE_SUNDAYS}
+ * @param nightDistribution how nights are distributed; null in rules saved before it existed means
+ *        {@link NightDistribution#HABIT}
  */
 public record Rules(double minDailyRestHours, double minWeeklyRestHours, double maxDutyHours, double maxWeekHours,
         double maxAverageWeekHours, int minBlock, int maxBlock, int maxWishesPerPerson,
         boolean holidayWorkEarnsCompRest, LocalTime nightStart, LocalTime nightEnd, double nightMinHours,
         double accountCarryShare, int historyMonths, Map<String, Long> weights, String timeZone,
-        int averagingWeeks, Double maxOverTargetPercent, Integer minFreeSundays) {
+        int averagingWeeks, Double maxOverTargetPercent, Integer minFreeSundays,
+        NightDistribution nightDistribution) {
 
     public static final String DEFAULT_TIME_ZONE = "Europe/Vienna";
     /** Planning never goes below this daily rest; a shortened rest is for operations only. */
@@ -45,6 +48,11 @@ public record Rules(double minDailyRestHours, double minWeeklyRestHours, double 
         return minFreeSundays != null ? minFreeSundays : DEFAULT_FREE_SUNDAYS;
     }
 
+    /** {@link #nightDistribution()} with the default for rules saved without it. */
+    public NightDistribution nightMode() {
+        return nightDistribution != null ? nightDistribution : NightDistribution.HABIT;
+    }
+
     /** {@link #maxOverTargetPercent()} with the default for rules saved without it. */
     public double overTargetPercent() {
         return maxOverTargetPercent != null ? maxOverTargetPercent : DEFAULT_OVER_TARGET_PERCENT;
@@ -54,6 +62,6 @@ public record Rules(double minDailyRestHours, double minWeeklyRestHours, double 
     public static Rules defaults() {
         return new Rules(11, 36, 12, 60, 46.16, 2, 4, 6, true, LocalTime.of(22, 0), LocalTime.of(6, 0), 2, 0.25, 3,
                 Map.of(), DEFAULT_TIME_ZONE, 52, DEFAULT_OVER_TARGET_PERCENT,
-                DEFAULT_FREE_SUNDAYS);
+                DEFAULT_FREE_SUNDAYS, NightDistribution.HABIT);
     }
 }

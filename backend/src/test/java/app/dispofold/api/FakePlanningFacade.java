@@ -133,7 +133,7 @@ public class FakePlanningFacade implements PlanningFacade {
         int historyNights = input.dataset().history().stream().filter(h -> h.personId().equals(personId))
                 .mapToInt(h -> h.nights()).sum();
         return new PersonStats(personId, 170, 0, duties * 12.0, 0, 0, duties, nights, 2, 2, 1, nights, 1, 1, 0, 0,
-                0, 0, historyNights, 0, 0, 0, 0, 0, 31, 0, 40, false, 170, 170, null);
+                0, 0, historyNights, 0, 0, 0, 0, 0, 31, 0, 40, false, 170, 170, null, true, null, 2.0, 1.5);
     }
 
     @Override
