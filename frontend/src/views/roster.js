@@ -15,8 +15,6 @@ import { cellChoice, createPopover, dayClass, dayHeader, legendBox, lightThemeWh
 import { closeMonth, exportItems, outputMenu, printItem } from './plan-output.js';
 
 const POLL_INTERVAL_MS = 2000;
-/** Person explanations loaded at a time for the list behind a chip (each one analyses the plan on the server). */
-const HIT_REQUESTS = 4;
 const NAME_LABELS = { short: t('functions.names.short'), full: t('functions.names.full') };
 
 export async function render(root, ctx) {
@@ -58,7 +56,7 @@ export async function render(root, ctx) {
   const btnUnpin = h('button.btn.btn-secondary', { type: 'button', onclick: unpin }, t('roster.unpinAll'));
   const scoreText = h('span', {});
   const sticky = stickyHeights();
-  let personHits = null; // { analysis, promise } of the list behind the chips, loaded on the first click
+  let ruleHits = null; // { analysis, lists: rule id -> promise } of the lists behind the chips, loaded on the first click
 
   root.classList.add('roster-view', 'print-view');
   append(root, [
@@ -150,9 +148,8 @@ export async function render(root, ctx) {
   }
 
   /**
-   * Who and when for one rule: the penalties of that rule among the hits of every person's explanation (the
-   * analysis has only totals per rule). Loaded once per analysis, a few people at a time; viewers get only the
-   * hits the server shows them.
+   * Who and when for one rule: the penalties of that rule among the hits of the plan (the analysis has only totals
+   * per rule). Loaded once per rule and analysis; viewers get only the hits the server shows them.
    */
   function openHits(anchor, c, label) {
     const box = h('div.hit-list', {}, h('p.muted', {}, t('common.loading')));
@@ -160,18 +157,18 @@ export async function render(root, ctx) {
     // the list loads later: focus the dialog so that Escape works meanwhile
     el.tabIndex = -1;
     el.focus();
-    if (personHits?.analysis !== analysis) personHits = { analysis, promise: loadHits() };
-    const loading = personHits;
-    loading.promise.then((all) => {
-      const failed = all.filter((x) => !x.hits).length;
+    if (ruleHits?.analysis !== analysis) ruleHits = { analysis, lists: new Map() };
+    const { lists } = ruleHits;
+    if (!lists.has(c.id)) lists.set(c.id, loadHits(c.id));
+    const loading = lists.get(c.id);
+    loading.then((rows) => {
       // a failed request is tried again at the next click
-      if (failed && personHits === loading) personHits = null;
-      const rows = all.flatMap(({ person, hits }) => (hits ?? []).filter((x) => x.constraintId === c.id && x.score < 0).map((hit) => ({ person, hit })));
+      if (!rows && lists.get(c.id) === loading) lists.delete(c.id);
       if (!box.isConnected) return;
       box.replaceChildren();
       append(box, [
-        failed > 0 && h('p.alert.alert-error', {}, t('roster.chipFailed', { count: failed })),
-        rows.length
+        !rows ? h('p.alert.alert-error', {}, t('roster.chipFailed'))
+        : rows.length
           ? h('ul', {}, rows.map(({ person, hit }) => h('li', {},
             h('button', { type: 'button', onclick: () => ctx.navigate(`person/${encodeURIComponent(person.id)}`) },
               h('span.candidate-name', {}, personName(person)), h('span', {}, hit.date ? dayLabel(hit.date) : t('roster.chipMonth')),
@@ -180,19 +177,14 @@ export async function render(root, ctx) {
     });
   }
 
-  /** Hits of every person, sorted by name; hits is null where the request failed. */
-  async function loadHits() {
-    const people = [...dataset.people].sort((a, b) => personName(a).localeCompare(personName(b), 'de'));
-    const out = new Array(people.length);
-    let next = 0;
-    const worker = async () => {
-      while (next < people.length) {
-        const i = next++;
-        out[i] = { person: people[i], hits: (await api.person(month, people[i].id).catch(() => null))?.hits ?? null };
-      }
-    };
-    await Promise.all(Array.from({ length: HIT_REQUESTS }, worker));
-    return out;
+  /** The penalties of one rule with their person, sorted by name; null when the request failed. */
+  async function loadHits(id) {
+    const groups = await api.hits(month, id).catch(() => null);
+    if (!groups) return null;
+    const people = new Map(dataset.people.map((p) => [p.id, p]));
+    return (groups[id] ?? []).filter((hit) => hit.score < 0 && people.has(hit.personId))
+      .map((hit) => ({ person: people.get(hit.personId), hit }))
+      .sort((a, b) => personName(a.person).localeCompare(personName(b.person), 'de'));
   }
 
   function drawTable() {

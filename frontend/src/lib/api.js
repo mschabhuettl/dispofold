@@ -159,6 +159,8 @@ export function createApi({ fetchImpl = (...a) => globalThis.fetch(...a), onUnau
     unpin: (month) => request('POST', `/api/plans/${m(month)}/unpin`),
     analysis: (month) => request('GET', `/api/plans/${m(month)}/analysis`),
     person: (month, id) => request('GET', `/api/plans/${m(month)}/people/${encodeURIComponent(id)}`),
+    /** The hits of every person for one rule: { [constraintId]: [{ personId, ...hit }] }. */
+    hits: (month, constraintId) => request('GET', `/api/plans/${m(month)}/hits?constraint=${k(constraintId)}`),
     coverage: (month, areaId) => request('GET', `/api/plans/${m(month)}/coverage/${encodeURIComponent(areaId)}`),
     /** Planners only: who could be asked in a gap {areaId, from, to} (local date-times as in the analysis). */
     candidates: (month, gap) => request('GET', `/api/plans/${m(month)}/candidates?areaId=${k(gap.areaId)}&from=${k(gap.from)}&to=${k(gap.to)}`),

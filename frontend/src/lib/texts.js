@@ -162,7 +162,7 @@ export const TEXTS = {
   'roster.chipCompare': 'Qualität {label}. Wer liegt über dem Durchschnitt?',
   'roster.chipMonth': 'ganzer Monat',
   'roster.chipNone': 'Keine Angaben zu Personen und Tagen verfügbar.',
-  'roster.chipFailed': 'Für {count|Person|Personen} konnten die Angaben nicht geladen werden. Ein neuer Klick versucht es noch einmal.',
+  'roster.chipFailed': 'Die Angaben konnten nicht geladen werden. Ein neuer Klick versucht es noch einmal.',
   'output.menu': 'Ausgabe',
   'output.export': 'Export {format}',
   'closeMonth.hardNone': 'Keine Regelverstöße',

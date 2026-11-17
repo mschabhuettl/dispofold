@@ -475,6 +475,18 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
         if (role !== 'planner') return json({ stats: redactStats(stats), hits: [] });
         return json({ stats, hits: hitsOf(m, p, stats) });
       }
+      if (c === 'hits') {
+        // like the person explanations: viewers get no hits here
+        const groups = {};
+        if (role !== 'planner') return json(groups);
+        const only = query.get('constraint');
+        for (const p of dataset.people) {
+          for (const hit of hitsOf(m, p, personStats(m, p))) {
+            if (!only || hit.constraintId === only) (groups[hit.constraintId] ??= []).push({ personId: p.id, ...hit });
+          }
+        }
+        return json(groups);
+      }
       if (c === 'coverage') return json(coverage(m, d));
       if (c === 'candidates') {
         if (role !== 'planner') return err(403, 'Nur für Planung', 'auth.forbidden');

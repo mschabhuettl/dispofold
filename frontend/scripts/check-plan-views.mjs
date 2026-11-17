@@ -12,6 +12,7 @@ import { chromium } from 'playwright';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const month = '2027-01';
+const hitsPath = `/api/plans/${month}/hits`;
 const port = await new Promise((resolve) => {
   const s = createServer().listen(0, () => { const p = s.address().port; s.close(() => resolve(p)); });
 });
@@ -140,10 +141,18 @@ try {
   // chips: a click lists person and day
   const chips = page.locator('.chips .chip');
   check('rule chips', await chips.count() > 0, String(await chips.count()));
+  const listRequests = [];
+  const countRequest = (r) => {
+    const path = new URL(r.url()).pathname;
+    if (path === hitsPath || path.startsWith(`/api/plans/${month}/people/`)) listRequests.push(path);
+  };
+  page.on('request', countRequest);
   await chips.first().click();
   await page.locator('.popover .hit-list li').first().waitFor({ timeout: 10000 }).catch(() => {});
+  page.off('request', countRequest);
   const entries = await page.locator('.popover .hit-list li').allInnerTexts();
   check('chip list with person and day', entries.length > 0 && /\S+ \S+/.test(entries[0]), entries.slice(0, 2).join(' | '));
+  check('chip list: one request for all hits, none per person', listRequests.length === 1 && listRequests[0] === hitsPath, listRequests.join(' '));
   await page.keyboard.press('Escape');
   check('chip list closes', await page.locator('.popover').count() === 0);
   // a fairness rule is one comparison of everybody: its chip has no count
@@ -163,14 +172,15 @@ try {
   check('headline with violations', /^2 Regelverstöße(, \d+ Lücken? \([\d,]+ Personenstunden\))?$/.test(bad)
     && (await headline.getAttribute('class')).includes('headline-bad'), bad);
   check('hard chip', (await page.locator('.chip.chip-hard').textContent()).replace(/\s+/g, ' ') === 'Tägliche Ruhezeit 2');
-  // the person explanations fail: a note, and the next click loads them again
-  await page.route(`**/api/plans/${month}/people/**`, (route) => route.fulfill({ status: 500, body: '' }));
+  // the hits fail: a note, and the next click loads them again
+  const hitsUrl = (url) => url.pathname === hitsPath;
+  await page.route(hitsUrl, (route) => route.fulfill({ status: 500, body: '' }));
   const softChip = page.locator('.chips .chip:not(.chip-hard)').first();
   await softChip.click();
   await page.locator('.popover .alert-error').waitFor({ timeout: 10000 }).catch(() => {});
   check('failed list: note', await page.locator('.popover .alert-error').count() === 1);
   await page.keyboard.press('Escape');
-  await page.unroute(`**/api/plans/${month}/people/**`);
+  await page.unroute(hitsUrl);
   await softChip.click();
   await page.locator('.popover .hit-list li').first().waitFor({ timeout: 10000 }).catch(() => {});
   check('failed list: loaded again', await page.locator('.popover .alert-error').count() === 0
