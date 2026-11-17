@@ -34,7 +34,7 @@ tun ist, steht in [docs/betrieb.md](docs/betrieb.md#unsignierte-programme).
 
 | Für | Dokument |
 |---|---|
-| Dienstplanung | [docs/anleitung.md](docs/anleitung.md): planen, prüfen, fixieren, abschließen, exportieren |
+| Dienstplanung | [docs/anleitung.md](docs/anleitung.md): so funktioniert es, typischer Ablauf, jede Seite des Menüs |
 | IT | [docs/betrieb.md](docs/betrieb.md): Installation, Update, Sicherung, Deinstallation jeder Auslieferung |
 | Betreuung und Releases | [docs/release.md](docs/release.md): CI, Repository-Einstellungen, Release |
 | Technik Desktop | [docs/desktop.md](docs/desktop.md): Programmfenster, Launcher, Datenordner, Updates |
@@ -76,8 +76,8 @@ docker compose ps    # nach ein bis zwei Minuten alle Dienste "healthy"
 ```
 
 Die Oberfläche ist dann unter `http://<server>:8080` erreichbar. Für den Zugriff im Netz gehört ein Reverse Proxy
-mit HTTPS davor. Erster Test: anmelden, **Import/Export**, **Erweitert**, **Demodaten laden**, dann im **Dienstplan** auf
-**Planen** klicken. Die Demodaten beschreiben eine erfundene Leitstelle: 150 erfundene Personen in fünf
+mit HTTPS davor. Erster Test: anmelden, **Einstellungen**, **Daten**, **Erweitert**, **Demodaten laden**, dann im
+**Dienstplan** auf **Planen** klicken. Die Demodaten beschreiben eine erfundene Leitstelle: 150 erfundene Personen in fünf
 Bereichen, Jänner 2027.
 
 `scripts/make-env.sh` füllt eine `.env` mit Zufallswerten. Es ist für Teststacks gedacht (CI), nicht für den
@@ -91,7 +91,7 @@ Betrieb.
 |---|---|
 | ![Zeitachse](docs/screenshots/zeitachse.png) | ![Person](docs/screenshots/person.png) |
 
-| Fairness | Regeln & Gewichte |
+| Fairness | Regeln |
 |---|---|
 | ![Fairness](docs/screenshots/fairness.png) | ![Regeln](docs/screenshots/regeln.png) |
 

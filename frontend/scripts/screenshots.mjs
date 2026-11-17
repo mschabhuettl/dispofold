@@ -81,7 +81,13 @@ try {
     state = await api('GET', `/api/plans/${month}`);
   }
 
-  const analysis = await api('GET', `/api/plans/${month}/analysis`);
+  let analysis = await api('GET', `/api/plans/${month}/analysis`);
+  // the demo plan has no gaps: with SEED_DEMO=1, free a few duties of one day (pinned free) for the gap views
+  if (process.env.SEED_DEMO === '1' && !analysis.gaps.length) {
+    const freed = state.plan.assignments.filter((a) => a.shiftId && a.date === `${month}-12`).slice(0, 3);
+    for (const a of freed) await api('PUT', `/api/plans/${month}/cells`, { personId: a.personId, date: a.date, shiftId: null, compRest: false, pinned: true });
+    analysis = await api('GET', `/api/plans/${month}/analysis`);
+  }
   const gapArea = analysis.gaps[0]?.areaId;
   const gapDay = analysis.gaps[0]?.from.slice(0, 10);
   const someone = state.plan.assignments.find((a) => a.shiftId)?.personId;
@@ -115,6 +121,17 @@ try {
       await page.waitForTimeout(500);
       await save('anfrage');
     }
+    // Prüfen with the list of who could be asked opened at the first gap
+    await shot('pruefen', 'pruefen', '#check-data');
+    const ask = page.locator('#check-gaps .gap-item button').first();
+    if (await ask.count()) {
+      await ask.click();
+      await page.locator('#check-gaps .candidates[data-loaded]').first().waitFor({ timeout: 30000 });
+      await page.locator('#check-gaps').evaluate((el) => { el.scrollIntoView(); window.scrollBy(0, -120); });
+      await page.waitForTimeout(500);
+      await save('pruefen-bedarf');
+    }
+    await shot('eingaben', 'eingaben', '#inputs-filter');
     await shot('person', `person/${encodeURIComponent(someone)}`, '.hits-day, .alert');
     await shot('fairness', 'fairness', '.spread svg');
     await shot('regeln', 'regeln', '#h-goals');
@@ -126,6 +143,7 @@ try {
     await page.locator('#h-edit').evaluate((el) => el.scrollIntoView());
     await page.waitForTimeout(500);
     await save('person-bearbeiten');
+    await shot('daten', 'import', '#h-import');
     if (desktop) await shot('einstellungen', 'einstellungen', '.settings');
   }
 } finally {
