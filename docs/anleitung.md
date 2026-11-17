@@ -153,14 +153,15 @@ Die Begriffe im Einzelnen:
   gesetzten oder fixierten Diensten. Rot markierte Zellen zeigen einen Dienst trotz Abwesenheit. Welche Regel
   an welchem Tag verletzt ist, zeigt die Seite **Person**.
 - **Freie Sonntage:** Jede Person hat im Kalendermonat mindestens zwei Sonntage ohne Dienst. Die Zahl steht
-  unter **Regeln & Gewichte** bei **Freie Sonntage je Monat**; 0 schaltet die Regel aus. Ein Sonntag ist nur
+  unter **Regeln & Gewichte**, **Gesetz und Betriebsvereinbarung** (nach **Ändern**: **Freie Sonntage je Monat**);
+  0 schaltet die Regel aus. Ein Sonntag ist nur
   frei, wenn kein Dienst ihn berührt, auch kein Nachtdienst von Samstag auf Sonntag; Urlaub und andere
   Abwesenheiten zählen als frei. Von Hand gesetzte Dienste dürfen die Regel verletzen und zählen dann als
   Regelverstoß.
 - **Höchststunden im Monat:** Die Stunden einer Person im Monat (Dienste, angerechnete Abwesenheitstage und
   Ersatzruhe) dürfen das Ziel (Soll mit Ausgleich des Stundenkontos) höchstens um eine Toleranz übersteigen,
-  voreingestellt 10 % des Ziels. Die Toleranz steht unter **Regeln & Gewichte** bei **Höchstens über dem Ziel
-  (%)**; die gesetzlichen Grenzen wie die Höchstarbeitszeit je Woche gelten unabhängig davon. Das Programm plant
+  voreingestellt 10 % des Ziels. Die Toleranz steht unter **Regeln & Gewichte** im Planungsziel **Stunden
+  treffen** („höchstens 10 % über dem Ziel“); die gesetzlichen Grenzen wie die Höchstarbeitszeit je Woche gelten unabhängig davon. Das Programm plant
   nie darüber. Ein von Hand gesetzter Dienst darf darüber gehen, zählt dann aber als Regelverstoß und steht auf
   der Seite **Person** unter **Ganzer Monat**. Die Liste **Auf Anfrage verfügbar** lässt Personen aus, die
   der Dienst über diese Grenze brächte.
@@ -205,12 +206,31 @@ Weitere Seiten:
   die Vormonate (Historie). Mit **Auf 40 Wochenstunden normiert** werden Teilzeitkräfte vergleichbar. Bei der
   Fairness zählt die Abweichung vom Mittelwert: Ein Treffer in der Erklärung erscheint nur bei Personen über dem
   Mittelwert.
-- **Regeln & Gewichte:** Regelwerte (zum Beispiel Ruhezeiten) und die Gewichte der Qualitätsregeln als
-  Zahlenfelder, jeweils mit dem Standardwert und **Zurücksetzen**. Die Beschreibungen der Regeln nennen die
-  eingestellten Werte und folgen der Eingabe. Die Leiste mit **Speichern** bleibt beim Blättern sichtbar und
-  zeigt **Nicht gespeichert**, solange Änderungen offen sind; wer die Seite dann verlässt, wird gefragt. Die
-  tägliche Ruhezeit kann nicht unter 11 Stunden gesetzt werden. Das Gewicht von **Dienst nur auf Anfrage** ist
-  fest („fest“ statt eines Zahlenfelds): Solche Dienste plant das Programm ohnehin nie selbst ein.
+- **Regeln & Gewichte:** drei Abschnitte.
+  - **Planungsziele:** oben die Einstellung **Nachtdienste**: „Wie bisher“ (jede Person behält ihren gewohnten
+    Nachtanteil, Standard) oder „Gleichmäßig“ (Nachtdienste fair auf alle verteilen). Ist „Wie bisher“ gewählt und
+    das Gewicht von **Gewohnte Verteilung** 0, warnt die Seite: Personen mit gewohnter Verteilung haben dann keine
+    Regel für Nachtdienste. Darunter die Ziele **Dienstblöcke** (Blöcke von ... bis ... Tagen), **Wünsche**
+    (höchstens ... je Person), **Faire Verteilung** (Wochenenden, Feiertage, unbeliebte Dienste und Nächte, über
+    die letzten ... Monate), **Stunden treffen** (höchstens ... % über dem Ziel, Stundenkonto ausgleichen ... % je
+    Monat) und **Familienregeln**, jedes mit einer **Wichtigkeit**: **weniger**, **normal** oder **mehr** setzt die
+    Gewichte der Regeln dieses Ziels auf das 0,5-, 1- oder 2-Fache ihres Standards (auf ganze Zahlen gerundet).
+    Wurde ein Gewicht des Ziels unter **Erweitert** von Hand geändert, steht dort **angepasst**; die Wahl einer
+    Wichtigkeit überschreibt diese Gewichte wieder.
+  - **Gesetz und Betriebsvereinbarung:** Ruhezeiten, Höchstdauer eines Dienstes, Höchstarbeitszeit je Woche,
+    Höchststunden im Monat, durchschnittliche Wochenarbeitszeit mit dem Durchrechnungszeitraum, freie Sonntage
+    und Ersatzruhe für Feiertagsdienste, als Text. Erst **Ändern** macht die Felder bearbeitbar. Die tägliche
+    Ruhezeit kann nicht unter 11 Stunden gesetzt werden.
+  - **Erweitert** (zugeklappt): die Nachtzeit (Beginn, Ende, Mindeststunden) und alle Regeln mit Beschreibung,
+    nach Qualität, Regelverstoß und Bedarf. Die Gewichte der Qualitätsregeln sind Zahlenfelder mit dem
+    Standardwert und **Zurücksetzen**; bei den Regeln eines Planungsziels steht, zu welchem Ziel sie gehören. Das
+    Gewicht von **Dienst nur auf Anfrage** ist fest („fest“ statt eines Zahlenfelds): Solche Dienste plant das
+    Programm ohnehin nie selbst ein.
+
+  Die Beschreibungen der Regeln nennen die eingestellten Werte und folgen der Eingabe. Die Leiste mit
+  **Speichern** bleibt beim Blättern sichtbar und zeigt **Nicht gespeichert**, solange Änderungen offen sind; wer
+  die Seite dann verlässt, wird gefragt. Regeln, die mit einer älteren Version gespeichert wurden, laden
+  unverändert; ohne Einstellung der Nachtdienste gilt „Wie bisher“.
 
 ## Plan nach Funktion
 
