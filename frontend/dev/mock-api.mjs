@@ -308,7 +308,7 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
     const plan = plans.get(m);
     const gaps = [];
     let overstaffedHours = 0;
-    const hours = (sg) => (parseLocalDateTime(sg.to) - parseLocalDateTime(sg.from)) / 3600000;
+    const hours = (sg) => (parseLocalDateTime(sg.to) - parseLocalDateTime(sg.from)) / 60; // epoch minutes
     for (const area of dataset.areas) {
       for (const sg of coverage(m, area.id)) {
         if (sg.planned < sg.required) gaps.push({ areaId: area.id, from: sg.from, to: sg.to, required: sg.required, planned: sg.planned });

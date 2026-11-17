@@ -99,7 +99,7 @@ try {
   // Open demand
   const gaps = page.locator('#check-gaps');
   const headline = (await gaps.locator('.check-headline').textContent()) ?? '';
-  check('open demand has the headline of the Dienstplan', /^\d+ Lücken? \([\d,]+ Personenstunden\)$/.test(headline), headline);
+  check('open demand has the headline of the Dienstplan', /^\d+ Lücken? \([\d,  ]+ Personenstunden\)$/.test(headline), headline);
   check('gaps are listed by day', (await gaps.locator('.check-group > summary').count()) > 0 && (await gaps.locator('li.gap-item').count()) > 0);
   check('a gap names the functions of the area', ((await gaps.locator('li.gap-item').first().textContent()) ?? '').includes('Funktionen:'));
   await gaps.locator('li.gap-item button', { hasText: 'Auf Anfrage verfügbar' }).first().click();

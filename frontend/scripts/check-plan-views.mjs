@@ -129,7 +129,7 @@ try {
   if (analysis.hardViolations === 0 && gaps === 0) {
     check('headline usable', text === 'Plan verwendbar: keine Regelverstöße, keine Lücken' && cls.includes('headline-good'), `${text} (${cls})`);
   } else {
-    check('headline with gaps', analysis.hardViolations === 0 && new RegExp(`^${gaps} Lücken? \\([\\d,]+ Personenstunden\\)$`).test(text)
+    check('headline with gaps', analysis.hardViolations === 0 && new RegExp(`^${gaps} Lücken? \\([\\d,\\u202f\\u00a0]+ Personenstunden\\)$`).test(text)
       && cls.includes('headline-warn'), `${text} (${cls})`);
   }
   const visible = await page.locator('.statusbar').innerText();
@@ -169,7 +169,7 @@ try {
   await page.reload();
   await page.locator('.roster-wrap table').waitFor();
   const bad = await headline.textContent();
-  check('headline with violations', /^2 Regelverstöße(, \d+ Lücken? \([\d,]+ Personenstunden\))?$/.test(bad)
+  check('headline with violations', /^2 Regelverstöße(, \d+ Lücken? \([\d,  ]+ Personenstunden\))?$/.test(bad)
     && (await headline.getAttribute('class')).includes('headline-bad'), bad);
   check('hard chip', (await page.locator('.chip.chip-hard').textContent()).replace(/\s+/g, ' ') === 'Tägliche Ruhezeit 2');
   // the hits fail: a note, and the next click loads them again
