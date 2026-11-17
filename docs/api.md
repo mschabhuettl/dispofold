@@ -32,6 +32,10 @@ Im Docker-Betrieb begrenzt nginx die Anmeldeversuche auf 10 je Minute und Adress
 | `GET` | `/api/dataset/export` | Datei-Download: Stammdaten und alle Planungsmonate als `Dataset` (Version 2), nur für `planner` |
 | `POST` | `/api/import/dataset?replace=true` | lädt ein `Dataset`-Dokument (Body, siehe `docs/datenformat.md`), Antwort `ImportSummary` |
 | `POST` | `/api/import/demo?replace=true` | lädt die mitgelieferten synthetischen Demodaten (150 Personen, Jänner 2027), Antwort `ImportSummary` |
+| `POST` | `/api/import/dataset?keep=true` | Import, der die seit dem letzten Import in Dispofold geänderten Stammdaten übernimmt (siehe unten), Antwort `ImportSummary` |
+| `POST` | `/api/import/preview` | Probelauf von `keep=true` ohne zu speichern (Body: `Dataset`), Antwort `{ "changed": bool, "kept": n, "conflicts": [{ "personId", "areaId", "field" }], "notes": [{ code, params }] }`; lehnt wie der Import ab (`import.invalid`), wenn der zusammengeführte Datensatz Fehler hätte |
+| `GET` | `/api/data/corrections` | Änderungen seit dem letzten Import als Korrekturdatei: `{ "file": { "format": "dispofold/corrections", "version": 2, "people": {...}, "demand": {...} }, "notes": [{ code, params }], "count": n }`, nur für `planner` |
+| `GET` | `/api/data/anonymized?month=YYYY-MM` | pseudonymisierter Datensatz (alle Planungsmonate) und Plan des Monats mit getrenntem Schlüssel: `{ "dataset", "plan", "key": "CSV", "people": n }`, nur für `planner` |
 
 Stammdaten bearbeiten:
 
@@ -61,7 +65,19 @@ Stammdaten bearbeiten:
   Import ohne `replace=true` mit `409` `import.masterChanged` ab. Ein Planungsmonat im Datensatz, der hier
   abgeschlossen ist, muss gleich sein wie der gespeicherte (er bleibt dann unverändert), sonst `import.closed`.
 
-`ImportSummary`: `{ "source", "people", "areas", "shifts", "months": ["YYYY-MM"], "warnings": [{ "code", "params" }] }`.
+Stand des letzten Imports: Jeder Import speichert die importierten Stammdaten unverändert als Ausgangsstand.
+Die Korrekturdatei enthält, was seit diesem Stand in Dispofold geändert wurde: je Person die geänderten Felder
+(`weeklyHours`, `areaIds`, `hoursAccount`, `compRestBalance`, `familyRules`, `entryDate`, `exitDate`,
+`shiftMix`), ihre Einschränkungen als ganze Liste, `"exclude": true` für in Dispofold entfernte Personen und
+`demand` je Bereich mit geänderten Bedarfsregeln. Was die Datei nicht ausdrücken kann (neue Personen, geänderte
+Ids, Namen und Kürzel, geänderte Bereiche, Schichten, Abwesenheitsarten und Feiertage, Werte mit Ids, die es im
+Ausgangsstand nicht gibt) steht in `notes` (nur Ids und Feldnamen). `keep=true` wendet dieselben Änderungen auf
+den neuen Datensatz an; ein Feld, das auch der neue Import gegenüber dem alten Ausgangsstand ändert, ist ein
+Konflikt, und der Wert aus Dispofold gilt. Danach ist der neue, unveränderte Import der Ausgangsstand; wurde
+etwas übernommen, bleibt `changedSinceImport` wahr. Installationen aus älteren Versionen haben bis zum nächsten
+Import keinen Ausgangsstand (`409` `corrections.noBaseline`).
+
+`ImportSummary`: `{ "source", "people", "areas", "shifts", "months": ["YYYY-MM"], "warnings": [{ "code", "params" }], "kept": n, "notes": [{ "code", "params" }] }`.
 Ein Import ersetzt die Stammdaten und die Planungsmonate, die im Datensatz enthalten sind. Pläne bleiben.
 Ein fehlerhafter Datensatz wird als Ganzes abgelehnt (`400` `import.invalid` mit allen Fehlern in `errors`);
 nichts wird stillschweigend verworfen. Passt die Datei nicht zum Format (kein JSON, falsche Typen), nennt
@@ -236,6 +252,18 @@ Import:
 | `import.solving`, `import.closed` | 409 | `month` |
 | `import.masterChanged` | 409 | |
 | `import.demoMissing` | 500 | |
+| `corrections.noBaseline` | 409 | |
+| `anonymize.leak` | 409 | `count`, `places` (JSON-Pfade, durch Komma getrennt, nie Namen) |
+
+Hinweise (`notes`) der Korrekturdatei und des Imports mit `keep=true`, alle mit Status 200:
+
+| Code | Status | Parameter |
+|---|---|---|
+| `corrections.personAdded`, `corrections.personMissing`, `corrections.unknownArea`, `corrections.noArea`, `corrections.mixArea`, `corrections.unknownShift`, `corrections.dates`, `corrections.lastPerson` | 200 | `personId` |
+| `corrections.identity` | 200 | `personId`, `field` |
+| `corrections.master` | 200 | `kind`, `key`, `change` (`added`, `removed`, `changed`) |
+| `corrections.demandArea` | 200 | `areaId` |
+| `corrections.idFormat` | 200 | `count` |
 
 Die Codes in `errors` und `warnings` stehen in `docs/datenformat.md` unter "Fehlercodes beim Import".
 

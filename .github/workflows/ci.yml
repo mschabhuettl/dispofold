@@ -137,6 +137,9 @@ jobs:
       - name: Eingaben with absence ranges and a person filter (browser)
         working-directory: frontend
         run: node scripts/check-inputs.mjs
+      - name: Daten page, corrections file, import keeping changes, anonymised export (browser)
+        working-directory: frontend
+        run: node scripts/check-data.mjs
 
   desktop-shell:
     # Unit tests of the program window (protocol, proof, proxy rules).

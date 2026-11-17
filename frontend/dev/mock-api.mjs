@@ -8,6 +8,10 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
   let dataset = initial ? structuredClone(initial) : makeDataset(month);
   let rules = structuredClone(DEFAULT_RULES);
   const periods = new Map(dataset.periods.map((p) => [p.month, p]));
+  // Daten page: the master data of the last import (baseline) and whether they were changed since (PUT people)
+  const masterOf = (d) => structuredClone({ ...d, periods: [] });
+  let baseline = masterOf(dataset);
+  let changedSinceImport = false;
   const plans = new Map();
   const solving = new Map(); // month -> { started, limitMs }
 
@@ -397,6 +401,64 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
     accountAfter: null, compRestBalanceAfter: null, compRestEarned: null, chargedHours: null, creditedHours: null,
     nightPool: null, nightReason: null, nightLoad: null, nightMean: null, weekendLoad: null, holidayLoad: null, unpopularLoad: null });
 
+  // Changes made "in Dispofold" since the last import, person fields only (the backend also has restrictions,
+  // removed people and demand), compared like the backend: absent and null are the same.
+  const PERSON_FIELDS = ['weeklyHours', 'areaIds', 'hoursAccount', 'compRestBalance', 'familyRules', 'entryDate', 'exitDate', 'shiftMix'];
+  const same = (x, y) => JSON.stringify(x ?? null) === JSON.stringify(y ?? null);
+  function changes() {
+    const before = new Map(baseline.people.map((p) => [p.id, p]));
+    const out = [];
+    for (const p of dataset.people) {
+      const old = before.get(p.id);
+      if (old) for (const field of PERSON_FIELDS) if (!same(old[field], p[field])) out.push({ personId: p.id, field, value: p[field] ?? null });
+    }
+    const notes = dataset.people.filter((p) => !before.has(p.id)).map((p) => ({ code: 'corrections.personAdded', params: { personId: p.id } }));
+    return { changed: out, notes };
+  }
+  /** The changes applied to a new import; a field the import changed as well is a conflict, Dispofold's value wins. */
+  function keepChanges(incoming) {
+    const { changed, notes } = changes();
+    const merged = structuredClone(incoming);
+    const was = new Map(baseline.people.map((p) => [p.id, p]));
+    const conflicts = [];
+    let kept = 0;
+    for (const c of changed) {
+      const target = merged.people.find((p) => p.id === c.personId);
+      if (!target) {
+        notes.push({ code: 'corrections.personMissing', params: { personId: c.personId } });
+        continue;
+      }
+      if (!same(was.get(c.personId)[c.field], target[c.field])) conflicts.push({ personId: c.personId, areaId: null, field: c.field });
+      target[c.field] = structuredClone(c.value);
+      kept++;
+    }
+    return { merged, conflicts, kept, notes };
+  }
+  /** Pseudonymised dataset (all months) and plan: people sorted by id are P001, P002, ...; free texts neutral. */
+  function anonymized(m) {
+    const ids = dataset.people.map((p) => p.id).sort();
+    const byId = new Map(dataset.people.map((p) => [p.id, p]));
+    const pseudonym = new Map(ids.map((id, i) => [id, `P${String(i + 1).padStart(3, '0')}`]));
+    const swap = (x) => (Array.isArray(x) ? x.map(swap) : x && typeof x === 'object'
+      ? Object.fromEntries(Object.entries(x).map(([k, v]) => [k, k === 'personId' ? (pseudonym.get(v) ?? 'P999') : swap(v)])) : x);
+    const shared = swap({ ...dataset, periods: [...periods.values()] });
+    Object.assign(shared, { source: 'anonymisiert',
+      areas: dataset.areas.map((x) => ({ ...x, name: x.id })),
+      shifts: dataset.shifts.map((x) => ({ ...x, name: x.code })),
+      absenceTypes: dataset.absenceTypes.map((x) => ({ ...x, name: x.code })),
+      holidays: dataset.holidays.map((x) => ({ ...x, name: 'Feiertag' })),
+      people: ids.map((id) => {
+        const p = byId.get(id);
+        const q = pseudonym.get(id);
+        return { ...p, id: q, firstName: q, lastName: q, shortName: q, externalId: q, familyRules: (p.familyRules ?? []).map((f) => ({ ...f, note: null })) };
+      }) });
+    const key = ['﻿pseudonym;id;externe_id;nachname;vorname;kuerzel', ...ids.map((id) => {
+      const p = byId.get(id);
+      return [pseudonym.get(id), id, p.externalId ?? '', p.lastName, p.firstName, p.shortName].join(';');
+    })].join('\r\n');
+    return { dataset: shared, plan: swap(plans.get(m) ?? emptyPlan(m)), key: `${key}\r\n`, people: ids.length };
+  }
+
   /** True while the mock program "restarts" after an update. */
   handle.restarting = () => Date.now() < downUntil;
   handle.restartFor = (ms) => { downUntil = Date.now() + ms; };
@@ -442,55 +504,91 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
     if (a === 'logout') return json(null, 204);
     if (a === 'dataset' && !b && method === 'GET') {
       if (role !== 'planner') {
-        return json({ ...dataset, revision: masterRevision, periods: [], restrictions: [], people: dataset.people.map((p) => ({ ...p, familyRules: [], hoursAccount: null,
+        return json({ ...dataset, revision: masterRevision, periods: [], restrictions: [], changedSinceImport, people: dataset.people.map((p) => ({ ...p, familyRules: [], hoursAccount: null,
           compRestBalance: null, shiftMix: null, externalId: null })) });
       }
-      return json({ ...dataset, revision: masterRevision, periods: [] });
+      return json({ ...dataset, revision: masterRevision, periods: [], changedSinceImport });
     }
     // master data of people as docs/api.md (answers { revision, key, item }); the revision is counted but not checked
     if (a === 'dataset' && b === 'people' && d === 'restrictions' && method === 'PUT') {
       if (!dataset.people.some((p) => p.id === c)) return err(404, `Person ${c} nicht gefunden`, 'masterdata.unknown');
       dataset.restrictions = [...dataset.restrictions.filter((r) => r.personId !== c), ...body.map((r) => ({ ...r, personId: c }))];
+      changedSinceImport = true;
       return json({ revision: ++masterRevision, key: c, item: body });
     }
     if (a === 'dataset' && b === 'people' && !c && method === 'POST') {
       const item = { ...body, id: `PN${++newPeople}` };
       dataset.people.push(item);
+      changedSinceImport = true;
       return json({ revision: ++masterRevision, key: item.id, item });
     }
     if (a === 'dataset' && b === 'people' && c && !d && method === 'DELETE') {
       if (!dataset.people.some((p) => p.id === c)) return err(404, `Person ${c} nicht gefunden`, 'masterdata.unknown');
       dataset.people = dataset.people.filter((p) => p.id !== c);
       dataset.restrictions = dataset.restrictions.filter((r) => r.personId !== c);
+      changedSinceImport = true;
       return json({ revision: ++masterRevision, key: c });
     }
     if (a === 'dataset' && b === 'people' && c && !d && method === 'PUT') {
       const i = dataset.people.findIndex((p) => p.id === c);
       if (i < 0) return err(404, `Person ${c} nicht gefunden`);
       dataset.people[i] = { ...body, id: c };
+      changedSinceImport = true;
       return json({ revision: ++masterRevision, key: c, item: dataset.people[i] });
     }
     if (a === 'import') {
-      const summary = (source, warnings = []) => json({ source, people: dataset.people.length, areas: dataset.areas.length,
-        shifts: dataset.shifts.length, months: dataset.periods.map((p) => p.month), warnings });
-      if (b === 'demo') {
-        dataset = initial ? structuredClone(initial) : makeDataset(query.get('month') ?? month, 1);
-        for (const p of dataset.periods) periods.set(p.month, p);
-        return summary('synthetic');
-      }
-      if (b === 'dataset') {
-        // rejected like the real validator: every finding with code and params
-        const errors = [];
+      const summary = (source, warnings = [], kept = 0, notes = []) => json({ source, people: dataset.people.length, areas: dataset.areas.length,
+        shifts: dataset.shifts.length, months: dataset.periods.map((p) => p.month), warnings, kept, notes });
+      // rejected like the real validator: every finding with code and params
+      const errors = [];
+      if (b !== 'demo') {
         if (body?.format !== 'dispofold/dataset') errors.push({ code: 'import.format', params: {} });
         else if (body.version !== 2) errors.push({ code: 'import.version', params: { version: body.version ?? 0 } });
         if (!body?.people?.length) errors.push({ code: 'import.noPeople', params: {} });
-        if (errors.length) {
-          return { status: 400, body: { code: 'import.invalid', params: { count: errors.length }, error: 'Datensatz abgelehnt',
-            errors, warnings: [] } };
-        }
-        dataset = body;
+      }
+      if (errors.length) {
+        return { status: 400, body: { code: 'import.invalid', params: { count: errors.length }, error: 'Datensatz abgelehnt',
+          errors, warnings: [] } };
+      }
+      if (b === 'preview') {
+        if (!changedSinceImport) return json({ changed: false, kept: 0, conflicts: [], notes: [] });
+        const k = keepChanges(body);
+        return json({ changed: true, kept: k.kept, conflicts: k.conflicts, notes: k.notes });
+      }
+      const keep = b === 'dataset' && query.get('keep') === 'true' && changedSinceImport;
+      if (changedSinceImport && !keep && query.get('replace') !== 'true') {
+        return err(409, 'Die Stammdaten wurden seit dem letzten Import in Dispofold geändert', 'import.masterChanged');
+      }
+      if (b === 'demo') {
+        dataset = initial ? structuredClone(initial) : makeDataset(query.get('month') ?? month, 1);
+        for (const p of dataset.periods) periods.set(p.month, p);
+        baseline = masterOf(dataset);
+        changedSinceImport = false;
+        return summary('synthetic');
+      }
+      if (b === 'dataset') {
+        const k = keep ? keepChanges(body) : null;
+        baseline = masterOf(body);
+        dataset = k ? k.merged : body;
+        changedSinceImport = Boolean(k?.kept);
         for (const p of dataset.periods ?? []) periods.set(p.month, p);
-        return summary(body.source ?? 'upload', ['Hochgeladener Datensatz ersetzt die Stammdaten.']);
+        return summary(body.source ?? 'upload', ['Hochgeladener Datensatz ersetzt die Stammdaten.'], k?.kept ?? 0, k?.notes ?? []);
+      }
+    }
+    if (a === 'data') {
+      // like the backend: planners only, also for reading
+      if (role !== 'planner') return err(403, 'Nur für Planung', 'security.forbidden');
+      if (b === 'corrections') {
+        const { changed, notes } = changes();
+        const people = {};
+        for (const x of changed) (people[x.personId] ??= {})[x.field] = x.value;
+        return json({ file: { format: 'dispofold/corrections', version: 2, people, demand: {} }, notes, count: changed.length });
+      }
+      if (b === 'anonymized') {
+        const m = query.get('month') ?? '';
+        if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(m)) return err(400, 'Monat im Format JJJJ-MM erwartet', 'request.month');
+        if (solving.has(m) && planState(m).solving) return err(409, 'Planung läuft', 'plan.solving', { month: m });
+        return json(anonymized(m));
       }
     }
     if (a === 'rules') {

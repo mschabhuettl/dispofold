@@ -24,7 +24,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * ("abwesend"), wish counts (also in the history) are 0, personal balances (hours account, compensatory rest,
  * credited and charged absence hours), the usual mix, the id in the source system (personnel number), the night
  * comparison (who is in it, why not) and the fairness loads are null and constraint results about wishes, family
- * rules, restrictions and absences are left out. Exports and the problem list are planner only (PlanResource).
+ * rules, restrictions and absences are left out. Exports and the problem list are planner only (PlanResource,
+ * DataResource: corrections file and pseudonymised export).
  */
 @Provider
 public class ViewerFilter implements ContainerResponseFilter {

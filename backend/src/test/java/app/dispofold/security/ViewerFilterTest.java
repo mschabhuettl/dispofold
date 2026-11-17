@@ -145,6 +145,20 @@ class ViewerFilterTest {
     }
 
     @Test
+    void correctionsAnonymisationAndImportPreviewArePlannerOnly() {
+        given().cookie(planner).get("/api/data/corrections").then().statusCode(200);
+        given().cookie(planner).get("/api/data/anonymized?month=" + MONTH).then().statusCode(200);
+        given().cookie(viewer).get("/api/data/corrections").then().statusCode(403)
+                .body("code", equalTo("security.forbidden"));
+        given().cookie(viewer).get("/api/data/anonymized?month=" + MONTH).then().statusCode(403)
+                .body("code", equalTo("security.forbidden"));
+        given().cookie(viewer).contentType("application/json").body("{}").post("/api/import/preview").then()
+                .statusCode(403);
+        given().cookie(viewer).contentType("application/json").body("{}").post("/api/import/dataset?keep=true")
+                .then().statusCode(403);
+    }
+
+    @Test
     void personEditErrorsHaveCodes() {
         Map<String, Object> p1 = given().cookie(planner).get("/api/dataset").then().extract().path("people[0]");
         String revision = given().cookie(planner).get("/api/dataset").then().extract().path("revision").toString();
