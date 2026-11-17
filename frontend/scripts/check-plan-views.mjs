@@ -101,6 +101,9 @@ try {
   await page.keyboard.press('Escape');
   check('Escape closes the menu', await page.locator('#output-menu').isHidden() && await toggle.getAttribute('aria-expanded') === 'false');
   check('focus back on the menu button', await page.evaluate(() => document.activeElement.getAttribute('aria-controls')) === 'output-menu');
+  await toggle.click();
+  await page.keyboard.press('Tab');
+  check('Tab closes the menu', await page.locator('#output-menu').isHidden() && await toggle.getAttribute('aria-expanded') === 'false');
 
   // legend: collapsed by default, remembered after a reload
   check('legend collapsed', !(await legendOpen(page)));
@@ -143,6 +146,9 @@ try {
   check('chip list with person and day', entries.length > 0 && /\S+ \S+/.test(entries[0]), entries.slice(0, 2).join(' | '));
   await page.keyboard.press('Escape');
   check('chip list closes', await page.locator('.popover').count() === 0);
+  // a fairness rule is one comparison of everybody: its chip has no count
+  const fairness = page.locator('.chip').filter({ hasText: 'Fairness' });
+  check('fairness chip without count', await fairness.count() === 0 || await fairness.first().locator('.chip-count').count() === 0);
 
   // a rule violation (injected into the analysis): red headline, hard chip
   await page.route(`**/api/plans/${month}/analysis`, async (route) => {
@@ -158,7 +164,7 @@ try {
     && (await headline.getAttribute('class')).includes('headline-bad'), bad);
   check('hard chip', (await page.locator('.chip.chip-hard').textContent()).replace(/\s+/g, ' ') === 'Tägliche Ruhezeit 2');
   // the person explanations fail: a note, and the next click loads them again
-  await page.route(`**/api/plans/${month}/people/**`, (route) => route.fulfill({ status: 503, body: '' }));
+  await page.route(`**/api/plans/${month}/people/**`, (route) => route.fulfill({ status: 500, body: '' }));
   const softChip = page.locator('.chips .chip:not(.chip-hard)').first();
   await softChip.click();
   await page.locator('.popover .alert-error').waitFor({ timeout: 10000 }).catch(() => {});
@@ -171,8 +177,25 @@ try {
     && await page.locator('.popover .hit-list li').count() > 0);
   await page.keyboard.press('Escape');
   await page.unroute(`**/api/plans/${month}/analysis`);
+  // a plan without violations and gaps (injected): green
+  await page.route(`**/api/plans/${month}/analysis`, async (route) => {
+    const a = await (await route.fetch()).json();
+    await route.fulfill({ json: { ...a, hardViolations: 0, gaps: [], uncoveredHours: 0 } });
+  });
   await page.reload();
   await page.locator('.roster-wrap table').waitFor();
+  check('headline usable', await headline.textContent() === 'Plan verwendbar: keine Regelverstöße, keine Lücken'
+    && (await headline.getAttribute('class')).includes('headline-good'), await headline.textContent());
+  await page.unroute(`**/api/plans/${month}/analysis`);
+  await page.reload();
+  await page.locator('.roster-wrap table').waitFor();
+
+  // the gap row is row 0 of the arrow key grid
+  const days = await page.locator('.roster-wrap thead th').count() - 2;
+  check('gap row in the arrow key grid', await page.locator('tr.sticky-gaps [data-cell]').count() === days, String(days));
+  await page.locator('tr.sticky-gaps [data-cell]').first().focus();
+  await page.keyboard.press('ArrowDown');
+  check('arrow down from the gap row', await page.evaluate(() => document.activeElement.dataset.r) === '1');
 
   // gap row: sticky below the day header, still on top after scrolling the grid
   const wrapScroll = (sel, to) => page.evaluate(([s, y]) => { document.querySelector(s).scrollTop = y; }, [sel, to]);

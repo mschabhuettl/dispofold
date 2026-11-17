@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { closeChecklist, planHeadline, problemConstraints } from '../src/lib/plan-status.js';
+import { chipCount, closeChecklist, planHeadline, problemConstraints } from '../src/lib/plan-status.js';
 
 test('headline: usable plan, gaps, rule violations, both', () => {
   assert.deepEqual(planHeadline({ hard: 0, gaps: 0, uncoveredHours: 0 }),
@@ -29,6 +29,9 @@ test('chips: violated hard rules, then soft rules with a high share of the soft 
   // soft total -1000: fairNights 15 % and up are in, forwardRotation (5 %) is not
   assert.deepEqual(list.map((x) => x.id), ['absence', 'dailyRest', 'wishes', 'blockLength', 'fairNights']);
   assert.deepEqual(problemConstraints(undefined), []);
+  // a fairness rule is one comparison of everybody: no count
+  assert.equal(chipCount(c('fairNights', 'SOFT', -150, 1)), null);
+  assert.equal(chipCount(c('wishes', 'SOFT', -500, 5)), 5);
 });
 
 test('close checklist: violations, gaps, plan out of date; no analysis counts as open', () => {

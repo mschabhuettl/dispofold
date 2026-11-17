@@ -14,8 +14,8 @@ export async function exportPlanFile(api, month, format) {
 
 /**
  * The "Ausgabe" menu: a button that opens a list of actions. items() returns the item buttons and runs at every
- * opening, so the items follow the plan state. Arrow keys move between the items; Escape, Tab out of the menu or a
- * click outside close it.
+ * opening, so the items follow the plan state. Arrow keys move between the items; Escape, Tab or a click outside
+ * close it.
  */
 export function outputMenu(items) {
   const list = h('ul.menu-list', { id: 'output-menu', hidden: true });
@@ -41,12 +41,13 @@ export function outputMenu(items) {
 
   // an item closes the list before its action runs (print dialog, close dialog)
   list.addEventListener('click', (e) => { if (e.target.closest('button')) close(true); }, true);
-  box.addEventListener('focusout', (e) => { if (!list.hidden && !box.contains(e.relatedTarget)) close(); });
   box.addEventListener('keydown', (e) => {
     if (list.hidden) return;
     if (e.key === 'Escape') {
       e.preventDefault();
       close(true);
+    } else if (e.key === 'Tab') {
+      close(); // focus moves on as usual
     } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
       const buttons = [...list.querySelectorAll('button:not(:disabled)')];

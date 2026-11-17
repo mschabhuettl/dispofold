@@ -6,7 +6,7 @@ import { dayLabel, monthLabel } from '../lib/dates.js';
 import { append, fmt, guarded, h, toast } from '../lib/dom.js';
 import { NAME_MODES, personLabel, printParts } from '../lib/functions-model.js';
 import { NEUTRAL_ABSENCE, buildGrid, cellRequest, cellsEditable, personName } from '../lib/grid-model.js';
-import { planHeadline, problemConstraints } from '../lib/plan-status.js';
+import { chipCount, planHeadline, problemConstraints } from '../lib/plan-status.js';
 import { printHeader, printStatus } from '../lib/print.js';
 import { needsRulesForCategories, onRequestTest } from '../lib/restrictions.js';
 import { t } from '../lib/texts.js';
@@ -140,10 +140,12 @@ export async function render(root, ctx) {
     if (!list.length) return null;
     return h('div.chips', { role: 'group', 'aria-label': t('roster.problems') }, list.map((c) => {
       const label = constraintLabel(c);
-      const info = { label, count: c.matches };
+      const count = chipCount(c);
+      const info = { label, count };
+      const name = count == null ? t('roster.chipCompare', info) : c.level === 'HARD' ? t('roster.chipHard', info) : t('roster.chipSoft', info);
       return h('button.chip', { type: 'button', class: c.level === 'HARD' ? 'chip-hard' : null, 'aria-haspopup': 'dialog',
-        'aria-label': c.level === 'HARD' ? t('roster.chipHard', info) : t('roster.chipSoft', info),
-        onclick: (e) => openHits(e.currentTarget, c, label) }, label, ' ', h('span.chip-count', {}, String(c.matches)));
+        'aria-label': name, onclick: (e) => openHits(e.currentTarget, c, label) },
+      label, count != null && [' ', h('span.chip-count', {}, String(count))]);
     }));
   }
 
@@ -208,12 +210,12 @@ export async function render(root, ctx) {
       grid.days.map(dayHeader),
       h('th', { scope: 'col' }, t('roster.hoursShort')));
     // the gap row first: it sticks below the day header while the grid scrolls
-    const body = [h('tr.gap-row.sticky-gaps', {},
+    const body = [h('tr.gap-row.sticky-gaps', { 'data-row': '0' },
       h('th.person', { scope: 'row' }, t('roster.gapsRow')),
-      grid.days.map((d) => h('td.cell', { class: dayClass(d) }, gapCell(d, gapDays.get(d.date)))),
+      grid.days.map((d, i) => h('td.cell', { class: dayClass(d) }, gapCell(d, gapDays.get(d.date), i))),
       h('td.sum', {}, ''))];
     let group = null;
-    let rowIndex = 0;
+    let rowIndex = 1;
     for (const row of grid.rows) {
       const first = row.person.areaIds[0];
       if (!areaId && first !== group) {
@@ -279,13 +281,15 @@ export async function render(root, ctx) {
       h('tbody', {}, body));
   }
 
-  /** Gap count of a day; planners open the day's gaps with who could be asked. */
-  function gapCell(d, count) {
-    if (!count) return '';
-    const title = t('roster.gapCount', { count });
-    if (!editable()) return h('strong.text-danger', { title }, String(count));
-    return h('button.gap-btn.text-danger', { type: 'button', title, 'aria-label': t('roster.gapButton', { count, day: dayLabel(d.date) }),
-      'aria-haspopup': 'dialog', onclick: (e) => openGaps(e.currentTarget, d.date) }, String(count));
+  /** Gap count of a day, row 0 of the arrow key grid; planners open the day's gaps with who could be asked. */
+  function gapCell(d, count, c) {
+    const open = editable() && count > 0;
+    const label = open ? t('roster.gapButton', { count, day: dayLabel(d.date) }) : t('roster.gapDay', { count: count ?? 0, day: dayLabel(d.date) });
+    // always focusable for arrow navigation; read-only cells do nothing on Enter or click
+    return h('button', { type: 'button', class: count ? 'cell-btn gap-btn' : 'cell-btn', title: count ? t('roster.gapCount', { count }) : null,
+      'aria-label': label, 'aria-haspopup': open ? 'dialog' : null, 'aria-disabled': open ? null : 'true', tabindex: '-1',
+      'data-cell': `gaps|${d.date}`, 'data-r': '0', 'data-c': String(c),
+      onclick: (e) => { if (editable() && count) openGaps(e.currentTarget, d.date); } }, count ? String(count) : '');
   }
 
   function cellContent(row, cell, day, r, c) {

@@ -40,6 +40,12 @@ export function problemConstraints(constraints = []) {
   return [...hard, ...high];
 }
 
+/** The fairness rules compare everybody in one match: their match count says nothing. */
+const COMPARISONS = new Set(['fairNights', 'fairWeekends', 'fairHolidays', 'fairUnpopular']);
+
+/** The number on a rule's chip: its matches, null for a fairness comparison. */
+export const chipCount = (c) => (COMPARISONS.has(c.id) ? null : c.matches);
+
 /**
  * Checklist before closing a month: rule violations, open gaps, plan out of date; each { ok, text }. Without an
  * analysis the gaps are unknown and count as open.
