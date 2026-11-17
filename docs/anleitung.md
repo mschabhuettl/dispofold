@@ -61,9 +61,14 @@ Planung pflegt sie hier, ein neuer Import ist dafür nicht nötig:
   Speichern hat die Person keine gewohnte Verteilung mehr. Die Tabelle zeigt sie kurz an („Tag 90 %, Nacht 10 %“);
   die Felder je Bereich nennen den Bereich mit Namen und Kürzel.
   Beim Planen versucht die Regel „Gewohnte Verteilung“, die Dienste je Schichtart und Bereich an diese Anteile
-  anzunähern. Hat eine Person Anteile je Schichtart (Früh, Tag, Spät, Nacht, auch einen Nachtanteil), nimmt
-  sie das aus der Fairness Nachtdienste (dem „Nachtausgleich“) und aus „Abwechslung Dienste“ heraus, solange sie
-  die Verteilung hat: Ihre Nächte ergeben sich aus dem Nachtanteil. Für Personen mit Anteilen je Bereich gilt
+  anzunähern. Was mit dem Nachtanteil geschieht, hängt von der Einstellung **Nachtdienste** auf der Seite
+  **Regeln & Gewichte** ab: Bei „Wie bisher“ ergeben sich die Nächte einer Person mit Anteilen je Schichtart aus
+  ihrem Nachtanteil, sie ist nicht in der Fairness Nachtdienste (dem „Nachtausgleich“) und nicht in „Abwechslung
+  Dienste“. Bei „Gleichmäßig“ zählt der Nachtanteil nicht: Die Person ist im Nachtausgleich, die übrigen Anteile
+  (Früh, Tag, Spät) gelten für ihre Dienste außer Nächten. In beiden Fällen ist nicht im Nachtausgleich, wer nie
+  Nacht macht: eine Einschränkung „nie“ für jeden Tag auf alle Nachtschichten der eigenen Bereiche (als
+  Schichtart Nacht oder Schicht für Schicht) oder eine Familienregel „keine Nacht“ an allen sieben Wochentagen.
+  Für Personen mit Anteilen je Bereich gilt
   die Abwechslung Bereiche nicht. Auf der Seite **Person** stehen geplanter und gewohnter Anteil nebeneinander. Die
   Rolle „nur lesen“ sieht die Verteilung nicht. Mehr dazu in [regeln.md](regeln.md).
 - **Ids:** Neue Personen und Schichten bekommen ihre Id vom Programm (`PN1`, `SN1`, ...). Bereiche und
@@ -205,7 +210,9 @@ Weitere Seiten:
 - **Fairness-Übersicht:** Alle Personen nebeneinander, je Kennzahl mit Minimum, Mittelwert und Maximum, auch über
   die Vormonate (Historie). Mit **Auf 40 Wochenstunden normiert** werden Teilzeitkräfte vergleichbar. Bei der
   Fairness zählt die Abweichung vom Mittelwert: Ein Treffer in der Erklärung erscheint nur bei Personen über dem
-  Mittelwert.
+  Mittelwert. Personen außerhalb des Nachtausgleichs sind markiert, mit dem Grund (gewohnte Verteilung oder nie
+  Nacht). Die Seite **Person** zeigt in der Kachel **Nächte**, ob die Person ihrer gewohnten Verteilung folgt, nie
+  Nacht macht oder im Nachtausgleich ist, dann mit ihrer Belastung und dem Mittel aller Verglichenen.
 - **Regeln & Gewichte:** drei Abschnitte.
   - **Planungsziele:** oben die Einstellung **Nachtdienste**: „Wie bisher“ (jede Person behält ihren gewohnten
     Nachtanteil, Standard) oder „Gleichmäßig“ (Nachtdienste fair auf alle verteilen). Ist „Wie bisher“ gewählt und
