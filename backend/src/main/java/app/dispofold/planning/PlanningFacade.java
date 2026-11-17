@@ -11,6 +11,7 @@ import app.dispofold.model.ConstraintHit;
 import app.dispofold.model.ConstraintInfo;
 import app.dispofold.model.CoverageSegment;
 import app.dispofold.model.PersonExplanation;
+import app.dispofold.model.PersonHit;
 import app.dispofold.model.PlanAnalysis;
 
 /**
@@ -42,6 +43,12 @@ public interface PlanningFacade {
 
     /** The constraint matches of every person by person id, as {@link #explain} gives them, from one analysis. */
     Map<String, List<ConstraintHit>> hits(PlanningInput input);
+
+    /**
+     * Every match with a penalty, from one analysis: those of every person (as {@link #hits} gives them) and, with
+     * person id null, overstaffing (no person). Uncovered demand is left out: it is in the gaps of {@link #analyze}.
+     */
+    List<PersonHit> problems(PlanningInput input);
 
     /** Demand against staffing of one area for every segment of the month. */
     List<CoverageSegment> coverage(PlanningInput input, String areaId);

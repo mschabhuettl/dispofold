@@ -18,6 +18,7 @@ import app.dispofold.model.CoverageSegment;
 import app.dispofold.model.Holiday;
 import app.dispofold.model.HistoryEntry;
 import app.dispofold.model.Person;
+import app.dispofold.model.PersonHit;
 import app.dispofold.model.PersonStats;
 import app.dispofold.model.PlanAnalysis;
 import app.dispofold.model.PlanAssignment;
@@ -198,11 +199,31 @@ public final class RosterAnalyzer {
         return loads;
     }
 
-    /** Night loads of the people in the night comparison, by person id: nights per 30 available days at 40 h. */
-    static Map<String, Double> nightLoads(Roster roster) {
+    /**
+     * Loads of the people in one fairness comparison (index in {@link #COUNTERS}: nights, weekends, holidays,
+     * unpopular), by person id: duties of this and the history months per 30 available days at 40 h.
+     */
+    static Map<String, Double> comparisonLoads(Roster roster, int counter) {
         Map<String, Double> loads = new HashMap<>();
-        loads(COUNTERS.get(0), roster, monthWork(roster)).forEach((s, l) -> loads.put(s.getId(), l / 1000.0));
+        loads(COUNTERS.get(counter), roster, monthWork(roster)).forEach((s, l) -> loads.put(s.getId(), l / 1000.0));
         return loads;
+    }
+
+    /** Matches of no person on the medium level except uncovered demand (that is in the gaps): overstaffing. */
+    public static List<PersonHit> personlessHits(ScoreExplainer.Explanation score) {
+        List<PersonHit> hits = new ArrayList<>();
+        for (ConstraintInfo info : ConstraintCatalog.ALL) {
+            if (!ConstraintCatalog.MEDIUM.equals(info.level()) || info.id().equals(ConstraintCatalog.DEMAND)) {
+                continue;
+            }
+            for (ScoreExplainer.Match m : score.total(info.id()).matches()) {
+                if (m.hit().personId() == null) {
+                    hits.add(new PersonHit(null, info.id(), info.level(), m.hit().date(),
+                            level(m.score(), info.level()), "hit." + info.id(), m.hit().params()));
+                }
+            }
+        }
+        return hits;
     }
 
     static long level(HardMediumSoftScore score, String level) {
@@ -354,7 +375,7 @@ public final class RosterAnalyzer {
         Staff.History h = staff.getHistory();
         Staff.Average a = staff.getAverage();
         double average = a.weeks() <= 0 ? 0 : (a.minutes() + plannedMinutes) / 60.0 / a.weeks();
-        Map<String, Double> nightLoads = nightLoads(roster);
+        Map<String, Double> nightLoads = comparisonLoads(roster, 0);
         Double nightLoad = nightLoads.get(personId);
         String nightReason = nightLoad != null ? null
                 : staff.getNightExclusion() != null ? staff.getNightExclusion()
@@ -368,7 +389,14 @@ public final class RosterAnalyzer {
                 h.unpopular(), h.wishes(), h.wishesMet(), available, round(charged), round(average), a.complete(),
                 round(staff.getTargetMinutes() / 60.0), round(staff.getScaledTargetMinutes() / 60.0),
                 shares(byCategory, byArea, duties), nightLoad != null, nightReason,
-                nightLoad == null ? null : round(nightLoad), nightMean);
+                nightLoad == null ? null : round(nightLoad), nightMean, load(roster, 1, personId),
+                load(roster, 2, personId), load(roster, 3, personId));
+    }
+
+    /** The person's load in one comparison (see {@link #comparisonLoads}), null when not compared. */
+    private static Double load(Roster roster, int counter, String personId) {
+        Double load = comparisonLoads(roster, counter).get(personId);
+        return load == null ? null : round(load);
     }
 
     private static boolean previousWorked(Roster roster, String personId, YearMonth month) {

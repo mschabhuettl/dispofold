@@ -18,6 +18,7 @@ import app.dispofold.model.ConstraintInfo;
 import app.dispofold.model.CoverageSegment;
 import app.dispofold.model.Person;
 import app.dispofold.model.PersonExplanation;
+import app.dispofold.model.PersonHit;
 import app.dispofold.model.PersonStats;
 import app.dispofold.model.PlanAnalysis;
 import app.dispofold.model.PlanAssignment;
@@ -133,7 +134,8 @@ public class FakePlanningFacade implements PlanningFacade {
         int historyNights = input.dataset().history().stream().filter(h -> h.personId().equals(personId))
                 .mapToInt(h -> h.nights()).sum();
         return new PersonStats(personId, 170, 0, duties * 12.0, 0, 0, duties, nights, 2, 2, 1, nights, 1, 1, 0, 0,
-                0, 0, historyNights, 0, 0, 0, 0, 0, 31, 0, 40, false, 170, 170, null, true, null, 2.0, 1.5);
+                0, 0, historyNights, 0, 0, 0, 0, 0, 31, 0, 40, false, 170, 170, null, true, null, 2.0, 1.5, 1.0, 0.5,
+                2.0);
     }
 
     @Override
@@ -149,6 +151,13 @@ public class FakePlanningFacade implements PlanningFacade {
             hits.put(p.id(), explain(input, p.id()).hits());
         }
         return hits;
+    }
+
+    @Override
+    public List<PersonHit> problems(PlanningInput input) {
+        List<PersonHit> problems = new ArrayList<>();
+        hits(input).forEach((personId, hits) -> hits.forEach(h -> problems.add(new PersonHit(personId, h))));
+        return problems;
     }
 
     @Override

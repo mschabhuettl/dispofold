@@ -26,6 +26,10 @@ package app.dispofold.model;
  * @param nightLoad the person's night load as the rule compares it: nights of this and the history months per 30
  *        available days of a 40 h person; null when not compared and for viewers
  * @param nightMean the mean night load of everybody in the comparison; null for viewers
+ * @param weekendLoad the person's weekend load as {@code fairWeekends} compares it (weekends of this and the history
+ *        months per 30 available days of a 40 h person); null when not compared and for viewers
+ * @param holidayLoad the same for holiday duties ({@code fairHolidays})
+ * @param unpopularLoad the same for unpopular duties ({@code fairUnpopular})
  */
 public record PersonStats(String personId, double targetHours, double creditedHours, double plannedHours,
         double accountBefore, double accountAfter, int duties, int nights, int weekendsWorked, int weekendsOff,
@@ -33,5 +37,6 @@ public record PersonStats(String personId, double targetHours, double creditedHo
         int compRestBalanceAfter, int singleDays, int historyNights, int historyWeekends, int historyHolidays,
         int historyUnpopular, int historyWishes, int historyWishesMet, int availableDays, double chargedHours,
         double averageWeekHours, boolean averageComplete, double goalHours, double scaledGoalHours,
-        ShiftMix plannedMix, Boolean nightPool, String nightReason, Double nightLoad, Double nightMean) {
+        ShiftMix plannedMix, Boolean nightPool, String nightReason, Double nightLoad, Double nightMean,
+        Double weekendLoad, Double holidayLoad, Double unpopularLoad) {
 }

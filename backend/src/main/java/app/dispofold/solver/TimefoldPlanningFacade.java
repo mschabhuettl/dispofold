@@ -2,6 +2,7 @@ package app.dispofold.solver;
 
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +20,7 @@ import app.dispofold.model.ConstraintHit;
 import app.dispofold.model.ConstraintInfo;
 import app.dispofold.model.CoverageSegment;
 import app.dispofold.model.PersonExplanation;
+import app.dispofold.model.PersonHit;
 import app.dispofold.model.PlanAnalysis;
 import app.dispofold.planning.PlanningFacade;
 import app.dispofold.planning.PlanningInput;
@@ -199,6 +201,22 @@ public class TimefoldPlanningFacade implements PlanningFacade {
             hits.put(s.getId(), RosterAnalyzer.hits(score, roster, s.getId()));
         }
         return hits;
+    }
+
+    @Override
+    public List<PersonHit> problems(PlanningInput input) {
+        Roster roster = new RosterBuilder(input, true).build();
+        ScoreExplainer.Explanation score = analyzeScore(roster);
+        List<PersonHit> problems = new ArrayList<>();
+        for (Staff s : roster.getStaff()) {
+            for (ConstraintHit h : RosterAnalyzer.hits(score, roster, s.getId())) {
+                if (h.score() < 0) {
+                    problems.add(new PersonHit(s.getId(), h));
+                }
+            }
+        }
+        problems.addAll(RosterAnalyzer.personlessHits(score));
+        return problems;
     }
 
     @Override

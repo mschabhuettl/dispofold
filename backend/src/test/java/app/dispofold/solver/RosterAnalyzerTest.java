@@ -62,6 +62,38 @@ class RosterAnalyzerTest {
         assertThat(FACADE.analyze(fairnessInput()).score()).isEqualTo("-1hard/-61200000000000medium/-48739236soft");
     }
 
+    /** The loads in the figures are those the rules compare: the hits name the same loads, in thousandths. */
+    @Test
+    void theFiguresShowTheLoadsOfTheFairnessRules() {
+        PlanningInput input = fairnessInput();
+        var analysis = FACADE.analyze(input);
+        for (PersonStats s : analysis.people()) {
+            for (ConstraintHit h : FACADE.explain(input, s.personId()).hits()) {
+                Double load = switch (h.code()) {
+                    case "hit.fairWeekends" -> s.weekendLoad();
+                    case "hit.fairHolidays" -> s.holidayLoad();
+                    case "hit.fairUnpopular" -> s.unpopularLoad();
+                    case "hit.fairNights" -> s.nightLoad();
+                    default -> Double.NaN;
+                };
+                if (!load.isNaN()) {
+                    assertThat(((Number) h.params().get("load")).doubleValue() / 1000).as(h.code())
+                            .isEqualTo(load, org.assertj.core.api.Assertions.offset(0.01));
+                }
+            }
+        }
+        PersonStats p4 = analysis.people().stream().filter(s -> s.personId().equals("P0004")).findFirst()
+                .orElseThrow();
+        // one weekend and one holiday on 31 available days: 30 / 31 at 40 h
+        assertThat(p4.weekendLoad()).isEqualTo(0.97);
+        assertThat(p4.holidayLoad()).isEqualTo(0.97);
+        assertThat(FACADE.explain(input, "P0004").hits()).anyMatch(h -> h.code().equals("hit.fairWeekends"));
+        // P0001 has no unpopular shift in its area: not in that comparison
+        PersonStats p1 = FACADE.explain(input, "P0001").stats();
+        assertThat(p1.unpopularLoad()).isNull();
+        assertThat(p1.weekendLoad()).isNotNull();
+    }
+
     @Test
     void timeOffInLieuIsBookedAgainstTheAccount() {
         Dataset d = TestData.dataset(MONTH);

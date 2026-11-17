@@ -71,6 +71,26 @@ class PlanHitsTest {
                 .orElseThrow();
         assertThat(hits(viewer, "?constraint=" + hidden)).isEmpty();
         assertThat(hits(planner, "?constraint=unknown")).isEmpty();
+
+        // The problem list: the penalties among the hits, and overstaffing without a person; planners only.
+        given().cookie(planner).contentType(ContentType.JSON)
+                .body(mapper.writeValueAsString(new PlanAssignment("P0002", MONTH.atDay(5), "DR-N", false, true)))
+                .put("/api/plans/" + MONTH + "/cells").then().statusCode(200);
+        given().cookie(planner).contentType(ContentType.JSON)
+                .body(mapper.writeValueAsString(new PlanAssignment("P0004", MONTH.atDay(5), "DR-N", false, true)))
+                .put("/api/plans/" + MONTH + "/cells").then().statusCode(200);
+        List<Map<String, Object>> problems = given().cookie(planner).get("/api/plans/" + MONTH + "/problems").then()
+                .statusCode(200).extract().path("$");
+        List<Map<String, Object>> penalties = new ArrayList<>();
+        hits(planner, "").values().forEach(list -> list.stream()
+                .filter(h -> ((Number) h.get("score")).longValue() < 0).forEach(penalties::add));
+        assertThat(problems).filteredOn(p -> p.get("personId") != null)
+                .containsExactlyInAnyOrderElementsOf(penalties);
+        assertThat(problems).filteredOn(p -> p.get("personId") == null).isNotEmpty()
+                .allSatisfy(p -> assertThat(p).containsEntry("constraintId", "overstaffing")
+                        .containsEntry("level", "MEDIUM"));
+        assertThat(problems).anyMatch(p -> "absence".equals(p.get("constraintId")));
+        given().cookie(viewer).get("/api/plans/" + MONTH + "/problems").then().statusCode(403);
     }
 
     private static Map<String, List<Map<String, Object>>> hits(Cookie who, String query) {
