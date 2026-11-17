@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mergePeriod } from '../src/lib/period-merge.js';
+import { absenceRanges, addAbsenceRange, mergePeriod } from '../src/lib/period-merge.js';
 
 const abs = (personId, date, typeCode = 'U') => ({ personId, date, typeCode });
 
@@ -30,4 +30,27 @@ test('changes only on the server stay untouched', () => {
   assert.deepEqual(period.wishes, []);
   assert.deepEqual(period.fixed, server.fixed);
   assert.deepEqual(conflicts, []);
+});
+
+test('absences as ranges: consecutive days of one person and type, across a month end', () => {
+  const list = [abs('P2', '2027-01-03'), abs('P1', '2027-01-05'), abs('P1', '2027-01-04'), abs('P1', '2027-01-06', 'K'),
+    abs('P1', '2027-01-08'), abs('P2', '2027-01-31'), abs('P2', '2027-02-01')];
+  assert.deepEqual(absenceRanges(list).map((r) => [r.personId, r.typeCode, r.from, r.to, r.entries.length]), [
+    ['P1', 'U', '2027-01-04', '2027-01-05', 2], ['P1', 'K', '2027-01-06', '2027-01-06', 1], ['P1', 'U', '2027-01-08', '2027-01-08', 1],
+    ['P2', 'U', '2027-01-03', '2027-01-03', 1], ['P2', 'U', '2027-01-31', '2027-02-01', 2]]);
+  assert.deepEqual(absenceRanges([]), []);
+});
+
+test('a range is stored as one record per day and replaces the absences of the person on these days', () => {
+  assert.deepEqual(addAbsenceRange([], { personId: 'P1', from: '2027-01-30', to: '2027-02-02', typeCode: 'U' }),
+    ['2027-01-30', '2027-01-31', '2027-02-01', '2027-02-02'].map((d) => abs('P1', d)));
+  assert.deepEqual(addAbsenceRange([], { personId: 'P1', from: '2027-01-05', to: '2027-01-05', typeCode: 'K' }), [abs('P1', '2027-01-05', 'K')]);
+  // a range inside another one splits it; other people stay
+  let list = addAbsenceRange([abs('P2', '2027-01-06')], { personId: 'P1', from: '2027-01-04', to: '2027-01-10', typeCode: 'U' });
+  list = addAbsenceRange(list, { personId: 'P1', from: '2027-01-06', to: '2027-01-07', typeCode: 'K' });
+  assert.equal(list.filter((a) => a.personId === 'P1').length, 7);
+  assert.deepEqual(absenceRanges(list).map((r) => [r.personId, r.typeCode, r.from, r.to]), [['P1', 'U', '2027-01-04', '2027-01-05'],
+    ['P1', 'K', '2027-01-06', '2027-01-07'], ['P1', 'U', '2027-01-08', '2027-01-10'], ['P2', 'U', '2027-01-06', '2027-01-06']]);
+  // an end before the start enters nothing
+  assert.deepEqual(addAbsenceRange([abs('P1', '2027-01-04')], { personId: 'P1', from: '2027-01-05', to: '2027-01-04', typeCode: 'U' }), [abs('P1', '2027-01-04')]);
 });
