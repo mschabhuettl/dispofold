@@ -10,7 +10,6 @@ import { cellsEditable, personName } from '../lib/grid-model.js';
 import { info } from '../lib/info.js';
 import { planHeadline } from '../lib/plan-status.js';
 import { filterProblems, groupKey, groupProblems, problemEntries } from '../lib/problems.js';
-import { nightDistribution } from '../lib/rule-groups.js';
 import { t } from '../lib/texts.js';
 import { candidateList } from './candidate-list.js';
 
@@ -37,7 +36,7 @@ export async function render(root, ctx) {
     const ask = cellsEditable({ canEdit: ctx.canEdit, solving: state.solving, closed: state.plan.status === 'CLOSED' });
     root.append(gapSection(ctx, dataset, analysis, ask));
   }
-  root.append(dataSection(dataset, month, nightDistribution(rules)));
+  root.append(dataSection(dataset, month, rules));
 }
 
 /** Rule violations, overstaffing and quality, with a grouping and three filters. */
@@ -132,9 +131,9 @@ function gapItem(ctx, dataset, areaName, g, ask) {
 }
 
 /** Findings on the master data with what to do and where. */
-function dataSection(dataset, month, mode) {
+function dataSection(dataset, month, rules) {
   const section = h('section.check-section', { id: 'check-data' }, h('h2', {}, t('check.data.title'), info(t('help.check.data'), t('check.data.title'))), h('p.muted', {}, t('check.data.help')));
-  const findings = dataChecks(dataset, { month, nightDistribution: mode });
+  const findings = dataChecks(dataset, { month, rules });
   if (!findings.length) return append(section, [h('p', {}, t('check.data.none'))]);
   const people = new Map(dataset.people.map((p) => [p.id, p]));
   return append(section, [h('ul.check-list', {}, findings.map((f) => h('li', { 'data-kind': f.kind, 'data-severity': f.severity },

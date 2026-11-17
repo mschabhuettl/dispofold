@@ -2,6 +2,7 @@
 // without demand, a usual distribution that does not fit. Pure, no DOM.
 import { monthDates } from './dates.js';
 import { personName } from './grid-model.js';
+import { shiftCategory } from './restrictions.js';
 import { t } from './texts.js';
 
 const CATEGORY = { EARLY: t('masterdata.category.early'), DAY: t('masterdata.category.day'), LATE: t('masterdata.category.late'),
@@ -18,12 +19,15 @@ function wholeMonth(list, first, last) {
   return days.has(0) || [1, 2, 3, 4, 5, 6, 7].every((d) => days.has(d));
 }
 
-/** Shifts of the person's areas that no NEVER restriction excludes on every day of the month. */
-export function plannableShifts(dataset, person, month) {
+/**
+ * Shifts of the person's areas that no NEVER restriction excludes on every day of the month. rules: for the category of
+ * shifts without one in the dataset (derived from the times as the backend does).
+ */
+export function plannableShifts(dataset, person, month, rules = null) {
   const dates = monthDates(month);
   const never = (dataset.restrictions ?? []).filter((r) => r.personId === person.id && r.kind === 'NEVER');
   return dataset.shifts.filter((s) => (person.areaIds ?? []).includes(s.areaId)
-    && !wholeMonth(never.filter((r) => (r.shiftId ? r.shiftId === s.id : r.category === s.category)), dates[0], dates.at(-1)));
+    && !wholeMonth(never.filter((r) => (r.shiftId ? r.shiftId === s.id : r.category === shiftCategory(s, rules))), dates[0], dates.at(-1)));
 }
 
 /** A family rule "keine Nacht" on every weekday: the person never does nights anyway. */
@@ -39,10 +43,11 @@ function badSum(map) {
 
 /**
  * Findings on the master data for the month: [{ kind, severity: 'warning' | 'info', personId, areaId, text, todo,
- * link: 'masterdata' | 'rules' }]. People not employed in the month are left out. nightDistribution: the rules'
- * setting (missing: HABIT).
+ * link: 'masterdata' | 'rules' }]. People not employed in the month are left out. rules: the rules, for the night
+ * setting (missing: HABIT) and the category of shifts without one in the dataset.
  */
-export function dataChecks(dataset, { month, nightDistribution = 'HABIT' }) {
+export function dataChecks(dataset, { month, rules = null }) {
+  const nightDistribution = rules?.nightDistribution ?? 'HABIT';
   const out = [];
   const dates = monthDates(month);
   const areaName = new Map(dataset.areas.map((a) => [a.id, a.name ?? a.id]));
@@ -56,7 +61,7 @@ export function dataChecks(dataset, { month, nightDistribution = 'HABIT' }) {
     const own = dataset.shifts.filter((s) => areas.includes(s.areaId));
     if (!areas.length) add('noArea', 'warning', { personId: p.id }, { name });
     else if (!own.length) add('noShift', 'warning', { personId: p.id }, { name, count: areas.length });
-    else if (!plannableShifts(dataset, p, month).length) add('allNever', 'warning', { personId: p.id }, { name });
+    else if (!plannableShifts(dataset, p, month, rules).length) add('allNever', 'warning', { personId: p.id }, { name });
 
     const mix = p.shiftMix;
     if (!mix) continue;
@@ -68,14 +73,14 @@ export function dataChecks(dataset, { month, nightDistribution = 'HABIT' }) {
       if (!areas.includes(a)) add('mixArea', 'warning', { personId: p.id }, { name, area: areaName.get(a) ?? a });
     }
     for (const [c, share] of Object.entries(mix.categories ?? {})) {
-      if (share > 0 && !own.some((s) => s.category === c)) add('mixCategory', 'warning', { personId: p.id }, { name, category: CATEGORY[c] ?? c });
+      if (share > 0 && !own.some((s) => shiftCategory(s, rules) === c)) add('mixCategory', 'warning', { personId: p.id }, { name, category: CATEGORY[c] ?? c });
     }
     // the night note of the person form, where it changes what the person gets
     const nightShare = mix.categories?.NIGHT ?? 0;
     const hasCategories = Object.keys(mix.categories ?? {}).length > 0;
     if (nightDistribution === 'EVEN' && nightShare > 0) add('nightIgnored', 'info', { personId: p.id }, { name }, 'rules');
     else if (nightDistribution !== 'EVEN' && hasCategories && nightShare === 0 && !noNightsRule(p)
-      && plannableShifts(dataset, p, month).some((s) => s.category === 'NIGHT')) add('noNights', 'info', { personId: p.id }, { name });
+      && plannableShifts(dataset, p, month, rules).some((s) => shiftCategory(s, rules) === 'NIGHT')) add('noNights', 'info', { personId: p.id }, { name });
   }
 
   for (const a of dataset.areas) {

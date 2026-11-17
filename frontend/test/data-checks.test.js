@@ -79,14 +79,28 @@ test('the night note: in HABIT shares without nights mean no nights, in EVEN a n
       familyRules: [{ weekdays: [1, 2, 3, 4, 5, 6, 7], noNights: true }] }),
     // no night shift in the area: no note
     person('DAYAREA', ['Y'], { shiftMix: { categories: { DAY: 1 }, areas: {} } }));
-  const habit = dataChecks(d, { month, nightDistribution: 'HABIT' });
+  const habit = dataChecks(d, { month, rules: { nightDistribution: 'HABIT' } });
   assert.deepEqual(kinds(habit, 'DAYS'), ['noNights']);
   assert.equal(habit.find((f) => f.personId === 'DAYS').severity, 'info');
   assert.deepEqual(kinds(habit, 'NIGHTS'), []);
   assert.deepEqual(kinds(habit, 'FAMILY'), []);
   assert.deepEqual(kinds(habit, 'DAYAREA'), []);
-  const even = dataChecks(d, { month, nightDistribution: 'EVEN' });
+  const even = dataChecks(d, { month, rules: { nightDistribution: 'EVEN' } });
   assert.deepEqual(kinds(even, 'DAYS'), []);
   assert.deepEqual(kinds(even, 'NIGHTS'), ['nightIgnored']);
   assert.equal(even.find((f) => f.personId === 'NIGHTS').link, 'rules');
+});
+
+test('shifts without a category count with the category derived from their times', () => {
+  const rules = { nightStart: '22:00', nightEnd: '06:00', nightMinHours: 2, nightDistribution: 'HABIT' };
+  const d = base();
+  d.shifts = [{ id: 'X-D', areaId: 'X', code: 'X1', category: null, start: '08:00', end: '16:00' },
+    { id: 'X-N', areaId: 'X', code: 'X2', category: null, start: '20:00', end: '08:00' }];
+  d.people = [person('DAY', ['X'], { shiftMix: { categories: { DAY: 1 }, areas: {} } }),
+    person('NONIGHT', ['X'], { shiftMix: { categories: { DAY: 1 }, areas: {} } })];
+  d.restrictions = [{ personId: 'NONIGHT', shiftId: null, category: 'NIGHT', weekday: 0, kind: 'NEVER' }];
+  const findings = dataChecks(d, { month, rules });
+  assert.deepEqual(kinds(findings, 'DAY'), ['noNights']);
+  assert.deepEqual(kinds(findings, 'NONIGHT'), []);
+  assert.deepEqual(plannableShifts(d, d.people[1], month, rules).map((s) => s.id), ['X-D']);
 });
