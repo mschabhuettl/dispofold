@@ -113,6 +113,9 @@ jobs:
       - name: Forms save stored decimals (browser)
         working-directory: frontend
         run: npx playwright install --with-deps chromium && node scripts/check-forms.mjs
+      - name: Rules page and person page (browser)
+        working-directory: frontend
+        run: node scripts/check-rules-person.mjs
       - name: Print layouts of both plan views (browser)
         working-directory: frontend
         run: node scripts/check-print.mjs
