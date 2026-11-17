@@ -98,6 +98,9 @@ public class Store {
      * @return the new revision
      */
     public long saveDataset(Dataset dataset, Ids ids, boolean imported) {
+        if (imported) {
+            return saveImport(dataset, ids, dataset, true);
+        }
         String doc = json(dataset);
         String idState = json(ids);
         DatasetState before = datasetState();
@@ -108,6 +111,35 @@ public class Store {
                 "insert into dataset (id, doc, revision, imported_revision, ids) values (1, ?, ?, ?, ?)",
                 new Object[] { doc, next, importedRevision, idState });
         return next;
+    }
+
+    /**
+     * Stores imported master data with the raw import as the new baseline. The caller holds {@link #DATASET_LOCK}.
+     *
+     * @param dataset the master data to store: the import, or the import with changes kept from Dispofold
+     * @param baseline the raw imported master data
+     * @param unchanged the master data equal the import and count as unchanged since it; false (changes kept)
+     *        leaves the revision of the import behind, so that {@link DatasetState#changedSinceImport()} stays true
+     * @return the new revision
+     */
+    public long saveImport(Dataset dataset, Ids ids, Dataset baseline, boolean unchanged) {
+        String doc = json(dataset);
+        String base = json(baseline);
+        String idState = json(ids);
+        DatasetState before = datasetState();
+        long next = before.revision() + 1;
+        long importedRevision = unchanged ? next : before.importedRevision();
+        upsert2("update dataset set doc = ?, revision = ?, imported_revision = ?, ids = ?, baseline = ?,"
+                + " updated = current_timestamp where id = 1",
+                new Object[] { doc, next, importedRevision, idState, base },
+                "insert into dataset (id, doc, revision, imported_revision, ids, baseline) values (1, ?, ?, ?, ?, ?)",
+                new Object[] { doc, next, importedRevision, idState, base });
+        return next;
+    }
+
+    /** The master data as last imported; empty before the first import and after an upgrade until the next one. */
+    public Optional<Dataset> baseline() {
+        return queryOne("select baseline from dataset where id = 1 and baseline is not null", Dataset.class);
     }
 
     public Optional<Period> period(YearMonth month) {
