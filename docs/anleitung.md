@@ -182,7 +182,8 @@ Die Zeile über dem Plan:
 - **Status:** **Entwurf** oder **abgeschlossen**.
 - **Überbesetzung:** Personenstunden über der Höchstbesetzung (wo keine gesetzt ist, über der Mindestbesetzung)
   und Dienste, die keinen Bedarf abdecken.
-- **Einzelne freie Tage:** freie Tage zwischen zwei Diensten (wenig Erholung). **Tage außerhalb der
+- **Einzelne freie Tage:** freie Tage zwischen zwei Diensten (wenig Erholung); hat die Regel oben einen Knopf,
+  steht die Zahl nur dort. **Tage außerhalb der
   Blocklänge:** um wie viele Tage die Dienstblöcke kürzer oder länger sind als unter **Regeln** eingestellt.
   Beide sollen klein sein; sie sind keine Fehler, sondern ein Maß für die Güte des Plans.
 - **Plan veraltet: neu planen**, siehe [unten](#hinweis-plan-veraltet-neu-planen).
