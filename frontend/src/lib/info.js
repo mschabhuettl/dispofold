@@ -28,12 +28,15 @@ export function info(text, label = '', id = `info-${++counter}`) {
 
   function open() {
     current?.();
-    box.textContent = text;
+    // in the page first, then the text: screen readers announce the change of the status box
     document.body.append(box);
+    box.textContent = text;
     const r = button.getBoundingClientRect();
     const room = document.documentElement.clientWidth;
     box.style.left = `${Math.max(8, Math.min(r.left, room - box.offsetWidth - 8)) + window.scrollX}px`;
-    box.style.top = `${r.bottom + window.scrollY + 4}px`;
+    // below the button, above it when the window has no room below
+    const below = r.bottom + 4 + box.offsetHeight <= document.documentElement.clientHeight || r.top < box.offsetHeight + 4;
+    box.style.top = `${(below ? r.bottom + 4 : r.top - 4 - box.offsetHeight) + window.scrollY}px`;
     button.setAttribute('aria-expanded', 'true');
     document.addEventListener('click', onDocClick, true);
     document.addEventListener('keydown', onKey, true);

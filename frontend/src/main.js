@@ -145,8 +145,14 @@ async function render() {
       if (typeof result === 'function') result();
       return;
     }
-    // the short intro of the page under its title
-    container.querySelector('h1')?.after(h('p.page-intro.muted', {}, INTROS[route.path]));
+    // the short intro of the page under its title, again after a view draws itself anew
+    const intro = h('p.page-intro.muted', {}, INTROS[route.path]);
+    const placeIntro = () => {
+      const title = container.querySelector('h1');
+      if (title && title.nextElementSibling !== intro) title.after(intro);
+    };
+    placeIntro();
+    new MutationObserver(placeIntro).observe(container, { childList: true });
     main.replaceChildren(...tabs(route), container);
     if (typeof result === 'function') cleanup = result;
   } catch (e) {

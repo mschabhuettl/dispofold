@@ -57,6 +57,10 @@ export async function render(root, ctx) {
   const btnUnpin = h('button.btn.btn-secondary', { type: 'button', onclick: unpin }, t('roster.unpinAll'));
   const scoreText = h('span', {});
   const sticky = stickyHeights();
+  // help buttons of the status line, made once: it is drawn again every few seconds while solving, an open help
+  // and the focus on its button stay
+  const helps = {};
+  const help = (key, label) => (helps[key] ??= info(t(key), label));
   let ruleHits = null; // { analysis, lists: rule id -> promise } of the lists behind the chips, loaded on the first click
 
   root.classList.add('roster-view', 'print-view');
@@ -109,17 +113,18 @@ export async function render(root, ctx) {
     const staleReasons = [state.stale && t('roster.staleHelp'),
       (state.previousMonthChanged || analysis?.previousMonthChanged) && t('roster.previousChangedHelp')].filter(Boolean);
     status.className = `statusbar status-${headline.level}`;
+    const focused = status.contains(document.activeElement) ? document.activeElement : null;
     status.replaceChildren();
     append(status, [
       // the raw score only as a tooltip here (and as text under "Erweitert")
       h('div.with-info', {}, h('p.plan-headline', { class: `headline-${headline.level}`, title: score }, headline.text),
-        info(t('help.plan.headline'), headline.text)),
+        help('help.plan.headline', t('help.plan.headlineLabel'))),
       !state.solving && chips(),
       h('div.status-details', {},
-        h('span', {}, t('roster.statusLabel'), ' ', h('strong', {}, printStatus(plan.status)), info(t('help.plan.status'), t('roster.statusLabel'))),
+        h('span', {}, t('roster.statusLabel'), ' ', h('strong', {}, printStatus(plan.status)), help('help.plan.status', t('roster.statusLabel'))),
         plan.status === 'FAILED' && h('span.badge.badge-hard', {}, t('roster.failed')),
         figures?.overstaffed > 0 && h('span', {}, t('roster.overstaffed'), ' ', t('roster.personHours', { hours: fmt.num(figures.overstaffed, 1) }),
-          info(t('help.plan.overstaffed'), t('roster.overstaffed'))),
+          help('help.plan.overstaffed', t('roster.overstaffed'))),
         analysis?.singleDaysOff != null && h('span', {}, t('roster.singleDaysOff', { count: analysis.singleDaysOff }),
           info(t('help.plan.singleDaysOff'), t('roster.singleDaysOff', { count: analysis.singleDaysOff }))),
         analysis?.blockDays != null && h('span', {}, t('roster.blockDays', { count: analysis.blockDays }),
@@ -129,6 +134,7 @@ export async function render(root, ctx) {
         // the plan no longer matches its inputs or the previous month: plan again (the reasons as tooltip)
         staleReasons.length > 0 && h('span.badge.badge-warn', { title: staleReasons.join(' ') }, t('closeMonth.stale'))),
     ]);
+    if (focused?.isConnected && document.activeElement !== focused) focused.focus();
     if (canEdit) {
       btnSolve.disabled = state.solving || closed();
       btnStop.disabled = !state.solving;

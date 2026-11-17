@@ -132,10 +132,10 @@ test('every figure of the Dienstplan status line has a help', () => {
   const figure = (a) => [...a.matchAll(/t\('(roster\.\w+)'/g)].some((m) => /\{\w|:$/.test(TEXTS[m[1]]));
   const parts = args(details[0]).filter(figure);
   assert.ok(parts.length >= 4, `figures: ${parts.length}`);
-  assert.deepEqual(parts.filter((a) => !a.includes('info(')), []);
+  assert.deepEqual(parts.filter((a) => !a.includes('info(') && !a.includes("help('help.")), []);
   for (const cls of ['p.plan-headline', 'span.score']) {
     const around = roster.slice(roster.indexOf(cls) - 40, roster.indexOf(cls) + 400);
-    assert.match(around, /info\(t\('help\./, cls);
+    assert.match(around, /info\(t\('help\.|help\('help\./, cls);
   }
 });
 
@@ -168,7 +168,9 @@ test('every field of the person form, the Stammdaten forms and the Eingaben has 
 test('every help text belongs to something that exists', () => {
   const literal = new Set();
   const files = (dir) => readdirSync(dir).flatMap((n) => (statSync(join(dir, n)).isDirectory() ? files(join(dir, n)) : [join(dir, n)]));
-  for (const f of files(join(root, 'src'))) for (const m of readFileSync(f, 'utf8').matchAll(/'(help\.[\w.]+)'/g)) literal.add(m[1]);
+  for (const f of files(join(root, 'src')).filter((f) => !f.endsWith(join('lib', 'texts.js')))) {
+    for (const m of readFileSync(f, 'utf8').matchAll(/'(help\.[\w.]+)'/g)) literal.add(m[1]);
+  }
   const derived = new Set([...CONSTRAINTS.map((c) => `help.constraint.${c.id}`), ...METRICS.map((m) => `help.figure.${m.id}`),
     ...Object.keys(DEFAULT_RULES).map((k) => `help.param.${k}`)]);
   // help.import.*: for the Daten page, which is being rewritten separately
