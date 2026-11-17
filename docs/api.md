@@ -99,6 +99,7 @@ sie, antwortet das Backend mit `428` `period.revisionMissing`; hat inzwischen je
 | `POST` | `/api/plans/{month}/unpin` | löst alle Fixierungen, die nicht aus `Period.fixed` kommen |
 | `GET` | `/api/plans/{month}/analysis` | `PlanAnalysis` (Score, Summen je Regel, Bedarfslücken, Kennzahlen je Person, `uncoveredHours` und `overstaffedHours`: ungedeckter Bedarf und Überbesetzung in Personenstunden, zusammen die mittlere Stufe) |
 | `GET` | `/api/plans/{month}/people/{personId}` | `PersonExplanation` (Kennzahlen und alle Regel-Treffer der Person) |
+| `GET` | `/api/plans/{month}/hits?constraint={id}` | Regel-Treffer aller Personen je Regel aus einer Analyse; siehe unten |
 | `GET` | `/api/plans/{month}/coverage/{areaId}` | Liste von `CoverageSegment` für den ganzen Monat |
 | `GET` | `/api/plans/{month}/candidates?areaId=&from=&to=` | wer für eine Bedarfslücke gefragt werden kann, nur für `planner`; siehe unten |
 | `POST` | `/api/plans/{month}/finalize` | schließt den Monat ab (Status `CLOSED`), Antwort Liste von `HistoryEntry` mit `source: "plan"` |
@@ -126,6 +127,12 @@ keinen neuen harten Verstoß bringt. `plannedHours` sind die Stunden, die bisher
 gutgeschriebene Tage). Sortiert nach `plannedHours - targetHours`, die mit den wenigsten Stunden zuerst. Fehler:
 `400` `candidates.span`, `404` `area.unknown`.
 
+Regel-Treffer des Plans: Die Antwort ist ein Objekt mit der Regel-Id als Schlüssel (Reihenfolge des Katalogs,
+nur Regeln mit Treffern) und je Regel einer Liste `[{ "personId", "constraintId", "level", "date", "score",
+"code", "params" }]`, also den Treffern der Personenansicht mit der Person. Mit `constraint` nur diese Regel
+(bei einer unbekannten Id oder ohne Treffer `{}`). Die Treffer sind dieselben wie die aller Personenansichten
+zusammen, auch für `viewer`, berechnet aber nur einmal.
+
 Monatsabschluss: `finalize` speichert je Person das Stundenkonto und die Ersatzruhe nach dem Monat (verbraucht
 und neu erworben, Arbeit an einem Feiertag erwirbt eine). Importierte Ist-Werte (`source: "import"`) werden nie
 überschrieben. Ein abgeschlossener Monat ist nur lesbar (`409` `plan.closed`), bis ihn `reopen` wieder öffnet.
@@ -137,9 +144,9 @@ nennt sie. CSV: Semikolon, UTF-8 mit BOM, eine Zeile je Person und Tag mit
 
 ## Leser-Rolle
 
-Für `viewer` enthalten `/api/dataset`, `/api/periods/{month}`, Pläne, Analyse, Personenansicht, Abdeckung und
-`/api/months` keine Wünsche, keine Einschränkungen und keine Familienregeln. Abwesenheiten erscheinen nur als Art
-`ABW` (abwesend), ohne den Grund. Exporte antworten Lesern mit `403`.
+Für `viewer` enthalten `/api/dataset`, `/api/periods/{month}`, Pläne, Analyse, Personenansicht, Regel-Treffer,
+Abdeckung und `/api/months` keine Wünsche, keine Einschränkungen und keine Familienregeln. Abwesenheiten
+erscheinen nur als Art `ABW` (abwesend), ohne den Grund. Exporte antworten Lesern mit `403`.
 
 ## Desktop-Modus
 
