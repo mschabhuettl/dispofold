@@ -9,23 +9,23 @@ const LEVELS = [
   ['SOFT', t('rules.level.soft.title'), t('rules.level.soft.help')],
 ];
 
-/** Rule parameters: key, label, help, type ('number' | 'time' | 'bool'), step. */
+/** Rule parameters: key, label, help, type ('number' | 'time' | 'bool'), step ('any' for the decimal ones: the backend keeps any value). */
 const PARAMS = [
-  ['minDailyRestHours', t('rules.param.minDailyRestHours.label'), t('rules.param.minDailyRestHours.help'), 'number', 0.5],
-  ['minWeeklyRestHours', t('rules.param.minWeeklyRestHours.label'), t('rules.param.minWeeklyRestHours.help'), 'number', 1],
-  ['maxDutyHours', t('rules.param.maxDutyHours.label'), t('rules.param.maxDutyHours.help'), 'number', 0.5],
-  ['maxWeekHours', t('rules.param.maxWeekHours.label'), t('rules.param.maxWeekHours.help'), 'number', 1],
-  ['maxAverageWeekHours', t('rules.param.maxAverageWeekHours.label'), t('rules.param.maxAverageWeekHours.help'), 'number', 0.01],
+  ['minDailyRestHours', t('rules.param.minDailyRestHours.label'), t('rules.param.minDailyRestHours.help'), 'number', 'any'],
+  ['minWeeklyRestHours', t('rules.param.minWeeklyRestHours.label'), t('rules.param.minWeeklyRestHours.help'), 'number', 'any'],
+  ['maxDutyHours', t('rules.param.maxDutyHours.label'), t('rules.param.maxDutyHours.help'), 'number', 'any'],
+  ['maxWeekHours', t('rules.param.maxWeekHours.label'), t('rules.param.maxWeekHours.help'), 'number', 'any'],
+  ['maxAverageWeekHours', t('rules.param.maxAverageWeekHours.label'), t('rules.param.maxAverageWeekHours.help'), 'number', 'any'],
   ['minBlock', t('rules.param.minBlock.label'), t('rules.param.minBlock.help'), 'number', 1],
   ['maxBlock', t('rules.param.maxBlock.label'), t('rules.param.maxBlock.help'), 'number', 1],
   ['maxWishesPerPerson', t('rules.param.maxWishesPerPerson.label'), t('rules.param.maxWishesPerPerson.help'), 'number', 1],
   ['holidayWorkEarnsCompRest', t('rules.param.holidayWorkEarnsCompRest.label'), t('rules.param.holidayWorkEarnsCompRest.help'), 'bool'],
   ['nightStart', t('rules.param.nightStart.label'), '', 'time'],
   ['nightEnd', t('rules.param.nightEnd.label'), '', 'time'],
-  ['nightMinHours', t('rules.param.nightMinHours.label'), t('rules.param.nightMinHours.help'), 'number', 0.5],
-  ['maxOverTargetPercent', t('rules.param.maxOverTargetPercent.label'), t('rules.param.maxOverTargetPercent.help'), 'number', 1],
+  ['nightMinHours', t('rules.param.nightMinHours.label'), t('rules.param.nightMinHours.help'), 'number', 'any'],
+  ['maxOverTargetPercent', t('rules.param.maxOverTargetPercent.label'), t('rules.param.maxOverTargetPercent.help'), 'number', 'any'],
   ['minFreeSundays', t('rules.param.minFreeSundays.label'), t('rules.param.minFreeSundays.help'), 'number', 1],
-  ['accountCarryShare', t('rules.param.accountCarryShare.label'), t('rules.param.accountCarryShare.help'), 'number', 0.05],
+  ['accountCarryShare', t('rules.param.accountCarryShare.label'), t('rules.param.accountCarryShare.help'), 'number', 'any'],
   ['historyMonths', t('rules.param.historyMonths.label'), t('rules.param.historyMonths.help'), 'number', 1],
 ];
 

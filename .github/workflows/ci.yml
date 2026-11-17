@@ -110,6 +110,9 @@ jobs:
         run: npm test
       - working-directory: frontend
         run: npm run build
+      - name: Forms save stored decimals (browser)
+        working-directory: frontend
+        run: npx playwright install --with-deps chromium && node scripts/check-forms.mjs
 
   desktop-shell:
     # Unit tests of the program window (protocol, proof, proxy rules).

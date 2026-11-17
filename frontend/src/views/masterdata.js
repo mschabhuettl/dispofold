@@ -61,8 +61,8 @@ export async function render(root, ctx) {
     return {
       people: [{ name: 'firstName', label: t('masterdata.col.firstName'), required: true }, { name: 'lastName', label: t('masterdata.col.lastName'), required: true },
         { name: 'shortName', label: t('masterdata.col.shortName') },
-        { name: 'weeklyHours', label: t('masterdata.col.weeklyHours'), type: 'number', step: 0.1, min: 0, required: true },
-        { name: 'hoursAccount', label: t('masterdata.col.account'), type: 'number', step: 0.1, required: true },
+        { name: 'weeklyHours', label: t('masterdata.col.weeklyHours'), type: 'number', step: 'any', min: 0, required: true },
+        { name: 'hoursAccount', label: t('masterdata.col.account'), type: 'number', step: 'any', required: true },
         { name: 'compRestBalance', label: t('masterdata.col.compRestOpen'), type: 'number', step: 1, min: 0, required: true },
         { name: 'externalId', label: t('masterdata.col.externalId') },
         { name: 'entryDate', label: t('masterdata.entryDate'), type: 'date' }, { name: 'exitDate', label: t('masterdata.exitDate'), type: 'date' },
