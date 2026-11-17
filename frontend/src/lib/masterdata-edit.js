@@ -88,12 +88,12 @@ export function toForm(kind, item) {
 }
 
 const FROM_FORM = {
-  people: (v, base) => {
+  people: (v, base, areaName) => {
     const entryDate = orNull(v.entryDate);
     const exitDate = orNull(v.exitDate);
     if (entryDate && exitDate && exitDate < entryDate) throw new Error(t('masterdata.exitBeforeEntry'));
     const areaIds = [...(v.areaIds ?? [])];
-    const shiftMix = mixFromForm(v.shiftMix, areaIds);
+    const shiftMix = mixFromForm(v.shiftMix, areaIds, areaName);
     // fields the form does not show (e.g. from a newer server) stay as they were
     const person = { ...base, firstName: required(v.firstName, t('masterdata.col.firstName')), lastName: required(v.lastName, t('masterdata.col.lastName')),
       shortName: orNull(v.shortName), weeklyHours: number(v.weeklyHours, t('masterdata.col.weeklyHours')), areaIds,
@@ -126,10 +126,11 @@ const FROM_FORM = {
 
 /**
  * The object to send from form values; base is the object as read (null when creating), so fields the form does
- * not show are kept. New people and shifts get their id from the server. Throws an Error with a German message.
+ * not show are kept. New people and shifts get their id from the server. Throws an Error with a German message;
+ * areaName(id) names an area in it (people: the usual distribution).
  */
-export function fromForm(kind, values, base = null) {
-  const item = FROM_FORM[kind](values, base ?? {});
+export function fromForm(kind, values, base = null, areaName = undefined) {
+  const item = FROM_FORM[kind](values, base ?? {}, areaName);
   if (!base && (kind === 'people' || kind === 'shifts')) delete item.id;
   return item;
 }

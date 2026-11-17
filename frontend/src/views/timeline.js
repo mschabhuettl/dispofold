@@ -11,15 +11,19 @@ import { coverageChart, coverageLegend } from './coverage-chart.js';
 
 const LABEL_WIDTH = 200;
 
-export async function render(root, ctx) {
+/** params: area id and day from a link (#/zeitachse/<area>/<date>), e.g. of a gap or an overstaffing on Prüfen. */
+export async function render(root, ctx, [linkArea, linkDate] = []) {
   const { api, month, canEdit } = ctx;
   const [dataset, initialState, period] = await Promise.all([ctx.dataset(), api.planState(month), api.period(month).catch(() => null)]);
   let state = initialState;
   const dates = monthDates(month);
+  const known = (id) => dataset.areas.some((a) => a.id === id);
   const storedArea = sessionStorage.getItem('timeline-area');
-  let areaId = dataset.areas.some((a) => a.id === storedArea) ? storedArea : dataset.areas[0]?.id;
-  let mode = sessionStorage.getItem('timeline-mode') || 'day';
-  let date = dates[0];
+  let areaId = known(linkArea) ? linkArea : known(storedArea) ? storedArea : dataset.areas[0]?.id;
+  // a linked day opens as that day
+  const linked = dates.includes(linkDate);
+  let mode = linked ? 'day' : sessionStorage.getItem('timeline-mode') || 'day';
+  let date = linked ? linkDate : dates[0];
   let segments = [];
   let timeline = null;
   let disposed = false;
@@ -31,7 +35,7 @@ export async function render(root, ctx) {
   const chartHost = h('div.coverage', {});
   const gapList = h('div.gap-list', {});
   const dateInput = h('select', { id: 'tl-date', onchange: (e) => { date = e.target.value; draw(); } },
-    dates.map((d) => h('option', { value: d }, dayLabel(d))));
+    dates.map((d) => h('option', { value: d, selected: d === date }, dayLabel(d))));
 
   root.append(
     h('h1', {}, t('nav.timeline')),

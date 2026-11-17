@@ -182,7 +182,8 @@ Die Zeile über dem Plan:
 - **Status:** **Entwurf** oder **abgeschlossen**.
 - **Überbesetzung:** Personenstunden über der Höchstbesetzung (wo keine gesetzt ist, über der Mindestbesetzung)
   und Dienste, die keinen Bedarf abdecken.
-- **Einzelne freie Tage:** freie Tage zwischen zwei Diensten (wenig Erholung). **Tage außerhalb der
+- **Einzelne freie Tage:** freie Tage zwischen zwei Diensten (wenig Erholung); hat die Regel oben einen Knopf,
+  steht die Zahl nur dort. **Tage außerhalb der
   Blocklänge:** um wie viele Tage die Dienstblöcke kürzer oder länger sind als unter **Regeln** eingestellt.
   Beide sollen klein sein; sie sind keine Fehler, sondern ein Maß für die Güte des Plans.
 - **Plan veraltet: neu planen**, siehe [unten](#hinweis-plan-veraltet-neu-planen).
@@ -220,7 +221,8 @@ mit mindestens einem Dienst im Monat und Schichten, deren Zeit ein Bedarf des Be
 - **Zeile „offen“** (rot): Hat ein Bereich im Monat Bedarfslücken, steht direkt unter seinem Namen eine Zeile
   „offen“. Beim Scrollen bleiben Name und Zeile „offen“ des obersten Bereichs unter den Tagen stehen. Jede Lücke
   steht dort genau einmal, am Tag ihres Beginns (eine Lücke von 19:00 bis 07:00 also am ersten Tag), mit der Zahl
-  der fehlenden Personen und der Uhrzeit, zum Beispiel „1 · 07:00-19:00“.
+  der fehlenden Personen und der Uhrzeit, zum Beispiel „1 · 07:00-19:00“. Hat ein Tag mehr als drei Lücken,
+  zeigt die Zelle die ersten zwei und „+N weitere“; alle stehen im Hinweis der Zelle und im Ausdruck.
 - **Ein Klick auf einen Namen** öffnet dieselbe Auswahl wie im Dienstplan (Dienst ändern, frei, fixieren).
   **Ein Klick auf eine Zelle der Zeile „offen“** öffnet die Liste **Auf Anfrage verfügbar** für die Lücken
   dieses Tages.
@@ -344,10 +346,10 @@ Die Seite listet alles, was am Plan des gewählten Monats nicht stimmt, in drei 
   nach** ordnet die Liste nach **Regel**, **Person** oder **Tag**; die drei Auswahlen daneben zeigen nur eine
   Regel, eine Person oder einen Tag. Jede Gruppe klappt mit einem Klick auf ihre Überschrift auf und zu; bei
   langen Listen ist nur die erste offen. Ein Eintrag nennt die Gruppe (**Regelverstoß**, **Bedarf**,
-  **Qualität**), die Person (ein Klick öffnet ihre Seite) oder bei Bedarfseinträgen die **Zeitachse**, den Tag
-  und eine kurze Erklärung.
-- **Offener Bedarf:** die Lücken nach Tagen, je Lücke Bereich, Uhrzeit, wie viele Personen fehlen und welche
-  Funktionen des Bereichs in diese Zeit fallen. **Auf Anfrage verfügbar** klappt die Personen auf, die man fragen
+  **Qualität**), die Person (ein Klick öffnet ihre Seite) oder bei Bedarfseinträgen die **Zeitachse** (sie öffnet
+  sich auf Bereich und Tag des Eintrags), den Tag und eine kurze Erklärung.
+- **Offener Bedarf:** die Lücken nach Tagen, je Lücke Bereich, Uhrzeit, wie viele Personen fehlen, welche
+  Funktionen des Bereichs in diese Zeit fallen und ein Link zur **Zeitachse** auf Bereich und Tag. **Auf Anfrage verfügbar** klappt die Personen auf, die man fragen
   kann, siehe [Dienste nur auf Anfrage](#dienste-nur-auf-anfrage). Während einer Planung und in einem
   abgeschlossenen Monat fehlt dieser Knopf.
 - **Stammdaten:** unabhängig vom Plan, was in den Stammdaten fehlt oder nicht zusammenpasst, zum Beispiel eine

@@ -12,6 +12,8 @@ import { cellChoice, createPopover, dayClass, dayHeader, legendBox, lightThemeWh
 import { exportItems, outputMenu, printItem } from './plan-output.js';
 
 const NAME_LABELS = { short: t('functions.names.short'), full: t('functions.names.full') };
+/** Lines of gaps a cell of the "offen" row shows on screen; more are summarised (print shows them all). */
+const GAP_LINES = 3;
 
 export async function render(root, ctx) {
   const { api, month, canEdit } = ctx;
@@ -113,6 +115,12 @@ export async function render(root, ctx) {
     return c.gaps.map((g) => h('span.cell-code', {}, t('functions.gapLine', gapLine(g))));
   }
 
+  /** On screen at most GAP_LINES lines, the rest summarised: the sticky row stays low (the title names every gap). */
+  function shortGapLines(c) {
+    if (c.gaps.length <= GAP_LINES) return gapLines(c);
+    return [...gapLines(c).slice(0, GAP_LINES - 1), h('span.cell-code', {}, t('functions.gapMore', { count: c.gaps.length - GAP_LINES + 1 }))];
+  }
+
   function gapRow(row, r, days) {
     return h('tr.gap-row', { 'data-row': String(r) }, gapRowHeader(),
       row.cells.map((c, i) => h('td.cell', { class: dayClass(days[i]) }, gapButton(row, c, days[i], r, i))));
@@ -129,7 +137,7 @@ export async function render(root, ctx) {
       'aria-haspopup': open ? 'dialog' : null, 'aria-disabled': open ? null : 'true', tabindex: '-1',
       'data-cell': `gaps|${row.area.id}|${day.date}`, 'data-r': String(r), 'data-c': String(col),
       onclick: (e) => { if (open && editable()) openGap(e.currentTarget, row.area, c, day); } },
-    c.kind === 'gaps' ? gapLines(c) : '');
+    c.kind === 'gaps' ? shortGapLines(c) : '');
   }
 
   function positionRow(row, r, days) {

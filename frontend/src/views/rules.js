@@ -89,6 +89,7 @@ export async function render(root, ctx) {
 
   // 2. Law and works agreement: text until "Ändern"
   const lawText = h('ul.law-text', {});
+  const lawHelp = {};
   const monthNote = h('p.muted', {});
   const lawFields = h('div.params', { id: 'law-fields', hidden: true }, LAW_FIELDS.map(paramField), monthNote);
   const unlock = h('button.btn.btn-secondary', { type: 'button', 'aria-expanded': 'false', 'aria-controls': 'law-fields', 'aria-describedby': 'h-law',
@@ -185,9 +186,12 @@ export async function render(root, ctx) {
   function refresh() {
     for (const [c, el] of descriptions) el.textContent = constraintDescription(c, params);
     const p = formatParams(params);
-    lawText.replaceChildren(...[t('rules.law.rest', p), t('rules.law.day', p), t('rules.law.week', p), t('rules.law.month', p),
-      t('rules.law.average', p), t('rules.law.sundays', p), params.holidayWorkEarnsCompRest ? t('rules.law.holiday') : t('rules.law.noHoliday')]
-      .map((line) => h('li', {}, line)));
+    // each line with its own help, made once so that an open help stays open while the values change
+    lawText.replaceChildren(...[[t('rules.law.rest', p), t('help.law.rest')], [t('rules.law.day', p), t('help.law.day')],
+      [t('rules.law.week', p), t('help.law.week')], [t('rules.law.month', p), t('help.law.month')], [t('rules.law.average', p), t('help.law.average')],
+      [t('rules.law.sundays', p), t('help.law.sundays')],
+      [params.holidayWorkEarnsCompRest ? t('rules.law.holiday') : t('rules.law.noHoliday'), t('help.law.holiday')]]
+      .map(([line, help]) => h('li', {}, line, lawHelp[help] ??= info(help, line))));
     monthNote.textContent = t('rules.law.month', p);
     for (const [group, level, input] of groupRadios) {
       const current = groupLevel(group, constraints, weights);

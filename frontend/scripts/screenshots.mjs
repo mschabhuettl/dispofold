@@ -5,6 +5,9 @@
 // Every request to another host is blocked and makes the script fail, so it doubles as an offline check.
 // Each view is captured in the light and the dark theme (files with the suffix "-dunkel").
 // DESKTOP=1 (desktop program or `MOCK_DESKTOP=1 npm run dev`): no login, adds the Einstellungen page.
+// German throughout: the full Chromium (channel 'chromium', not the headless shell, which has only English UI
+// strings) with --lang and LANG/LANGUAGE renders date fields and file pickers in German; the context locale sets
+// navigator.language and Intl.
 import { mkdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { chromium } from 'playwright';
@@ -20,8 +23,8 @@ mkdirSync(outDir, { recursive: true });
 
 const origin = new URL(base).origin;
 const external = [];
-const browser = await chromium.launch();
-const context = await browser.newContext({ viewport: { width: 1600, height: 1000 }, locale: 'de-AT' });
+const browser = await chromium.launch({ channel: 'chromium', args: ['--lang=de-DE'], env: { ...process.env, LANG: 'de_DE.UTF-8', LANGUAGE: 'de' } });
+const context = await browser.newContext({ viewport: { width: 1600, height: 1000 }, locale: 'de-DE' });
 await context.route('**/*', (route) => {
   const url = route.request().url();
   if (url.startsWith(origin) || url.startsWith('data:') || url.startsWith('blob:')) return route.continue();

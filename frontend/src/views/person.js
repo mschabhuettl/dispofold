@@ -263,7 +263,8 @@ function editor(root, ctx, initial, personId, nightDistribution) {
     const values = readValues();
     let item;
     try {
-      item = fromForm('people', values, base);
+      const areaName = (id) => dataset.areas.find((a) => a.id === id)?.name ?? id;
+      item = fromForm('people', values, base, areaName);
     } catch (err) {
       showProblem(err);
       return;
@@ -387,14 +388,19 @@ function familyEditor(rules) {
   const line = (r) => {
     const i = n++;
     const id = (k) => `f-fr${i}-${k}`;
+    const timeField = (k, label, help) => h('div.field', {}, h('div.with-info', {}, h('label', { for: id(k) }, label), info(help, label)),
+      h('input', { id: id(k), 'data-fr': k, type: 'time', value: r[k] }));
     const el = h('fieldset.family-rule', { style: { ...bare, display: 'flex', flexWrap: 'wrap', gap: '.4rem .8rem', alignItems: 'end' } },
       h('legend', { style: { fontWeight: 600 } }, t('masterdata.family.rule', { number: i + 1 })),
       h('span', {}, WEEKDAY_OPTIONS.map(([v, label]) => h('label', { style: inline },
-        h('input', { type: 'checkbox', 'data-fr': 'weekdays', value: v, checked: r.weekdays.includes(v) }), ` ${label}`))),
-      h('div.field', {}, h('label', { for: id('latestEnd') }, t('masterdata.family.col.latestEnd')), h('input', { id: id('latestEnd'), 'data-fr': 'latestEnd', type: 'time', value: r.latestEnd })),
-      h('div.field', {}, h('label', { for: id('earliestStart') }, t('masterdata.family.col.earliestStart')), h('input', { id: id('earliestStart'), 'data-fr': 'earliestStart', type: 'time', value: r.earliestStart })),
-      h('label', { style: inline }, h('input', { type: 'checkbox', 'data-fr': 'noNights', checked: r.noNights }), ` ${t('masterdata.family.noNights')}`),
-      h('div.field', {}, h('label', { for: id('note') }, t('masterdata.family.col.note')), h('input', { id: id('note'), 'data-fr': 'note', value: r.note })),
+        h('input', { type: 'checkbox', 'data-fr': 'weekdays', value: v, checked: r.weekdays.includes(v) }), ` ${label}`)),
+      info(t('help.field.family.weekdays'), t('masterdata.family.weekdays'))),
+      timeField('latestEnd', t('masterdata.family.col.latestEnd'), t('help.field.family.latestEnd')),
+      timeField('earliestStart', t('masterdata.family.col.earliestStart'), t('help.field.family.earliestStart')),
+      h('span', {}, h('label', { style: inline }, h('input', { type: 'checkbox', 'data-fr': 'noNights', checked: r.noNights }), ` ${t('masterdata.family.noNights')}`),
+        info(t('help.field.family.noNights'), t('masterdata.family.noNights'))),
+      h('div.field', {}, h('div.with-info', {}, h('label', { for: id('note') }, t('masterdata.family.col.note')), info(t('help.field.family.note'), t('masterdata.family.col.note'))),
+        h('input', { id: id('note'), 'data-fr': 'note', value: r.note })),
       h('button.btn-link', { type: 'button', onclick: () => el.remove() }, t('masterdata.family.remove')));
     return el;
   };
@@ -409,17 +415,22 @@ const readFamily = (form) => [...form.querySelectorAll('fieldset.family-rule')].
   latestEnd: el.querySelector('[data-fr=latestEnd]').value, earliestStart: el.querySelector('[data-fr=earliestStart]').value,
   noNights: el.querySelector('[data-fr=noNights]').checked, note: el.querySelector('[data-fr=note]').value }));
 
+/** Help of each category field of the usual distribution. */
+const MIX_HELP = { EARLY: t('help.field.mix.early'), DAY: t('help.field.mix.day'), LATE: t('help.field.mix.late'), NIGHT: t('help.field.mix.night') };
+
 /** Usual shift mix of the person form: a percentage per category and per area, cleared with one button. */
 function mixEditor(dataset, mix, nightDistribution) {
   let n = 0;
-  const field = (wrapper, attr, key, name, value) => {
+  const field = (wrapper, attr, key, name, value, help) => {
     const id = `f-mix-${n++}`;
-    return h('div.field', wrapper, h('label', { for: id }, t('masterdata.shiftMix.input', { name })),
+    const label = t('masterdata.shiftMix.input', { name });
+    return h('div.field', wrapper, h('div.with-info', {}, h('label', { for: id }, label), info(help, label)),
       h('input', { id, type: 'text', inputmode: 'decimal', size: 5, value, [attr]: key }));
   };
   const inputs = h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '.4rem .8rem', alignItems: 'end' } },
-    MIX_CATEGORIES.map((c) => field({}, 'data-mix-cat', c, CATEGORY[c], mix?.categories?.[c] ?? '')),
-    dataset.areas.map((a) => field({ 'data-mix-area': a.id }, 'data-mix-area', a.id, `${a.name} (${a.id})`, mix?.areas?.[a.id] ?? '')));
+    MIX_CATEGORIES.map((c) => field({}, 'data-mix-cat', c, CATEGORY[c], mix?.categories?.[c] ?? '', MIX_HELP[c])),
+    dataset.areas.map((a) => field({ 'data-mix-area': a.id }, 'data-mix-area', a.id, `${a.name} (${a.id})`, mix?.areas?.[a.id] ?? '',
+      t('help.field.mix.area', { name: a.name }))));
   const clear = h('button.btn.btn-secondary.btn-small', { type: 'button',
     onclick: () => inputs.querySelectorAll('input').forEach((i) => { i.value = ''; }) }, t('masterdata.shiftMix.remove'));
   return h('div', { style: wide }, h('strong', {}, t('masterdata.col.shiftMix')), info(t('help.field.people.shiftMix'), t('masterdata.col.shiftMix')), h('p.muted', {}, t('masterdata.shiftMix.help'), ' ', nightNote(nightDistribution)),

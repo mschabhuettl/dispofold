@@ -29,7 +29,7 @@ const check = (name, ok, detail = '') => {
 const browser = await chromium.launch();
 
 async function login(user) {
-  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const context = await browser.newContext({ locale: 'de-DE', viewport: { width: 1280, height: 900 } });
   await context.addInitScript((m) => sessionStorage.setItem('month', m), month);
   const page = await context.newPage();
   page.on('pageerror', (e) => check(`${user}: no page error`, false, e.message));
@@ -137,6 +137,27 @@ try {
   check('score as tooltip', (await headline.getAttribute('title')).includes(state.plan.score));
   check('score under Erweitert', (await advanced.locator('.score').textContent()).includes(state.plan.score));
   check('gaps shown once', (visible.match(/Lücke/g) ?? []).length <= 1, visible.replace(/\n/g, ' | '));
+  // "Einzelne freie Tage" once: as chip when the rule has one (it lists who and when), else as figure
+  const singleDays = async (withChip) => {
+    await page.route(`**/api/plans/${month}/analysis`, async (route) => {
+      const a = await (await route.fetch()).json();
+      const others = a.constraints.filter((c) => c.id !== 'isolatedDayOff');
+      a.constraints = withChip ? [...others, { id: 'isolatedDayOff', level: 'SOFT', weight: 1, score: -1000000, matches: 7 }] : others;
+      a.singleDaysOff = 7;
+      await route.fulfill({ json: a });
+    });
+    await page.reload();
+    await page.locator('.roster-wrap table').waitFor();
+    await page.unroute(`**/api/plans/${month}/analysis`);
+    const line = await page.locator('.statusbar').innerText();
+    return { count: (line.match(/Einzelne freie Tage/g) ?? []).length, chip: await page.locator('.chips .chip').filter({ hasText: 'Einzelne freie Tage' }).count() };
+  };
+  const withChip = await singleDays(true);
+  check('"Einzelne freie Tage" once with its chip', withChip.count === 1 && withChip.chip === 1, JSON.stringify(withChip));
+  const withoutChip = await singleDays(false);
+  check('"Einzelne freie Tage" once without a chip', withoutChip.count === 1 && withoutChip.chip === 0, JSON.stringify(withoutChip));
+  await page.reload();
+  await page.locator('.roster-wrap table').waitFor();
 
   // chips: a click lists person and day
   const chips = page.locator('.chips .chip');
@@ -214,8 +235,29 @@ try {
   const gapRow = await belowHeader(page, 'tr.sticky-gaps th.person');
   check('gap row sticky', gapRow.position === 'sticky' && gapRow.scrolled > 0 && Math.abs(gapRow.offset) < 2 && gapRow.onTop, JSON.stringify(gapRow));
 
+  // a day with many gaps in the first area: twelve short windows of demand on that date only
+  const manyGapsDay = `${month}-15`;
+  await page.evaluate(async ([m, day]) => {
+    const dataset = await (await fetch('/api/dataset')).json();
+    const area = dataset.areas[0].id;
+    const windows = Array.from({ length: 12 }, (_, i) => ({ areaId: area, date: day, from: `${String(2 * i).padStart(2, '0')}:00`,
+      to: `${String(2 * i).padStart(2, '0')}:30`, min: 9 }));
+    dataset.demand = [...dataset.demand, ...windows];
+    dataset.periods = [await (await fetch(`/api/periods/${m}`)).json()];
+    await fetch('/api/import/dataset?replace=true', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...dataset, version: 2 }) });
+  }, [month, manyGapsDay]);
+
   // Plan nach Funktion: menu without closing, legend state shared, "offen" row of the area at the top sticks
   await open(page, 'funktionen');
+  // the "offen" row stays low on a day with many gaps: a few lines and "+N weitere", every gap in the title
+  const manyGaps = await page.evaluate((day) => {
+    const row = document.querySelector('.roster-wrap tbody tr.gap-row');
+    const cell = row.querySelector(`[data-cell$="|${day}"]`);
+    return { height: row.getBoundingClientRect().height, lines: cell.querySelectorAll('.cell-code').length,
+      text: cell.textContent, title: cell.title };
+  }, manyGapsDay);
+  check('"offen" row capped on a day with many gaps', manyGaps.height < 80 && /\+\d+ weitere/.test(manyGaps.text)
+    && (manyGaps.title.match(/\d+ · \d\d:\d\d-\d\d:\d\d/g) ?? []).length >= 12, JSON.stringify(manyGaps));
   const fnItems = await menuItems(page);
   check('function view menu', ['Drucken', 'Export XLSX', 'Export CSV', 'Export JSON'].every((x) => fnItems.includes(x))
     && !fnItems.includes('Monat abschließen'), fnItems.join(', '));

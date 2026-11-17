@@ -22,7 +22,7 @@ const base = `http://localhost:${port}`;
 const browser = await chromium.launch();
 let failed = false;
 try {
-  const context = await browser.newContext({ acceptDownloads: true });
+  const context = await browser.newContext({ locale: 'de-DE', acceptDownloads: true });
   await context.addInitScript((m) => sessionStorage.setItem('month', m), month);
   const page = await context.newPage();
   page.on('dialog', (d) => d.accept());

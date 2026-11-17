@@ -72,7 +72,8 @@ export async function render(root, ctx) {
     h('div.toolbar', {}, h('div.field', {}, h('div.with-info', {}, h('label', { for: 'inputs-filter' }, t('inputs.filter')),
       info(t('help.field.inputs.filter'), t('inputs.filter'))), filter)),
     section(t('inputs.section.absences'), 'absences', t('help.field.inputs.absences'), canEdit && addForm('abs', [
-      [t('inputs.person'), personSelect('abs-person')], [t('inputs.from'), dateSelect('abs-from')], [t('inputs.to'), dateSelect('abs-to')],
+      [t('inputs.person'), personSelect('abs-person'), t('help.field.inputs.absencePerson')],
+      [t('inputs.from'), dateSelect('abs-from'), t('help.field.inputs.absenceFrom')], [t('inputs.to'), dateSelect('abs-to'), t('help.field.inputs.absenceTo')],
       [t('inputs.type'), h('select', { id: 'abs-type' }, dataset.absenceTypes.map((type) => h('option', { value: type.code }, `${type.code} ${type.name}`))), t('help.field.inputs.absenceType')],
     ], () => {
       const range = { personId: val('abs-person'), from: val('abs-from'), to: val('abs-to'), typeCode: val('abs-type') };
@@ -85,7 +86,7 @@ export async function render(root, ctx) {
     })),
     // '' instead of false: root.append would print "false"
     !showWishes ? '' : section(t('inputs.section.wishes'), 'wishes', t('help.field.inputs.wishes'), canEdit && addForm('wish', [
-      [t('inputs.person'), personSelect('wish-person')], [t('inputs.date'), dateSelect('wish-date')],
+      [t('inputs.person'), personSelect('wish-person'), t('help.field.inputs.wishPerson')], [t('inputs.date'), dateSelect('wish-date'), t('help.field.inputs.wishDate')],
       [t('inputs.type'), h('select', { id: 'wish-kind' }, Object.entries(WISH_KINDS).map(([k, v]) => h('option', { value: k }, v))), t('help.field.inputs.wishKind')],
       [t('inputs.wishShift'), shiftSelect('wish-shift', false, 'wish-person'), t('help.field.inputs.wishShift')],
     ], () => {
@@ -93,7 +94,8 @@ export async function render(root, ctx) {
       add('wishes', { personId: val('wish-person'), date: val('wish-date'), kind, shiftId: kind === 'SHIFT' || kind === 'NOT_SHIFT' ? val('wish-shift') : null });
     }), h('p.muted', {}, t('inputs.wishLimit', { limit }))),
     section(t('inputs.section.fixed'), 'fixed', t('help.field.inputs.fixed'), canEdit && addForm('fix', [
-      [t('inputs.person'), personSelect('fix-person')], [t('inputs.date'), dateSelect('fix-date')], [t('inputs.duty'), shiftSelect('fix-shift', true, 'fix-person')],
+      [t('inputs.person'), personSelect('fix-person'), t('help.field.inputs.fixedPerson')], [t('inputs.date'), dateSelect('fix-date'), t('help.field.inputs.fixedDate')],
+      [t('inputs.duty'), shiftSelect('fix-shift', true, 'fix-person'), t('help.field.inputs.fixedShift')],
     ], () => add('fixed', { personId: val('fix-person'), date: val('fix-date'), shiftId: val('fix-shift') || null }))),
   );
 
