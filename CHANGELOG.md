@@ -88,7 +88,7 @@ Drucken aus beiden Planansichten, Dezimalwerte in den Formularen.
   wie am Bildschirm, mit Abwesenheiten, Ersatzruhe, fixierten Diensten, geplanten Stunden und Bedarfslücken.
   Neu im Dienstplan: die Auswahl „Anzeige“ („Nachname Vorname“ oder „Kürzel“), auch für den Druck. Die Rolle
   Lesen druckt nur, was sie am Bildschirm sieht. Im Desktop-Programm öffnet sich der Druckdialog des Systems.
-- **Formulare:** Wochenstunden und Stundenkonto mit zwei Nachkommastellen (z. B. 46,15 aus einem Import) ließen
+- **Formulare:** Wochenstunden und Stundenkonto mit zwei Nachkommastellen (z. B. 41,75 aus einem Import) ließen
   sich nicht speichern, auch wenn nur ein anderes Feld geändert wurde. Diese Felder und die Dezimalwerte auf der
   Seite Regeln nehmen jetzt jeden Wert, den das Programm speichert.
 - Betrieb: keine Änderung an Datenbank, `docker-compose.yml` oder `.env`.

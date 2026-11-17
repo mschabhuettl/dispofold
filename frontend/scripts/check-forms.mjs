@@ -1,4 +1,4 @@
-// Playwright check: forms save stored decimals unchanged. A person with weekly hours 46.15 and an hours account
+// Playwright check: forms save stored decimals unchanged. A person with weekly hours 41.75 and an hours account
 // of 12.25, and rules with decimal parameters, are opened and saved without a change, with the law fields locked and
 // again after "Ändern" (the hours account share is shown in percent and saved as a fraction); the browser must not reject
 // the values (step) and the saved values must be the stored ones. Demo data of the dev server (mock API).
@@ -35,7 +35,7 @@ try {
   const person = await page.evaluate(async () => {
     await fetch('/api/import/demo', { method: 'POST' });
     const p = (await (await fetch('/api/dataset')).json()).people[0];
-    const changed = { ...p, weeklyHours: 46.15, hoursAccount: 12.25 };
+    const changed = { ...p, weeklyHours: 41.75, hoursAccount: 12.25 };
     await fetch(`/api/dataset/people/${encodeURIComponent(p.id)}`,
       { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(changed) });
     const rules = await (await fetch('/api/rules')).json();
@@ -52,7 +52,7 @@ try {
   await edit.click();
   const form = page.locator('tr.edit-row form');
   await form.waitFor();
-  check('weekly hours shown', await page.inputValue('#f-weeklyHours') === '46.15', await page.inputValue('#f-weeklyHours'));
+  check('weekly hours shown', await page.inputValue('#f-weeklyHours') === '41.75', await page.inputValue('#f-weeklyHours'));
   check('person form valid', await form.evaluate((f) => f.checkValidity()),
     await form.evaluate((f) => [...f.querySelectorAll(':invalid')].map((x) => `${x.id}: ${x.validationMessage}`).join('; ')));
   const [put] = await Promise.all([
@@ -60,7 +60,7 @@ try {
     form.locator('button[type=submit]').click(),
   ]);
   const sent = put.postDataJSON();
-  check('person saved unchanged', sent.weeklyHours === 46.15 && sent.hoursAccount === 12.25,
+  check('person saved unchanged', sent.weeklyHours === 41.75 && sent.hoursAccount === 12.25,
     `${sent.weeklyHours} / ${sent.hoursAccount}`);
 
   // The rules: decimal parameters save unchanged as well.
