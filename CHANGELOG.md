@@ -3,6 +3,48 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.9.0 (unreleased)
+
+Einfachere Oberfläche: was am Plan nicht stimmt, steht oben; ein Name je Begriff. Die Planungsergebnisse sind
+unverändert.
+
+- **Dienstplan, Kopf:** Planen, Stopp und Fixierungen lösen stehen in einer Zeile. Startwert, Zeitlimit,
+  Schrittzahl, Neu beginnen und der Score stehen unter „Erweitert“ (zugeklappt). Drucken, Export (XLSX, CSV,
+  JSON) und Monat abschließen sind im Menü „Ausgabe“; Plan nach Funktion hat dasselbe Menü mit Drucken und
+  Export. Die Legende ist zugeklappt und merkt sich ihren Zustand.
+- **Statuszeile:** Eine farbige Schlagzeile statt des Scores, z. B. „Plan verwendbar: keine Regelverstöße,
+  keine Lücken“, „3 Lücken (16 Personenstunden)“ oder „2 Regelverstöße“. Darunter ein Knopf je verletzter
+  Regel und je Qualitätsregel mit großem Anteil am Score, meist mit der Zahl der Treffer; ein Klick listet, wen
+  es an welchem Tag betrifft.
+- **Lückenzeile:** Die Zeile „Bedarfslücken“ im Dienstplan und die Zeile „offen“ in Plan nach Funktion bleiben
+  beim Scrollen oben stehen.
+- **Regeln:** Speichern steht in einer Leiste, die immer sichtbar ist; vor dem Verlassen mit ungespeicherten
+  Änderungen kommt eine Rückfrage. Gewichte sind Zahlenfelder mit Standardwert und „Zurücksetzen“. Die
+  Regeltexte nennen die eingestellten Werte. „Ausgleich Stundenkonto je Monat“ wird in Prozent eingegeben
+  (25 % statt 0,25; gespeichert wird wie bisher der Anteil).
+- **Person:** Eine Kachel „x h von Ziel y h (Soll z h)“ mit einer Erklärung von Soll und Ziel statt fünf
+  Kacheln. „Warum dieser Dienst?“ in Worten und Zahlen, ohne Score-Werte.
+- **Begriffe, überall gleich (Oberfläche, Druck, Anleitung):**
+  - Die drei Gruppen der Regeln heißen „Regelverstoß“, „Bedarf“ und „Qualität“ (statt hart, mittel, weich).
+  - Die Regel „Sollstunden“ heißt „Stunden treffen“; für Stunden gibt es nur noch „Soll“ und „Ziel“.
+  - „Fixe Dienste“ in den Eingaben heißen „Vorgaben“; „fixiert“ steht nur noch für fixierte Zellen im Plan.
+  - „Plan veraltet: neu planen“ statt „Eingaben geändert“ und „Vormonat geändert“; der Grund steht im Tooltip.
+  - „Familienregel“ statt „Familienwunsch“, „Gewohnte Verteilung“ als einziger Name der Verteilung.
+  - „Tage außerhalb der Blocklänge“ statt „Blocktage abweichend“.
+  - „Auf Anfrage verfügbar“ statt „Wer kann gefragt werden?“.
+  - Stand des Plans am Bildschirm und im Druck: „Entwurf“ oder „abgeschlossen“.
+- **Stammdaten:** Die Personentabelle zeigt Bereichsnamen statt Kürzel, das Formular Name und Kürzel, auch bei
+  den Feldern der gewohnten Verteilung. Wo die gewohnte Verteilung bearbeitet oder gezeigt wird (Stammdaten,
+  Person), steht: Wer Anteile je Schichtart hat, ist nicht im Nachtausgleich („Fairness Nachtdienste“) und
+  nicht in der „Abwechslung Dienste“.
+- **Monat abschließen:** Der Dialog zeigt eine Prüfliste (Regelverstöße, offene Lücken, Plan aktuell). Mit
+  offenen Punkten braucht das Abschließen eine zweite Bestätigung. Neu auch im Menü „Ausgabe“ des Dienstplans.
+- **Rolle Lesen:** Import/Export steht nicht mehr in der Navigation; die Adresse der Seite zeigt den Dienstplan.
+  Die Legende zeigt nur, was diese Rolle sieht.
+- **Import/Export:** Keine Dateipfade und Formatangaben mehr auf der Seite; „Demodaten laden“ steht unter
+  „Erweitert“.
+- Betrieb: keine Änderung an Datenbank, `docker-compose.yml` oder `.env`.
+
 ## 0.8.0 (2026-11-17)
 
 Drucken aus beiden Planansichten, Dezimalwerte in den Formularen.

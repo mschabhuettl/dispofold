@@ -1,5 +1,6 @@
 // Playwright check: forms save stored decimals unchanged. A person with weekly hours 46.15 and an hours account
-// of 12.25, and rules with decimal parameters, are opened and saved without a change; the browser must not reject
+// of 12.25, and rules with decimal parameters, are opened and saved without a change (the hours account share is
+// shown in percent and saved as a fraction); the browser must not reject
 // the values (step) and the saved values must be the stored ones. Demo data of the dev server (mock API).
 //   npm run build && node scripts/check-forms.mjs     (Chromium via `npx playwright install chromium`)
 import { spawn } from 'node:child_process';
@@ -77,6 +78,14 @@ try {
     && rules.maxAverageWeekHours === 38.25 && rules.accountCarryShare === 0.33 && rules.maxOverTargetPercent === 12.5,
   JSON.stringify([rules.minDailyRestHours, rules.maxWeekHours, rules.maxAverageWeekHours, rules.accountCarryShare,
     rules.maxOverTargetPercent]));
+  // The hours account share is shown and typed in percent, stored as a fraction.
+  check('account share shown in percent', await page.inputValue('#param-accountCarryShare') === '33', await page.inputValue('#param-accountCarryShare'));
+  await page.fill('#param-accountCarryShare', '25');
+  const [percentPut] = await Promise.all([
+    page.waitForRequest((r) => r.method() === 'PUT' && r.url().endsWith('/api/rules'), { timeout: 5000 }),
+    rulesForm.locator('button.btn-primary').click(),
+  ]);
+  check('account share saved as a fraction', percentPut.postDataJSON().accountCarryShare === 0.25, String(percentPut.postDataJSON().accountCarryShare));
 } finally {
   await browser.close();
   server.kill();

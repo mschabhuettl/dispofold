@@ -42,6 +42,13 @@ test('every text key is used', () => {
   assert.deepEqual(dead, []);
 });
 
+// One term each (docs/anleitung.md): the old names of levels, rules, inputs and badges are gone from every text.
+const OLD_TERMS = /Sollstunden|Monatssoll|Ziel für diesen Plan|\bfixe[nrs]?\b|Fixe Dienste|Eingaben geändert|Vormonat geändert|Schichtmix|\bMix\b|Familienw[uü]nsch|Blocktage|Wer kann gefragt|\bhart(e[nrs]?)?\b|\bweich(e[nrs]?)?\b|\bStufen?\b|dispofold\/dataset|docs\/|Version 2\b/i;
+
+test('no text uses an old term', () => {
+  assert.deepEqual(Object.entries(TEXTS).filter(([, v]) => OLD_TERMS.test(v)).map(([k]) => k), []);
+});
+
 test('t replaces placeholders', () => {
   assert.equal(t('roster.title', { month: 'Jänner 2027' }), 'Dienstplan Jänner 2027');
   assert.equal(t('common.outOf', { value: 3, total: 5 }), '3 von 5');
@@ -147,7 +154,7 @@ test('hit params are shown readably', async () => {
   assert.equal(messageText({ code: 'import.shiftTooLong', params: { shiftId: 'X1', minutes: 810, maxMinutes: 720 } }),
     'Schicht X1 dauert 13,5 h, erlaubt sind höchstens 12,0 h.');
   assert.equal(messageText({ code: 'import.duplicateEntry', params: { kind: 'fixed', personId: 'P1', date: '2027-01-04' } }),
-    'fixer Dienst: doppelter Eintrag für Person P1 (04.01.2027).');
+    'Vorgabe: doppelter Eintrag für Person P1 (04.01.2027).');
   assert.equal(messageText({ code: 'import.missingField', params: { kind: 'shift', field: 'start', index: 2 } }),
     'Schicht Nr. 3: Pflichtfeld „start“ fehlt.');
 });
@@ -157,5 +164,5 @@ test('hit targetHours names the scaled goal only when it differs', async () => {
   assert.equal(hitText({ code: 'hit.targetHours', params: { minutes: 7842, targetMinutes: 7947, scaledMinutes: 7947 } }),
     'Geplant und angerechnet 130,7 h, Ziel 132,5 h (Soll mit Ausgleich des Stundenkontos).');
   assert.equal(hitText({ code: 'hit.targetHours', params: { minutes: 7842, targetMinutes: 7947, scaledMinutes: 7800 } }),
-    'Geplant und angerechnet 130,7 h, Ziel für diesen Plan 130,0 h (Ziel 132,5 h, verkleinert, weil der Bedarf weniger Arbeit braucht).');
+    'Geplant und angerechnet 130,7 h, Ziel 130,0 h (verkleinert von 132,5 h, weil der Bedarf weniger Arbeit braucht).');
 });

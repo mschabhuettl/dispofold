@@ -84,11 +84,13 @@ export async function render(root, ctx) {
             if (data && !confirm(t('import.dataset.confirm'))) return;
             if (data) showSummary(await runImport((replace) => api.importDataset(data, replace)));
           }, true)),
-        h('div.toolbar', {},
-          button(t('import.demo'), async () => {
-            if (!confirm(t('import.demo.confirm'))) return;
-            showSummary(await runImport((replace) => api.importDemo(replace)));
-          }))),
+        // demo data are for trying the program out: collapsed
+        h('details.advanced', {}, h('summary', {}, t('roster.advanced')),
+          h('div.toolbar', {},
+            button(t('import.demo'), async () => {
+              if (!confirm(t('import.demo.confirm'))) return;
+              showSummary(await runImport((replace) => api.importDemo(replace)));
+            })))),
     );
   }
 

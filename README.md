@@ -3,14 +3,14 @@
 Dienstplanung für Leitstellen. Ein Solver (Timefold) berechnet den Monatsdienstplan der hauptberuflichen
 Mitarbeiterinnen und Mitarbeiter. Die Dienstplanung prüft, ändert, fixiert, schließt ab und exportiert ihn.
 
-- Harte Regeln aus Kollektivvertrag und Qualifikation: 11 h tägliche und 36 h wöchentliche Ruhe, höchstens
+- Regeln aus Kollektivvertrag und Qualifikation, jede Abweichung ein Regelverstoß: 11 h tägliche und 36 h wöchentliche Ruhe, höchstens
   12 h je Dienst, 60 h je Woche und 46,16 h im Durchschnitt des Durchrechnungszeitraums, nur qualifizierte
   Personen, Abwesenheiten und Sperren.
 - Bedarf je Bereich und Tageszeit. Der Solver wählt unter den Schichtvarianten des Bereichs. Ist der Bedarf
   nicht erfüllbar, zeigt das Programm die Lücken genau an.
-- Weiche Regeln mit sichtbaren Gewichten: Sollstunden, Fairness (Nächte, Wochenenden, Feiertage, unbeliebte
+- Qualitätsregeln mit sichtbaren Gewichten: Stunden treffen, Fairness (Nächte, Wochenenden, Feiertage, unbeliebte
   Dienste, auch über die Vormonate), Wünsche mit gleicher Quote je Person, Blöcke von 2 bis 4 Diensten,
-  Vorwärtsrotation, ganze Wochenenden, Ersatzruhe abbauen, Abwechslung, Familienwünsche.
+  Vorwärtsrotation, ganze Wochenenden, Ersatzruhe abbauen, Abwechslung, Familienregeln.
 - Für jeden Dienst lässt sich nachlesen, welche Regeln gegriffen haben.
 - Import eines Datensatzes im eigenen, dokumentierten JSON-Format. Export als Excel, CSV und JSON.
 
@@ -76,7 +76,7 @@ docker compose ps    # nach ein bis zwei Minuten alle Dienste "healthy"
 ```
 
 Die Oberfläche ist dann unter `http://<server>:8080` erreichbar. Für den Zugriff im Netz gehört ein Reverse Proxy
-mit HTTPS davor. Erster Test: anmelden, **Import/Export**, **Demodaten laden**, dann im **Dienstplan** auf
+mit HTTPS davor. Erster Test: anmelden, **Import/Export**, **Erweitert**, **Demodaten laden**, dann im **Dienstplan** auf
 **Planen** klicken. Die Demodaten beschreiben eine erfundene Leitstelle: 150 erfundene Personen in fünf
 Bereichen, Jänner 2027.
 
@@ -99,9 +99,9 @@ Betrieb.
 |---|---|
 | ![Stammdaten](docs/screenshots/stammdaten.png) | ![Plan nach Funktion](docs/screenshots/funktionen.png) |
 
-| Wer kann gefragt werden? |
+| Auf Anfrage verfügbar |
 |---|
-| ![Wer kann gefragt werden?](docs/screenshots/anfrage.png) |
+| ![Auf Anfrage verfügbar](docs/screenshots/anfrage.png) |
 
 | Dienstplan, dunkel | Bereichs-Zeitachse, dunkel |
 |---|---|

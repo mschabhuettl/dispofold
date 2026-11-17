@@ -27,8 +27,10 @@ Unter **Import/Export**:
   prüft die ganze Datei. Ist etwas falsch, wird nichts übernommen, und die Liste der Fehler erscheint (nur mit
   Ids, ohne Namen). Ein Import ersetzt die Stammdaten und die Planungsmonate, die in der Datei stehen.
   Vorhandene Pläne bleiben. Ein abgeschlossener Monat kann nicht überschrieben werden.
-- **Demodaten laden (Jänner 2027):** 150 erfundene Personen in fünf Bereichen. Gut zum Ausprobieren. Die
-  Demodaten ersetzen alle Stammdaten.
+- **Demodaten laden (Jänner 2027):** Zuerst im Datensatz-Import **Erweitert** öffnen, dann **Demodaten laden**.
+  150 erfundene Personen in fünf Bereichen. Gut zum Ausprobieren. Die Demodaten ersetzen alle Stammdaten.
+
+Die Rolle „nur lesen“ sieht **Import/Export** nicht in der Navigation.
 
 **Wenn Stammdaten in Dispofold geändert wurden** (unter **Stammdaten**, siehe unten), würde ein Import diese
 Änderungen überschreiben. Das Programm fragt dann nach:
@@ -44,7 +46,7 @@ Planung pflegt sie hier, ein neuer Import ist dafür nicht nötig:
 
 - **Neu** über jeder Tabelle legt einen Eintrag an, **Bearbeiten** und **Entfernen** stehen in jeder Zeile. Es
   ist immer nur ein Formular offen. **Speichern** übernimmt die Änderung sofort, **Abbrechen** verwirft sie.
-- **Personen:** Name, Kürzel, Wochenstunden, Bereiche, Stundenkonto, offene Ersatzruhe, externe Id, Eintritt
+- **Personen:** Die Tabelle zeigt die Bereiche mit ihrem Namen statt mit dem Kürzel. Das Formular hat Name, Kürzel, Wochenstunden, Bereiche (Namen mit Kürzel), Stundenkonto, offene Ersatzruhe, externe Id, Eintritt
   und Austritt sowie die **Familienregeln** (Wochentage, spätestes Ende, frühester Beginn, keine Nacht, Notiz).
   Mit **Einschränkungen** in der Zeile einer Person legt man fest, welche Schicht oder Kategorie (zum Beispiel
   alle Nachtschichten) sie nie oder nur auf Anfrage macht, an jedem Tag oder an einem Wochentag, auf Wunsch nur
@@ -55,12 +57,14 @@ Planung pflegt sie hier, ein neuer Import ist dafür nicht nötig:
   Prozent je Schichtart (Früh, Tag, Spät, Nacht) und je Bereich der Person, zum Beispiel Tag 90 % und Nacht 10 %.
   Die Werte stammen aus dem Datensatz, den ein Export aus der Historie liefert (Feld `shiftMix`, siehe
   [datenformat.md](datenformat.md)); im Formular lassen sie sich ändern. Eine ausgefüllte Gruppe muss zusammen
-  100 % ergeben, eine leere Gruppe heißt keine Vorgabe. **Verteilung entfernen** leert alle Felder, nach dem
-  Speichern hat die Person keine gewohnte Verteilung mehr. Die Tabelle zeigt sie kurz an („Tag 90 %, Nacht 10 %“).
+  100 % ergeben, eine leere Gruppe heißt keine Verteilung. **Verteilung entfernen** leert alle Felder, nach dem
+  Speichern hat die Person keine gewohnte Verteilung mehr. Die Tabelle zeigt sie kurz an („Tag 90 %, Nacht 10 %“);
+  die Felder je Bereich nennen den Bereich mit Namen und Kürzel.
   Beim Planen versucht die Regel „Gewohnte Verteilung“, die Dienste je Schichtart und Bereich an diese Anteile
-  anzunähern. Für Personen mit Anteilen je Schichtart gelten dafür die Fairness der Nachtdienste und die
-  Abwechslung Dienste nicht (ihre Nächte ergeben sich aus dem Anteil), für Personen mit Anteilen je Bereich nicht
-  die Abwechslung Bereiche. Auf der Seite **Person** stehen geplanter und gewohnter Anteil nebeneinander. Die
+  anzunähern. Hat eine Person Anteile je Schichtart (Früh, Tag, Spät, Nacht, auch einen Nachtanteil), nimmt
+  sie das aus der Fairness Nachtdienste (dem „Nachtausgleich“) und aus „Abwechslung Dienste“ heraus, solange sie
+  die Verteilung hat: Ihre Nächte ergeben sich aus dem Nachtanteil. Für Personen mit Anteilen je Bereich gilt
+  die Abwechslung Bereiche nicht. Auf der Seite **Person** stehen geplanter und gewohnter Anteil nebeneinander. Die
   Rolle „nur lesen“ sieht die Verteilung nicht. Mehr dazu in [regeln.md](regeln.md).
 - **Ids:** Neue Personen und Schichten bekommen ihre Id vom Programm (`PN1`, `SN1`, ...). Bereiche und
   Abwesenheitsarten haben als Id ihr Kürzel, das im Plan steht. Es wird beim Anlegen eingegeben und lässt sich
@@ -78,7 +82,7 @@ Planung pflegt sie hier, ein neuer Import ist dafür nicht nötig:
   stattdessen den Austritt ein.
 - Ein Bereich lässt sich erst entfernen, wenn seine Schichten entfernt sind. Während einer Planung sind
   Änderungen an betroffenen Monaten gesperrt.
-- Offene Monate, die eine Änderung betrifft, zeigen danach „Eingaben geändert“.
+- Offene Monate, die eine Änderung betrifft, zeigen danach „Plan veraltet: neu planen“.
 
 **Wenn jemand anderer inzwischen Stammdaten gespeichert hat**, fragt das Programm wie bei den Eingaben nach:
 **OK** übernimmt die eigene Änderung in die neue Fassung, **Abbrechen** verwirft sie und lädt die neue Fassung.
@@ -94,7 +98,7 @@ Unter **Eingaben** stehen für den gewählten Monat:
 - **Wünsche:** frei, Dienst, eine bestimmte Schicht oder eine bestimmte Schicht nicht. Je Person zählen
   höchstens so viele Wünsche, wie unter **Regeln & Gewichte** eingestellt ist (Standard 6), und zwar die ersten
   nach Datum. Die Spalte **Wünsche der Person** zeigt, wenn es zu viele sind.
-- **Fixe Dienste:** Dienste, die fest vorgegeben sind. Der Solver ändert sie nicht.
+- **Vorgaben:** Dienste, die fest vorgegeben sind. Der Solver ändert sie nicht.
 
 Mit **Hinzufügen** und **Entfernen** ändert man die Listen, mit **Speichern** übernimmt man sie. Solange etwas
 nicht gespeichert ist, steht **Ungespeicherte Änderungen** da.
@@ -135,54 +139,54 @@ Die voreingestellten Werte legt im Serverbetrieb die IT fest (siehe [betrieb.md]
 Oben im **Dienstplan** steht die Statuszeile:
 
 - **Überschrift** in Farbe: grün „Plan verwendbar: keine Regelverstöße, keine Lücken“, gelb die Zahl der Lücken
-  mit den fehlenden Personenstunden, rot die Zahl der Regelverstöße (harte Verstöße). Der Score erscheint beim
+  mit den fehlenden Personenstunden, rot die Zahl der Regelverstöße. Der Score erscheint beim
   Darüberfahren und unter **Erweitert**.
-- **Regeln mit Treffern** darunter: je harte Regel mit Verstößen und je weiche Regel mit einem großen Anteil am
-  weichen Score (mindestens 10 %, höchstens die fünf größten) ein Knopf mit der Zahl der Treffer. Ein Klick
+- **Regeln mit Treffern** darunter: je Regel der Gruppe Regelverstoß mit Verstößen und je Qualitätsregel mit einem großen Anteil am
+  Score Qualität (mindestens 10 %, höchstens die fünf größten) ein Knopf mit der Zahl der Treffer. Ein Klick
   listet Person und Tag mit einer kurzen Erklärung; ein Klick auf einen Eintrag öffnet die Seite **Person**.
 - **Legende:** über dem Plan, zugeklappt; ein Klick öffnet sie, der Browser merkt sich die Wahl.
 
 Die Begriffe im Einzelnen:
 
-- **Harte Verstöße:** Muss 0 sein. Harte Regeln sind Ruhezeiten, Höchstarbeitszeiten, Qualifikation und
-  Abwesenheiten. Ein Plan mit harten Verstößen darf so nicht verwendet werden. Meist kommen sie von Hand
+- **Regelverstöße:** Muss 0 sein. Die Regeln der Gruppe Regelverstoß sind Ruhezeiten, Höchstarbeitszeiten,
+  Qualifikation und Abwesenheiten. Ein Plan mit Regelverstößen darf so nicht verwendet werden. Meist kommen sie von Hand
   gesetzten oder fixierten Diensten. Rot markierte Zellen zeigen einen Dienst trotz Abwesenheit. Welche Regel
   an welchem Tag verletzt ist, zeigt die Seite **Person**.
 - **Freie Sonntage:** Jede Person hat im Kalendermonat mindestens zwei Sonntage ohne Dienst. Die Zahl steht
   unter **Regeln & Gewichte** bei **Freie Sonntage je Monat**; 0 schaltet die Regel aus. Ein Sonntag ist nur
   frei, wenn kein Dienst ihn berührt, auch kein Nachtdienst von Samstag auf Sonntag; Urlaub und andere
-  Abwesenheiten zählen als frei. Von Hand gesetzte Dienste dürfen die Regel verletzen und zählen dann als harter
-  Verstoß.
+  Abwesenheiten zählen als frei. Von Hand gesetzte Dienste dürfen die Regel verletzen und zählen dann als
+  Regelverstoß.
 - **Höchststunden im Monat:** Die Stunden einer Person im Monat (Dienste, angerechnete Abwesenheitstage und
   Ersatzruhe) dürfen das Ziel (Soll mit Ausgleich des Stundenkontos) höchstens um eine Toleranz übersteigen,
   voreingestellt 10 % des Ziels. Die Toleranz steht unter **Regeln & Gewichte** bei **Höchstens über dem Ziel
   (%)**; die gesetzlichen Grenzen wie die Höchstarbeitszeit je Woche gelten unabhängig davon. Das Programm plant
-  nie darüber. Ein von Hand gesetzter Dienst darf darüber gehen, zählt dann aber als harter Verstoß und steht auf
-  der Seite **Person** unter **Ganzer Monat**. Die Liste **Wer kann gefragt werden?** lässt Personen aus, die
+  nie darüber. Ein von Hand gesetzter Dienst darf darüber gehen, zählt dann aber als Regelverstoß und steht auf
+  der Seite **Person** unter **Ganzer Monat**. Die Liste **Auf Anfrage verfügbar** lässt Personen aus, die
   der Dienst über diese Grenze brächte.
-- **Ziel für diesen Plan:** Braucht der Bedarf weniger Arbeit, als die Ziele aller Personen zusammen ergeben,
+- **Verkleinertes Ziel:** Braucht der Bedarf weniger Arbeit, als die Ziele aller Personen zusammen ergeben,
   strebt das Programm ein verkleinertes Ziel an: Der Arbeitsanteil jedes Ziels (Ziel ohne angerechnete
   Abwesenheitstage) schrumpft um denselben Anteil. So muss niemand Stunden über den Bedarf hinaus sammeln, und
   der Plan kann zusammenhängende Dienstblöcke bevorzugen und einzelne freie Tage zwischen Diensten vermeiden.
-  Die harte Obergrenze (Höchststunden im Monat) rechnet weiter mit dem echten Ziel. Die Seite **Person** zeigt
-  in einer Kachel die geplanten Stunden gegen das Ziel für diesen Plan und das Soll („28,0 h von Ziel 112,9 h
+  Die Obergrenze (Höchststunden im Monat, ein Regelverstoß) rechnet weiter mit dem echten Ziel. Die Seite **Person** zeigt
+  in einer Kachel die geplanten Stunden gegen das verkleinerte Ziel und das Soll („28,0 h von Ziel 112,9 h
   (Soll 129,2 h)“); **Was bedeuten Soll und Ziel?** erklärt beide. Die Zeile **Warum dieser Dienst?** nennt beide
   Ziele. Für Lesende ist das Ziel ausgeblendet, weil es das Stundenkonto enthält.
 - **Bedarfslücken:** Zeitabschnitte, in denen weniger Personen eingeteilt sind als der Bedarf verlangt. Die
   Zeile **Bedarfslücken** direkt unter den Tagen zeigt sie je Tag und bleibt beim Scrollen stehen; die
   Überschrift nennt ihre Zahl und die Summe in Personenstunden. In der Statuszeile steht **Überbesetzung**: Personenstunden über der Höchstbesetzung (wo keine gesetzt
   ist, über der Mindestbesetzung) und Dienste, die keinen Bedarf abdecken. Lücken sind kein Fehler des Solvers:
-  Reicht das Personal nicht, bleibt die Lücke sichtbar, statt dass eine harte Regel verletzt wird. Ein Klick auf die Zahl eines Tages listet die Lücken dieses
-  Tages mit Bereich, Uhrzeit und fehlender Besetzung, jeweils mit der Liste **Wer kann gefragt werden?** (siehe
+  Reicht das Personal nicht, bleibt die Lücke sichtbar, statt dass ein Regelverstoß entsteht. Ein Klick auf die Zahl eines Tages listet die Lücken dieses
+  Tages mit Bereich, Uhrzeit und fehlender Besetzung, jeweils mit der Liste **Auf Anfrage verfügbar** (siehe
   [Dienste nur auf Anfrage](#dienste-nur-auf-anfrage)).
-- **Einzelne freie Tage / Blocktage abweichend:** Zwei Kennzahlen der Statuszeile nach der Planung.
-  **Einzelne freie Tage** zählt freie Tage, die zwischen zwei Diensten liegen (wenig Erholung). **Blocktage
-  abweichend** zählt die Tage, um die Dienstblöcke kürzer oder länger sind als bevorzugt. Beide sollen klein
+- **Einzelne freie Tage / Tage außerhalb der Blocklänge:** Zwei Kennzahlen der Statuszeile nach der Planung.
+  **Einzelne freie Tage** zählt freie Tage, die zwischen zwei Diensten liegen (wenig Erholung). **Tage außerhalb
+  der Blocklänge** zählt die Tage, um die Dienstblöcke kürzer oder länger sind als bevorzugt. Beide sollen klein
   sein; sie sind keine Fehler, sondern Maß für die Güte des Plans.
-- **Score:** Die Bewertung in drei Stufen: hart, mittel, weich (unter **Erweitert**). Mittel umfasst ungedeckten
+- **Score:** Die Bewertung in drei Gruppen: Regelverstoß, Bedarf, Qualität (unter **Erweitert**). Bedarf umfasst ungedeckten
   Bedarf und Besetzung über dem Bedarf, beides in der Statuszeile in Personenstunden. Eine fehlende Minute wiegt schwerer als
   jeder ganze Dienst über dem Bedarf: Ist jemand frei, wird eine Lücke immer zuerst gefüllt. Besetzung über dem
-  Bedarf wiegt schwerer als jede weiche Regel: Wer unter seinem Soll liegt, bleibt darunter, statt dass Stellen
+  Bedarf wiegt schwerer als jede Qualitätsregel: Wer unter seinem Soll liegt, bleibt darunter, statt dass Stellen
   doppelt besetzt werden. Einzelheiten in [regeln.md](regeln.md).
 
 Weitere Seiten:
@@ -190,18 +194,18 @@ Weitere Seiten:
 - **Plan nach Funktion:** derselbe Monat, aber je Funktion statt je Person, siehe
   [Plan nach Funktion](#plan-nach-funktion).
 - **Bereichs-Zeitachse:** Dienste eines Bereichs als Tag oder Woche und die Besetzung gegen den Bedarf. Lücken
-  sind rot markiert und darunter als Liste mit Uhrzeit und fehlender Besetzung aufgeführt. **Wer kann gefragt
-  werden?** in einer Zeile der Liste klappt darunter die Personen auf, die man für diese Lücke fragen kann.
+  sind rot markiert und darunter als Liste mit Uhrzeit und fehlender Besetzung aufgeführt. **Auf Anfrage
+  verfügbar** in einer Zeile der Liste klappt darunter die Personen auf, die man für diese Lücke fragen kann.
 - **Person:** Eine Person auswählen. Die Seite zeigt die geplanten Stunden gegen Ziel und Soll, Stundenkonto vorher
   und danach, Nächte, Wochenenden, Feiertage, unbeliebte Dienste, erfüllte Wünsche und Ersatzruhe. Unter **Warum
   dieser Dienst?** steht für jeden Tag (oder **Ganzer Monat**) in Worten, was zutrifft (zum Beispiel „verletzt
-  keine Regel, 1 Wunsch erfüllt“), darunter welche Regeln gegriffen haben, mit ihrer Stufe (**Hart**,
-  **Bedarf**, **Weich**) und ob es ein Verstoß, ein Nachteil oder ein Vorteil ist.
+  keine Regel, 1 Wunsch erfüllt“), darunter welche Regeln gegriffen haben, mit ihrer Gruppe (**Regelverstoß**,
+  **Bedarf**, **Qualität**) und ob es ein Verstoß, ein Nachteil oder ein Vorteil ist.
 - **Fairness-Übersicht:** Alle Personen nebeneinander, je Kennzahl mit Minimum, Mittelwert und Maximum, auch über
   die Vormonate (Historie). Mit **Auf 40 Wochenstunden normiert** werden Teilzeitkräfte vergleichbar. Bei der
   Fairness zählt die Abweichung vom Mittelwert: Ein Treffer in der Erklärung erscheint nur bei Personen über dem
   Mittelwert.
-- **Regeln & Gewichte:** Regelwerte (zum Beispiel Ruhezeiten) und die Gewichte der weichen Regeln als
+- **Regeln & Gewichte:** Regelwerte (zum Beispiel Ruhezeiten) und die Gewichte der Qualitätsregeln als
   Zahlenfelder, jeweils mit dem Standardwert und **Zurücksetzen**. Die Beschreibungen der Regeln nennen die
   eingestellten Werte und folgen der Eingabe. Die Leiste mit **Speichern** bleibt beim Blättern sichtbar und
   zeigt **Nicht gespeichert**, solange Änderungen offen sind; wer die Seite dann verlässt, wird gefragt. Die
@@ -228,7 +232,7 @@ Dienst im Monat und Schichten, deren Zeit ein Bedarf des Bereichs überschneidet
   ersten Tag), mit der Zahl der fehlenden Personen und der Uhrzeit, zum Beispiel „1 · 07:00-19:00“. Mehrere
   Lücken eines Tages stehen untereinander in derselben Zelle.
 - **Ein Klick auf einen Namen** öffnet dieselbe Auswahl wie im Dienstplan (Dienst ändern, frei, fixieren).
-  **Ein Klick auf eine Zelle der Zeile „offen“** öffnet die Liste **Wer kann gefragt werden?** für die Lücken
+  **Ein Klick auf eine Zelle der Zeile „offen“** öffnet die Liste **Auf Anfrage verfügbar** für die Lücken
   dieses Tages.
 - Mit den Pfeiltasten bewegt man sich wie im Dienstplan durch die Zellen, Enter öffnet die Auswahl.
 - **Drucken:** siehe [Drucken](#drucken).
@@ -264,22 +268,22 @@ des Browsers (Strg+P) liefert dasselbe. Im Dialog lässt sich auch „Als PDF sp
 
 ## Dienste nur auf Anfrage
 
-![Wer kann gefragt werden?](screenshots/anfrage.png)
+![Auf Anfrage verfügbar](screenshots/anfrage.png)
 
 Eine Einschränkung „nur auf Anfrage“ (unter **Stammdaten**, **Einschränkungen**) heißt: Das Programm plant
 diese Schicht für diese Person nie von selbst ein. Fehlt dadurch Personal, bleibt die Lücke im Plan stehen.
 Die Planung fragt die Person und setzt den Dienst dann von Hand.
 
-- **Wer kann gefragt werden?** Diese Liste steht bei jeder Lücke: im **Dienstplan** nach einem Klick auf die
+- **Auf Anfrage verfügbar:** Diese Liste steht bei jeder Lücke: im **Dienstplan** nach einem Klick auf die
   Zahl in der Zeile **Bedarfslücken**, in **Plan nach Funktion** nach einem Klick auf eine Zelle der Zeile „offen“ und in der
   Lückenliste der **Bereichs-Zeitachse**. Sie nennt die Personen, für die eine Schicht des Bereichs in dieser
   Lücke an diesem Tag nur auf Anfrage geht, die an dem Tag frei sind (kein Dienst, keine Abwesenheit, nicht
-  fixiert) und für die der Dienst keine harte Regel verletzt (auch nicht die Höchststunden im Monat). Je Person stehen Schicht, Datum und Stunden
+  fixiert) und für die der Dienst keinen Regelverstoß ergibt (auch nicht die Höchststunden im Monat). Je Person stehen Schicht, Datum und Stunden
   (geplant von Soll); wer am wenigsten Stunden hat, steht oben. Passt niemand, sagt die Liste das.
 - **Ein Klick auf einen Namen** setzt den Dienst für diese Person und fixiert ihn. Die nächste Planung behält
   ihn bei.
 - Im Plan ist ein solcher Dienst unten links mit einer kleinen Ecke markiert (**nur auf Anfrage**). Er zählt
-  nicht als harter Verstoß.
+  nicht als Regelverstoß.
 
 ## Von Hand ändern und fixieren
 
@@ -289,28 +293,27 @@ eine Auswahl:
 - Einen Dienst, **frei** oder **Ersatzruhe** wählen. Eine von Hand gesetzte Zelle ist danach **fixiert**: Die
   nächste Planung behält sie bei.
 - **Fixieren** oder **Fixierung lösen** schaltet die Fixierung einer Zelle um, ohne den Dienst zu ändern.
-- **Fixierungen lösen** (oben) löst alle Fixierungen des Monats. Fixe Dienste aus den **Eingaben** bleiben
+- **Fixierungen lösen** (oben) löst alle Fixierungen des Monats. Vorgaben aus den **Eingaben** bleiben
   dabei erhalten. Sie lassen sich nur unter **Eingaben** entfernen.
 - Abwesenheiten werden nicht im Plan geändert, sondern unter **Eingaben**.
 
-Ein von Hand gesetzter Dienst kann eine harte Regel verletzen. Dann steigen die **Harten Verstöße**. Vor dem
+Ein von Hand gesetzter Dienst kann eine Regel der Gruppe Regelverstoß verletzen. Dann steigen die **Regelverstöße**. Vor dem
 Abschluss prüfen.
 
-## Hinweise „Eingaben geändert“ und „Vormonat geändert“
+## Hinweis „Plan veraltet: neu planen“
 
-Neben dem Status können zwei Hinweise stehen. Beide bedeuten: Der Plan passt nicht mehr ganz zu den Daten,
-bitte neu planen.
+Neben dem Status kann der Hinweis **Plan veraltet: neu planen** stehen. Er bedeutet: Der Plan passt nicht mehr
+ganz zu den Daten, bitte neu planen. Der Grund steht im Tooltip:
 
-- **Eingaben geändert:** Eingaben (Abwesenheiten, Wünsche, fixe Dienste), Stammdaten, Regeln oder Gewichte
-  oder die Historie der Vormonate wurden nach dieser Planung geändert.
-- **Vormonat geändert:** Der Plan des Vormonats wurde nach dieser Planung geändert. Die Ruhezeiten am
-  Monatsanfang hängen von den letzten Diensten des Vormonats ab, deshalb nimmt der Solver sie aus dem
-  gespeicherten Plan des Vormonats.
+- Eingaben (Abwesenheiten, Wünsche, Vorgaben), Stammdaten, Regeln oder Gewichte wurden nach dieser Planung
+  geändert, oder die Historie der Vormonate.
+- Der Plan des Vormonats wurde nach dieser Planung geändert. Die Ruhezeiten am Monatsanfang hängen von den
+  letzten Diensten des Vormonats ab, deshalb nimmt der Solver sie aus dem gespeicherten Plan des Vormonats.
 
 ## Monatsabschluss
 
 Unter **Import/Export**, **Monat abschließen**, oder im **Dienstplan** im Menü **Ausgabe**. Vorher sollte der Plan
-fertig sein: keine harten Verstöße, Lücken geklärt. Der Dialog prüft das in einer Liste: Regelverstöße, offene
+fertig sein: keine Regelverstöße, Lücken geklärt. Der Dialog prüft das in einer Liste: Regelverstöße, offene
 Lücken, Plan veraltet. Ist ein Punkt offen, lässt sich der Monat erst nach dem Häkchen **Trotzdem abschließen**
 abschließen.
 
@@ -339,8 +342,8 @@ beiden Planansichten. Im Programmfenster der Desktop-Version
 landet die Datei im Ordner Downloads, eine Meldung nennt den Namen.
 
 - Nur die Rolle Planung kann exportieren. Während einer Planung ist der Export gesperrt.
-- Hat der Plan harte Verstöße, endet der Dateiname auf `-mit-verstoessen`. In XLSX heißt das Blatt
-  „Dienstplan mit Verstößen“ und trägt den Hinweis „Achtung: … harte Regelverstöße, Plan nicht verwendbar“; in
+- Hat der Plan Regelverstöße, endet der Dateiname auf `-mit-verstoessen`. In XLSX heißt das Blatt
+  „Dienstplan mit Verstößen“ und trägt den Hinweis „Achtung: … harte Regelverstöße, Plan nicht verwendbar“ (Text der Exportdatei); in
   CSV steht dieser Hinweis in der ersten Zeile.
 - **Plan importieren** auf derselben Seite ersetzt den Plan des Monats durch einen früher exportierten Plan im
   JSON-Format.
@@ -349,10 +352,10 @@ landet die Datei im Ordner Downloads, eine Meldung nennt den Namen.
 
 Im Serverbetrieb gibt es neben der Planung die Rolle **nur lesen** (`viewer`). Sie sieht Dienstplan, Plan nach
 Funktion, Zeitachse, Personen und Fairness, kann aber nichts ändern, nicht planen, nicht abschließen und nicht
-exportieren. Aus Datenschutzgründen sieht sie außerdem nicht:
+exportieren; **Import/Export** steht in ihrer Navigation nicht. Aus Datenschutzgründen sieht sie außerdem nicht:
 
 - Wünsche und die Quote erfüllter Wünsche,
 - Einschränkungen und Familienregeln von Personen (auch nicht die Markierung „nur auf Anfrage“ und nicht die
-  Liste **Wer kann gefragt werden?**),
+  Liste **Auf Anfrage verfügbar**),
 - den Grund einer Abwesenheit (sie erscheint nur als „abwesend“),
 - das Stundenkonto.

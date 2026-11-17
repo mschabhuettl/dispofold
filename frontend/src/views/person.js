@@ -99,6 +99,7 @@ function mixSection(planned, usual, areaNames) {
   const rows = mixRows(planned, usual, (id) => areaNames.get(id) ?? id);
   if (!rows.length) return null;
   return h('section.section', { 'aria-labelledby': 'h-mix' }, h('h2', { id: 'h-mix' }, t('person.section.mix')),
+    Object.keys(usual?.categories ?? {}).length > 0 && h('p.muted', {}, t('masterdata.shiftMix.nightNote')),
     h('table.data', {}, h('thead', {}, h('tr', {}, h('th', {}, t('person.mix.group')), h('th.num', {}, t('person.mix.planned')), h('th.num', {}, t('person.mix.usual')))),
       h('tbody', {}, rows.map((r) => h('tr', {}, h('td', {}, r.name), h('td.num', {}, sharePercent(r.planned)), h('td.num', {}, sharePercent(r.usual)))))));
 }

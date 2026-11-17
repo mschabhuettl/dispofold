@@ -26,7 +26,7 @@ const ROUTES = [
   { path: 'regeln', label: t('nav.rules'), view: rules },
   { path: 'eingaben', label: t('nav.inputs'), view: inputs },
   { path: 'stammdaten', label: t('nav.masterdata'), view: masterdata },
-  { path: 'import', label: t('nav.import'), view: importExport },
+  { path: 'import', label: t('nav.import'), view: importExport, plannerOnly: true },
 ];
 const SETTINGS_ROUTE = { path: 'einstellungen', label: t('nav.settings'), view: settings };
 
@@ -105,6 +105,8 @@ function defaultMonth(months) {
 function parseHash() {
   const [path, ...rest] = location.hash.replace(/^#\/?/, '').split('/');
   const route = ROUTES.find((r) => r.path === path) ?? ROUTES[0];
+  // an unknown or hidden page (e.g. Import/Export for viewers) shows the first page under its own address
+  if (route.path !== path && path) history.replaceState(null, '', `#/${route.path}`);
   const decode = (x) => { try { return decodeURIComponent(x); } catch { return x; } };
   return { route, params: rest.map(decode) };
 }
@@ -162,6 +164,8 @@ async function start() {
   if (!me) return;
   ctx.me = me;
   ctx.canEdit = me.role === 'planner';
+  // viewers cannot import or export: the page is not offered
+  if (!ctx.canEdit) ROUTES.splice(0, ROUTES.length, ...ROUTES.filter((r) => !r.plannerOnly));
   document.getElementById('user-name').textContent = me.username;
   document.getElementById('user-role').textContent = ctx.canEdit ? t('app.role.planner') : t('app.role.readonly');
   desktop = me.desktop === true;

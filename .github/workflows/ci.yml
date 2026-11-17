@@ -122,6 +122,9 @@ jobs:
       - name: Header, status line and sticky rows of both plan views (browser)
         working-directory: frontend
         run: node scripts/check-plan-views.mjs
+      - name: Terms on every page, viewer navigation, import page (browser)
+        working-directory: frontend
+        run: node scripts/check-terms.mjs
 
   desktop-shell:
     # Unit tests of the program window (protocol, proof, proxy rules).

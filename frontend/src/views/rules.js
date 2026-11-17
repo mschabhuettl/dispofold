@@ -53,7 +53,7 @@ export async function render(root, ctx) {
     form.append(h('section.section', { 'aria-labelledby': `lvl-${level}` },
       h('h2', { id: `lvl-${level}` }, title), h('p.muted', {}, help),
       list.map((c) => h('div.rule-row', {},
-        h('div', {}, h('strong', {}, constraintLabel(c)), description(c)),
+        h('div', {}, h('strong', { title: c.id === 'targetHours' ? t('person.kpi.hoursHelp') : null }, constraintLabel(c)), description(c)),
         level === 'SOFT' && !c.tunable ? h('div.muted', {}, t('rules.weightFixed', { weight: c.defaultWeight }))
           : level === 'SOFT' ? (canEdit ? weightControl(c) : h('div', {}, t('rules.weight', { weight: weights[c.id] }), h('div.muted', { style: { fontSize: '.8rem' } }, t('rules.default', { weight: c.defaultWeight })))) : h('div.muted', {}, level === 'HARD' ? t('rules.always') : t('rules.weight', { weight: weights[c.id] }))))));
   }
@@ -62,7 +62,8 @@ export async function render(root, ctx) {
     h('div.params', {}, PARAMS.map(([key, label, help, type, step]) => {
       const id = `param-${key}`;
       if (!canEdit) {
-        const shown = type === 'bool' ? (params[key] ? t('common.yes') : t('common.no')) : type === 'time' ? String(params[key] ?? '').slice(0, 5) : String(params[key]);
+        const shown = type === 'bool' ? (params[key] ? t('common.yes') : t('common.no')) : type === 'time' ? String(params[key] ?? '').slice(0, 5)
+          : key === 'accountCarryShare' ? `${String(percent(params[key])).replace('.', ',')} %` : String(params[key]);
         return h('div.field', {}, h('strong', {}, label), h('span', {}, help ? t('rules.valueWithHelp', { value: shown, help }) : shown));
       }
       if (type === 'bool') {
@@ -70,9 +71,10 @@ export async function render(root, ctx) {
           oninput: (e) => { params[key] = e.target.checked; } }), ' ', label), help && h('span', {}, help));
       }
       return h('div.field', {}, h('label', { for: id }, label),
-        h('input', { id, type, step, min: type === 'number' ? 0 : null, max: key === 'accountCarryShare' ? 1 : null, required: true,
-          value: type === 'time' ? String(params[key] ?? '').slice(0, 5) : params[key],
-          oninput: (e) => { params[key] = type === 'time' ? e.target.value : Number(e.target.value); } }),
+        // the hours account share is stored as a fraction and shown in percent
+        h('input', { id, type, step, min: type === 'number' ? 0 : null, max: key === 'accountCarryShare' ? 100 : null, required: true,
+          value: type === 'time' ? String(params[key] ?? '').slice(0, 5) : key === 'accountCarryShare' ? percent(params[key]) : params[key],
+          oninput: (e) => { params[key] = type === 'time' ? e.target.value : Number(e.target.value) / (key === 'accountCarryShare' ? 100 : 1); } }),
         help && h('span', {}, help));
     }))));
   if (saveBar) form.append(saveBar);
@@ -115,6 +117,9 @@ export async function render(root, ctx) {
     }
   }
 }
+
+/** A share (0..1) in percent, rounded so that 0.29 shows as 29 and not 28.999…. */
+const percent = (share) => Math.round(share * 1e6) / 1e4;
 
 /** Weights for PUT /api/rules: the stored ones, overwritten by the tunable soft weights (others are not settings). */
 export function weightsToSave(constraints, weights, stored) {

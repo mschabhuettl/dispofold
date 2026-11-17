@@ -14,7 +14,8 @@
     "check:print": "node scripts/build.mjs && node scripts/check-print.mjs",
     "check:plan-views": "node scripts/build.mjs && node scripts/check-plan-views.mjs",
     "check:desktop": "node scripts/build.mjs && node scripts/check-desktop.mjs",
-    "check:rules-person": "node scripts/build.mjs && node scripts/check-rules-person.mjs"
+    "check:rules-person": "node scripts/build.mjs && node scripts/check-rules-person.mjs",
+    "check:terms": "node scripts/build.mjs && node scripts/check-terms.mjs"
   },
   "dependencies": {
     "@bryntum/core-community": "8.0.0",
