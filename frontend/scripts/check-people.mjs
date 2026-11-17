@@ -47,7 +47,11 @@ try {
     await fetch('/api/import/demo', { method: 'POST' });
     await fetch(`/api/plans/${m}/solve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"seed":1,"timeLimitSeconds":1}' });
   }, month);
-  await page.waitForFunction(async (m) => !(await (await fetch(`/api/plans/${m}`)).json()).solving, month, { polling: 500, timeout: 60000 });
+  // waitForFunction does not await an async predicate: poll from here until the solve has ended
+  for (const end = Date.now() + 60000; await page.evaluate(async (m) => (await (await fetch(`/api/plans/${m}`)).json()).solving, month);) {
+    if (Date.now() > end) throw new Error('solve did not end within 60 s');
+    await page.waitForTimeout(500);
+  }
   const dataset = await getDataset(page);
   const shiftsOf = (areaId) => dataset.shifts.filter((s) => s.areaId === areaId);
   // a person without restrictions in two areas with at least two shifts each

@@ -84,7 +84,11 @@ try {
       body: JSON.stringify({ ...p, shiftMix: { categories: { DAY: 0.9, NIGHT: 0.1 }, areas: {} } }) });
     return { personId: p.id, areas: dataset.areas };
   }, month);
-  await page.waitForFunction(async (m) => !(await (await fetch(`/api/plans/${m}`)).json()).solving, month, { polling: 500, timeout: 60000 });
+  // waitForFunction does not await an async predicate: poll from here until the solve has ended
+  for (const end = Date.now() + 60000; await page.evaluate(async (m) => (await (await fetch(`/api/plans/${m}`)).json()).solving, month);) {
+    if (Date.now() > end) throw new Error('solve did not end within 60 s');
+    await page.waitForTimeout(500);
+  }
   const routes = await pages(page);
   check('planner navigation has Daten', routes.includes('import'), routes.join(' '));
   check('planner menu', (await page.locator('#nav').innerText()).split('\n').join(' | ') === 'Dienstplan | Prüfen | Eingaben | Personen | Einstellungen',
