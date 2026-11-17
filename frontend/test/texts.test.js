@@ -83,7 +83,8 @@ test('errors, constraints and hits are rendered from codes', async () => {
   const { constraintDescription, constraintLabel, hitText, messageText } = await import('../src/lib/codes.js');
   const { errorMessage } = await import('../src/lib/api.js');
   assert.equal(constraintLabel({ id: 'dailyRest', label: 'old' }), TEXTS['constraint.dailyRest.label']);
-  assert.equal(constraintDescription({ id: 'dailyRest' }), TEXTS['constraint.dailyRest.description']);
+  assert.equal(constraintDescription({ id: 'dailyRest' }, { minDailyRestHours: 11.5 }),
+    'Zwischen zwei Diensten liegen mindestens 11,5 Stunden Ruhe (KV, Ruhezeit). Strafe in fehlenden Minuten.');
   assert.equal(constraintLabel({ id: 'unknownRule', label: 'Server label' }), 'Server label');
   assert.equal(constraintLabel({ id: 'unknownRule' }), 'unknownRule');
   assert.equal(messageText({ code: 'plan.closed', params: { month: '2027-01' } }), 'Der Monat Jänner 2027 ist abgeschlossen und kann nicht geändert werden.');

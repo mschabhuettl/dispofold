@@ -321,16 +321,23 @@ tr.gap-row th.person { color: var(--danger); font-weight: 600; }
 .kpi .value { font-size: 1.3rem; font-weight: 600; font-variant-numeric: tabular-nums; }
 .hits-day { margin-bottom: .8rem; }
 .hits-day h3 { font-size: .95rem; border-bottom: 1px solid var(--border); padding-bottom: .2rem; }
+.kpi-hours { grid-column: 1 / -1; }
+.kpi-hours .btn-link { font-size: .8rem; }
+.kpi-help { font-size: .85rem; margin: .3rem 0 0; }
 .hit { display: grid; grid-template-columns: 5.5rem 1fr 5rem; gap: .5rem; font-size: .9rem; padding: .1rem 0; }
-.hit .score { text-align: right; font-variant-numeric: tabular-nums; }
+.hit .effect { text-align: right; }
 .score-neg { color: var(--danger); }
 .score-pos { color: var(--success); }
 
 /* Rules */
 .rule-row { display: grid; grid-template-columns: 1fr 15rem; gap: 1rem; padding: .5rem 0; border-bottom: 1px solid var(--border); }
-.rule-row .weight { display: flex; gap: .5rem; align-items: center; }
-.rule-row .weight input[type=range] { flex: 1; }
+.rule-row .weight { display: flex; gap: .5rem; align-items: center; flex-wrap: wrap; }
 .rule-row .weight input[type=number] { width: 5.5rem; }
+.rule-row .weight .muted { font-size: .8rem; }
+.save-bar {
+  position: sticky; bottom: 0; z-index: 5; display: flex; gap: 1rem; align-items: center; margin-top: 1rem;
+  padding: .6rem 0; background: var(--bg); border-top: 1px solid var(--border);
+}
 .params { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: .6rem 1.5rem; }
 .params .field { display: flex; flex-direction: column; gap: .15rem; }
 .params .field span { font-size: .85rem; color: var(--text-muted); font-weight: 400; }

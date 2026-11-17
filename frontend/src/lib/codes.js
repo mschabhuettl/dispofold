@@ -58,8 +58,9 @@ export function constraintLabel(c) {
   return codeText(`constraint.${c.id}.label`, {}, c.label ?? c.id);
 }
 
-export function constraintDescription(c) {
-  return codeText(`constraint.${c.id}.description`, {}, c.description ?? '');
+/** Description of a constraint; its numbers (rest hours, block lengths, ...) come from the rule parameters. */
+export function constraintDescription(c, rules = {}) {
+  return codeText(`constraint.${c.id}.description`, rules, c.description ?? '');
 }
 
 /** Explanation of one constraint hit; the code may come with or without the 'hit.' prefix. */

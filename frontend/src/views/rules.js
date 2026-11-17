@@ -40,8 +40,11 @@ export async function render(root, ctx) {
   root.append(h('h1', {}, t('nav.rules')));
   if (!canEdit) root.append(h('p.alert', {}, t('rules.readonly')));
 
-  const saveBtn = canEdit && h('button.btn.btn-primary', { type: 'button', onclick: save }, t('common.save'));
-  const form = h('form', { onsubmit: (e) => { e.preventDefault(); save(); } });
+  let dirty = false;
+  const status = h('span.muted', { role: 'status' });
+  const saveBar = canEdit && h('div.save-bar', {}, h('button.btn.btn-primary', { type: 'button', onclick: save }, t('common.save')), status);
+  const descriptions = [];
+  const form = h('form', { onsubmit: (e) => { e.preventDefault(); save(); }, oninput: changed });
 
   for (const [level, title, help] of LEVELS) {
     const list = constraints.filter((c) => c.level === level);
@@ -49,7 +52,7 @@ export async function render(root, ctx) {
     form.append(h('section.section', { 'aria-labelledby': `lvl-${level}` },
       h('h2', { id: `lvl-${level}` }, title), h('p.muted', {}, help),
       list.map((c) => h('div.rule-row', {},
-        h('div', {}, h('strong', {}, constraintLabel(c)), h('div.muted', {}, constraintDescription(c))),
+        h('div', {}, h('strong', {}, constraintLabel(c)), description(c)),
         level === 'SOFT' && !c.tunable ? h('div.muted', {}, t('rules.weightFixed', { weight: c.defaultWeight }))
           : level === 'SOFT' ? (canEdit ? weightControl(c) : h('div', {}, t('rules.weight', { weight: weights[c.id] }), h('div.muted', { style: { fontSize: '.8rem' } }, t('rules.default', { weight: c.defaultWeight })))) : h('div.muted', {}, level === 'HARD' ? t('rules.always') : t('rules.weight', { weight: weights[c.id] }))))));
   }
@@ -63,32 +66,50 @@ export async function render(root, ctx) {
       }
       if (type === 'bool') {
         return h('div.field', {}, h('label', {}, h('input', { id, type: 'checkbox', checked: Boolean(params[key]),
-          onchange: (e) => { params[key] = e.target.checked; } }), ' ', label), help && h('span', {}, help));
+          oninput: (e) => { params[key] = e.target.checked; } }), ' ', label), help && h('span', {}, help));
       }
       return h('div.field', {}, h('label', { for: id }, label),
         h('input', { id, type, step, min: type === 'number' ? 0 : null, max: key === 'accountCarryShare' ? 1 : null, required: true,
           value: type === 'time' ? String(params[key] ?? '').slice(0, 5) : params[key],
-          onchange: (e) => { params[key] = type === 'time' ? e.target.value : Number(e.target.value); } }),
+          oninput: (e) => { params[key] = type === 'time' ? e.target.value : Number(e.target.value); } }),
         help && h('span', {}, help));
     }))));
-  if (saveBtn) form.append(saveBtn);
+  if (saveBar) form.append(saveBar);
   root.append(form);
+  ctx.isDirty = () => dirty;
+
+  /** The description with the numbers of the current parameters; refreshed while they are edited. */
+  function description(c) {
+    const el = h('div.muted', {}, constraintDescription(c, params));
+    descriptions.push([c, el]);
+    return el;
+  }
+
+  function changed() {
+    dirty = true;
+    status.textContent = t('rules.unsaved');
+    for (const [c, el] of descriptions) el.textContent = constraintDescription(c, params);
+  }
 
   function weightControl(c) {
     const max = Math.max(1000, c.defaultWeight * 4, weights[c.id]);
     const id = `w-${c.id}`;
     const number = h('input', { id, type: 'number', min: 0, max, step: 1, required: true, value: weights[c.id],
-      oninput: (e) => { weights[c.id] = Number(e.target.value); range.value = e.target.value; } });
-    const range = h('input', { type: 'range', min: 0, max, value: weights[c.id], 'aria-label': t('rules.weightLabel', { label: constraintLabel(c) }),
-      oninput: (e) => { weights[c.id] = Number(e.target.value); number.value = e.target.value; } });
-    return h('div', {}, h('label.visually-hidden', { for: id }, t('rules.weightLabel', { label: constraintLabel(c) })), h('div.weight', {}, range, number),
-      h('div.muted', { style: { fontSize: '.8rem' } }, t('rules.default', { weight: c.defaultWeight })));
+      oninput: (e) => { weights[c.id] = Number(e.target.value); } });
+    const reset = () => { number.value = c.defaultWeight; weights[c.id] = c.defaultWeight; changed(); };
+    return h('div.weight', {}, h('label.visually-hidden', { for: id }, t('rules.weightLabel', { label: constraintLabel(c) })), number,
+      h('span.muted', {}, t('rules.default', { weight: c.defaultWeight })),
+      h('button.btn.btn-secondary', { type: 'button', onclick: reset,
+        'aria-label': t('rules.resetWeightLabel', { label: constraintLabel(c), weight: c.defaultWeight }) }, t('rules.resetWeight')));
   }
 
   async function save() {
     if (!form.reportValidity()) return;
     const body = { ...params, weights: weightsToSave(constraints, weights, rules.weights) };
-    await guarded(() => api.saveRules(body), t('rules.saved'));
+    if (await guarded(async () => { await api.saveRules(body); return true; }, t('rules.saved'))) {
+      dirty = false;
+      status.textContent = '';
+    }
   }
 }
 

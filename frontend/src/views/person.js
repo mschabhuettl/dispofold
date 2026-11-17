@@ -1,7 +1,7 @@
 // Person panel: key figures of the month and "Warum dieser Dienst?" (constraint hits by date).
 import { dayLabel, monthLabel } from '../lib/dates.js';
 import { fmt, h } from '../lib/dom.js';
-import { groupHitsByDate } from '../lib/explain.js';
+import { groupHitsByDate, hitEffect, hitSummary } from '../lib/explain.js';
 import { personName } from '../lib/grid-model.js';
 import { constraintLabel, hitText } from '../lib/codes.js';
 import { familyText, restrictionText } from '../lib/masterdata-edit.js';
@@ -48,17 +48,19 @@ export async function render(root, ctx, [personId]) {
   const s = explanation.stats;
   const kpi = (label, value) => h('div.kpi', {}, h('div.label', {}, label), h('div.value', {}, value));
   const hours = (v) => `${fmt.num(v, 1)} h`;
+  // Ziel: the goal the soft rule aims at in this plan; personal (hours account), so null for viewers. Soll: the contract target.
+  const goal = s.scaledGoalHours ?? s.goalHours;
+  const help = h('p.kpi-help', { id: 'hours-help', hidden: true }, t('person.kpi.hoursHelp'));
+  const info = h('button.btn-link', { type: 'button', 'aria-expanded': 'false', 'aria-controls': 'hours-help',
+    onclick: () => { help.hidden = !help.hidden; info.setAttribute('aria-expanded', String(!help.hidden)); } }, t('person.kpi.hoursInfo'));
+  const hoursTile = h('div.kpi.kpi-hours', { title: t('person.kpi.hoursHelp') }, h('div.label', {}, t('person.kpi.hours')),
+    h('div.value', {}, goal != null
+      ? t('person.kpi.hoursOfGoal', { planned: fmt.num(s.plannedHours, 1), goal: fmt.num(goal, 1), target: fmt.num(s.targetHours, 1) })
+      : t('person.kpi.hoursOfTarget', { planned: fmt.num(s.plannedHours, 1), target: fmt.num(s.targetHours, 1) })), info, help);
   root.append(
     h('section.section', { 'aria-labelledby': 'h-hours' }, h('h2', { id: 'h-hours' }, t('person.section.hours')),
       h('div.kpis', {},
-        kpi(t('person.kpi.target'), hours(s.targetHours)),
-        // the goals are personal (hours account): null for viewers
-        s.goalHours != null && kpi(t('person.kpi.goal'), hours(s.goalHours)),
-        s.goalHours != null && s.scaledGoalHours != null && s.scaledGoalHours !== s.goalHours && kpi(t('person.kpi.scaledGoal'), hours(s.scaledGoalHours)),
-        s.goalHours != null && kpi(t('person.kpi.counted'), t('person.kpi.countedVsGoal', { counted: fmt.num(s.plannedHours + s.creditedHours, 1), goal: fmt.num(s.goalHours, 1) })),
-        s.goalHours != null && s.scaledGoalHours != null && s.scaledGoalHours !== s.goalHours
-          && kpi(t('person.kpi.countedScaled'), t('person.kpi.countedVsGoal', { counted: fmt.num(s.plannedHours + s.creditedHours, 1), goal: fmt.num(s.scaledGoalHours, 1) })),
-        kpi(t('person.kpi.planned'), hours(s.plannedHours)), ctx.canEdit && kpi(t('person.kpi.credited'), hours(s.creditedHours)),
+        hoursTile, ctx.canEdit && kpi(t('person.kpi.credited'), hours(s.creditedHours)),
         // the hours account is personal: planners only (viewers get 0 from the server)
         ctx.canEdit && kpi(t('person.kpi.accountBefore'), hours(s.accountBefore)), ctx.canEdit && kpi(t('person.kpi.accountAfter'), hours(s.accountAfter)),
         kpi(t('person.kpi.duties'), fmt.num(s.duties)),
@@ -83,11 +85,11 @@ export async function render(root, ctx, [personId]) {
         kpi(t('person.kpi.unpopular'), fmt.num(s.historyUnpopular)), ctx.canEdit && kpi(t('person.kpi.wishesMet'), t('common.outOf', { value: s.historyWishesMet, total: s.historyWishes })))),
     h('section.section', { 'aria-labelledby': 'h-why' }, h('h2', { id: 'h-why' }, t('person.section.why')),
       explanation.hits.length ? groupHitsByDate(explanation.hits).map((g) => h('div.hits-day', {},
-        h('h3', {}, g.date ? dayLabel(g.date) : t('person.wholeMonth'), ' ', h('span.muted', {}, t('person.sum', { total: fmt.num(g.total) }))),
+        h('h3', {}, g.date ? dayLabel(g.date) : t('person.wholeMonth'), ' ', h('span.muted', {}, `(${hitSummary(g.hits).join(', ')})`)),
         g.hits.map((hit) => h('div.hit', {},
           h('span', { class: hit.level === 'HARD' ? 'badge badge-hard' : 'badge' }, LEVEL[hit.level] ?? hit.level),
           h('span', {}, h('strong', {}, constraintLabels.get(hit.constraintId) ?? constraintLabel({ id: hit.constraintId })), ': ', hitText(hit)),
-          h('span', { class: `score ${hit.score < 0 ? 'score-neg' : hit.score > 0 ? 'score-pos' : ''}` }, fmt.num(hit.score))))))
+          h('span', { class: `effect ${hit.score < 0 ? 'score-neg' : hit.score > 0 ? 'score-pos' : ''}` }, hitEffect(hit))))))
         : h('p.muted', {}, t('person.noHits'))),
   );
 }
