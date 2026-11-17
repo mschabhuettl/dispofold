@@ -78,10 +78,13 @@ export function dataChecks(dataset, { month, rules = null }) {
     // the night note of the person form, where it changes what the person gets
     const nightShare = mix.categories?.NIGHT ?? 0;
     const hasCategories = Object.keys(mix.categories ?? {}).length > 0;
-    const plannable = plannableShifts(dataset, p, month, rules);
-    const neverNights = noNightsRule(p) || !plannable.some((s) => shiftCategory(s, rules) === 'NIGHT');
-    // never nights beats the night share in both modes (only where the areas have night shifts at all)
-    if (nightShare > 0 && neverNights && own.some((s) => shiftCategory(s, rules) === 'NIGHT')) add('nightNever', 'info', { personId: p.id }, { name });
+    const night = (s) => shiftCategory(s, rules) === 'NIGHT';
+    const neverNights = noNightsRule(p) || !plannableShifts(dataset, p, month, rules).some(night);
+    // never nights beats the night share in both modes (only where the areas have night shifts at all); as the
+    // solver (RosterBuilder.neverNights) only NEVER restrictions for every day of the week count, not seven weekdays
+    const solverNever = noNightsRule(p) || !plannableShifts({ ...dataset,
+      restrictions: (dataset.restrictions ?? []).filter((r) => Number(r.weekday ?? 0) === 0) }, p, month, rules).some(night);
+    if (nightShare > 0 && solverNever && own.some((s) => shiftCategory(s, rules) === 'NIGHT')) add('nightNever', 'info', { personId: p.id }, { name });
     else if (nightDistribution === 'EVEN' && nightShare > 0) add('nightIgnored', 'info', { personId: p.id }, { name }, 'rules');
     else if (nightDistribution !== 'EVEN' && hasCategories && nightShare === 0 && !neverNights) add('noNights', 'info', { personId: p.id }, { name });
   }

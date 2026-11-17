@@ -112,4 +112,7 @@ test('shifts without a category count with the category derived from their times
   assert.deepEqual(kinds(findings, 'NEVERSHARE'), ['nightNever']);
   assert.deepEqual(kinds(dataChecks(d, { month, rules: { ...rules, nightDistribution: 'EVEN' } }), 'NEVERSHARE'), ['nightNever']);
   assert.deepEqual(plannableShifts(d, d.people[1], month, rules).map((s) => s.id), ['X-D']);
+  // seven weekday restrictions: no nights either, but the solver keeps the night share (only weekday 0 counts there)
+  d.restrictions = [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({ personId: 'NEVERSHARE', shiftId: null, category: 'NIGHT', weekday, kind: 'NEVER' }));
+  assert.deepEqual(kinds(dataChecks(d, { month, rules }), 'NEVERSHARE'), []);
 });
