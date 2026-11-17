@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { needsRulesForCategories, onRequestTest, restrictionAppliesOn, shiftCategory } from '../src/lib/restrictions.js';
+import { areaRestriction, needsRulesForCategories, onRequestTest, restrictionAppliesOn, setAreaRestriction, shiftCategory } from '../src/lib/restrictions.js';
+import { restrictionFromForm } from '../src/lib/masterdata-edit.js';
 
 const shifts = [
   { id: 'X-T', areaId: 'X', start: '07:00', end: '19:00', category: 'DAY' },
@@ -70,4 +71,39 @@ test('the rules are loaded only for category restrictions and shifts without a c
   assert.equal(needsRulesForCategories({ restrictions: [restriction], shifts: shifts.slice(0, 2) }), false);
   assert.equal(needsRulesForCategories({ restrictions: [r({ shiftId: 'X-M' })], shifts }), false);
   assert.equal(needsRulesForCategories({ restrictions: [], shifts }), false);
+});
+
+test('the area switch gives the same records as entering each shift by hand', () => {
+  const ids = ['X-T', 'X-N', 'X-M'];
+  for (const kind of ['NEVER', 'ON_REQUEST']) {
+    const byHand = ids.map((id) => restrictionFromForm('P1', { target: `shift:${id}`, weekday: '0', kind, validFrom: '', validTo: '' }));
+    assert.deepEqual(setAreaRestriction([], 'P1', ids, kind), byHand);
+    assert.equal(areaRestriction(byHand, 'P1', ids), kind);
+  }
+  assert.deepEqual(setAreaRestriction([], 'P1', ids, 'NONE'), []);
+});
+
+test('the area switch replaces the undated shift restrictions of the area and keeps the others', () => {
+  const other = r({ shiftId: 'Y-T', kind: 'NEVER' });
+  const dated = r({ shiftId: 'X-T', kind: 'NEVER', validFrom: '2027-01-01' });
+  const category = r({ category: 'NIGHT', kind: 'NEVER' });
+  const otherPerson = r({ personId: 'P2', shiftId: 'X-T', kind: 'NEVER' });
+  const list = [other, dated, category, otherPerson, r({ shiftId: 'X-T', weekday: 3 }), r({ shiftId: 'X-N', kind: 'NEVER' })];
+  const never = setAreaRestriction(list, 'P1', ['X-T', 'X-N'], 'NEVER');
+  assert.deepEqual(never.slice(0, 4), [other, dated, category, otherPerson]);
+  assert.deepEqual(never.slice(4).map((x) => [x.shiftId, x.weekday, x.kind]), [['X-T', 0, 'NEVER'], ['X-N', 0, 'NEVER']]);
+  assert.deepEqual(setAreaRestriction(list, 'P1', ['X-T', 'X-N'], 'NONE'), [other, dated, category, otherPerson]);
+});
+
+test('the state of an area: one kind, none, or mixed', () => {
+  const ids = ['X-T', 'X-N'];
+  assert.equal(areaRestriction([], 'P1', ids), 'NONE');
+  assert.equal(areaRestriction([r({ shiftId: 'X-T' })], 'P1', ids), 'MIXED'); // one shift only
+  assert.equal(areaRestriction([r({ shiftId: 'X-T' }), r({ shiftId: 'X-N', kind: 'NEVER' })], 'P1', ids), 'MIXED');
+  assert.equal(areaRestriction([r({ shiftId: 'X-T', weekday: 2 }), r({ shiftId: 'X-N', weekday: 2 })], 'P1', ids), 'MIXED'); // single weekdays
+  assert.equal(areaRestriction([r({ shiftId: 'X-T' }), r({ shiftId: 'X-N' })], 'P1', ids), 'ON_REQUEST');
+  // dated, category and other people's restrictions do not count; records without the optional keys (mock data) do
+  assert.equal(areaRestriction([r({ shiftId: 'X-T', validTo: '2027-01-31' }), r({ category: 'DAY' }), r({ personId: 'P2', shiftId: 'X-N' })], 'P1', ids), 'NONE');
+  assert.equal(areaRestriction([{ personId: 'P1', shiftId: 'X-T', weekday: 0, kind: 'NEVER' }, { personId: 'P1', shiftId: 'X-N', weekday: 0, kind: 'NEVER' }], 'P1', ids), 'NEVER');
+  assert.equal(areaRestriction([], 'P1', []), 'NONE');
 });

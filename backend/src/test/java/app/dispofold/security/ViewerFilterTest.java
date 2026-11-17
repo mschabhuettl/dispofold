@@ -85,7 +85,7 @@ class ViewerFilterTest {
         for (String field : new String[] { "hoursAccount", "compRestBalance", "hoursAccountAfter",
                 "compRestBalanceAfter", "compRestUsed", "compRestEarned", "accountBefore", "accountAfter",
                 "chargedHours", "creditedHours", "goalHours", "scaledGoalHours", "nightPool", "nightReason",
-                "nightLoad", "nightMean", "weekendLoad", "holidayLoad", "unpopularLoad" }) {
+                "nightLoad", "nightMean", "weekendLoad", "holidayLoad", "unpopularLoad", "shiftMix", "externalId" }) {
             assertThat(json).as(field).doesNotContainPattern("\"" + field + "\":(?!null)");
         }
     }
@@ -97,7 +97,7 @@ class ViewerFilterTest {
         assertThat(given().cookie(planner).get("/api/periods/" + MONTH).asString()).contains("\"kind\"");
         String plannerDataset = given().cookie(planner).get("/api/dataset").asString();
         assertThat(plannerDataset).containsPattern("\"hoursAccount\":(?!null)")
-                .containsPattern("\"compRestBalanceAfter\":(?!null)");
+                .containsPattern("\"compRestBalanceAfter\":(?!null)").containsPattern("\"externalId\":(?!null)");
         assertThat(given().cookie(planner).get("/api/plans/" + MONTH + "/analysis").asString())
                 .containsPattern("\"accountAfter\":(?!null)").containsPattern("\"nightPool\":(?!null)")
                 .containsPattern("\"nightLoad\":(?!null)").containsPattern("\"weekendLoad\":(?!null)")

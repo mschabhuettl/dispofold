@@ -118,12 +118,14 @@ try {
     await shot('person', `person/${encodeURIComponent(someone)}`, '.hits-day, .alert');
     await shot('fairness', 'fairness', '.spread svg');
     await shot('regeln', 'regeln', '#h-goals');
-    // Stammdaten with the form of the first person open (planners edit master data there)
-    await shot('stammdaten', 'stammdaten', '[data-table="people"]');
-    await page.locator('[data-table="people"] [data-kind="people"]').first().click();
-    await page.locator('form').first().waitFor({ timeout: 30000 });
+    // Stammdaten (areas, shifts, demand, ...), the list of people and the form on the person page (planners edit a person there)
+    await shot('stammdaten', 'stammdaten', '[data-table="shifts"]');
+    await shot('personen', 'person', '[data-table="people"]');
+    await page.goto(`${base}/#/person/${encodeURIComponent(someone)}`);
+    await page.locator('#person-form').waitFor({ timeout: 30000 });
+    await page.locator('#h-edit').evaluate((el) => el.scrollIntoView());
     await page.waitForTimeout(500);
-    await save('stammdaten');
+    await save('person-bearbeiten');
     if (desktop) await shot('einstellungen', 'einstellungen', '.settings');
   }
 } finally {

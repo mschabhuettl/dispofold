@@ -1,8 +1,9 @@
-// Eingaben of the month: absences, wishes and fixed duties. Saved together via PUT /api/periods/{month}.
+// Eingaben of the month: absences (entered and shown as date ranges, stored per day), wishes and fixed duties, with a
+// person filter for all three. Saved together via PUT /api/periods/{month}.
 import { dayLabel, monthDates, monthLabel } from '../lib/dates.js';
 import { append, guarded, h, toast } from '../lib/dom.js';
 import { absenceName, personName } from '../lib/grid-model.js';
-import { mergePeriod } from '../lib/period-merge.js';
+import { absenceRanges, addAbsenceRange, mergePeriod } from '../lib/period-merge.js';
 import { messageText } from '../lib/codes.js';
 import { t } from '../lib/texts.js';
 
@@ -55,13 +56,31 @@ export async function render(root, ctx) {
     fixed: h('div', {}),
   };
 
+  // display only: saving always sends the whole month, and the wish counts are those of all wishes
+  let shownPerson = '';
+  const filter = h('select', { id: 'inputs-filter', onchange: () => {
+    shownPerson = filter.value;
+    // new entries are for the shown person
+    if (shownPerson) root.querySelectorAll('#abs-person, #wish-person, #fix-person').forEach((s) => { s.value = shownPerson; s.dispatchEvent(new Event('change')); });
+    draw();
+  } }, h('option', { value: '' }, t('inputs.filter.all')), people.map((p) => h('option', { value: p.id }, personName(p))));
+
   root.append(h('h1', {}, t('inputs.title', { month: monthLabel(month) })),
     canEdit ? h('div', {}, h('div.toolbar', {}, saveBtn, h('span.muted', { id: 'dirty-note' }, '')), problems)
       : h('p.alert', {}, closed ? (ctx.canEdit ? t('inputs.closed') : t('common.closedReadonly')) : t('inputs.readonly')),
+    h('div.toolbar', {}, h('div.field', {}, h('label', { for: 'inputs-filter' }, t('inputs.filter')), filter)),
     section(t('inputs.section.absences'), 'absences', canEdit && addForm('abs', [
-      [t('inputs.person'), personSelect('abs-person')], [t('inputs.date'), dateSelect('abs-date')],
+      [t('inputs.person'), personSelect('abs-person')], [t('inputs.from'), dateSelect('abs-from')], [t('inputs.to'), dateSelect('abs-to')],
       [t('inputs.type'), h('select', { id: 'abs-type' }, dataset.absenceTypes.map((type) => h('option', { value: type.code }, `${type.code} ${type.name}`)))],
-    ], () => add('absences', { personId: val('abs-person'), date: val('abs-date'), typeCode: val('abs-type') }))),
+    ], () => {
+      const range = { personId: val('abs-person'), from: val('abs-from'), to: val('abs-to'), typeCode: val('abs-type') };
+      if (range.to < range.from) {
+        toast(t('inputs.rangeOrder'), true);
+        return;
+      }
+      period.absences = addAbsenceRange(period.absences, range);
+      changed();
+    })),
     // '' instead of false: root.append would print "false"
     !showWishes ? '' : section(t('inputs.section.wishes'), 'wishes', canEdit && addForm('wish', [
       [t('inputs.person'), personSelect('wish-person')], [t('inputs.date'), dateSelect('wish-date')],
@@ -158,8 +177,27 @@ export async function render(root, ctx) {
     }
   }
 
+  const shown = (rows) => rows.filter((r) => !shownPerson || r.personId === shownPerson);
+
+  /** Absences: one row per range of consecutive days of one person and type; removing a row removes all its days. */
+  function rangeTable() {
+    const ranges = shown(absenceRanges(period.absences)).sort((a, b) => a.from.localeCompare(b.from) || name(a.personId).localeCompare(name(b.personId), 'de'));
+    if (!ranges.length) return h('p.muted', {}, t('inputs.none'));
+    const label = (r) => (r.from === r.to ? dayLabel(r.from) : t('inputs.range', { from: dayLabel(r.from), to: dayLabel(r.to) }));
+    return h('table.data', { 'data-table': 'absences' },
+      h('thead', {}, h('tr', {}, h('th', {}, t('inputs.col.range')), h('th', {}, t('inputs.person')), h('th', {}, t('inputs.type')), h('th.num', {}, t('inputs.col.days')),
+        canEdit && h('th', {}, ''))),
+      h('tbody', {}, ranges.map((r) => h('tr', {}, h('td', {}, label(r)), h('td', {}, name(r.personId)), h('td', {}, `${r.typeCode} ${absenceName(r.typeCode, types)}`),
+        h('td.num', {}, String(r.entries.length)),
+        canEdit && h('td', {}, h('button.btn-link', { type: 'button', 'aria-label': t('inputs.removeRangeLabel', { range: label(r), name: name(r.personId) }),
+          onclick: () => {
+            period.absences = period.absences.filter((x) => !r.entries.includes(x));
+            changed();
+          } }, t('inputs.remove')))))));
+  }
+
   function table(key, columns, rows) {
-    const sorted = [...rows].sort((a, b) => a.date.localeCompare(b.date) || name(a.personId).localeCompare(name(b.personId), 'de'));
+    const sorted = shown(rows).sort((a, b) => a.date.localeCompare(b.date) || name(a.personId).localeCompare(name(b.personId), 'de'));
     if (!sorted.length) return h('p.muted', {}, t('inputs.none'));
     return h('table.data', {},
       h('thead', {}, h('tr', {}, h('th', {}, t('inputs.date')), h('th', {}, t('inputs.person')), columns.map(([label]) => h('th', {}, label)), canEdit && h('th', {}, ''))),
@@ -169,7 +207,7 @@ export async function render(root, ctx) {
   }
 
   function draw() {
-    sections.absences.replaceChildren(table('absences', [[t('inputs.type'), (r) => `${r.typeCode} ${absenceName(r.typeCode, types)}`]], period.absences));
+    sections.absences.replaceChildren(rangeTable());
     const counts = new Map();
     for (const w of period.wishes) counts.set(w.personId, (counts.get(w.personId) ?? 0) + 1);
     sections.wishes.replaceChildren(table('wishes', [

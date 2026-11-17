@@ -1,8 +1,8 @@
 // Playwright check of the terms: every page, for planners and viewers, shows none of the old names (Sollstunden,
 // Fixe Dienste, Eingaben geändert, Schichtmix, Familienwunsch, hart/weich, ...) in its text, tooltips or labels; the
 // plan status reads Entwurf or abgeschlossen. Also: the menu has the groups Dienstplan, Prüfen, Eingaben, Personen and Einstellungen, viewers get Dienstplan, Personen and Fairness only, the address of Daten
-// shows viewers the Dienstplan, the month picker shows on month pages only, the people table names the areas, the mix fields have labels, the note on the
-// night fairness is shown in Stammdaten and on the person page, the import page shows no paths.
+// shows viewers the Dienstplan, the month picker shows on month pages only, the people list names the areas, the mix fields have labels, the note on the
+// night fairness is shown in the person form and next to the mix on the person page, the import page shows no paths.
 // Demo data of the dev server (mock API), month 2027-01 planned.
 //   npm run build && node scripts/check-terms.mjs     (Chromium via `npx playwright install chromium`)
 import { spawn } from 'node:child_process';
@@ -119,8 +119,10 @@ try {
     await page.keyboard.press('Escape');
   }
 
-  // Stammdaten: area names in the people table, the person form with labelled mix fields and the night note
-  await open(page, 'stammdaten');
+  // Personen: area names in the people list, the person form with labelled mix fields and the night note (the note
+  // next to the mix of the person page is checked above; Stammdaten has no people section any more)
+  await open(page, 'person');
+  await scan(page, 'planner people list');
   const areaCells = await page.locator('[data-table="people"] tbody tr').evaluateAll((rows) => rows.map((r) => {
     const col = [...r.closest('table').querySelectorAll('thead th')].findIndex((th) => th.textContent === 'Bereiche');
     return r.children[col]?.textContent ?? '';
@@ -128,9 +130,8 @@ try {
   const names = new Set(areas.map((a) => a.name));
   check('people table shows area names', areaCells.length > 0 && areaCells.every((c) => c.split(', ').every((n) => names.has(n))),
     areaCells.slice(0, 3).join(' | '));
-  check('night note in the people section', (await page.locator('section:has([data-table="people"])').innerText()).includes('Nachtausgleich'));
-  await page.locator('[data-table="people"] [data-kind="people"]').first().click();
-  const form = page.locator('tr.edit-row form');
+  await open(page, `person/${encodeURIComponent(personId)}`);
+  const form = page.locator('#person-form');
   await form.waitFor();
   const unlabelled = await form.evaluate((f) => [...f.querySelectorAll('input[data-mix-cat], input[data-mix-area]')]
     .filter((i) => !i.id || !f.querySelector(`label[for="${i.id}"]`)).length);

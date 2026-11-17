@@ -171,7 +171,8 @@ nennt sie. CSV: Semikolon, UTF-8 mit BOM, eine Zeile je Person und Tag mit
 ## Leser-Rolle
 
 Für `viewer` enthalten `/api/dataset`, `/api/periods/{month}`, Pläne, Analyse, Personenansicht, Regel-Treffer,
-Abdeckung und `/api/months` keine Wünsche, keine Einschränkungen und keine Familienregeln. Abwesenheiten
+Abdeckung und `/api/months` keine Wünsche, keine Einschränkungen und keine Familienregeln; Stundenkonto,
+Ersatzruhe, gewohnte Verteilung und externe Id der Personen sind `null`. Abwesenheiten
 erscheinen nur als Art `ABW` (abwesend), ohne den Grund. Exporte antworten Lesern mit `403`.
 
 ## Desktop-Modus
