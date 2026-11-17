@@ -286,6 +286,8 @@ function editor(root, ctx, initial, personId, nightDistribution) {
         if (key == null) {
           key = res.key;
           history.replaceState(null, '', `#/person/${encodeURIComponent(key)}`);
+          // the restrictions entered before belong to the new id (also when the form is drawn again after an error)
+          op.local = op.local.map((r) => ({ ...r, personId: key }));
         }
         revision = res?.revision ?? revision;
       }
@@ -353,6 +355,8 @@ function editor(root, ctx, initial, personId, nightDistribution) {
       }
       if (e.code === 'masterdata.conflict') {
         if (!(await reload())) return;
+        // the form shows the newer version, so that a later save does not undo the other change
+        if (base) draw();
         const decision = conflictDecision('people', key, before, dataset);
         if (decision.action === 'retry' && confirm(t('masterdata.conflict.prompt'))) await sendRemove(confirmed);
         else if (decision.action !== 'retry') toast(decision.action === 'gone' ? t('masterdata.conflict.gone') : t('masterdata.conflict.changedRemove'), true);
