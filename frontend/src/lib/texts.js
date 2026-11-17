@@ -711,7 +711,7 @@ export const TEXTS = {
   'rules.level.soft.title': 'Qualität',
   'rules.level.soft.help': 'Wünsche, Fairness und Dienstblöcke bestimmen die Qualität des Plans. Das Gewicht bestimmt, wie wichtig eine Regel im Vergleich ist.',
   'rules.goals.title': 'Planungsziele',
-  'rules.goals.help': 'Was der Plan anstreben soll. Die Wichtigkeit wirkt auf die Gewichte der Regeln eines Ziels: weniger halbiert ihre Standardgewichte, mehr verdoppelt sie. Einzelne Gewichte stehen unter Erweitert.',
+  'rules.goals.help': 'Was der Plan anstreben soll. Die Wichtigkeit wirkt auf die Gewichte der Regeln eines Ziels: weniger halbiert ihre Standardgewichte, mehr verdoppelt sie; bei der fairen Verteilung viertelt weniger sie, mehr vervierfacht sie. Einzelne Gewichte stehen unter Erweitert.',
   'rules.night.title': 'Nachtdienste',
   'rules.night.habit': 'Wie bisher: jede Person behält ihren gewohnten Nachtanteil',
   'rules.night.even': 'Gleichmäßig: Nachtdienste fair auf alle verteilen',
