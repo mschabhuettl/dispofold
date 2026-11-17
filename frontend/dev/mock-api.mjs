@@ -348,6 +348,8 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
   // error scheme of docs/api.md: { code, params, error }
   const err = (status, error, code = 'mock.error', params = {}) => ({ status, body: { code, params, error } });
   const revisions = new Map(); // month -> revision of the period
+  let masterRevision = 0; // revision of the master data
+  let newPeople = 0; // ids PN1, PN2, ... of people created here
   const stale = new Set(); // months whose inputs changed after planning
 
   /** Viewers get no wishes, restrictions or family rules; absences only as the neutral "ABW". */
@@ -404,15 +406,33 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
     if (a === 'logout') return json(null, 204);
     if (a === 'dataset' && !b && method === 'GET') {
       if (role !== 'planner') {
-        return json({ ...dataset, periods: [], restrictions: [], people: dataset.people.map((p) => ({ ...p, familyRules: [], hoursAccount: null, compRestBalance: null, shiftMix: null })) });
+        return json({ ...dataset, revision: masterRevision, periods: [], restrictions: [], people: dataset.people.map((p) => ({ ...p, familyRules: [], hoursAccount: null,
+          compRestBalance: null, shiftMix: null, externalId: null })) });
       }
-      return json({ ...dataset, periods: [] });
+      return json({ ...dataset, revision: masterRevision, periods: [] });
     }
-    if (a === 'dataset' && b === 'people' && method === 'PUT') {
+    // master data of people as docs/api.md (answers { revision, key, item }); the revision is counted but not checked
+    if (a === 'dataset' && b === 'people' && d === 'restrictions' && method === 'PUT') {
+      if (!dataset.people.some((p) => p.id === c)) return err(404, `Person ${c} nicht gefunden`, 'masterdata.unknown');
+      dataset.restrictions = [...dataset.restrictions.filter((r) => r.personId !== c), ...body.map((r) => ({ ...r, personId: c }))];
+      return json({ revision: ++masterRevision, key: c, item: body });
+    }
+    if (a === 'dataset' && b === 'people' && !c && method === 'POST') {
+      const item = { ...body, id: `PN${++newPeople}` };
+      dataset.people.push(item);
+      return json({ revision: ++masterRevision, key: item.id, item });
+    }
+    if (a === 'dataset' && b === 'people' && c && !d && method === 'DELETE') {
+      if (!dataset.people.some((p) => p.id === c)) return err(404, `Person ${c} nicht gefunden`, 'masterdata.unknown');
+      dataset.people = dataset.people.filter((p) => p.id !== c);
+      dataset.restrictions = dataset.restrictions.filter((r) => r.personId !== c);
+      return json({ revision: ++masterRevision, key: c });
+    }
+    if (a === 'dataset' && b === 'people' && c && !d && method === 'PUT') {
       const i = dataset.people.findIndex((p) => p.id === c);
       if (i < 0) return err(404, `Person ${c} nicht gefunden`);
       dataset.people[i] = { ...body, id: c };
-      return json(dataset.people[i]);
+      return json({ revision: ++masterRevision, key: c, item: dataset.people[i] });
     }
     if (a === 'import') {
       const summary = (source, warnings = []) => json({ source, people: dataset.people.length, areas: dataset.areas.length,

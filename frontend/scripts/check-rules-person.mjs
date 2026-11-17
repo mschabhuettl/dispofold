@@ -161,7 +161,7 @@ try {
   check('dismiss keeps the edit', await page.inputValue('#param-minDailyRestHours') === '9.5');
   page.once('dialog', (d) => { dialogs.push(d.message()); d.accept(); });
   await page.click('#nav a[data-group="people"]');
-  await page.locator('#person-select').waitFor();
+  await page.locator('#person-search').waitFor();
   check('accept leaves the rules page', dialogs.length === 2 && page.url().endsWith('#/person'), page.url());
   // the edit was not saved, and a page without edits leaves without asking
   await openRules();

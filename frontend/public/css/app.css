@@ -498,3 +498,6 @@ details.rules-advanced section { margin-top: 1.2rem; }
   table.functions-print tr.gap-row .cell-code { white-space: normal; }
   table.functions-print tr, table.plan-print tr { break-inside: avoid; }
 }
+
+/* Personen: the search field of the list */
+#person-search { min-width: 18rem; }

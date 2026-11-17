@@ -100,9 +100,10 @@ try {
   marked = await marks(page);
   check('EVEN: fairness no longer marks the mix', marked[people.mix] === null, marked[people.mix]);
   check('EVEN: fairness marks never nights', marked[people.never] === 'NEVER', marked[people.never]);
-  await page.goto(`${base}/#/stammdaten`);
-  await page.locator('[data-table=people]').waitFor();
-  check('EVEN: master data note follows the mode', (await page.locator('main').textContent()).includes('Nachtanteil wird nicht beachtet'));
+  // the master data of a person are edited on the person page
+  await page.goto(`${base}/#/person/${encodeURIComponent(people.plain)}`);
+  await page.locator('#person-form').waitFor();
+  check('EVEN: master data note follows the mode', (await page.locator('#person-form').textContent()).includes('Nachtanteil wird nicht beachtet'));
   await setMode('HABIT');
 
   // Viewers learn neither the mix nor the reason.

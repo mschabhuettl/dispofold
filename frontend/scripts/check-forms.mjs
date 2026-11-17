@@ -45,12 +45,9 @@ try {
     return changed;
   });
 
-  // The person: open the form, save it unchanged.
-  await page.goto(`${base}/#/stammdaten`);
-  const edit = page.locator(`button[data-kind="people"][data-key="${person.id}"]`).first();
-  await edit.waitFor();
-  await edit.click();
-  const form = page.locator('tr.edit-row form');
+  // The person: the form on the person page, saved unchanged.
+  await page.goto(`${base}/#/person/${encodeURIComponent(person.id)}`);
+  const form = page.locator('#person-form');
   await form.waitFor();
   check('weekly hours shown', await page.inputValue('#f-weeklyHours') === '41.75', await page.inputValue('#f-weeklyHours'));
   check('person form valid', await form.evaluate((f) => f.checkValidity()),

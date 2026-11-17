@@ -1,20 +1,17 @@
-// Stammdaten: people, areas, absence types, shifts, demand and holidays. Planners edit them here (one inline form
-// at a time, every change with the revision it was made on, see docs/api.md); viewers see read-only tables.
-import { fmt, h, toast } from '../lib/dom.js';
+// Stammdaten: areas, absence types, shifts, demand and holidays (people have their own pages, views/person.js), each
+// table with a filter field. Planners edit them here (one inline form at a time, every change with the revision it
+// was made on, see docs/api.md); viewers see read-only tables.
+import { h, toast } from '../lib/dom.js';
 import { tintStyle } from '../lib/colors.js';
 import { WEEKDAY_SHORT } from '../lib/dates.js';
-import { personName } from '../lib/grid-model.js';
 import { messageText } from '../lib/codes.js';
-import { CATEGORIES, DEMAND_DAYS, conflictDecision, familyText, fromForm, inUseQuestion, itemLabel, keyOf, restrictionFromForm,
-  restrictionText, toForm } from '../lib/masterdata-edit.js';
-import { MIX_CATEGORIES, mixText, nightNote } from '../lib/shift-mix.js';
+import { CATEGORIES, DEMAND_DAYS, conflictDecision, fromForm, inUseQuestion, itemLabel, keyOf, toForm } from '../lib/masterdata-edit.js';
 import { t } from '../lib/texts.js';
 
 const CATEGORY = { EARLY: t('masterdata.category.early'), DAY: t('masterdata.category.day'), LATE: t('masterdata.category.late'), NIGHT: t('masterdata.category.night') };
 const DAY_CODES = { MON: WEEKDAY_SHORT[0], TUE: WEEKDAY_SHORT[1], WED: WEEKDAY_SHORT[2], THU: WEEKDAY_SHORT[3], FRI: WEEKDAY_SHORT[4], SAT: WEEKDAY_SHORT[5],
   SUN: WEEKDAY_SHORT[6], HOL: t('masterdata.holiday') };
-const WEEKDAY_OPTIONS = WEEKDAY_SHORT.map((d, i) => [String(i + 1), d]);
-const TITLES = { people: t('masterdata.section.people'), areas: t('masterdata.section.areas'), absenceTypes: t('masterdata.section.absences'),
+const TITLES = { areas: t('masterdata.section.areas'), absenceTypes: t('masterdata.section.absences'),
   shifts: t('masterdata.section.shifts'), demand: t('masterdata.section.demand'), holidays: t('masterdata.section.holidays') };
 const inline = { fontWeight: 400, marginRight: '.6rem' };
 const bare = { border: 0, padding: 0, margin: 0 };
@@ -22,26 +19,15 @@ const bare = { border: 0, padding: 0, margin: 0 };
 export async function render(root, ctx) {
   const { api, canEdit } = ctx;
   let dataset = await ctx.dataset();
-  const nightDistribution = (await api.rules().catch(() => null))?.nightDistribution;
+  const filters = {}; // filter text per kind, kept when the page is drawn again
   const hhmm = (s) => String(s ?? '').slice(0, 5);
   const yesNo = (v) => (v ? t('common.yes') : t('common.no'));
 
   /** Table columns per kind: [header, cell]. */
   function columns(kind) {
     const areaName = new Map(dataset.areas.map((a) => [a.id, a.name]));
-    const shifts = new Map(dataset.shifts.map((s) => [s.id, s]));
-    const restrictions = (p) => (dataset.restrictions ?? []).filter((r) => r.personId === p.id);
     const chip = (color, label) => h('span.cell-code.strong.tinted', { style: tintStyle(color) }, label);
     return {
-      people: [
-        [t('masterdata.col.name'), (p) => h('a', { href: `#/person/${encodeURIComponent(p.id)}` }, personName(p))], [t('masterdata.col.shortName'), (p) => p.shortName ?? ''],
-        [t('masterdata.col.id'), (p) => p.id], [t('masterdata.col.weeklyHours'), (p) => fmt.num(p.weeklyHours, 1), 'num'], [t('masterdata.col.areas'), (p) => p.areaIds.map((id) => areaName.get(id) ?? id).join(', ')],
-        [t('masterdata.col.employment'), employmentText],
-        // hours account, compensatory rest, family rules and restrictions are personal: planners only (viewers get null)
-        canEdit && [t('masterdata.col.account'), (p) => fmt.num(p.hoursAccount, 1), 'num'], canEdit && [t('masterdata.col.compRestOpen'), (p) => fmt.num(p.compRestBalance), 'num'],
-        canEdit && [t('masterdata.col.familyRules'), (p) => (p.familyRules ?? []).map(familyText).join('; ')],
-        [t('masterdata.col.shiftMix'), (p) => mixText(p.shiftMix, (id) => areaName.get(id) ?? id)],
-        canEdit && [t('masterdata.col.restrictions'), (p) => restrictions(p).map((r) => restrictionText(r, shifts)).join('; ')]],
       areas: [[t('masterdata.col.shortName'), (a) => chip(a.color, a.id)], [t('masterdata.col.name'), (a) => a.name]],
       absenceTypes: [[t('masterdata.col.code'), (a) => a.code], [t('masterdata.col.name'), (a) => a.name], [t('masterdata.col.reducesTarget'), (a) => yesNo(a.reducesTarget)],
         [t('masterdata.col.chargesAccount'), (a) => yesNo(a.chargesAccount)], [t('masterdata.col.compRest'), (a) => yesNo(a.compensatoryRest)]],
@@ -52,7 +38,7 @@ export async function render(root, ctx) {
         [t('masterdata.col.from'), (d) => hhmm(d.from)], [t('masterdata.col.to'), (d) => hhmm(d.to)], [t('masterdata.col.min'), (d) => String(d.min), 'num'],
         [t('masterdata.col.max'), (d) => d.max ?? '–', 'num']],
       holidays: [[t('masterdata.col.date'), (x) => de(x.date)], [t('masterdata.col.name'), (x) => x.name]],
-    }[kind].filter(Boolean);
+    }[kind];
   }
 
   /** Form fields per kind: { name, label, type, options, ... }; key is null for a new object. */
@@ -60,15 +46,6 @@ export async function render(root, ctx) {
     const editing = key != null;
     const areas = dataset.areas.map((a) => [a.id, `${a.id} ${a.name}`]);
     return {
-      people: [{ name: 'firstName', label: t('masterdata.col.firstName'), required: true }, { name: 'lastName', label: t('masterdata.col.lastName'), required: true },
-        { name: 'shortName', label: t('masterdata.col.shortName') },
-        { name: 'weeklyHours', label: t('masterdata.col.weeklyHours'), type: 'number', step: 'any', min: 0, required: true },
-        { name: 'hoursAccount', label: t('masterdata.col.account'), type: 'number', step: 'any', required: true },
-        { name: 'compRestBalance', label: t('masterdata.col.compRestOpen'), type: 'number', step: 1, min: 0, required: true },
-        { name: 'externalId', label: t('masterdata.col.externalId') },
-        { name: 'entryDate', label: t('masterdata.entryDate'), type: 'date' }, { name: 'exitDate', label: t('masterdata.exitDate'), type: 'date' },
-        { name: 'areaIds', label: t('masterdata.col.areas'), type: 'checks', options: dataset.areas.map((a) => [a.id, `${a.name} (${a.id})`]) },
-        { name: 'familyRules', type: 'family' }, { name: 'shiftMix', type: 'mix' }],
       areas: [{ name: 'id', label: t('masterdata.col.shortName'), required: true, readOnly: editing }, { name: 'name', label: t('masterdata.col.name'), required: true },
         { name: 'color', label: t('masterdata.col.color'), placeholder: '#RRGGBB' }],
       absenceTypes: [{ name: 'code', label: t('masterdata.col.code'), required: true, readOnly: editing }, { name: 'name', label: t('masterdata.col.name'), required: true },
@@ -91,13 +68,12 @@ export async function render(root, ctx) {
 
   const list = (kind) => dataset[kind] ?? [];
   const find = (kind, key) => list(kind).find((x, i) => keyOf(kind, x, i) === key) ?? null;
-  const personRestrictions = (personId) => (dataset.restrictions ?? []).filter((r) => r.personId === personId);
   const sel = (kind, key) => `[data-kind="${kind}"][data-key="${CSS.escape(String(key))}"]`;
 
   function draw() {
     root.replaceChildren(h('h1', {}, t('nav.masterdata')),
-      h('p.muted', {}, t('masterdata.source', { source: dataset.source ?? t('masterdata.unknown'), people: dataset.people.length, areas: dataset.areas.length, shifts: dataset.shifts.length })),
-      section('people'),
+      h('p.muted', {}, t('masterdata.source', { source: dataset.source ?? t('masterdata.unknown'), people: dataset.people.length, areas: dataset.areas.length, shifts: dataset.shifts.length }),
+        ' ', h('a', { href: '#/person' }, t('masterdata.peopleLink'))),
       h('div.grid-2', {}, section('areas'), section('absenceTypes')),
       section('shifts'), section('demand'), section('holidays'));
   }
@@ -105,23 +81,39 @@ export async function render(root, ctx) {
   function section(kind) {
     const id = `h-${kind}`;
     const cols = columns(kind);
+    // filtering hides rows: holidays and demand are keyed by their position in the whole list
     const rows = list(kind).map((item, index) => ({ item, key: keyOf(kind, item, index) }));
-    if (kind === 'people') rows.sort((a, b) => personName(a.item).localeCompare(personName(b.item), 'de'));
     const button = (label, aria, onclick, data = {}) => h('button.btn-link', { type: 'button', 'aria-label': aria, onclick, ...data }, label);
     const actions = (item, key) => {
       const data = { 'data-kind': kind, 'data-key': String(key) };
       const label = itemLabel(kind, item);
       return h('td', {}, button(t('masterdata.edit'), t('masterdata.editLabel', { label }), () => openForm(kind, key), data), ' ',
-        kind === 'people' && [button(t('masterdata.restrictions'), t('masterdata.restrictionsLabel', { label }), () => openRestrictions(key)), ' '],
         button(t('masterdata.remove'), t('masterdata.removeLabel', { label }), () => remove(kind, key)));
     };
     const table = h('table.data', { 'data-table': kind },
       h('thead', {}, h('tr', {}, cols.map(([label]) => h('th', {}, label)), canEdit && h('th', {}, ''))),
       h('tbody', {}, rows.map(({ item, key }) => h('tr', {}, cols.map(([, cell, cls]) => h(cls ? `td.${cls}` : 'td', {}, cell(item))), canEdit && actions(item, key)))));
+    const none = h('p.muted', { hidden: true }, t('masterdata.noMatch'));
+    const filterId = `filter-${kind}`;
+    const filter = h('input', { id: filterId, type: 'search', 'data-filter': kind, value: filters[kind] ?? '', autocomplete: 'off',
+      'aria-label': t('masterdata.filterLabel', { section: TITLES[kind] }), oninput: apply });
+    function apply() {
+      filters[kind] = filter.value;
+      const terms = filter.value.trim().toLocaleLowerCase('de').split(/\s+/).filter(Boolean);
+      let shown = 0;
+      for (const tr of table.tBodies[0].rows) {
+        if (tr.classList.contains('edit-row')) continue;
+        const text = tr.textContent.toLocaleLowerCase('de');
+        tr.hidden = !terms.every((term) => text.includes(term));
+        if (!tr.hidden) shown++;
+      }
+      none.hidden = shown > 0 || !rows.length;
+    }
+    apply();
     return h('section.section', { 'aria-labelledby': id }, h('h2', { id }, TITLES[kind]),
-      kind === 'people' && h('p.muted', {}, h('strong', {}, t('masterdata.col.shiftMix')), ': ', nightNote(nightDistribution)),
-      canEdit && h('div.toolbar', {}, h('button.btn.btn-secondary.btn-small', { type: 'button', 'data-new': kind, onclick: () => openForm(kind, null) }, t('masterdata.new'))),
-      h('div', { style: { overflowX: 'auto' } }, table));
+      h('div.toolbar', {}, h('div.field', {}, h('label', { for: filterId }, t('masterdata.filter')), filter),
+        canEdit && h('button.btn.btn-secondary.btn-small', { type: 'button', 'data-new': kind, onclick: () => openForm(kind, null) }, t('masterdata.new'))),
+      h('div', { style: { overflowX: 'auto' } }, table), none);
   }
 
   /** Puts a form into a row below the object's row (at the top for a new one); only one form at a time. */
@@ -157,17 +149,7 @@ export async function render(root, ctx) {
       }
       await busy(form, () => write({ kind, key, base, item, values: read }));
     } },
-    base && kind === 'people' && h('span.muted', {}, `${t('masterdata.col.id')}: ${base.id}`),
     defs.map((f) => control(f, v[f.name])), formButtons(), problems());
-    if (kind === 'people') {
-      // the area shares only offer the areas ticked above
-      const sync = () => {
-        const ticked = new Set([...form.querySelectorAll('input[name="areaIds"]:checked')].map((c) => c.value));
-        form.querySelectorAll('div[data-mix-area]').forEach((el) => { el.hidden = !ticked.has(el.dataset.mixArea); });
-      };
-      form.addEventListener('change', sync);
-      sync();
-    }
     if (kind === 'demand') {
       const mode = form.querySelector('#f-mode');
       const show = () => form.querySelectorAll('[data-mode]').forEach((el) => { el.hidden = el.dataset.mode !== mode.value; });
@@ -175,41 +157,6 @@ export async function render(root, ctx) {
       show();
     }
     placeForm(kind, key, form);
-  }
-
-  /** Restrictions of a person: a local list, saved as a whole. */
-  function openRestrictions(personId, values = null) {
-    const person = find('people', personId);
-    const base = personRestrictions(personId);
-    const local = (values ?? base).map((r) => ({ ...r }));
-    const shifts = new Map(dataset.shifts.map((s) => [s.id, s]));
-    const items = h('ul', {});
-    const drawItems = () => items.replaceChildren(...(local.length ? local.map((r, i) => h('li', {}, restrictionText(r, shifts), ' ',
-      h('button.btn-link', { type: 'button', 'aria-label': t('masterdata.restriction.removeLabel', { text: restrictionText(r, shifts) }),
-        onclick: () => { local.splice(i, 1); drawItems(); } }, t('masterdata.remove')))) : [h('li.muted', {}, t('masterdata.restriction.none'))]));
-    const add = [
-      { name: 'target', label: t('masterdata.restriction.target'), type: 'select', options: [...CATEGORIES.map((c) => [`category:${c}`, t('masterdata.restriction.category', { category: CATEGORY[c] })]),
-        ...dataset.shifts.map((s) => [`shift:${s.id}`, `${s.code} ${s.name}`])] },
-      { name: 'weekday', label: t('masterdata.restriction.weekday'), type: 'select', options: [['0', t('masterdata.restriction.everyDay')], ...WEEKDAY_OPTIONS] },
-      { name: 'kind', label: t('masterdata.restriction.kind'), type: 'select', options: [['NEVER', t('masterdata.restriction.never')], ['ON_REQUEST', t('masterdata.restriction.onRequest')]] },
-      { name: 'validFrom', label: t('masterdata.restriction.validFrom'), type: 'date' }, { name: 'validTo', label: t('masterdata.restriction.validTo'), type: 'date' }];
-    const form = h('form.toolbar', { onsubmit: (e) => {
-      e.preventDefault();
-      busy(form, () => write({ kind: 'restrictions', key: personId, base, item: local, values: local }));
-    } },
-    h('div', { style: { flexBasis: '100%' } }, h('strong', {}, t('masterdata.restriction.title', { name: personName(person) })), items),
-    add.map((f) => control(f, f.type === 'date' ? '' : f.options[0][0])),
-    h('button.btn.btn-secondary.btn-small', { type: 'button', onclick: () => {
-      try {
-        local.push(restrictionFromForm(personId, readForm(form, add)));
-        drawItems();
-      } catch (err) {
-        showProblem(err);
-      }
-    } }, t('masterdata.restriction.add')),
-    formButtons(), problems());
-    drawItems();
-    placeForm('people', personId, form);
   }
 
   async function busy(form, action) {
@@ -232,8 +179,7 @@ export async function render(root, ctx) {
     const revision = dataset.revision ?? 0;
     let res;
     try {
-      if (kind === 'restrictions') res = await api.saveRestrictions(key, item, revision);
-      else if (item === undefined) res = await api.deleteMaster(kind, key, revision, op.confirmed);
+      if (item === undefined) res = await api.deleteMaster(kind, key, revision, op.confirmed);
       else if (key == null) res = await api.createMaster(kind, item, revision);
       else res = await api.updateMaster(kind, key, item, revision);
     } catch (e) {
@@ -242,13 +188,12 @@ export async function render(root, ctx) {
         if (confirm(inUseQuestion(kind, op.base, e.params))) return write({ ...op, confirmed: true });
         return undefined;
       }
-      return showProblem(e, kind, item !== undefined);
+      return showProblem(e, item !== undefined);
     }
     toast(item === undefined ? t('masterdata.removed') : t('masterdata.saved'));
-    const focusKind = kind === 'restrictions' ? 'people' : kind;
     // deleting may also remove references (restrictions, demand, areas of people): always read everything again
     await reload();
-    const target = item === undefined || res?.key == null ? root.querySelector(`[data-new="${focusKind}"]`) : root.querySelector(sel(focusKind, res.key));
+    const target = item === undefined || res?.key == null ? root.querySelector(`[data-new="${kind}"]`) : root.querySelector(sel(kind, res.key));
     target?.focus();
     return undefined;
   }
@@ -273,16 +218,15 @@ export async function render(root, ctx) {
       return;
     }
     const decision = conflictDecision(op.kind, op.key, op.base, dataset);
-    // the own values back in the form on the newer version, so that a rejected retry can be corrected
-    const reopen = () => (op.kind === 'restrictions' ? openRestrictions(op.key, op.values) : openForm(op.kind, decision.key, op.values));
     if (decision.action === 'retry') {
-      if (op.item !== undefined) reopen();
+      // the own values back in the form on the newer version, so that a rejected retry can be corrected
+      if (op.item !== undefined) openForm(op.kind, decision.key, op.values);
       await write({ ...op, key: decision.key });
     } else if (decision.action === 'changed' && op.item !== undefined) {
       // the object itself was changed too: do not save, let the user check
-      reopen();
+      openForm(op.kind, decision.key, op.values);
       showProblem(new Error(t('masterdata.conflict.changed')));
-    } else if (decision.action === 'gone' && op.item !== undefined && op.kind !== 'restrictions') {
+    } else if (decision.action === 'gone' && op.item !== undefined) {
       // changed or removed meanwhile (holidays and demand cannot tell): the own values as a new entry, not saved
       openForm(op.kind, null, op.values);
       showProblem(new Error(t('masterdata.conflict.goneForm')));
@@ -292,94 +236,45 @@ export async function render(root, ctx) {
   }
 
   /** An error in the open form (with the lists of a rejected change), else (removing) as a message. */
-  function showProblem(e, kind = null, inForm = true) {
-    const errors = e.body?.errors ?? [];
-    const warnings = e.body?.warnings ?? [];
-    // a person in a closed month stays: the exit date ends the employment instead
-    const hint = e.code === 'masterdata.inUseClosed' && kind === 'people' ? ` ${t('masterdata.inUseClosed.person')}` : '';
+  function showProblem(e, inForm = true) {
     const host = inForm ? root.querySelector('tr.edit-row .form-problems') : null;
-    if (host) {
-      host.replaceChildren(h('div.alert.alert-error', { role: 'alert' }, h('strong', {}, e.message + hint),
-        errors.length ? h('ul', {}, errors.map((x) => h('li', {}, messageText(x)))) : null,
-        warnings.length ? [h('p', {}, h('strong', {}, t('import.warnings', { count: warnings.length }))),
-          h('ul', {}, warnings.map((w) => h('li', {}, messageText(w))))] : null));
-    } else toast(e.message + hint, true);
-  }
-
-  function control(f, value) {
-    const id = `f-${f.name}`;
-    const data = f.mode ? { 'data-mode': f.mode } : {};
-    if (f.type === 'family') return familyEditor(value ?? []);
-    if (f.type === 'mix') return mixEditor(value);
-    if (f.type === 'checks') {
-      return h('fieldset', { style: bare, ...data }, h('legend', { style: { fontWeight: 600 } }, f.label),
-        f.options.map(([v, label]) => h('label', { style: inline }, h('input', { type: 'checkbox', name: f.name, value: v, checked: (value ?? []).includes(v) }), ` ${label}`)));
-    }
-    if (f.type === 'checkbox') return h('div.field', data, h('label', {}, h('input', { id, type: 'checkbox', checked: Boolean(value) }), ` ${f.label}`));
-    const input = f.type === 'select'
-      ? h('select', { id }, f.options.map(([v, label]) => h('option', { value: v, selected: v === value }, label)))
-      : h('input', { id, type: f.type ?? 'text', value: value ?? '', required: f.required, readOnly: f.readOnly, step: f.step, min: f.min, placeholder: f.placeholder });
-    return h('div.field', data, h('label', { for: id }, f.label), input);
-  }
-
-  /** Family rules of the person form: one line per rule, added and removed in the form, saved with the person. */
-  function familyEditor(rules) {
-    const host = h('div', {});
-    let n = 0;
-    const line = (r) => {
-      const i = n++;
-      const id = (k) => `f-fr${i}-${k}`;
-      const el = h('fieldset.family-rule', { style: { ...bare, display: 'flex', flexWrap: 'wrap', gap: '.4rem .8rem', alignItems: 'end' } },
-        h('legend', { style: { fontWeight: 600 } }, t('masterdata.family.rule', { number: i + 1 })),
-        h('span', {}, WEEKDAY_OPTIONS.map(([v, label]) => h('label', { style: inline },
-          h('input', { type: 'checkbox', 'data-fr': 'weekdays', value: v, checked: r.weekdays.includes(v) }), ` ${label}`))),
-        h('div.field', {}, h('label', { for: id('latestEnd') }, t('masterdata.family.col.latestEnd')), h('input', { id: id('latestEnd'), 'data-fr': 'latestEnd', type: 'time', value: r.latestEnd })),
-        h('div.field', {}, h('label', { for: id('earliestStart') }, t('masterdata.family.col.earliestStart')), h('input', { id: id('earliestStart'), 'data-fr': 'earliestStart', type: 'time', value: r.earliestStart })),
-        h('label', { style: inline }, h('input', { type: 'checkbox', 'data-fr': 'noNights', checked: r.noNights }), ` ${t('masterdata.family.noNights')}`),
-        h('div.field', {}, h('label', { for: id('note') }, t('masterdata.family.col.note')), h('input', { id: id('note'), 'data-fr': 'note', value: r.note })),
-        h('button.btn-link', { type: 'button', onclick: () => el.remove() }, t('masterdata.family.remove')));
-      return el;
-    };
-    const lines = h('div', {}, rules.map(line));
-    host.append(h('strong', {}, t('masterdata.col.familyRules')), lines,
-      h('button.btn.btn-secondary.btn-small', { type: 'button', onclick: () => lines.append(line({ weekdays: [], latestEnd: '', earliestStart: '', noNights: false, note: '' })) },
-        t('masterdata.family.add')));
-    return h('div', { style: { flexBasis: '100%' } }, host);
-  }
-
-  /** Usual shift mix of the person form: a percentage per category and per area, cleared with one button. */
-  function mixEditor(mix) {
-    let n = 0;
-    const field = (wrapper, attr, key, name, value) => {
-      const id = `f-mix-${n++}`;
-      return h('div.field', wrapper, h('label', { for: id }, t('masterdata.shiftMix.input', { name })),
-        h('input', { id, type: 'text', inputmode: 'decimal', size: 5, value, [attr]: key }));
-    };
-    const inputs = h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '.4rem .8rem', alignItems: 'end' } },
-      MIX_CATEGORIES.map((c) => field({}, 'data-mix-cat', c, CATEGORY[c], mix?.categories?.[c] ?? '')),
-      dataset.areas.map((a) => field({ 'data-mix-area': a.id }, 'data-mix-area', a.id, `${a.name} (${a.id})`, mix?.areas?.[a.id] ?? '')));
-    const clear = h('button.btn.btn-secondary.btn-small', { type: 'button',
-      onclick: () => inputs.querySelectorAll('input').forEach((i) => { i.value = ''; }) }, t('masterdata.shiftMix.remove'));
-    return h('div', { style: { flexBasis: '100%' } }, h('strong', {}, t('masterdata.col.shiftMix')), h('p.muted', {}, t('masterdata.shiftMix.help'), ' ', nightNote(nightDistribution)),
-      inputs, clear);
+    if (host) host.replaceChildren(problemAlert(e));
+    else toast(e.message, true);
   }
 
   draw();
 }
 
-/** Form values as the pure module reads them (masterdata-edit.js). */
-function readForm(form, defs) {
+/** The alert for a rejected change: the message (and hint) with the lists of errors and warnings the server sent. */
+export function problemAlert(e, hint = '') {
+  const errors = e.body?.errors ?? [];
+  const warnings = e.body?.warnings ?? [];
+  return h('div.alert.alert-error', { role: 'alert' }, h('strong', {}, e.message + hint),
+    errors.length ? h('ul', {}, errors.map((x) => h('li', {}, messageText(x)))) : null,
+    warnings.length ? [h('p', {}, h('strong', {}, t('import.warnings', { count: warnings.length }))),
+      h('ul', {}, warnings.map((w) => h('li', {}, messageText(w))))] : null);
+}
+
+/** One form field: a text, number, date or time input, a select, a checkbox or a group of checkboxes (id f-<name>). */
+export function control(f, value) {
+  const id = `f-${f.name}`;
+  const data = f.mode ? { 'data-mode': f.mode } : {};
+  if (f.type === 'checks') {
+    return h('fieldset', { style: bare, ...data }, h('legend', { style: { fontWeight: 600 } }, f.label),
+      f.options.map(([v, label]) => h('label', { style: inline }, h('input', { type: 'checkbox', name: f.name, value: v, checked: (value ?? []).includes(v) }), ` ${label}`)));
+  }
+  if (f.type === 'checkbox') return h('div.field', data, h('label', {}, h('input', { id, type: 'checkbox', checked: Boolean(value) }), ` ${f.label}`));
+  const input = f.type === 'select'
+    ? h('select', { id }, f.options.map(([v, label]) => h('option', { value: v, selected: v === value }, label)))
+    : h('input', { id, type: f.type ?? 'text', value: value ?? '', required: f.required, readOnly: f.readOnly, step: f.step, min: f.min, placeholder: f.placeholder });
+  return h('div.field', data, h('label', { for: id }, f.label), input);
+}
+
+/** Form values of the fields (see control) as the pure module reads them (masterdata-edit.js). */
+export function readForm(form, defs) {
   const out = {};
   for (const f of defs) {
-    if (f.type === 'family') {
-      out[f.name] = [...form.querySelectorAll('fieldset.family-rule')].map((el) => ({
-        weekdays: [...el.querySelectorAll('[data-fr=weekdays]:checked')].map((c) => c.value),
-        latestEnd: el.querySelector('[data-fr=latestEnd]').value, earliestStart: el.querySelector('[data-fr=earliestStart]').value,
-        noNights: el.querySelector('[data-fr=noNights]').checked, note: el.querySelector('[data-fr=note]').value }));
-    } else if (f.type === 'mix') {
-      const read = (attr) => Object.fromEntries([...form.querySelectorAll(`input[${attr}]`)].map((i) => [i.getAttribute(attr), i.value]));
-      out[f.name] = { categories: read('data-mix-cat'), areas: read('data-mix-area') };
-    } else if (f.type === 'checks') out[f.name] = [...form.querySelectorAll(`input[name="${f.name}"]:checked`)].map((c) => c.value);
+    if (f.type === 'checks') out[f.name] = [...form.querySelectorAll(`input[name="${f.name}"]:checked`)].map((c) => c.value);
     else if (f.type === 'checkbox') out[f.name] = form.querySelector(`#f-${f.name}`).checked;
     else out[f.name] = form.querySelector(`#f-${f.name}`).value;
   }
@@ -388,7 +283,7 @@ function readForm(form, defs) {
 
 const de = (iso) => `${iso.slice(8, 10)}.${iso.slice(5, 7)}.${iso.slice(0, 4)}`;
 
-/** Employment period for the people table: entry and exit date, either may be open. */
+/** Employment period of a person: entry and exit date, either may be open. */
 export function employmentText(p) {
   if (p.entryDate && p.exitDate) return t('masterdata.employment.range', { from: de(p.entryDate), to: de(p.exitDate) });
   if (p.entryDate) return t('masterdata.employment.from', { from: de(p.entryDate) });
