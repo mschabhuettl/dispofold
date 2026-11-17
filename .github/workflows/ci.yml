@@ -137,6 +137,9 @@ jobs:
       - name: Eingaben with absence ranges and a person filter (browser)
         working-directory: frontend
         run: node scripts/check-inputs.mjs
+      - name: Help buttons by click, keyboard and touch (browser)
+        working-directory: frontend
+        run: node scripts/check-help.mjs
 
   desktop-shell:
     # Unit tests of the program window (protocol, proof, proxy rules).
