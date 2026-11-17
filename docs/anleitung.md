@@ -154,9 +154,9 @@ Oben im **Dienstplan** stehen:
   Abwesenheitstage) schrumpft um denselben Anteil. So muss niemand Stunden über den Bedarf hinaus sammeln, und
   der Plan kann zusammenhängende Dienstblöcke bevorzugen und einzelne freie Tage zwischen Diensten vermeiden.
   Die harte Obergrenze (Höchststunden im Monat) rechnet weiter mit dem echten Ziel. Die Seite **Person** zeigt
-  Soll, Ziel und, wenn es abweicht, das Ziel für diesen Plan mit den geplanten und angerechneten Stunden
-  daneben; die Zeile **Warum dieser Dienst?** nennt beide Ziele. Für Lesende sind die Ziele ausgeblendet, weil
-  sie das Stundenkonto enthalten.
+  in einer Kachel die geplanten Stunden gegen das Ziel für diesen Plan und das Soll („28 h von Ziel 112,9 h
+  (Soll 129,2 h)“); **Was bedeuten Soll und Ziel?** erklärt beide. Die Zeile **Warum dieser Dienst?** nennt beide
+  Ziele. Für Lesende ist das Ziel ausgeblendet, weil es das Stundenkonto enthält.
 - **Bedarfslücken:** Zeitabschnitte, in denen weniger Personen eingeteilt sind als der Bedarf verlangt. Die
   Zeile **Bedarfslücken** unter dem Plan zeigt sie je Tag, **Ungedeckter Bedarf** die Summe in
   Personenstunden. Daneben steht **Überbesetzung**: Personenstunden über der Höchstbesetzung (wo keine gesetzt
@@ -181,17 +181,21 @@ Weitere Seiten:
 - **Bereichs-Zeitachse:** Dienste eines Bereichs als Tag oder Woche und die Besetzung gegen den Bedarf. Lücken
   sind rot markiert und darunter als Liste mit Uhrzeit und fehlender Besetzung aufgeführt. **Wer kann gefragt
   werden?** in einer Zeile der Liste klappt darunter die Personen auf, die man für diese Lücke fragen kann.
-- **Person:** Eine Person auswählen. Die Seite zeigt Soll, Ziel, Ziel für diesen Plan, geplante Stunden, Stundenkonto vorher und danach,
-  Nächte, Wochenenden, Feiertage, unbeliebte Dienste, erfüllte Wünsche und Ersatzruhe. Unter **Warum dieser
-  Dienst?** steht für jeden Tag (oder **Ganzer Monat**), welche Regeln gegriffen haben, mit ihrer Stufe
-  (**Hart**, **Bedarf**, **Weich**).
+- **Person:** Eine Person auswählen. Die Seite zeigt die geplanten Stunden gegen Ziel und Soll, Stundenkonto vorher
+  und danach, Nächte, Wochenenden, Feiertage, unbeliebte Dienste, erfüllte Wünsche und Ersatzruhe. Unter **Warum
+  dieser Dienst?** steht für jeden Tag (oder **Ganzer Monat**) in Worten, was zutrifft (zum Beispiel „verletzt
+  keine Regel, 1 Wunsch erfüllt“), darunter welche Regeln gegriffen haben, mit ihrer Stufe (**Hart**,
+  **Bedarf**, **Weich**) und ob es ein Verstoß, ein Nachteil oder ein Vorteil ist.
 - **Fairness-Übersicht:** Alle Personen nebeneinander, je Kennzahl mit Minimum, Mittelwert und Maximum, auch über
   die Vormonate (Historie). Mit **Auf 40 Wochenstunden normiert** werden Teilzeitkräfte vergleichbar. Bei der
   Fairness zählt die Abweichung vom Mittelwert: Ein Treffer in der Erklärung erscheint nur bei Personen über dem
   Mittelwert.
-- **Regeln & Gewichte:** Regelwerte (zum Beispiel Ruhezeiten) und die Gewichte der weichen Regeln. Die tägliche
-  Ruhezeit kann nicht unter 11 Stunden gesetzt werden. Das Gewicht von **Dienst nur auf Anfrage** ist fest
-  („fest“ statt eines Reglers): Solche Dienste plant das Programm ohnehin nie selbst ein.
+- **Regeln & Gewichte:** Regelwerte (zum Beispiel Ruhezeiten) und die Gewichte der weichen Regeln als
+  Zahlenfelder, jeweils mit dem Standardwert und **Zurücksetzen**. Die Beschreibungen der Regeln nennen die
+  eingestellten Werte und folgen der Eingabe. Die Leiste mit **Speichern** bleibt beim Blättern sichtbar und
+  zeigt **Nicht gespeichert**, solange Änderungen offen sind; wer die Seite dann verlässt, wird gefragt. Die
+  tägliche Ruhezeit kann nicht unter 11 Stunden gesetzt werden. Das Gewicht von **Dienst nur auf Anfrage** ist
+  fest („fest“ statt eines Zahlenfelds): Solche Dienste plant das Programm ohnehin nie selbst ein.
 
 ## Plan nach Funktion
 
