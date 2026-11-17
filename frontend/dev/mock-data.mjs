@@ -155,32 +155,19 @@ export function makeDataset(month, seed = 1) {
   };
 }
 
+// The catalogue of the backend (ConstraintCatalog): ids, levels and default weights; labels and descriptions come
+// from the texts of the user interface (constraint.<id>).
 export const CONSTRAINTS = [
-  ['qualification', 'HARD', 'Qualifikation', 'Dienste nur in Bereichen, für die die Person eingesetzt werden darf.', 1],
-  ['dailyRest', 'HARD', 'Tägliche Ruhezeit', 'Mindestens 11 Stunden Ruhe zwischen zwei Diensten (KV, Ruhezeit).', 1],
-  ['weeklyRest', 'HARD', 'Wöchentliche Ruhezeit', 'Mindestens 36 Stunden zusammenhängende Ruhe je Kalenderwoche.', 1],
-  ['maxWeekHours', 'HARD', 'Höchstarbeitszeit Woche', 'Höchstens 60 Stunden je Kalenderwoche (KV, Durchrechnung).', 1],
-  ['maxMonthHours', 'HARD', 'Höchststunden im Monat', 'Geplante und angerechnete Stunden höchstens Ziel plus Toleranz.', 1],
-  ['freeSundays', 'HARD', 'Freie Sonntage im Monat', 'Mindestens so viele Sonntage ohne Dienst wie eingestellt.', 1],
-  ['absence', 'HARD', 'Abwesenheit', 'Kein Dienst an Tagen mit Urlaub, Krankenstand oder Fortbildung.', 1],
-  ['restrictionNever', 'HARD', 'Ausschluss Schicht', 'Schichten, die eine Person nie macht.', 1],
-  ['demand', 'MEDIUM', 'Bedarf gedeckt', 'Fehlende Besetzung in Personenminuten.', 1000000000],
-  ['overstaffing', 'MEDIUM', 'Überbesetzung', 'Besetzung über dem Bedarf, in Personenminuten.', 1],
-  ['uselessDuty', 'MEDIUM', 'Dienst ohne Bedarf', 'Ein Dienst, der keinen Bedarf seines Bereichs abdeckt, je Dienstminute.', 1],
-  ['targetHours', 'SOFT', 'Sollstunden', 'Geplante plus angerechnete Stunden nahe am Monatssoll inklusive Anteil des Stundenkontos.', 20],
-  ['wishOff', 'SOFT', 'Wunsch frei', 'Wunsch nach einem freien Tag erfüllen.', 60],
-  ['wishShift', 'SOFT', 'Wunsch Dienst', 'Gewünschten Dienst oder gewünschte Schicht einplanen.', 40],
-  ['familyRule', 'SOFT', 'Familienregel', 'Spätestes Ende, frühester Beginn oder keine Nacht an bestimmten Wochentagen.', 80],
-  ['blockLength', 'SOFT', 'Dienstblöcke', 'Bevorzugt 2 bis 4 Dienste am Stück, keine Einzeldienste.', 15],
-  ['forwardRotation', 'SOFT', 'Vorwärtsrotation', 'Früh vor Spät vor Nacht innerhalb eines Blocks.', 10],
-  ['fairNights', 'SOFT', 'Faire Nachtverteilung', 'Nächte gleichmäßig verteilen, mit Historie der Vormonate.', 25],
-  ['fairWeekends', 'SOFT', 'Faire Wochenenden', 'Arbeitswochenenden gleichmäßig verteilen.', 25],
-  ['fairUnpopular', 'SOFT', 'Unbeliebte Dienste', 'Unbeliebte Dienste gleichmäßig verteilen.', 15],
-  ['shiftMix', 'SOFT', 'Gewohnte Verteilung', 'Dienste folgen den gewohnten Anteilen je Schichtart und Bereich.', 100],
-  ['restrictionOnRequest', 'SOFT', 'Nur auf Anfrage', 'Schichten, die eine Person nur nach Rückfrage macht.', 50],
+  ...['dailyRest', 'weeklyRest', 'maxDutyLength', 'maxWeekHours', 'maxMonthHours', 'freeSundays', 'averageWeekHours',
+    'qualification', 'absence', 'employment', 'neverRestriction', 'compRestBalance', 'missingShift'].map((id) => [id, 'HARD', 1]),
+  ['demand', 'MEDIUM', 1000000000], ['overstaffing', 'MEDIUM', 1], ['uselessDuty', 'MEDIUM', 1],
+  ['targetHours', 'SOFT', 20], ['fairNights', 'SOFT', 3], ['fairWeekends', 'SOFT', 3], ['fairHolidays', 'SOFT', 3],
+  ['fairUnpopular', 'SOFT', 2], ['wishes', 'SOFT', 300], ['blockLength', 'SOFT', 6000], ['isolatedDayOff', 'SOFT', 10000],
+  ['forwardRotation', 'SOFT', 500], ['splitWeekend', 'SOFT', 300], ['compRestUse', 'SOFT', 500], ['shiftVariety', 'SOFT', 5],
+  ['areaVariety', 'SOFT', 1], ['shiftMix', 'SOFT', 100], ['family', 'SOFT', 800],
   // on-request duties are never planned automatically, so their weight is not a setting
-].map(([id, level, label, description, defaultWeight]) => ({ id, level, label, description, defaultWeight,
-  tunable: level === 'SOFT' && id !== 'restrictionOnRequest' }));
+  ['onRequest', 'SOFT', 1000],
+].map(([id, level, defaultWeight]) => ({ id, level, defaultWeight, tunable: level === 'SOFT' && id !== 'onRequest' }));
 
 export const DEFAULT_RULES = {
   minDailyRestHours: 11, minWeeklyRestHours: 36, maxDutyHours: 12, maxWeekHours: 60, maxAverageWeekHours: 46.16,

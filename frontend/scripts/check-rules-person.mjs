@@ -6,8 +6,7 @@
 // stays, accept leaves), weights are number fields with their default and a reset to it, and a rule text takes its
 // number from the parameter field. Person: one hour tile "x h von Ziel y h (Soll z h)" (viewers without Ziel) and
 // "Warum dieser Dienst?" in words, without scores.
-// Demo data of the dev server (mock API); the quality rules of /api/constraints are replaced by those of the backend
-// catalogue (the mock has older ids). With an output folder as argument, it also saves screenshots of both pages.
+// Demo data of the dev server (mock API, with the constraint catalogue of the backend). With an output folder as argument, it also saves screenshots of both pages.
 //   npm run build && node scripts/check-rules-person.mjs [output folder]     (Chromium via `npx playwright install chromium`)
 import { spawn } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
@@ -28,13 +27,6 @@ const base = `http://localhost:${port}`;
 if (out) mkdirSync(out, { recursive: true });
 
 /** The quality rules of the backend catalogue (ConstraintCatalog) with their default weights. */
-const QUALITY = [
-  ['targetHours', 20], ['fairNights', 3], ['fairWeekends', 3], ['fairHolidays', 3], ['fairUnpopular', 2], ['wishes', 300],
-  ['blockLength', 6000], ['isolatedDayOff', 10000], ['forwardRotation', 500], ['splitWeekend', 300], ['compRestUse', 500],
-  ['shiftVariety', 5], ['areaVariety', 1], ['shiftMix', 100], ['family', 800],
-].map(([id, defaultWeight]) => ({ id, level: 'SOFT', defaultWeight, tunable: true }))
-  .concat({ id: 'onRequest', level: 'SOFT', defaultWeight: 1000, tunable: false });
-
 let failed = false;
 const check = (name, ok, detail = '') => {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? `: ${detail}` : ''}`);
@@ -46,10 +38,6 @@ try {
   const login = async (user) => {
     const context = await browser.newContext({ viewport: { width: 1600, height: 1000 }, colorScheme: 'light' });
     await context.addInitScript((m) => sessionStorage.setItem('month', m), month);
-    await context.route('**/api/constraints', async (route) => {
-      const mock = await (await route.fetch()).json();
-      await route.fulfill({ json: [...mock.filter((c) => c.level !== 'SOFT'), ...QUALITY] });
-    });
     const page = await context.newPage();
     page.on('pageerror', (e) => check('no page error', false, e.message));
     await page.goto(`${base}/login.html`);

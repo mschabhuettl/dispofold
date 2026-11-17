@@ -391,7 +391,7 @@ export const TEXTS = {
   'rules.param.maxWeekHours.label': 'Höchstarbeitszeit je Woche (h)',
   'rules.param.maxWeekHours.help': 'je Kalenderwoche',
   'rules.param.maxAverageWeekHours.label': 'Durchschnittliche Wochenarbeitszeit (h)',
-  'rules.param.maxAverageWeekHours.help': 'im Durchrechnungszeitraum, nur angezeigt',
+  'rules.param.maxAverageWeekHours.help': 'im Durchrechnungszeitraum; Regelverstoß, sobald die Historie ihn abdeckt',
   'rules.param.averagingWeeks.label': 'Durchrechnungszeitraum (Wochen)',
   'rules.param.averagingWeeks.help': 'für die durchschnittliche Wochenarbeitszeit',
   'rules.param.minBlock.label': 'Kürzester Dienstblock (Tage)',

@@ -207,7 +207,7 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
     const never = (x) => dataset.restrictions.some((r) => r.personId === p.id && r.kind === 'NEVER' && !r.weekday
       && (!r.validFrom || r.validFrom <= dates[0]) && (!r.validTo || r.validTo >= dates.at(-1))
       && (r.shiftId ? r.shiftId === x.id : r.category === x.category));
-    const everyDay = (f) => !f.weekdays?.length || [1, 2, 3, 4, 5, 6, 7].every((d) => f.weekdays.map(Number).includes(d));
+    const everyDay = (f) => [1, 2, 3, 4, 5, 6, 7].every((d) => (f.weekdays ?? []).map(Number).includes(d));
     if ((p.familyRules ?? []).some((f) => f.noNights && everyDay(f)) || nights.every(never)) return 'NEVER';
     if ((rules.nightDistribution ?? 'HABIT') === 'HABIT' && Object.keys(p.shiftMix?.categories ?? {}).length) return 'MIX';
     return null;
@@ -258,7 +258,7 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
       const a = plan?.assignments.find((x) => x.personId === p.id && x.date === w.date);
       const working = Boolean(a?.shiftId);
       const ok = w.kind === 'OFF' ? !working : w.kind === 'DUTY' ? working : w.kind === 'SHIFT' ? a?.shiftId === w.shiftId : a?.shiftId !== w.shiftId;
-      const id = w.kind === 'OFF' ? 'wishOff' : 'wishShift';
+      const id = 'wishes';
       const what = { OFF: 'frei', DUTY: 'Dienst', SHIFT: `Schicht ${label(w.shiftId)}`, NOT_SHIFT: `nicht ${label(w.shiftId)}` }[w.kind];
       hits.push({ constraintId: id, level: 'SOFT', date: w.date, score: ok ? 0 : -weightOf(id),
         text: ok ? `Wunsch „${what}“ erfüllt.` : `Wunsch „${what}“ nicht erfüllt, Bedarf hatte Vorrang.` });
@@ -283,7 +283,7 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
     const constraints = CONSTRAINTS.map((c) => {
       let matches = 0;
       if (c.id === 'demand') matches = gaps.length;
-      else if (c.level === 'SOFT') matches = people.reduce((s, st) => s + (c.id === 'wishOff' ? st.wishes - st.wishesMet : c.id === 'blockLength' ? st.singleDays : c.id === 'fairUnpopular' ? st.unpopular : 0), 0);
+      else if (c.level === 'SOFT') matches = people.reduce((s, st) => s + (c.id === 'wishes' ? st.wishes - st.wishesMet : c.id === 'blockLength' ? st.singleDays : c.id === 'fairUnpopular' ? st.unpopular : 0), 0);
       const w = weightOf(c.id);
       const score = c.id === 'demand' ? -gaps.reduce((s, g) => s + (g.required - g.planned) * (parseLocalDateTime(g.to) - parseLocalDateTime(g.from)), 0) : c.level === 'SOFT' ? -matches * w : 0;
       return { id: c.id, level: c.level, label: c.label, weight: w, score, matches };
