@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import { CONSTRAINTS, DEFAULT_RULES } from '../dev/mock-data.mjs';
 import { METRICS } from '../src/lib/fairness.js';
 import { GROUPS } from '../src/lib/rule-groups.js';
+import { MIX_CATEGORIES } from '../src/lib/shift-mix.js';
 import { TEXTS } from '../src/lib/texts.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -163,6 +164,54 @@ test('every field of the person form, the Stammdaten forms and the Eingaben has 
   const sections = calls(inputs, 'section(').filter((a) => a.startsWith("t('inputs.section."));
   assert.equal(sections.length, 3);
   assert.deepEqual(sections.filter((a) => !/^t\('inputs\.section\.\w+'\), '\w+', t\('help\.field\.inputs\.\w+'\)/.test(a)), []);
+});
+
+test('no two help texts are the same: every field has its own', () => {
+  const seen = new Map();
+  for (const k of helpKeys) {
+    assert.ok(!seen.has(TEXTS[k]), `${k} has the text of ${seen.get(TEXTS[k])}`);
+    seen.set(TEXTS[k], k);
+  }
+});
+
+/** Elements of an array literal text "[a, b]". */
+const items = (text) => args(text.trim().replace(/^\[|\]$/g, ''));
+
+test('every field of the Eingaben forms has its own help', () => {
+  const forms = calls(source('views/inputs.js'), 'addForm(').filter((a) => a.startsWith("'"));
+  assert.equal(forms.length, 3);
+  const helps = forms.flatMap((f) => items(args(f)[1]).map((field) => items(field)[2] ?? `none: ${items(field)[0]}`));
+  assert.ok(helps.length >= 10, `fields: ${helps.length}`);
+  assert.deepEqual(helps.filter((x) => !/^t\('help\.field\.inputs\.\w+'\)$/.test(x)), []);
+  assert.equal(new Set(helps).size, helps.length, helps.join());
+});
+
+test('every field of the usual distribution and of a family rule has its own help', () => {
+  const person = source('views/person.js');
+  for (const c of MIX_CATEGORIES) assert.match(person, new RegExp(`${c}: t\\('help\\.field\\.mix\\.${c.toLowerCase()}'\\)`), c);
+  assert.match(person, /MIX_CATEGORIES\.map\(\(c\) => field\([^\n]*MIX_HELP\[c\]\)/);
+  // the area fields: one text naming the area
+  assert.match(TEXTS['help.field.mix.area'], /\{name\}/);
+  assert.match(person, /t\('help\.field\.mix\.area', \{ name: a\.name \}\)/);
+  // a family rule: each control (data-fr) has a help of its own name
+  const family = person.slice(person.indexOf('function familyEditor'), person.indexOf('const readFamily'));
+  const fields = new Set([...family.matchAll(/'data-fr': '(\w+)'/g)].map((m) => m[1]));
+  for (const m of family.matchAll(/timeField\('(\w+)'/g)) fields.add(m[1]);
+  const helped = new Set([...family.matchAll(/t\('help\.field\.family\.(\w+)'\)/g)].map((m) => m[1]));
+  assert.ok(fields.size >= 5, [...fields].join());
+  assert.deepEqual([...fields].filter((f) => !helped.has(f)), []);
+});
+
+test('every line of the law text on the rules page has its own help', () => {
+  const rules = source('views/rules.js');
+  const list = calls(rules, 'lawText.replaceChildren(');
+  assert.equal(list.length, 1);
+  const lines = items(list[0].replace(/^\.\.\./, '').replace(/\]\s*\.map\([\s\S]*$/, ']'));
+  assert.ok(lines.length >= 7, `lines: ${lines.length}`);
+  const helps = lines.map((l) => items(l)[1] ?? '');
+  assert.deepEqual(helps.filter((x) => !/^t\('help\.law\.\w+'\)$/.test(x)), []);
+  assert.equal(new Set(helps).size, helps.length);
+  assert.match(list[0], /\.map\(\(\[line, help\]\) => h\('li', \{\}, line, [^)]*info\(help, line\)/);
 });
 
 test('every help text belongs to something that exists', () => {
