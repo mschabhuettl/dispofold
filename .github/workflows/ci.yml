@@ -116,6 +116,9 @@ jobs:
       - name: Print layouts of both plan views (browser)
         working-directory: frontend
         run: node scripts/check-print.mjs
+      - name: Header, status line and sticky rows of both plan views (browser)
+        working-directory: frontend
+        run: node scripts/check-plan-views.mjs
 
   desktop-shell:
     # Unit tests of the program window (protocol, proof, proxy rules).

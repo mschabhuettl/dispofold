@@ -1,0 +1,253 @@
+// Playwright check of the header and status line of "Dienstplan" (#/plan) and "Plan nach Funktion" (#/funktionen):
+// solver options under a collapsed "Erweitert", Planen, Stopp and Fixierungen lösen in one row, the "Ausgabe" menu
+// (Drucken, exports, Monat abschließen), the legend collapsed and remembered, the coloured headline without the raw
+// score, the rule chips with their list, the sticky gap rows, the checklist before closing the month with its second
+// confirm, and what viewers see. Demo data of the dev server (mock API).
+//   npm run build && node scripts/check-plan-views.mjs     (Chromium via `npx playwright install chromium`)
+import { spawn } from 'node:child_process';
+import { createServer } from 'node:net';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { chromium } from 'playwright';
+
+const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const month = '2027-01';
+const port = await new Promise((resolve) => {
+  const s = createServer().listen(0, () => { const p = s.address().port; s.close(() => resolve(p)); });
+});
+const server = spawn(process.execPath, [join(root, 'scripts', 'dev-server.mjs'), String(port)], { stdio: ['ignore', 'pipe', 'inherit'] });
+await new Promise((resolve) => server.stdout.on('data', (d) => { if (String(d).includes('dev server on')) resolve(); }));
+const base = `http://localhost:${port}`;
+
+let failed = false;
+const check = (name, ok, detail = '') => {
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${name}${detail ? `: ${detail}` : ''}`);
+  if (!ok) failed = true;
+};
+
+const browser = await chromium.launch();
+
+async function login(user) {
+  const context = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  await context.addInitScript((m) => sessionStorage.setItem('month', m), month);
+  const page = await context.newPage();
+  page.on('pageerror', (e) => check(`${user}: no page error`, false, e.message));
+  await page.goto(`${base}/login.html`);
+  await page.fill('#j_username', user);
+  await page.fill('#j_password', 'x');
+  await Promise.all([page.waitForURL((u) => !u.pathname.endsWith('login.html')), page.click('button[type=submit]')]);
+  return page;
+}
+
+async function open(page, view) {
+  await page.goto(`${base}/#/${view}`);
+  await page.locator('.roster-wrap table').waitFor();
+}
+
+const api = (page, path, init) => page.evaluate(async ([p, i]) => {
+  const res = await fetch(p, i);
+  return res.status === 204 ? null : res.json();
+}, [path, init]);
+
+/** Texts of the "Ausgabe" menu items; the menu is closed again with Escape. */
+async function menuItems(page) {
+  await page.getByRole('button', { name: 'Ausgabe' }).click();
+  const items = await page.locator('#output-menu button').allTextContents();
+  await page.keyboard.press('Escape');
+  return items;
+}
+
+const legendOpen = (page) => page.locator('details.legend-box').evaluate((d) => d.open);
+
+/** Top of an element relative to the visible area of the grid below the day header. */
+const belowHeader = (page, selector) => page.evaluate((sel) => {
+  const wrap = document.querySelector('.roster-wrap');
+  const el = document.querySelector(sel);
+  const r = el.getBoundingClientRect();
+  const hit = document.elementFromPoint(r.left + Math.min(20, r.width / 2), r.top + r.height / 2);
+  return { offset: r.top - (wrap.getBoundingClientRect().top + wrap.clientTop + wrap.querySelector('thead').getBoundingClientRect().height),
+    position: getComputedStyle(el).position, onTop: Boolean(hit && el.closest('tr').contains(hit)), scrolled: wrap.scrollTop };
+}, selector);
+
+try {
+  const page = await login('planung');
+  await page.evaluate(async (m) => {
+    await fetch('/api/import/demo', { method: 'POST' });
+    await fetch(`/api/plans/${m}/solve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"seed":1,"timeLimitSeconds":1}' });
+  }, month);
+  await page.waitForTimeout(1500);
+  await open(page, 'plan');
+
+  // header: solver options under "Erweitert", collapsed; the three plan buttons in one row
+  const advanced = page.locator('details.advanced');
+  check('Erweitert collapsed', !(await advanced.evaluate((d) => d.open)));
+  check('Erweitert holds the solver options', await advanced.locator('#seed, #limit, #move-limit, #cold-start').count() === 4);
+  check('solver options hidden', await page.locator('#seed').isHidden());
+  const tops = await Promise.all(['Planen', 'Stopp', 'Fixierungen lösen']
+    .map(async (name) => (await page.getByRole('button', { name, exact: true }).boundingBox()).y));
+  check('Planen, Stopp, Fixierungen lösen in one row', tops.every((y) => y === tops[0]), tops.join(', '));
+
+  // the "Ausgabe" menu: aria-expanded, items, arrow keys, Escape back to the button
+  const toggle = page.getByRole('button', { name: 'Ausgabe' });
+  check('menu closed', await toggle.getAttribute('aria-expanded') === 'false');
+  await toggle.click();
+  check('menu open', await toggle.getAttribute('aria-expanded') === 'true' && await page.locator('#output-menu').isVisible());
+  const items = await page.locator('#output-menu button').allTextContents();
+  check('menu items (planner)', ['Drucken', 'Export XLSX', 'Export CSV', 'Export JSON', 'Monat abschließen'].every((x) => items.includes(x)), items.join(', '));
+  check('Drucken keeps data-print', await page.locator('#output-menu button[data-print]').textContent() === 'Drucken');
+  check('focus on the first item', await page.evaluate(() => document.activeElement.textContent) === 'Drucken');
+  await page.keyboard.press('ArrowDown');
+  check('arrow down moves', await page.evaluate(() => document.activeElement.textContent) === 'Export XLSX');
+  await page.keyboard.press('Escape');
+  check('Escape closes the menu', await page.locator('#output-menu').isHidden() && await toggle.getAttribute('aria-expanded') === 'false');
+  check('focus back on the menu button', await page.evaluate(() => document.activeElement.getAttribute('aria-controls')) === 'output-menu');
+
+  // legend: collapsed by default, remembered after a reload
+  check('legend collapsed', !(await legendOpen(page)));
+  await page.locator('details.legend-box > summary').click();
+  await page.reload();
+  await page.locator('.roster-wrap table').waitFor();
+  check('legend open after reload', await legendOpen(page));
+  check('planner legend: on request and absence types', await page.locator('.legend-box .cell-code.on-request').count() === 1
+    && await page.locator('.legend-box .cell-code.absence.tinted').count() > 0);
+  await page.locator('details.legend-box > summary').click();
+  await page.reload();
+  await page.locator('.roster-wrap table').waitFor();
+  check('legend closed after reload', !(await legendOpen(page)));
+
+  // headline: coloured, no raw score in the visible status line (only as tooltip and under "Erweitert")
+  const analysis = await api(page, `/api/plans/${month}/analysis`);
+  const state = await api(page, `/api/plans/${month}`);
+  const headline = page.locator('.plan-headline');
+  const text = await headline.textContent();
+  const cls = await headline.getAttribute('class');
+  const gaps = analysis.gaps.length;
+  if (analysis.hardViolations === 0 && gaps === 0) {
+    check('headline usable', text === 'Plan verwendbar: keine Regelverstöße, keine Lücken' && cls.includes('headline-good'), `${text} (${cls})`);
+  } else {
+    check('headline with gaps', analysis.hardViolations === 0 && new RegExp(`^${gaps} Lücken? \\([\\d,]+ Personenstunden\\)$`).test(text)
+      && cls.includes('headline-warn'), `${text} (${cls})`);
+  }
+  const visible = await page.locator('.statusbar').innerText();
+  check('no raw score in the status line', !visible.includes(state.plan.score) && !/\d+hard\//.test(visible), visible.replace(/\n/g, ' | '));
+  check('score as tooltip', (await headline.getAttribute('title')).includes(state.plan.score));
+  check('score under Erweitert', (await advanced.locator('.score').textContent()).includes(state.plan.score));
+  check('gaps shown once', (visible.match(/Lücke/g) ?? []).length <= 1, visible.replace(/\n/g, ' | '));
+
+  // chips: a click lists person and day
+  const chips = page.locator('.chips .chip');
+  check('rule chips', await chips.count() > 0, String(await chips.count()));
+  await chips.first().click();
+  await page.locator('.popover .hit-list li').first().waitFor({ timeout: 10000 }).catch(() => {});
+  const entries = await page.locator('.popover .hit-list li').allInnerTexts();
+  check('chip list with person and day', entries.length > 0 && /\S+ \S+/.test(entries[0]), entries.slice(0, 2).join(' | '));
+  await page.keyboard.press('Escape');
+  check('chip list closes', await page.locator('.popover').count() === 0);
+
+  // a rule violation (injected into the analysis): red headline, hard chip
+  await page.route(`**/api/plans/${month}/analysis`, async (route) => {
+    const a = await (await route.fetch()).json();
+    a.hardViolations = 2;
+    a.constraints = [{ id: 'dailyRest', level: 'HARD', weight: 1, score: -2, matches: 2 }, ...a.constraints];
+    await route.fulfill({ json: a });
+  });
+  await page.reload();
+  await page.locator('.roster-wrap table').waitFor();
+  const bad = await headline.textContent();
+  check('headline with violations', /^2 Regelverstöße(, \d+ Lücken? \([\d,]+ Personenstunden\))?$/.test(bad)
+    && (await headline.getAttribute('class')).includes('headline-bad'), bad);
+  check('hard chip', (await page.locator('.chip.chip-hard').textContent()).replace(/\s+/g, ' ') === 'Tägliche Ruhezeit 2');
+  await page.unroute(`**/api/plans/${month}/analysis`);
+  await page.reload();
+  await page.locator('.roster-wrap table').waitFor();
+
+  // gap row: sticky below the day header, still on top after scrolling the grid
+  const wrapScroll = (sel, to) => page.evaluate(([s, y]) => { document.querySelector(s).scrollTop = y; }, [sel, to]);
+  await wrapScroll('.roster-wrap', 100000);
+  await page.waitForTimeout(100);
+  const gapRow = await belowHeader(page, 'tr.sticky-gaps th.person');
+  check('gap row sticky', gapRow.position === 'sticky' && gapRow.scrolled > 0 && Math.abs(gapRow.offset) < 2 && gapRow.onTop, JSON.stringify(gapRow));
+
+  // Plan nach Funktion: menu without closing, legend state shared, "offen" row of the area at the top sticks
+  await open(page, 'funktionen');
+  const fnItems = await menuItems(page);
+  check('function view menu', ['Drucken', 'Export XLSX', 'Export CSV', 'Export JSON'].every((x) => fnItems.includes(x))
+    && !fnItems.includes('Monat abschließen'), fnItems.join(', '));
+  check('function view legend collapsed', !(await legendOpen(page)));
+  // the last area after the first with an "offen" row whose middle row can be scrolled to the top of the grid
+  const target = await page.evaluate(() => {
+    const wrap = document.querySelector('.roster-wrap');
+    wrap.style.maxHeight = '250px'; // a small window: the demo data has few areas
+    const scrollTo = (body) => wrap.scrollTop + body.rows[Math.floor(body.rows.length / 2)].getBoundingClientRect().top
+      - wrap.getBoundingClientRect().top - wrap.clientTop - wrap.querySelector('thead').getBoundingClientRect().height;
+    const bodies = [...wrap.querySelectorAll('tbody')];
+    const i = bodies.findLastIndex((b, k) => k > 0 && b.querySelector('tr.gap-row') && b.rows.length > 3
+      && scrollTo(b) <= wrap.scrollHeight - wrap.clientHeight);
+    if (i > 0) wrap.scrollTop = scrollTo(bodies[i]);
+    return i;
+  });
+  check('an area after the first with an "offen" row', target > 0, String(target));
+  if (target > 0) {
+    await page.waitForTimeout(150);
+    const stuck = await page.evaluate(() => [...document.querySelectorAll('.roster-wrap tbody')].map((b, i) => (b.classList.contains('stuck') ? i : -1)).filter((i) => i >= 0));
+    check('only the area at the top sticks', stuck.length === 1 && stuck[0] === target, JSON.stringify(stuck));
+    const group = await belowHeader(page, '.roster-wrap tbody.stuck tr.group th');
+    check('area name below the day header', Math.abs(group.offset) < 2 && group.onTop, JSON.stringify(group));
+    const offen = await belowHeader(page, '.roster-wrap tbody.stuck tr.gap-row th.person');
+    const groupHeight = await page.locator('.roster-wrap tbody.stuck tr.group').evaluate((r) => r.getBoundingClientRect().height);
+    check('"offen" row sticky below the area name', offen.position === 'sticky' && Math.abs(offen.offset - groupHeight) < 2 && offen.onTop,
+      JSON.stringify(offen));
+  }
+
+  // viewers: no solver options, no exports, no closing; the legend without planner-only items
+  const viewer = await login('ansicht');
+  await open(viewer, 'plan');
+  check('viewer: no Erweitert, no Planen', await viewer.locator('details.advanced').count() === 0
+    && await viewer.getByRole('button', { name: 'Planen', exact: true }).count() === 0);
+  const viewerItems = await menuItems(viewer);
+  check('viewer: menu only Drucken', viewerItems.length === 1 && viewerItems[0] === 'Drucken', viewerItems.join(', '));
+  await viewer.locator('details.legend-box > summary').click();
+  check('viewer legend: no on-request marker, no absence types, ABW',
+    await viewer.locator('.legend-box .cell-code.on-request').count() === 0
+    && await viewer.locator('.legend-box .cell-code.absence.tinted').count() === 0
+    && await viewer.locator('.legend-box .cell-code.absence').filter({ hasText: 'ABW' }).count() === 1);
+  check('viewer print legend: no absence types', await viewer.locator('.print-only .legend .cell-code.absence.tinted').count() === 0);
+  await open(viewer, 'funktionen');
+  check('viewer function legend: no on-request marker', await viewer.locator('.legend .cell-code.on-request').count() === 0);
+  check('viewer function menu only Drucken', (await menuItems(viewer)).join() === 'Drucken');
+  await viewer.context().close();
+
+  // closing the month: checklist; with an open item (plan out of date) only after "Trotzdem abschließen"
+  const period = await api(page, `/api/periods/${month}`);
+  await api(page, `/api/periods/${month}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(period) });
+  await open(page, 'plan');
+  const closeDialog = async () => {
+    await page.getByRole('button', { name: 'Ausgabe' }).click();
+    await page.locator('#output-menu').getByRole('button', { name: 'Monat abschließen' }).click();
+    await page.locator('dialog.dialog[open]').waitFor();
+  };
+  await closeDialog();
+  const list = await page.locator('dialog .checklist li').allInnerTexts();
+  check('checklist of three items', list.length === 3, list.join(' | '));
+  check('plan out of date is open', await page.locator('dialog .checklist li.open').filter({ hasText: 'Plan veraltet' }).count() === 1);
+  const confirmButton = page.locator('dialog').getByRole('button', { name: 'Monat abschließen' });
+  check('closing needs the second confirm', await confirmButton.isDisabled());
+  await page.locator('#close-anyway').check();
+  check('"Trotzdem abschließen" enables closing', await confirmButton.isEnabled());
+  await page.keyboard.press('Escape');
+  check('Escape cancels', await page.locator('dialog').count() === 0
+    && (await api(page, `/api/plans/${month}`)).plan.status !== 'CLOSED');
+  await closeDialog();
+  await page.locator('#close-anyway').check();
+  await confirmButton.click();
+  await page.locator('.status-details').filter({ hasText: 'abgeschlossen' }).waitFor({ timeout: 10000 }).catch(() => {});
+  check('month closed', (await api(page, `/api/plans/${month}`)).plan.status === 'CLOSED'
+    && (await page.locator('.status-details').innerText()).includes('Status: abgeschlossen'));
+  check('closed month: no closing in the menu', !(await menuItems(page)).includes('Monat abschließen'));
+  await page.context().close();
+} finally {
+  await browser.close();
+  server.kill();
+}
+if (failed) process.exit(1);
+console.log('plan views ok');
