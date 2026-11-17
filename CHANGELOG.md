@@ -3,6 +3,49 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.11.0 (2026-11-17)
+
+Neue Gliederung der Oberfläche, eine Seite zum Prüfen, eine Seite je Person, Korrekturdatei und Anonymisieren auf
+der Seite Daten, Hilfe auf jeder Seite. Die Planungsergebnisse sind unverändert.
+
+- **Navigation:** fünf Menüpunkte statt neun: Dienstplan (Reiter Personen, Funktionen, Zeitachse), Prüfen
+  (Probleme, Fairness), Eingaben, Personen, Einstellungen (Regeln, Stammdaten, Daten, auf dem Desktop Updates).
+  Die Monatsauswahl steht nur auf Seiten, die zu einem Monat gehören. Die Rolle Lesen sieht Dienstplan, Personen
+  und Fairness.
+- **Prüfen:** alle Regelverstöße, Überbesetzungen und auffälligen Qualitätsregeln des Plans, nach Regel, Person
+  oder Tag gruppiert und filterbar; der offene Bedarf nach Tag mit „Auf Anfrage verfügbar“; Prüfungen der
+  Stammdaten (Personen ohne Bereich oder ohne planbare Schicht, Bereiche ohne Bedarf, unstimmige gewohnte
+  Verteilung), jeweils mit dem, was zu tun ist.
+- **Fairness:** zeigt die Belastungen, die die Fairness-Regeln vergleichen (Nächte, Wochenenden, Feiertage,
+  unbeliebte Dienste je verfügbare Tage, mit den Vormonaten), statt der Umrechnung auf 40 Wochenstunden.
+- **Personen:** eine durchsuchbare Liste und eine Seite je Person mit Kennzahlen, „Warum dieser Dienst?“ und einem
+  einzigen Formular für Stammdaten, Eintritt und Austritt, gewohnte Verteilung, Einschränkungen und
+  Familienregeln. Neu bei den Einschränkungen: je Bereich „ganzer Bereich: keine / nur auf Anfrage / nie“, mit
+  „gemischt“, wenn die Schichten verschieden sind. Die Stammdaten enthalten keine Personen mehr; jede Tabelle hat
+  ein Suchfeld.
+- **Eingaben:** Abwesenheiten werden als Zeitraum eingegeben und angezeigt (eine Zeile je Zeitraum), ein Filter
+  nach Person gilt für Abwesenheiten, Wünsche und Vorgaben.
+- **Daten:**
+  - **Änderungen als Korrekturdatei exportieren:** Was seit dem letzten Import in Dispofold an Personen,
+    Einschränkungen und Bedarf geändert wurde, als Korrekturdatei (Version 2) für das Exportprogramm; was die Datei
+    nicht ausdrücken kann (etwa neu angelegte Personen), steht als Hinweis daneben.
+  - **Import mit „Änderungen aus Dispofold behalten“:** wendet diese Änderungen auf den neuen Datensatz an; eine
+    Vorschau zeigt vorher, was übernommen wird und wo auch der neue Datensatz etwas geändert hat (dort gilt der Wert
+    aus Dispofold).
+  - **Anonymisieren:** Datensatz und Plan des Monats mit Pseudonymen (P001, P002, ...) zum Weitergeben, dazu ein
+    getrennter Schlüssel, der bei der Planung bleibt. Findet die Prüfung danach noch einen Namen, wird nichts
+    erzeugt.
+- **Hilfe:** eine Einleitung auf jeder Seite und ein Hilfeknopf „i“ bei jeder Regel, jedem Gewicht, jeder
+  Einstellung, jeder Kennzahl und jedem Formularfeld; mit Maus, Tastatur und Touch bedienbar.
+- **Anleitung** neu gegliedert, mit „So funktioniert es“ und „Typischer Ablauf“, neue Bilder.
+- **Rolle Lesen:** bekommt die Personalnummer (`externalId`) nicht mehr.
+- **Schnittstelle:** neu `GET /api/plans/{m}/problems`, `POST /api/import/preview`, `POST /api/import/dataset?keep=true`,
+  `GET /api/data/corrections`, `GET /api/data/anonymized?month=`; in den Kennzahlen je Person `weekendLoad`,
+  `holidayLoad`, `unpopularLoad` (für die Rolle Lesen leer). Details: [docs/api.md](docs/api.md).
+- **Betrieb:** eine Datenbankänderung (V4, der unveränderte letzte Import), die beim Start automatisch läuft. Nach
+  dem Update gibt es den Ausgangsstand erst mit dem nächsten Import; bis dahin melden Korrekturdatei und
+  „Änderungen behalten“ das. Keine Änderung an `docker-compose.yml` oder `.env`.
+
 ## 0.10.0 (2026-11-17)
 
 Eine Einstellung für die Nachtdienste und eine einfachere Seite Regeln & Gewichte.
