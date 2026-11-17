@@ -217,12 +217,44 @@ der Erklärung je Person.
   kosten. Gewicht 100, damit die Verteilung den Plan sichtbar prägt: Im Demomonat mit klaren Verteilungen für
   92 Personen sank die Abweichung der Anteile von 0,55 auf 0,30; ein höheres Gewicht (200: 0,26) kostet
   deutlich mehr Blöcke und Abweichung vom Ziel. Bedarf und Überbesetzung (Gruppe Bedarf) gehen immer vor.
-- Wechselwirkung: Wer eine Verteilung je Kategorie hat (Früh, Tag, Spät, Nacht, auch einen Nachtanteil), zählt
-  nicht für die Fairness Nachtdienste (den Nachtausgleich) und nicht für die Abwechslung Dienste, solange die
-  Verteilung besteht; ihre Nächte folgen dem Nachtanteil. Sonst würden diese Regeln die Verteilung wieder einebnen. Wer eine
+- Wechselwirkung: Wer eine Verteilung je Kategorie hat (Früh, Tag, Spät, Nacht), zählt nicht für die
+  Abwechslung Dienste, solange die Verteilung besteht; sonst würde diese Regel die Verteilung wieder einebnen.
+  Für die Fairness Nachtdienste (den Nachtausgleich) entscheidet die Nachtverteilung (siehe unten). Wer eine
   Verteilung je Bereich hat, zählt nicht für die Abwechslung der Bereiche. Wochenenden, Feiertage und
   unbeliebte Dienste bleiben fair verteilt. Personen ohne Verteilung werden geplant wie bisher.
 - Die Personenansicht zeigt die geplante Verteilung neben der gewohnten.
+
+### Nachtverteilung
+
+Eine Einstellung der Regeln, `nightDistribution`:
+
+- `HABIT` (Standard, „Wie bisher: jede Person behält ihren gewohnten Nachtanteil“): Wer eine Verteilung je
+  Kategorie hat (auch einen Nachtanteil oder keinen), ist nicht im Nachtausgleich; die Nächte folgen dem
+  Nachtanteil der Verteilung. Regeln, die vor der Einstellung gespeichert wurden (ohne das Feld), gelten als
+  `HABIT` und planen unverändert.
+- `EVEN` („Gleichmäßig: Nachtdienste fair auf alle verteilen“): Nur der Nachtanteil der Verteilung zählt nicht.
+  Die übrigen Anteile (Früh, Tag, Spät) werden auf zusammen 100 % hochgerechnet und gelten für die Dienste
+  der Person, die nicht der Kategorie Nacht angehören: verglichen wird je Kategorie die Zahl der geplanten
+  Dienste gegen Anteil mal Zahl dieser Dienste. Beispiel: 45 % Früh, 45 % Tag, 10 % Nacht wird 50 % Früh und
+  50 % Tag; bei 8 Diensten außer Nächten kosten 4 Früh und 4 Tag nichts, gleich wie viele Nächte dazukommen.
+  Die Verteilung je Bereich bleibt unverändert und zählt alle Dienste. Die Person ist im Nachtausgleich. Für die
+  Abwechslung Dienste zählt sie weiter nicht, solange ohne den Nachtanteil Anteile übrig bleiben; eine
+  Verteilung nur aus Nächten fällt ganz weg.
+- In beiden Fällen ist nicht im Nachtausgleich (wird also auch für fehlende Nächte nicht bestraft), wer nie
+  Nacht macht:
+  - keine Nachtschicht in den eigenen Bereichen;
+  - eine Sperre „nie“ für jeden Wochentag (Wochentag 0), die den ganzen Planungsmonat gilt, deckt jede
+    Nachtschicht der eigenen Bereiche ab, als Kategorie Nacht oder Schicht für Schicht. Eine Sperre nur für
+    einige Wochentage, nur für einen Teil des Monats oder nur für eine von mehreren Nachtschichten genügt
+    nicht;
+  - eine Familienregel „keine Nacht“ gilt an allen Wochentagen (1 bis 7; eine Regel ohne Wochentage zählt hier
+    wie alle Wochentage).
+  „Nie Nacht“ geht vor der gewohnten Verteilung.
+- Die Personenansicht zeigt bei den Nächten „folgt gewohnter Verteilung (10 % Nacht)“, „im Nachtausgleich:
+  Belastung x, Mittel y“ (die Last der Fairness Nachtdienste, siehe unten, als Nächte je 30 verfügbare Tage)
+  oder „nicht im Nachtausgleich (nie Nacht)“. Die Fairness-Übersicht markiert, wer nicht verglichen wird, und
+  warum. Für Ansichtsrollen bleibt beides leer, weil es die Verteilung, Sperren oder Familienregeln verraten
+  würde.
 
 ### Fairness
 
@@ -232,8 +264,8 @@ der Erklärung je Person.
 - Verglichen wird die Last: Dienste je 30 verfügbare Tage einer 40-Stunden-Kraft, in Tausendsteln. Verfügbar
   sind die Tage in der Beschäftigung ohne Abwesenheit, dazu je Historienmonat rund 30 Tage. Wer im Monat
   eintritt oder lange abwesend war, bekommt dadurch nicht alle Nachtdienste; Teilzeit trägt anteilig weniger.
-- Verglichen werden alle, die solche Dienste machen können (z. B. Nachtdienste nur Personen mit Nachtschichten
-  in ihren Bereichen). Die Strafe ist die Wurzel aus der Summe der quadrierten Abweichungen vom Mittelwert:
+- Verglichen werden alle, die solche Dienste machen können (z. B. Nachtdienste nur Personen im Nachtausgleich,
+  siehe Nachtverteilung). Die Strafe ist die Wurzel aus der Summe der quadrierten Abweichungen vom Mittelwert:
   0, wenn alle gleich belastet sind. Die Erklärung je Person zeigt die Abweichung vom Mittelwert und nur bei
   Personen über dem Mittelwert einen Treffer.
 - Nachtdienst: ein Dienst, der mindestens `nightMinHours` (2 h) im Nachtfenster `nightStart` bis `nightEnd`

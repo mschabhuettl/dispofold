@@ -76,6 +76,11 @@ abgeschlossene Monate (`import.closed`) ist der Import gesperrt.
 | `PUT` | `/api/rules` | speichert `Rules` (Body), Antwort `Rules`; die Mindestruhe ist mindestens 11 Stunden |
 | `GET` | `/api/constraints` | `[{ "id", "level", "defaultWeight", "weight", "tunable" }]`; nur Regeln mit `tunable: true` nehmen ein Gewicht aus `Rules.weights` an, für die anderen gilt immer `defaultWeight`. Name und Beschreibung jeder Regel stehen in der Oberfläche |
 
+`Rules.nightDistribution`: `"HABIT"` (Standard: wer eine gewohnte Verteilung je Kategorie hat, behält ihren
+Nachtanteil und ist nicht im Nachtausgleich) oder `"EVEN"` (der Nachtanteil zählt nicht, alle sind im
+Nachtausgleich); fehlt das Feld oder ist es `null` (Regeln aus älteren Versionen), gilt `"HABIT"`. Ein anderer
+Wert ist ein Formatfehler (`400`). Siehe [regeln.md](regeln.md), Nachtverteilung.
+
 ## Planungsmonate
 
 | Methode | Pfad | Antwort |
@@ -126,6 +131,20 @@ geht, deren Tag frei ist (kein Dienst, keine Abwesenheit, beschäftigt, nicht fi
 keinen neuen harten Verstoß bringt. `plannedHours` sind die Stunden, die bisher zum Soll zählen (Dienste und
 gutgeschriebene Tage). Sortiert nach `plannedHours - targetHours`, die mit den wenigsten Stunden zuerst. Fehler:
 `400` `candidates.span`, `404` `area.unknown`.
+
+Nachtausgleich in den Kennzahlen je Person (`PersonStats` in Analyse und Personenansicht):
+
+- `nightPool`: `true`, wenn die Person in der Fairness Nachtdienste verglichen wird.
+- `nightReason`: warum nicht: `"MIX"` (die gewohnte Verteilung bestimmt die Nächte, nur bei `HABIT`), `"NEVER"`
+  (nie Nacht: keine Nachtschicht in den Bereichen, Sperren oder Familienregel); `null` im Nachtausgleich oder
+  ohne verfügbaren Tag.
+- `nightLoad`: die Last der Person, wie die Regel sie vergleicht: Nächte dieses Monats und der Vormonate je 30
+  verfügbare Tage einer 40-Stunden-Kraft (die Treffer `hit.fairNights` nennen dieselbe Zahl in Tausendsteln);
+  `null`, wenn nicht verglichen.
+- `nightMean`: der Mittelwert dieser Last über alle Verglichenen.
+
+Für `viewer` sind alle vier `null`, weil sie die gewohnte Verteilung, Sperren oder Familienregeln verraten
+würden.
 
 Regel-Treffer des Plans: Die Antwort ist ein Objekt mit der Regel-Id als Schlüssel (Reihenfolge des Katalogs,
 nur Regeln mit Treffern) und je Regel einer Liste `[{ "personId", "constraintId", "level", "date", "score",
