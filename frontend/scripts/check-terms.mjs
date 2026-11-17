@@ -1,7 +1,7 @@
 // Playwright check of the terms: every page, for planners and viewers, shows none of the old names (Sollstunden,
 // Fixe Dienste, Eingaben geändert, Schichtmix, Familienwunsch, hart/weich, ...) in its text, tooltips or labels; the
-// plan status reads Entwurf or abgeschlossen. Also: viewers have no Import/Export in the navigation and its address
-// shows the Dienstplan, the people table names the areas, the mix fields have labels, the note on the
+// plan status reads Entwurf or abgeschlossen. Also: the menu has the groups Dienstplan, Prüfen, Eingaben, Personen and Einstellungen, viewers get Dienstplan, Personen and Fairness only, the address of Daten
+// shows viewers the Dienstplan, the month picker shows on month pages only, the people table names the areas, the mix fields have labels, the note on the
 // night fairness is shown in Stammdaten and on the person page, the import page shows no paths.
 // Demo data of the dev server (mock API), month 2027-01 planned.
 //   npm run build && node scripts/check-terms.mjs     (Chromium via `npx playwright install chromium`)
@@ -49,6 +49,17 @@ try {
     await page.waitForFunction(() => document.querySelector('#main h1') && !document.querySelector('#main > p.muted'));
     await page.waitForTimeout(400);
   };
+  /** Every page of the navigation: each menu entry and the tabs of its group. */
+  const pages = async (page) => {
+    const groups = await page.locator('#nav a').evaluateAll((as) => as.map((a) => a.getAttribute('href').slice(2)));
+    const paths = [];
+    for (const first of groups) {
+      await open(page, first);
+      const tabs = await page.locator('.page-tabs a').evaluateAll((as) => as.map((a) => a.getAttribute('href').slice(2)));
+      paths.push(...(tabs.length ? tabs : [first]));
+    }
+    return paths;
+  };
   /** Visible text plus tooltips and accessible names, with every collapsed section opened. */
   const allText = (page) => page.evaluate(() => {
     for (const d of document.querySelectorAll('details')) d.open = true;
@@ -74,8 +85,15 @@ try {
     return { personId: p.id, areas: dataset.areas };
   }, month);
   await page.waitForFunction(async (m) => !(await (await fetch(`/api/plans/${m}`)).json()).solving, month, { polling: 500, timeout: 60000 });
-  const routes = await page.locator('#nav a').evaluateAll((as) => as.map((a) => a.dataset.path));
-  check('planner navigation has Import/Export', routes.includes('import'), routes.join(' '));
+  const routes = await pages(page);
+  check('planner navigation has Daten', routes.includes('import'), routes.join(' '));
+  check('planner menu', (await page.locator('#nav').innerText()).split('\n').join(' | ') === 'Dienstplan | Prüfen | Eingaben | Personen | Einstellungen',
+    await page.locator('#nav').innerText());
+  // the month picker shows on month pages only
+  for (const [path, shown] of [['plan', true], ['eingaben', true], ['regeln', false], ['stammdaten', false], ['import', false]]) {
+    await open(page, path);
+    check(`month picker on ${path}: ${shown}`, await page.locator('.month-picker').isVisible() === shown);
+  }
 
   for (const path of routes) {
     await open(page, path === 'person' ? `person/${encodeURIComponent(personId)}` : path);
@@ -131,9 +149,9 @@ try {
 
   // Viewers: no Import/Export, its address shows the Dienstplan; every other page without old terms
   const viewer = await login('ansicht');
-  const viewerRoutes = await viewer.locator('#nav a').evaluateAll((as) => as.map((a) => a.dataset.path));
-  check('viewer navigation without Import/Export', !viewerRoutes.includes('import')
-    && !(await viewer.locator('#nav').innerText()).includes('Import/Export'), viewerRoutes.join(' '));
+  const viewerRoutes = await pages(viewer);
+  check('viewer navigation: Dienstplan, Personen, Fairness', !viewerRoutes.includes('import')
+    && (await viewer.locator('#nav').innerText()).split('\n').join(' | ') === 'Dienstplan | Personen | Fairness', viewerRoutes.join(' '));
   await open(viewer, 'import');
   check('viewer address of Import/Export shows the Dienstplan', viewer.url().endsWith('#/plan')
     && (await viewer.locator('#main h1').innerText()).startsWith('Dienstplan'), viewer.url());

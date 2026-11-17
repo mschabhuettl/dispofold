@@ -24,7 +24,26 @@ export const TEXTS = {
   'nav.rules': 'Regeln & Gewichte',
   'nav.inputs': 'Eingaben',
   'nav.masterdata': 'Stammdaten',
-  'nav.import': 'Import/Export',
+  'nav.import': 'Daten',
+  'nav.check': 'Prüfen',
+  'nav.group.plan': 'Dienstplan',
+  'nav.group.check': 'Prüfen',
+  'nav.group.inputs': 'Eingaben',
+  'nav.group.people': 'Personen',
+  'nav.group.fairness': 'Fairness',
+  'nav.group.settings': 'Einstellungen',
+  'nav.tab.people': 'Personen',
+  'nav.tab.functions': 'Funktionen',
+  'nav.tab.timeline': 'Zeitachse',
+  'nav.tab.problems': 'Probleme',
+  'nav.tab.fairness': 'Fairness',
+  'nav.tab.rules': 'Regeln',
+  'nav.tab.masterdata': 'Stammdaten',
+  'nav.tab.data': 'Daten',
+  'nav.tab.updates': 'Updates',
+
+  // Prüfen
+  'check.title': 'Prüfen: {month}',
 
   // shared
   'common.loading': 'Lädt …',

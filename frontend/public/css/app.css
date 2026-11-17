@@ -135,6 +135,10 @@ a:hover { color: var(--primary-hover); }
 }
 .sidebar a:hover { background: var(--surface-2); color: var(--text); }
 .sidebar a[aria-current="page"] { font-weight: 600; color: var(--primary); background: var(--primary-tint); }
+.page-tabs { display: flex; flex-wrap: wrap; gap: .25rem; margin: 0 0 1rem; border-bottom: 1px solid var(--border); }
+.page-tabs a { padding: .4rem .8rem; border-radius: 6px 6px 0 0; color: var(--text-muted); text-decoration: none; }
+.page-tabs a:hover { background: var(--surface-2); color: var(--text); }
+.page-tabs a[aria-current="page"] { font-weight: 600; color: var(--primary); box-shadow: inset 0 -2px 0 var(--primary); }
 .sidebar a.source-link { margin: 1.5rem .5rem 0; font-size: .85rem; color: var(--text-muted); }
 .content { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .topbar {
@@ -472,7 +476,7 @@ details.rules-advanced section { margin-top: 1.2rem; }
 @page plan { size: A4 landscape; margin: 8mm; }
 @media print {
   body:has(.print-view) .sidebar, body:has(.print-view) .topbar, body:has(.print-view) .banner,
-  body:has(.print-view) .toast, body:has(.print-view) .skip-link, body:has(.print-view) .popover { display: none !important; }
+  body:has(.print-view) .toast, body:has(.print-view) .skip-link, body:has(.print-view) .page-tabs, body:has(.print-view) .popover { display: none !important; }
   body:has(.print-view) { background: #FFFFFF; }
   body:has(.print-view) main { padding: 0; }
   .print-view { page: plan; }

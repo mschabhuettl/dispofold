@@ -11,24 +11,31 @@ import * as timeline from './views/timeline.js';
 import * as functions from './views/functions.js';
 import * as person from './views/person.js';
 import * as fairness from './views/fairness.js';
+import * as check from './views/check.js';
 import * as rules from './views/rules.js';
 import * as inputs from './views/inputs.js';
 import * as masterdata from './views/masterdata.js';
 import * as importExport from './views/import.js';
 import * as settings from './views/settings.js';
 
+// Pages in menu groups: the menu shows one entry per group, the pages of a group are tabs above the page. month: the
+// page belongs to the selected month (the month picker shows only there). viewer: the page is offered to viewers too,
+// as a string the group it has for them.
 const ROUTES = [
-  { path: 'plan', label: t('nav.plan'), view: roster },
-  { path: 'funktionen', label: t('nav.functions'), view: functions },
-  { path: 'zeitachse', label: t('nav.timeline'), view: timeline },
-  { path: 'person', label: t('nav.person'), view: person },
-  { path: 'fairness', label: t('nav.fairness'), view: fairness },
-  { path: 'regeln', label: t('nav.rules'), view: rules },
-  { path: 'eingaben', label: t('nav.inputs'), view: inputs },
-  { path: 'stammdaten', label: t('nav.masterdata'), view: masterdata },
-  { path: 'import', label: t('nav.import'), view: importExport, plannerOnly: true },
+  { path: 'plan', group: 'plan', label: t('nav.plan'), tab: t('nav.tab.people'), view: roster, month: true, viewer: 'plan' },
+  { path: 'funktionen', group: 'plan', label: t('nav.functions'), tab: t('nav.tab.functions'), view: functions, month: true, viewer: 'plan' },
+  { path: 'zeitachse', group: 'plan', label: t('nav.timeline'), tab: t('nav.tab.timeline'), view: timeline, month: true, viewer: 'plan' },
+  { path: 'pruefen', group: 'check', label: t('nav.check'), tab: t('nav.tab.problems'), view: check, month: true },
+  { path: 'fairness', group: 'check', label: t('nav.fairness'), tab: t('nav.tab.fairness'), view: fairness, month: true, viewer: 'fairness' },
+  { path: 'eingaben', group: 'inputs', label: t('nav.inputs'), view: inputs, month: true },
+  { path: 'person', group: 'people', label: t('nav.person'), view: person, month: true, viewer: 'people' },
+  { path: 'regeln', group: 'settings', label: t('nav.rules'), tab: t('nav.tab.rules'), view: rules },
+  { path: 'stammdaten', group: 'settings', label: t('nav.masterdata'), tab: t('nav.tab.masterdata'), view: masterdata },
+  { path: 'import', group: 'settings', label: t('nav.import'), tab: t('nav.tab.data'), view: importExport },
 ];
-const SETTINGS_ROUTE = { path: 'einstellungen', label: t('nav.settings'), view: settings };
+const SETTINGS_ROUTE = { path: 'einstellungen', group: 'settings', label: t('nav.settings'), tab: t('nav.tab.updates'), view: settings };
+const GROUPS = { plan: t('nav.group.plan'), check: t('nav.group.check'), inputs: t('nav.group.inputs'), people: t('nav.group.people'),
+  fairness: t('nav.group.fairness'), settings: t('nav.group.settings') };
 
 let desktop = false;
 let frontEnd = 'window'; // desktop only: 'window' or 'browser' (GET /__shell/mode)
@@ -115,9 +122,10 @@ async function render() {
   const token = ++renderCount;
   const { route, params } = parseHash();
   for (const a of document.querySelectorAll('#nav a')) {
-    if (a.dataset.path === route.path) a.setAttribute('aria-current', 'page');
+    if (a.dataset.group === route.group) a.setAttribute('aria-current', 'page');
     else a.removeAttribute('aria-current');
   }
+  document.querySelector('.month-picker').hidden = !route.month;
   currentHash = location.hash;
   if (cleanup) cleanup();
   cleanup = null;
@@ -133,12 +141,20 @@ async function render() {
       if (typeof result === 'function') result();
       return;
     }
-    main.replaceChildren(container);
+    main.replaceChildren(...tabs(route), container);
     if (typeof result === 'function') cleanup = result;
   } catch (e) {
     if (token !== renderCount) return;
-    main.replaceChildren(h('h1', {}, route.label), h('p.alert.alert-error', { role: 'alert' }, e.message || String(e)));
+    main.replaceChildren(...tabs(route), h('h1', {}, route.label), h('p.alert.alert-error', { role: 'alert' }, e.message || String(e)));
   }
+}
+
+/** Tabs of the pages in the group of the route, none for a group of one page. */
+function tabs(route) {
+  const pages = ROUTES.filter((r) => r.group === route.group);
+  if (pages.length < 2) return [];
+  return [h('nav.page-tabs', { 'aria-label': GROUPS[route.group] }, pages.map((r) =>
+    h('a', { href: `#/${r.path}`, 'aria-current': r === route ? 'page' : null }, r.tab)))];
 }
 
 /** Month choices: a year back and forward around the selected month. */
@@ -164,8 +180,12 @@ async function start() {
   if (!me) return;
   ctx.me = me;
   ctx.canEdit = me.role === 'planner';
-  // viewers cannot import or export: the page is not offered
-  if (!ctx.canEdit) ROUTES.splice(0, ROUTES.length, ...ROUTES.filter((r) => !r.plannerOnly));
+  // viewers get the plan, the people and the fairness overview only
+  if (!ctx.canEdit) {
+    const order = ['plan', 'people', 'fairness'];
+    ROUTES.splice(0, ROUTES.length, ...ROUTES.filter((r) => r.viewer).map((r) => ({ ...r, group: r.viewer }))
+      .sort((a, b) => order.indexOf(a.group) - order.indexOf(b.group)));
+  }
   document.getElementById('user-name').textContent = me.username;
   document.getElementById('user-role').textContent = ctx.canEdit ? t('app.role.planner') : t('app.role.readonly');
   desktop = me.desktop === true;
@@ -184,8 +204,10 @@ async function start() {
       location.href = 'login.html';
     });
   }
-  document.getElementById('nav').replaceChildren(...ROUTES.map((r) =>
-    h('li', {}, h('a', { href: `#/${r.path}`, 'data-path': r.path }, r.label))));
+  const first = new Map();
+  for (const r of ROUTES) if (!first.has(r.group)) first.set(r.group, r);
+  document.getElementById('nav').replaceChildren(...[...first.values()].map((r) =>
+    h('li', {}, h('a', { href: `#/${r.path}`, 'data-group': r.group }, GROUPS[r.group]))));
 
   const months = (await guarded(() => api.months())) ?? [];
   monthInput.addEventListener('change', () => setMonth(monthInput.value));

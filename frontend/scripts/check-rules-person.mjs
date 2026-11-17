@@ -154,21 +154,21 @@ try {
   // Leaving with unsaved changes asks: dismissing stays on the page, accepting leaves it.
   const dialogs = [];
   page.once('dialog', (d) => { dialogs.push(d.message()); d.dismiss(); });
-  await page.click('#nav a[data-path="person"]');
+  await page.click('#nav a[data-group="people"]');
   await page.waitForTimeout(300);
   check('leaving asks', dialogs.length === 1, dialogs.join());
   check('dismiss stays on the rules page', page.url().endsWith('#/regeln') && await page.locator('#h-goals').count() > 0, page.url());
   check('dismiss keeps the edit', await page.inputValue('#param-minDailyRestHours') === '9.5');
   page.once('dialog', (d) => { dialogs.push(d.message()); d.accept(); });
-  await page.click('#nav a[data-path="person"]');
+  await page.click('#nav a[data-group="people"]');
   await page.locator('#person-select').waitFor();
   check('accept leaves the rules page', dialogs.length === 2 && page.url().endsWith('#/person'), page.url());
   // the edit was not saved, and a page without edits leaves without asking
   await openRules();
   check('discarded edit not saved', await page.inputValue('#param-minDailyRestHours') === '11');
   page.once('dialog', (d) => { dialogs.push(d.message()); d.accept(); });
-  await page.click('#nav a[data-path="fairness"]');
-  await page.waitForURL((u) => u.hash === '#/fairness');
+  await page.click('#nav a[data-group="inputs"]');
+  await page.waitForURL((u) => u.hash === '#/eingaben');
   check('no question without edits', dialogs.length === 2);
 
   // Wichtigkeit: weniger / normal / mehr = 0.5 / 1 / 2 x the default weights of the group, on save.
@@ -250,8 +250,8 @@ try {
   await Promise.all([page.waitForResponse(isPut), save()]);
   await page.waitForTimeout(100);
   check('saving clears the note', !(await bar.textContent()).includes('Nicht gespeichert'));
-  await page.click('#nav a[data-path="fairness"]');
-  await page.waitForURL((u) => u.hash === '#/fairness');
+  await page.click('#nav a[data-group="inputs"]');
+  await page.waitForURL((u) => u.hash === '#/eingaben');
   check('no question after saving', dialogs.length === 2, dialogs.join(' | '));
 
   // Person page: one hour tile, no scores in "Warum dieser Dienst?".
@@ -286,16 +286,10 @@ try {
   await viewer.locator('#h-hours').waitFor();
   const viewerTile = (await viewer.locator('.kpi-hours .value').textContent()).trim();
   check('viewer hour tile without Ziel', /^\d+(,\d)? h \(Soll \d+(,\d)? h\)$/.test(viewerTile), viewerTile);
-  // Viewers read the rules: texts with the stored numbers, no save bar, nothing to change.
+  // Viewers have no rules page: its address shows the Dienstplan.
   await viewer.goto(`${base}/#/regeln`);
-  await viewer.locator('#h-goals').waitFor();
-  check('viewer rules without save bar', await viewer.locator('.save-bar').count() === 0);
-  check('viewer without Ändern', await viewer.getByRole('button', { name: 'Ändern' }).count() === 0);
-  check('viewer law text with the stored number', (await viewer.locator('.law-text').textContent()).includes('täglich mindestens 11 Stunden'));
-  check('viewer cannot choose', await viewer.locator('.goal input').count() > 0 && await viewer.locator('.goal input:not([disabled])').count() === 0);
-  await viewer.locator('details.rules-advanced summary').click();
-  check('viewer rule text with the stored number',
-    (await viewer.locator('.rule-row').filter({ hasText: 'Tägliche Ruhezeit' }).first().textContent()).includes('mindestens 11 Stunden'));
+  await viewer.locator('#main h1').waitFor();
+  check('viewer without rules page', viewer.url().endsWith('#/plan') && await viewer.locator('#h-goals').count() === 0, viewer.url());
 } finally {
   await browser.close();
   server.kill();
