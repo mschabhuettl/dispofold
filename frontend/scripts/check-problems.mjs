@@ -30,7 +30,7 @@ const check = (name, ok, detail = '') => {
 const browser = await chromium.launch();
 try {
   const login = async (user) => {
-    const context = await browser.newContext({ viewport: { width: 1400, height: 1000 }, colorScheme: 'light' });
+    const context = await browser.newContext({ locale: 'de-DE', viewport: { width: 1400, height: 1000 }, colorScheme: 'light' });
     await context.addInitScript((m) => sessionStorage.setItem('month', m), month);
     const page = await context.newPage();
     page.on('pageerror', (e) => check('no page error', false, e.message));

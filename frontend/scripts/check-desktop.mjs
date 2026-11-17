@@ -37,7 +37,7 @@ const check = (name, ok, detail = '') => {
 
 const browser = await chromium.launch();
 try {
-  const page = await browser.newPage();
+  const page = await browser.newPage({ locale: 'de-DE' });
   page.on('dialog', (d) => d.accept());
   page.on('pageerror', (e) => check('no page error', false, e.message));
   await page.goto(`${base}/#/stammdaten`);
@@ -81,7 +81,7 @@ try {
 
   // 6. browser mode (Linux default): the tab stays open after quitting
   const browserBase = await startServer({ MOCK_DESKTOP: '1', MOCK_FRONTEND: 'browser' });
-  const tab = await browser.newPage();
+  const tab = await browser.newPage({ locale: 'de-DE' });
   tab.on('dialog', (d) => d.accept());
   await tab.goto(`${browserBase}/#/plan`);
   await tab.locator('#quit:not([hidden])').waitFor();
@@ -91,7 +91,7 @@ try {
 
   // 7. Docker build: never asks the shell
   const dockerBase = await startServer({});
-  const docker = await browser.newPage();
+  const docker = await browser.newPage({ locale: 'de-DE' });
   const asked = [];
   docker.on('request', (r) => { if (r.url().includes('/__shell/')) asked.push(r.url()); });
   await docker.goto(`${dockerBase}/login.html`);

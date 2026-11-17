@@ -25,7 +25,7 @@ const check = (name, ok, detail = '') => {
 
 const browser = await chromium.launch();
 try {
-  const page = await browser.newPage();
+  const page = await browser.newPage({ locale: 'de-DE' });
   page.on('dialog', (d) => d.accept());
   page.on('pageerror', (e) => check('no page error', false, e.message));
   await page.goto(`${base}/login.html`);
