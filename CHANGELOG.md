@@ -3,6 +3,22 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.8.0 (2026-11-17)
+
+Drucken aus beiden Planansichten, Dezimalwerte in den Formularen.
+
+- **Drucken:** Dienstplan und Plan nach Funktion haben den Knopf „Drucken“. Die Druckansicht ist A4 quer, mit
+  einer Kopfzeile (Monat, Stand „Entwurf“ oder „abgeschlossen“, Druckdatum) und einer Legende; der Monat steht
+  in zwei Hälften (Tag 1 bis 15, Tag 16 bis Monatsende), jede auf einer neuen Seite, der Tabellenkopf auf jeder
+  Seite. Menü und Bedienelemente werden nicht gedruckt. Der Dienstplan druckt dieselben Personen und Gruppen
+  wie am Bildschirm, mit Abwesenheiten, Ersatzruhe, fixierten Diensten, geplanten Stunden und Bedarfslücken.
+  Neu im Dienstplan: die Auswahl „Anzeige“ („Nachname Vorname“ oder „Kürzel“), auch für den Druck. Die Rolle
+  Lesen druckt nur, was sie am Bildschirm sieht. Im Desktop-Programm öffnet sich der Druckdialog des Systems.
+- **Formulare:** Wochenstunden und Stundenkonto mit zwei Nachkommastellen (z. B. 46,15 aus einem Import) ließen
+  sich nicht speichern, auch wenn nur ein anderes Feld geändert wurde. Diese Felder und die Dezimalwerte auf der
+  Seite Regeln nehmen jetzt jeden Wert, den das Programm speichert.
+- Betrieb: keine Änderung an Datenbank, `docker-compose.yml` oder `.env`.
+
 ## 0.7.0 (2026-11-15)
 
 Gewohnte Verteilung der Dienste je Person und freie Sonntage.
