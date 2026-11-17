@@ -219,7 +219,7 @@ class NightDistributionTest {
             assertThat(staff(input(mode, family(PERSON, new FamilyRule(List.of(1, 2, 3, 4, 5, 6, 7), null, null,
                     true, null)), List.of()), PERSON).getNightExclusion()).isEqualTo(Staff.NIGHTS_NEVER);
             assertThat(staff(input(mode, family(PERSON, new FamilyRule(List.of(), null, null, true, null)),
-                    List.of()), PERSON).getNightExclusion()).isEqualTo(Staff.NIGHTS_NEVER);
+                    List.of()), PERSON).isInNightPool()).isTrue();
             assertThat(staff(input(mode, family(PERSON, new FamilyRule(List.of(1, 2, 3, 4, 5, 6), null, null, true,
                     null)), List.of()), PERSON).isInNightPool()).isTrue();
             // Every day, but only a latest end: nights are allowed.

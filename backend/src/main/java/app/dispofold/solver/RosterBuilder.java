@@ -249,12 +249,11 @@ public final class RosterBuilder {
     /**
      * The person never does nights: a NEVER restriction for every day of the week and the whole month covers each
      * night shift of the person's areas (by category or shift by shift), or a family rule "keine Nacht" covers all
-     * weekdays (none given counts as all).
+     * weekdays 1 to 7 (as the rule family, a rule without weekdays applies on no day).
      */
     boolean neverNights(Person p, List<Restriction> restrictions) {
         for (FamilyRule r : list(p.familyRules())) {
-            if (r.noNights() && (r.weekdays() == null || r.weekdays().isEmpty()
-                    || r.weekdays().containsAll(List.of(1, 2, 3, 4, 5, 6, 7)))) {
+            if (r.noNights() && r.weekdays() != null && r.weekdays().containsAll(List.of(1, 2, 3, 4, 5, 6, 7))) {
                 return true;
             }
         }

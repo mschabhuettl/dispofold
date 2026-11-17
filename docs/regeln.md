@@ -247,8 +247,8 @@ Eine Einstellung der Regeln, `nightDistribution`:
     Nachtschicht der eigenen Bereiche ab, als Kategorie Nacht oder Schicht für Schicht. Eine Sperre nur für
     einige Wochentage, nur für einen Teil des Monats oder nur für eine von mehreren Nachtschichten genügt
     nicht;
-  - eine Familienregel „keine Nacht“ gilt an allen Wochentagen (1 bis 7; eine Regel ohne Wochentage zählt hier
-    wie alle Wochentage, die Regel `family` selbst wirkt aber nur an genannten Wochentagen).
+  - eine Familienregel „keine Nacht“ gilt an allen Wochentagen 1 bis 7 (eine Regel ohne Wochentage wirkt wie die
+    Regel `family` selbst an keinem Tag).
   „Nie Nacht“ geht vor der gewohnten Verteilung.
 - Demomonat mit klaren Verteilungen für 92 von 150 Personen, je 300 s: `HABIT` vergleicht 41 Personen (Nächte je
   Person 0 bis 10, Mittel 1,5), `EVEN` 120 (0 bis 13, Mittel 2,3); die Strafe der Verteilung sinkt von rund
