@@ -11,7 +11,7 @@ import { CATEGORIES, conflictDecision, fromForm, inUseQuestion, itemLabel, restr
 import { areaRestriction, setAreaRestriction } from '../lib/restrictions.js';
 import { nightStatus } from '../lib/fairness.js';
 import { info } from '../lib/info.js';
-import { MIX_CATEGORIES, mixRows, nightNote, sharePercent } from '../lib/shift-mix.js';
+import { MIX_CATEGORIES, mixNightNote, mixRows, nightNote, sharePercent } from '../lib/shift-mix.js';
 import { t } from '../lib/texts.js';
 import { control, employmentText, problemAlert, readForm } from './masterdata.js';
 
@@ -123,7 +123,7 @@ function figures(explanation, person, areaNames, constraintLabels, nightDistribu
         // compensatory-rest balance and the hours account are personal: planners only (viewers get null)
         canEdit && kpi(t('person.kpi.compRestEarned'), fmt.num(s.compRestEarned), t('help.figure.compRestEarned')),
         canEdit && kpi(t('person.kpi.compRestOpenAfter'), fmt.num(s.compRestBalanceAfter), t('help.figure.compRestBalanceAfter')))),
-    mixSection(s.plannedMix, person.shiftMix, areaNames, nightDistribution),
+    mixSection(s, person.shiftMix, areaNames, nightDistribution),
     h('section.section', { 'aria-labelledby': 'h-hist' }, h('h2', { id: 'h-hist' }, t('person.section.history')),
       h('div.kpis', {},
         kpi(t('person.kpi.nights'), fmt.num(s.historyNights), t('help.figure.historyNights')), kpi(t('person.kpi.weekends'), fmt.num(s.historyWeekends), t('help.figure.historyWeekends')), kpi(t('person.kpi.holidays'), fmt.num(s.historyHolidays), t('help.figure.historyHolidays')),
@@ -147,12 +147,12 @@ function nightsTile(s, usual) {
 }
 
 /** Planned against usual share of the duties per category and area; nothing to show without either. */
-function mixSection(planned, usual, areaNames, nightDistribution) {
-  const rows = mixRows(planned, usual, (id) => areaNames.get(id) ?? id);
+function mixSection(stats, usual, areaNames, nightDistribution) {
+  const rows = mixRows(stats.plannedMix, usual, (id) => areaNames.get(id) ?? id);
   if (!rows.length) return null;
   return h('section.section', { 'aria-labelledby': 'h-mix' }, h('h2', { id: 'h-mix' }, t('person.section.mix'),
     info(t('help.figure.plannedMix'), t('person.section.mix'))),
-    Object.keys(usual?.categories ?? {}).length > 0 && h('p.muted', {}, nightNote(nightDistribution)),
+    Object.keys(usual?.categories ?? {}).length > 0 && h('p.muted', {}, mixNightNote(nightDistribution, stats, usual)),
     // viewers get no usual mix: no empty column
     h('table.data', {}, h('thead', {}, h('tr', {}, h('th', {}, t('person.mix.group')), h('th.num', {}, t('person.mix.planned')), usual && h('th.num', {}, t('person.mix.usual')))),
       h('tbody', {}, rows.map((r) => h('tr', {}, h('td', {}, r.name), h('td.num', {}, sharePercent(r.planned)), usual && h('td.num', {}, sharePercent(r.usual)))))));
