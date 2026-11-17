@@ -160,6 +160,7 @@ export const TEXTS = {
   'roster.chipSoft': 'Qualität {label}: {count}. Wer und wann?',
   'roster.chipMonth': 'ganzer Monat',
   'roster.chipNone': 'Keine Angaben zu Personen und Tagen verfügbar.',
+  'roster.chipFailed': 'Für {count|Person|Personen} konnten die Angaben nicht geladen werden. Ein neuer Klick versucht es noch einmal.',
   'output.menu': 'Ausgabe',
   'output.export': 'Export {format}',
   'closeMonth.hardNone': 'Keine Regelverstöße',

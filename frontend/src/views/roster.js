@@ -159,18 +159,26 @@ export async function render(root, ctx) {
     el.tabIndex = -1;
     el.focus();
     if (personHits?.analysis !== analysis) personHits = { analysis, promise: loadHits() };
-    personHits.promise.then((all) => {
-      const rows = all.flatMap(({ person, hits }) => hits.filter((x) => x.constraintId === c.id && x.score < 0).map((hit) => ({ person, hit })));
+    const loading = personHits;
+    loading.promise.then((all) => {
+      const failed = all.filter((x) => !x.hits).length;
+      // a failed request is tried again at the next click
+      if (failed && personHits === loading) personHits = null;
+      const rows = all.flatMap(({ person, hits }) => (hits ?? []).filter((x) => x.constraintId === c.id && x.score < 0).map((hit) => ({ person, hit })));
       if (!box.isConnected) return;
-      box.replaceChildren(rows.length
-        ? h('ul', {}, rows.map(({ person, hit }) => h('li', {},
-          h('button', { type: 'button', onclick: () => ctx.navigate(`person/${encodeURIComponent(person.id)}`) },
-            h('span.candidate-name', {}, personName(person)), h('span', {}, hit.date ? dayLabel(hit.date) : t('roster.chipMonth')),
-            h('span.hit-text.muted', {}, hitText(hit))))))
-        : h('p.muted', {}, t('roster.chipNone')));
+      box.replaceChildren();
+      append(box, [
+        failed > 0 && h('p.alert.alert-error', {}, t('roster.chipFailed', { count: failed })),
+        rows.length
+          ? h('ul', {}, rows.map(({ person, hit }) => h('li', {},
+            h('button', { type: 'button', onclick: () => ctx.navigate(`person/${encodeURIComponent(person.id)}`) },
+              h('span.candidate-name', {}, personName(person)), h('span', {}, hit.date ? dayLabel(hit.date) : t('roster.chipMonth')),
+              h('span.hit-text.muted', {}, hitText(hit))))))
+          : h('p.muted', {}, t('roster.chipNone'))]);
     });
   }
 
+  /** Hits of every person, sorted by name; hits is null where the request failed. */
   async function loadHits() {
     const people = [...dataset.people].sort((a, b) => personName(a).localeCompare(personName(b), 'de'));
     const out = new Array(people.length);
@@ -178,7 +186,7 @@ export async function render(root, ctx) {
     const worker = async () => {
       while (next < people.length) {
         const i = next++;
-        out[i] = { person: people[i], hits: (await api.person(month, people[i].id).catch(() => null))?.hits ?? [] };
+        out[i] = { person: people[i], hits: (await api.person(month, people[i].id).catch(() => null))?.hits ?? null };
       }
     };
     await Promise.all(Array.from({ length: HIT_REQUESTS }, worker));

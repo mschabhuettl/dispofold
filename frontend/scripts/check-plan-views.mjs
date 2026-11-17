@@ -157,6 +157,19 @@ try {
   check('headline with violations', /^2 Regelverstöße(, \d+ Lücken? \([\d,]+ Personenstunden\))?$/.test(bad)
     && (await headline.getAttribute('class')).includes('headline-bad'), bad);
   check('hard chip', (await page.locator('.chip.chip-hard').textContent()).replace(/\s+/g, ' ') === 'Tägliche Ruhezeit 2');
+  // the person explanations fail: a note, and the next click loads them again
+  await page.route(`**/api/plans/${month}/people/**`, (route) => route.fulfill({ status: 503, body: '' }));
+  const softChip = page.locator('.chips .chip:not(.chip-hard)').first();
+  await softChip.click();
+  await page.locator('.popover .alert-error').waitFor({ timeout: 10000 }).catch(() => {});
+  check('failed list: note', await page.locator('.popover .alert-error').count() === 1);
+  await page.keyboard.press('Escape');
+  await page.unroute(`**/api/plans/${month}/people/**`);
+  await softChip.click();
+  await page.locator('.popover .hit-list li').first().waitFor({ timeout: 10000 }).catch(() => {});
+  check('failed list: loaded again', await page.locator('.popover .alert-error').count() === 0
+    && await page.locator('.popover .hit-list li').count() > 0);
+  await page.keyboard.press('Escape');
   await page.unroute(`**/api/plans/${month}/analysis`);
   await page.reload();
   await page.locator('.roster-wrap table').waitFor();
