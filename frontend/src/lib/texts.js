@@ -118,7 +118,7 @@ export const TEXTS = {
   'roster.gapDialog':'Bedarfslücken {day}',
   'roster.lockedWhileSolving': 'Während der Planung ist der Plan gesperrt.',
   'roster.closedHint': 'Abgeschlossen: nur lesen. Wieder öffnen unter „Import/Export“.',
-  'roster.staleHelp': 'Eingaben, Stammdaten, Regeln oder Gewichte wurden nach dieser Planung geändert.',
+  'roster.staleHelp': 'Eingaben, Stammdaten, Regeln, Gewichte oder die Historie der Vormonate wurden nach dieser Planung geändert.',
   'roster.previousChangedHelp': 'Der Plan des Vormonats wurde nach dieser Planung geändert (Ruhezeiten am Monatsanfang).',
   'roster.moveLimit': 'Schrittzahl',
   'roster.serverDefault': 'Standard',
