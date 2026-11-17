@@ -275,7 +275,7 @@ Gibt es nur, wenn der Eigentümer einen macOS-Runner eingetragen hat (siehe [rel
 Ein Update (`dispofold-<version>-update.zip`) ersetzt die Anwendung, nicht die Daten. Es gilt für alle
 Systeme.
 
-- Unter **Einstellungen** trägt man eine **Update-Quelle** ein: die Adresse der Releases-API von GitHub
+- Unter **Einstellungen > Updates** trägt man eine **Update-Quelle** ein: die Adresse der Releases-API von GitHub
   (`https://api.github.com/repos/mschabhuettl/dispofold/releases/latest`) oder einen Ordner, etwa eine
   Netzwerkfreigabe, in den die IT die Update-Dateien legt. Das Programm schickt keine Anmeldedaten mit: Die
   Releases müssen ohne Anmeldung lesbar sein. Solange das Repository privat ist, geht das nicht; dann einen

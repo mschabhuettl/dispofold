@@ -255,7 +255,7 @@ Eine Einstellung der Regeln, `nightDistribution`:
   10,0 auf 4,5 Millionen, Einzeldienste 152 und 145, Bedarf in beiden Fällen gedeckt.
 - Die Personenansicht zeigt bei den Nächten „folgt gewohnter Verteilung (10 % Nacht)“, „im Nachtausgleich:
   Belastung x, Mittel y“ (die Last der Fairness Nachtdienste, siehe unten, als Nächte je 30 verfügbare Tage)
-  oder „nicht im Nachtausgleich (nie Nacht)“. Die Fairness-Übersicht markiert, wer nicht verglichen wird, und
+  oder „nicht im Nachtausgleich (nie Nacht)“. Die Seite Fairness markiert, wer nicht verglichen wird, und
   warum. Für Ansichtsrollen bleibt beides leer, weil es die Verteilung, Sperren oder Familienregeln verraten
   würde.
 

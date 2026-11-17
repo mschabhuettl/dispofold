@@ -38,7 +38,8 @@ der Seite Daten, Hilfe auf jeder Seite. Die Planungsergebnisse sind unverändert
 - **Hilfe:** eine Einleitung auf jeder Seite und ein Hilfeknopf „i“ bei jeder Regel, jedem Gewicht, jeder
   Einstellung, jeder Kennzahl und jedem Formularfeld; mit Maus, Tastatur und Touch bedienbar.
 - **Anleitung** neu gegliedert, mit „So funktioniert es“ und „Typischer Ablauf“, neue Bilder.
-- **Rolle Lesen:** bekommt die Personalnummer (`externalId`) nicht mehr.
+- **Rolle Lesen:** bekommt die Personalnummer (`externalId`) nicht mehr; die Seite Fairness zeigt ihr die Anzahlen ohne
+  Umrechnung und ohne die neuen Belastungen, die Seite einer Person keine gewohnte Verteilung.
 - **Schnittstelle:** neu `GET /api/plans/{m}/problems`, `POST /api/import/preview`, `POST /api/import/dataset?keep=true`,
   `GET /api/data/corrections`, `GET /api/data/anonymized?month=`; in den Kennzahlen je Person `weekendLoad`,
   `holidayLoad`, `unpopularLoad` (für die Rolle Lesen leer). Details: [docs/api.md](docs/api.md).
