@@ -7,6 +7,7 @@ import { append, fmt, guarded, h, toast } from '../lib/dom.js';
 import { NAME_MODES, personLabel, printParts } from '../lib/functions-model.js';
 import { NEUTRAL_ABSENCE, buildGrid, cellRequest, cellsEditable, personName } from '../lib/grid-model.js';
 import { chipCount, planHeadline, problemConstraints } from '../lib/plan-status.js';
+import { info } from '../lib/info.js';
 import { printHeader, printStatus } from '../lib/print.js';
 import { needsRulesForCategories, onRequestTest } from '../lib/restrictions.js';
 import { t } from '../lib/texts.js';
@@ -83,11 +84,11 @@ export async function render(root, ctx) {
       // solver options and the raw score: rarely needed, collapsed
       h('details.advanced', {}, h('summary', {}, t('roster.advanced')),
         h('div.advanced-body', {},
-          h('div.field', {}, h('label', { for: 'seed' }, t('roster.seed')), seedInput),
-          h('div.field', {}, h('label', { for: 'limit' }, t('roster.timeLimit')), limitInput),
-          h('div.field', {}, h('label', { for: 'move-limit' }, t('roster.moveLimit')), moveLimitInput),
-          h('label.check-inline', { title: t('roster.coldStartHelp') }, coldStartInput, ' ', t('roster.coldStart')),
-          h('span.score', {}, t('roster.score'), ' ', scoreText)))),
+          h('div.field', {}, h('div.with-info', {}, h('label', { for: 'seed' }, t('roster.seed')), info(t('help.solve.seed'), t('roster.seed'))), seedInput),
+          h('div.field', {}, h('div.with-info', {}, h('label', { for: 'limit' }, t('roster.timeLimit')), info(t('help.solve.timeLimit'), t('roster.timeLimit'))), limitInput),
+          h('div.field', {}, h('div.with-info', {}, h('label', { for: 'move-limit' }, t('roster.moveLimit')), info(t('help.solve.moveLimit'), t('roster.moveLimit'))), moveLimitInput),
+          h('div.check-inline', {}, h('label.check-inline', {}, coldStartInput, ' ', t('roster.coldStart')), info(t('help.solve.coldStart'), t('roster.coldStart'))),
+          h('span.score', {}, t('roster.score'), ' ', scoreText, info(t('help.solve.score'), t('roster.score')))))),
     !dataset.people.length && h('p.alert', {}, canEdit ? t('common.noMasterdata') : t('common.noMasterdataReadonly')),
     status,
     legendBox(legend(dataset, canEdit)),
@@ -111,14 +112,18 @@ export async function render(root, ctx) {
     status.replaceChildren();
     append(status, [
       // the raw score only as a tooltip here (and as text under "Erweitert")
-      h('p.plan-headline', { class: `headline-${headline.level}`, title: score }, headline.text),
+      h('div.with-info', {}, h('p.plan-headline', { class: `headline-${headline.level}`, title: score }, headline.text),
+        info(t('help.plan.headline'), headline.text)),
       !state.solving && chips(),
       h('div.status-details', {},
-        h('span', {}, t('roster.statusLabel'), ' ', h('strong', {}, printStatus(plan.status))),
+        h('span', {}, t('roster.statusLabel'), ' ', h('strong', {}, printStatus(plan.status)), info(t('help.plan.status'), t('roster.statusLabel'))),
         plan.status === 'FAILED' && h('span.badge.badge-hard', {}, t('roster.failed')),
-        figures?.overstaffed > 0 && h('span', {}, t('roster.overstaffed'), ' ', t('roster.personHours', { hours: fmt.num(figures.overstaffed, 1) })),
-        analysis?.singleDaysOff != null && h('span', { title: t('roster.singleDaysOffHelp') }, t('roster.singleDaysOff', { count: analysis.singleDaysOff })),
-        analysis?.blockDays != null && h('span', { title: t('roster.blockDaysHelp') }, t('roster.blockDays', { count: analysis.blockDays })),
+        figures?.overstaffed > 0 && h('span', {}, t('roster.overstaffed'), ' ', t('roster.personHours', { hours: fmt.num(figures.overstaffed, 1) }),
+          info(t('help.plan.overstaffed'), t('roster.overstaffed'))),
+        analysis?.singleDaysOff != null && h('span', {}, t('roster.singleDaysOff', { count: analysis.singleDaysOff }),
+          info(t('help.plan.singleDaysOff'), t('roster.singleDaysOff', { count: analysis.singleDaysOff }))),
+        analysis?.blockDays != null && h('span', {}, t('roster.blockDays', { count: analysis.blockDays }),
+          info(t('help.plan.blockDays'), t('roster.blockDays', { count: analysis.blockDays }))),
         canEdit && state.solving && h('span', {}, t('roster.lockedWhileSolving')),
         closed() && h('span', {}, canEdit ? t('roster.closedHint') : t('common.closedReadonly')),
         // the plan no longer matches its inputs or the previous month: plan again (the reasons as tooltip)
@@ -144,7 +149,7 @@ export async function render(root, ctx) {
       return h('button.chip', { type: 'button', class: c.level === 'HARD' ? 'chip-hard' : null, 'aria-haspopup': 'dialog',
         'aria-label': name, onclick: (e) => openHits(e.currentTarget, c, label) },
       label, count != null && [' ', h('span.chip-count', {}, String(count))]);
-    }));
+    }), info(t('help.plan.chips'), t('roster.problems')));
   }
 
   /**

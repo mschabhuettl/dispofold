@@ -6,6 +6,7 @@ import { tintStyle } from '../lib/colors.js';
 import { WEEKDAY_SHORT } from '../lib/dates.js';
 import { messageText } from '../lib/codes.js';
 import { CATEGORIES, DEMAND_DAYS, conflictDecision, fromForm, inUseQuestion, itemLabel, keyOf, toForm } from '../lib/masterdata-edit.js';
+import { info } from '../lib/info.js';
 import { t } from '../lib/texts.js';
 
 const CATEGORY = { EARLY: t('masterdata.category.early'), DAY: t('masterdata.category.day'), LATE: t('masterdata.category.late'), NIGHT: t('masterdata.category.night') };
@@ -46,23 +47,23 @@ export async function render(root, ctx) {
     const editing = key != null;
     const areas = dataset.areas.map((a) => [a.id, `${a.id} ${a.name}`]);
     return {
-      areas: [{ name: 'id', label: t('masterdata.col.shortName'), required: true, readOnly: editing }, { name: 'name', label: t('masterdata.col.name'), required: true },
-        { name: 'color', label: t('masterdata.col.color'), placeholder: '#RRGGBB' }],
-      absenceTypes: [{ name: 'code', label: t('masterdata.col.code'), required: true, readOnly: editing }, { name: 'name', label: t('masterdata.col.name'), required: true },
-        { name: 'reducesTarget', label: t('masterdata.col.reducesTarget'), type: 'checkbox' }, { name: 'chargesAccount', label: t('masterdata.col.chargesAccount'), type: 'checkbox' },
-        { name: 'compensatoryRest', label: t('masterdata.col.compRest'), type: 'checkbox' }, { name: 'color', label: t('masterdata.col.color'), placeholder: '#RRGGBB' }],
-      shifts: [{ name: 'areaId', label: t('masterdata.col.area'), type: 'select', options: areas }, { name: 'code', label: t('masterdata.col.code'), required: true },
-        { name: 'name', label: t('masterdata.col.name'), required: true }, { name: 'start', label: t('masterdata.col.start'), type: 'time', required: true },
-        { name: 'end', label: t('masterdata.col.end'), type: 'time', required: true },
-        { name: 'category', label: t('masterdata.col.category'), type: 'select', options: [['', t('masterdata.category.auto')], ...CATEGORIES.map((c) => [c, CATEGORY[c]])] },
-        { name: 'color', label: t('masterdata.col.color'), placeholder: '#RRGGBB' }, { name: 'unpopular', label: t('masterdata.col.unpopular'), type: 'checkbox' }],
-      demand: [{ name: 'areaId', label: t('masterdata.col.area'), type: 'select', options: areas },
-        { name: 'mode', label: t('masterdata.col.valid'), type: 'select', options: [['days', t('masterdata.demand.byDays')], ['date', t('masterdata.demand.byDate')]] },
-        { name: 'days', label: t('masterdata.demand.days'), type: 'checks', options: DEMAND_DAYS.map((d) => [d, DAY_CODES[d]]), mode: 'days' },
-        { name: 'date', label: t('masterdata.col.date'), type: 'date', mode: 'date' }, { name: 'from', label: t('masterdata.col.from'), type: 'time', required: true },
-        { name: 'to', label: t('masterdata.col.to'), type: 'time', required: true }, { name: 'min', label: t('masterdata.col.min'), type: 'number', step: 1, min: 0, required: true },
-        { name: 'max', label: t('masterdata.col.max'), type: 'number', step: 1, min: 0 }],
-      holidays: [{ name: 'date', label: t('masterdata.col.date'), type: 'date', required: true }, { name: 'name', label: t('masterdata.col.name'), required: true }],
+      areas: [{ name: 'id', label: t('masterdata.col.shortName'), help: t('help.field.areas.id'), required: true, readOnly: editing }, { name: 'name', label: t('masterdata.col.name'), help: t('help.field.areas.name'), required: true },
+        { name: 'color', label: t('masterdata.col.color'), help: t('help.field.areas.color'), placeholder: '#RRGGBB' }],
+      absenceTypes: [{ name: 'code', label: t('masterdata.col.code'), help: t('help.field.absenceTypes.code'), required: true, readOnly: editing }, { name: 'name', label: t('masterdata.col.name'), help: t('help.field.absenceTypes.name'), required: true },
+        { name: 'reducesTarget', label: t('masterdata.col.reducesTarget'), help: t('help.field.absenceTypes.reducesTarget'), type: 'checkbox' }, { name: 'chargesAccount', label: t('masterdata.col.chargesAccount'), help: t('help.field.absenceTypes.chargesAccount'), type: 'checkbox' },
+        { name: 'compensatoryRest', label: t('masterdata.col.compRest'), help: t('help.field.absenceTypes.compensatoryRest'), type: 'checkbox' }, { name: 'color', label: t('masterdata.col.color'), help: t('help.field.absenceTypes.color'), placeholder: '#RRGGBB' }],
+      shifts: [{ name: 'areaId', label: t('masterdata.col.area'), help: t('help.field.shifts.areaId'), type: 'select', options: areas }, { name: 'code', label: t('masterdata.col.code'), help: t('help.field.shifts.code'), required: true },
+        { name: 'name', label: t('masterdata.col.name'), help: t('help.field.shifts.name'), required: true }, { name: 'start', label: t('masterdata.col.start'), help: t('help.field.shifts.start'), type: 'time', required: true },
+        { name: 'end', label: t('masterdata.col.end'), help: t('help.field.shifts.end'), type: 'time', required: true },
+        { name: 'category', label: t('masterdata.col.category'), help: t('help.field.shifts.category'), type: 'select', options: [['', t('masterdata.category.auto')], ...CATEGORIES.map((c) => [c, CATEGORY[c]])] },
+        { name: 'color', label: t('masterdata.col.color'), help: t('help.field.shifts.color'), placeholder: '#RRGGBB' }, { name: 'unpopular', label: t('masterdata.col.unpopular'), help: t('help.field.shifts.unpopular'), type: 'checkbox' }],
+      demand: [{ name: 'areaId', label: t('masterdata.col.area'), help: t('help.field.demand.areaId'), type: 'select', options: areas },
+        { name: 'mode', label: t('masterdata.col.valid'), help: t('help.field.demand.mode'), type: 'select', options: [['days', t('masterdata.demand.byDays')], ['date', t('masterdata.demand.byDate')]] },
+        { name: 'days', label: t('masterdata.demand.days'), help: t('help.field.demand.days'), type: 'checks', options: DEMAND_DAYS.map((d) => [d, DAY_CODES[d]]), mode: 'days' },
+        { name: 'date', label: t('masterdata.col.date'), help: t('help.field.demand.date'), type: 'date', mode: 'date' }, { name: 'from', label: t('masterdata.col.from'), help: t('help.field.demand.from'), type: 'time', required: true },
+        { name: 'to', label: t('masterdata.col.to'), help: t('help.field.demand.to'), type: 'time', required: true }, { name: 'min', label: t('masterdata.col.min'), help: t('help.field.demand.min'), type: 'number', step: 1, min: 0, required: true },
+        { name: 'max', label: t('masterdata.col.max'), help: t('help.field.demand.max'), type: 'number', step: 1, min: 0 }],
+      holidays: [{ name: 'date', label: t('masterdata.col.date'), help: t('help.field.holidays.date'), type: 'date', required: true }, { name: 'name', label: t('masterdata.col.name'), help: t('help.field.holidays.name'), required: true }],
     }[kind];
   }
 
@@ -255,19 +256,24 @@ export function problemAlert(e, hint = '') {
       h('ul', {}, warnings.map((w) => h('li', {}, messageText(w))))] : null);
 }
 
-/** One form field: a text, number, date or time input, a select, a checkbox or a group of checkboxes (id f-<name>). */
+/**
+ * One form field: a text, number, date or time input, a select, a checkbox or a group of checkboxes (id f-<name>),
+ * with the help text f.help (if any) behind an "i" next to the label.
+ */
 export function control(f, value) {
   const id = `f-${f.name}`;
   const data = f.mode ? { 'data-mode': f.mode } : {};
+  const help = f.help && info(f.help, f.label);
+  const labelled = (label) => (help ? h('div.with-info', {}, label, help) : label);
   if (f.type === 'checks') {
-    return h('fieldset', { style: bare, ...data }, h('legend', { style: { fontWeight: 600 } }, f.label),
+    return h('fieldset', { style: bare, ...data }, h('legend', { style: { fontWeight: 600 } }, f.label, help),
       f.options.map(([v, label]) => h('label', { style: inline }, h('input', { type: 'checkbox', name: f.name, value: v, checked: (value ?? []).includes(v) }), ` ${label}`)));
   }
-  if (f.type === 'checkbox') return h('div.field', data, h('label', {}, h('input', { id, type: 'checkbox', checked: Boolean(value) }), ` ${f.label}`));
+  if (f.type === 'checkbox') return h('div.field', data, labelled(h('label', {}, h('input', { id, type: 'checkbox', checked: Boolean(value) }), ` ${f.label}`)));
   const input = f.type === 'select'
     ? h('select', { id }, f.options.map(([v, label]) => h('option', { value: v, selected: v === value }, label)))
     : h('input', { id, type: f.type ?? 'text', value: value ?? '', required: f.required, readOnly: f.readOnly, step: f.step, min: f.min, placeholder: f.placeholder });
-  return h('div.field', data, h('label', { for: id }, f.label), input);
+  return h('div.field', data, labelled(h('label', { for: id }, f.label)), input);
 }
 
 /** Form values of the fields (see control) as the pure module reads them (masterdata-edit.js). */

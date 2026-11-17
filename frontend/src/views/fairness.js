@@ -4,6 +4,7 @@ import { monthLabel } from '../lib/dates.js';
 import { fmt, h, svg } from '../lib/dom.js';
 import { fairnessRows, metricSpreads, metricsFor, nightOutside, nightReasonText, sortRows } from '../lib/fairness.js';
 import { personName } from '../lib/grid-model.js';
+import { info } from '../lib/info.js';
 import { t } from '../lib/texts.js';
 
 export async function render(root, ctx) {
@@ -35,11 +36,11 @@ export async function render(root, ctx) {
     const spreads = metricSpreads(rows);
     charts.replaceChildren(h('div.grid-2', {}, metrics.map((m) => spreadStrip(m, rows, spreads[m.id]))));
     const sorted = sortRows(rows, sortKey, ascending);
-    const th = (key, label, num) => h('th', { class: num ? 'num' : '', scope: 'col', 'aria-sort': sortKey === key ? (ascending ? 'ascending' : 'descending') : 'none' },
+    const th = (key, label, num, help) => h('th', { class: num ? 'num' : '', scope: 'col', 'aria-sort': sortKey === key ? (ascending ? 'ascending' : 'descending') : 'none' },
       h('button', { type: 'button', onclick: () => { ascending = sortKey === key ? !ascending : true; sortKey = key; draw(); } },
-        label, sortKey === key ? (ascending ? ' ▲' : ' ▼') : ''));
+        label, sortKey === key ? (ascending ? ' ▲' : ' ▼') : ''), help && info(help, label));
     tableHost.replaceChildren(h('table.data', {},
-      h('thead', {}, h('tr', {}, th('name', t('fairness.person'), false), metrics.map((m) => th(m.id, m.label, true)))),
+      h('thead', {}, h('tr', {}, th('name', t('fairness.person'), false), metrics.map((m) => th(m.id, m.label, true, t(`help.figure.${m.id}`))))),
       h('tbody', {}, sorted.map((r) => h('tr', {},
         h('th', { scope: 'row' }, h('a', { href: `#/person/${encodeURIComponent(r.person.id)}` }, personName(r.person))),
         metrics.map((m) => h('td.num', {}, format(m, r.values[m.id]), m.id === 'nightLoad' && nightMark(r.stats))))))));

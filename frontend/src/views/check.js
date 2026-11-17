@@ -7,6 +7,7 @@ import { dayLabel, monthLabel, parseLocalDateTime } from '../lib/dates.js';
 import { append, h } from '../lib/dom.js';
 import { windowOverlapsShift } from '../lib/functions-model.js';
 import { cellsEditable, personName } from '../lib/grid-model.js';
+import { info } from '../lib/info.js';
 import { planHeadline } from '../lib/plan-status.js';
 import { filterProblems, groupKey, groupProblems, problemEntries } from '../lib/problems.js';
 import { nightDistribution } from '../lib/rule-groups.js';
@@ -41,7 +42,7 @@ export async function render(root, ctx) {
 
 /** Rule violations, overstaffing and quality, with a grouping and three filters. */
 function problemSection(dataset, analysis, problems) {
-  const section = h('section.check-section', { id: 'check-problems' }, h('h2', {}, t('check.problems.title')),
+  const section = h('section.check-section', { id: 'check-problems' }, h('h2', {}, t('check.problems.title'), info(t('help.check.problems'), t('check.problems.title'))),
     h('p.muted', {}, t('check.problems.help')));
   if (!problems || !analysis) return append(section, [h('p.alert.alert-error', {}, t('check.problems.failed'))]);
   const entries = problemEntries(problems, analysis.constraints, dataset.people);
@@ -93,7 +94,7 @@ function entryItem(e, by) {
 
 /** Open demand of the month by day: area, time, missing count, the functions of the area and who could be asked. */
 function gapSection(ctx, dataset, analysis, ask) {
-  const section = h('section.check-section', { id: 'check-gaps' }, h('h2', {}, t('check.gaps.title')));
+  const section = h('section.check-section', { id: 'check-gaps' }, h('h2', {}, t('check.gaps.title'), info(t('help.check.gaps'), t('check.gaps.title'))));
   if (!analysis) return append(section, [h('p.alert.alert-error', {}, t('check.problems.failed'))]);
   const gaps = analysis.gaps ?? [];
   if (!gaps.length) return append(section, [h('p', {}, t('check.gaps.none'))]);
@@ -132,7 +133,7 @@ function gapItem(ctx, dataset, areaName, g, ask) {
 
 /** Findings on the master data with what to do and where. */
 function dataSection(dataset, month, mode) {
-  const section = h('section.check-section', { id: 'check-data' }, h('h2', {}, t('check.data.title')), h('p.muted', {}, t('check.data.help')));
+  const section = h('section.check-section', { id: 'check-data' }, h('h2', {}, t('check.data.title'), info(t('help.check.data'), t('check.data.title'))), h('p.muted', {}, t('check.data.help')));
   const findings = dataChecks(dataset, { month, nightDistribution: mode });
   if (!findings.length) return append(section, [h('p', {}, t('check.data.none'))]);
   const people = new Map(dataset.people.map((p) => [p.id, p]));
