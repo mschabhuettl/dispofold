@@ -4,7 +4,7 @@ Die Werkzeuge tauschen zwei JSON-Dokumente aus:
 
 - **Datensatz** (`dispofold/dataset`, Version 2): Stammdaten und Planungsmonate. Jede Datenquelle liefert
   genau dieses Dokument (ein Export aus dem bisherigen Planungssystem, die synthetischen Demodaten, später
-  LOGA). Es wird unter **Import/Export**, **Datensatz importieren** hochgeladen.
+  LOGA). Es wird unter **Einstellungen > Daten**, **Datensatz importieren** hochgeladen.
 - **Plan** (`dispofold/plan`): der Dienstplan eines Monats. Das ist das JSON-Exportformat; ein
   exportierter Plan lässt sich wieder importieren.
 

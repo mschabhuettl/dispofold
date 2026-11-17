@@ -23,7 +23,7 @@ Der Score hat drei Teile (Gruppen), die streng nacheinander zählen. Technisch h
 Ist der Bedarf mit dem vorhandenen Personal nicht erfüllbar, bleibt die Gruppe Regelverstoß trotzdem bei 0. Die
 fehlende Besetzung steht dann als Lücke je Bereich und Zeitabschnitt in der Analyse.
 
-Alle Parameter stehen in `Rules` (Oberfläche: Regeln und Gewichte). Gewichte gibt es nur für Qualitätsregeln;
+Alle Parameter stehen in `Rules` (Oberfläche: Einstellungen > Regeln). Gewichte gibt es nur für Qualitätsregeln;
 die Regeln der Gruppe Regelverstoß und der Bedarf haben kein einstellbares Gewicht.
 
 ## Grundmodell

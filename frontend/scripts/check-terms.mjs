@@ -70,6 +70,9 @@ try {
     const text = await allText(page);
     const hit = text.split('\n').find((line) => OLD.test(line));
     check(`${name}: no old term`, !hit, hit);
+    // a condition that rendered as text (e.g. `x && h(...)` appended to a DOM node)
+    const stray = text.split('\n').find((line) => /^(false|true|null|undefined)$/.test(line.trim()));
+    check(`${name}: no stray value`, !stray, stray);
   };
 
   const page = await login('planung');

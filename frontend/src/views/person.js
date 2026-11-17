@@ -153,8 +153,9 @@ function mixSection(planned, usual, areaNames, nightDistribution) {
   return h('section.section', { 'aria-labelledby': 'h-mix' }, h('h2', { id: 'h-mix' }, t('person.section.mix'),
     info(t('help.figure.plannedMix'), t('person.section.mix'))),
     Object.keys(usual?.categories ?? {}).length > 0 && h('p.muted', {}, nightNote(nightDistribution)),
-    h('table.data', {}, h('thead', {}, h('tr', {}, h('th', {}, t('person.mix.group')), h('th.num', {}, t('person.mix.planned')), h('th.num', {}, t('person.mix.usual')))),
-      h('tbody', {}, rows.map((r) => h('tr', {}, h('td', {}, r.name), h('td.num', {}, sharePercent(r.planned)), h('td.num', {}, sharePercent(r.usual)))))));
+    // viewers get no usual mix: no empty column
+    h('table.data', {}, h('thead', {}, h('tr', {}, h('th', {}, t('person.mix.group')), h('th.num', {}, t('person.mix.planned')), usual && h('th.num', {}, t('person.mix.usual')))),
+      h('tbody', {}, rows.map((r) => h('tr', {}, h('td', {}, r.name), h('td.num', {}, sharePercent(r.planned)), usual && h('td.num', {}, sharePercent(r.usual)))))));
 }
 
 /**

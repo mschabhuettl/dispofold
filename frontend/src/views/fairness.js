@@ -22,12 +22,12 @@ export async function render(root, ctx) {
   const tableHost = h('div', { style: { overflowX: 'auto' } });
 
   root.append(
-    ctx.canEdit && h('p.fairness-measure', {}, t('fairness.measure')),
+    ctx.canEdit ? h('p.fairness-measure', {}, t('fairness.measure')) : '',
     h('h2', {}, t('fairness.spreadHeading')),
     h('p.muted', {}, t('fairness.spreadHelp')),
     charts,
     h('h2', { style: { marginTop: '1.5rem' } }, t('fairness.tableHeading')),
-    analysis.people.some(nightOutside) && h('p.muted', {}, t('fairness.nightHelp')),
+    analysis.people.some(nightOutside) ? h('p.muted', {}, t('fairness.nightHelp')) : '',
     tableHost,
   );
 
