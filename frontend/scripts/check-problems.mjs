@@ -85,6 +85,8 @@ try {
   await page.selectOption('#check-group', 'person');
   const headings = await problems.locator('.check-group > summary').allTextContents();
   check('grouped by person, the overstaffing is under "ohne Person"', headings.some((x) => x.startsWith('ohne Person')), headings.at(-1));
+  check('grouped by person, the entries keep their links', (await problems.locator('li a[href^="#/person/"]').count()) > 0
+    && (await problems.locator('li[data-rule=overstaffing] a[href="#/zeitachse"]').count()) > 0);
   await page.selectOption('#check-filter-rule', 'overstaffing');
   const rules = await problems.locator('.check-list > li').evaluateAll((li) => li.map((x) => x.dataset.rule));
   check('the rule filter keeps only that rule', rules.length > 0 && rules.every((r) => r === 'overstaffing'), rules.join());
@@ -103,6 +105,12 @@ try {
   await gaps.locator('li.gap-item button', { hasText: 'Auf Anfrage verfügbar' }).first().click();
   await gaps.locator('.candidates[data-loaded]').first().waitFor();
   check('who could be asked loads on demand', (await gaps.locator('.candidates[data-loaded]').count()) === 1);
+  // a closed month: nobody can be asked, a duty cannot be set
+  await page.evaluate((m) => fetch(`/api/plans/${m}/finalize`, { method: 'POST' }), month);
+  await page.reload();
+  await page.locator('#check-gaps li.gap-item').first().waitFor();
+  check('closed month: no "Auf Anfrage verfügbar"', (await page.locator('#check-gaps li.gap-item button').count()) === 0);
+  await page.evaluate((m) => fetch(`/api/plans/${m}/reopen`, { method: 'POST' }), month);
 
   // Master data checks
   const data = page.locator('#check-data');

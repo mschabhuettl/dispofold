@@ -3,10 +3,10 @@
 import { gapLabel } from '../lib/candidates.js';
 import { constraintLabel, hitText } from '../lib/codes.js';
 import { dataChecks } from '../lib/data-checks.js';
-import { dayLabel, monthLabel } from '../lib/dates.js';
+import { dayLabel, monthLabel, parseLocalDateTime } from '../lib/dates.js';
 import { append, h } from '../lib/dom.js';
 import { windowOverlapsShift } from '../lib/functions-model.js';
-import { personName } from '../lib/grid-model.js';
+import { cellsEditable, personName } from '../lib/grid-model.js';
 import { planHeadline } from '../lib/plan-status.js';
 import { filterProblems, groupKey, groupProblems, problemEntries } from '../lib/problems.js';
 import { nightDistribution } from '../lib/rule-groups.js';
@@ -32,7 +32,9 @@ export async function render(root, ctx) {
   if (!planned) root.append(h('p.alert', {}, t('check.noPlan')));
   else {
     root.append(problemSection(dataset, analysis, problems));
-    root.append(gapSection(ctx, dataset, analysis));
+    // who could be asked: only where a duty can be set
+    const ask = cellsEditable({ canEdit: ctx.canEdit, solving: state.solving, closed: state.plan.status === 'CLOSED' });
+    root.append(gapSection(ctx, dataset, analysis, ask));
   }
   root.append(dataSection(dataset, month, nightDistribution(rules)));
 }
@@ -75,22 +77,22 @@ function groupLabel(by, g) {
   return g.key ? dayLabel(g.key) : t('roster.chipMonth');
 }
 
-/** One entry: level, what the group heading does not say (rule, person, day), the text and the link. */
+/** One entry: level, what the group heading does not say (rule, day), the person (link), the text. */
 function entryItem(e, by) {
   const { hit, person } = e;
   const level = hit.level === 'HARD' ? 'badge-hard' : hit.level === 'MEDIUM' ? 'badge-warn' : null;
   return h('li', { 'data-rule': hit.constraintId, 'data-level': hit.level },
     h('span.badge', { class: level }, LEVEL[hit.level] ?? hit.level),
     by !== 'rule' && h('strong', {}, constraintLabel({ id: hit.constraintId })),
-    by !== 'person' && (person
-      ? h('a', { href: `#/person/${encodeURIComponent(person.id)}` }, personName(person))
-      : h('a', { href: '#/zeitachse' }, t('check.toTimeline'))),
+    // the link stays when grouped by person: the heading is no link
+    person ? h('a', { href: `#/person/${encodeURIComponent(person.id)}` }, personName(person))
+      : h('a', { href: '#/zeitachse' }, t('check.toTimeline')),
     by !== 'day' && h('span', {}, groupKey(e, 'day') ? dayLabel(hit.date) : t('roster.chipMonth')),
     h('span.hit-text', {}, hitText(hit)));
 }
 
 /** Open demand of the month by day: area, time, missing count, the functions of the area and who could be asked. */
-function gapSection(ctx, dataset, analysis) {
+function gapSection(ctx, dataset, analysis, ask) {
   const section = h('section.check-section', { id: 'check-gaps' }, h('h2', {}, t('check.gaps.title')));
   if (!analysis) return append(section, [h('p.alert.alert-error', {}, t('check.problems.failed'))]);
   const gaps = analysis.gaps ?? [];
@@ -105,14 +107,16 @@ function gapSection(ctx, dataset, analysis) {
     days.get(day).push(g);
   }
   [...days].forEach(([day, list], i) => section.append(fold(gaps.length <= FOLD || i === 0,
-    [dayLabel(day), ' ', h('span.muted', {}, `(${list.length})`)], h('ul.check-list', {}, list.map((g) => gapItem(ctx, dataset, areaName, g))))));
+    [dayLabel(day), ' ', h('span.muted', {}, `(${list.length})`)], h('ul.check-list', {}, list.map((g) => gapItem(ctx, dataset, areaName, g, ask))))));
   return section;
 }
 
 /** One gap with the functions (shifts) of its area at that time and, on demand, who could be asked. */
-function gapItem(ctx, dataset, areaName, g) {
+function gapItem(ctx, dataset, areaName, g, ask) {
+  // a gap of a day or more (gaps over several days are merged) concerns every shift of the area
   const window = { from: g.from.slice(11, 16), to: g.to.slice(11, 16) };
-  const codes = dataset.shifts.filter((s) => s.areaId === g.areaId && windowOverlapsShift(window, s)).map((s) => s.code);
+  const whole = parseLocalDateTime(g.to) - parseLocalDateTime(g.from) >= 1440;
+  const codes = dataset.shifts.filter((s) => s.areaId === g.areaId && (whole || windowOverlapsShift(window, s))).map((s) => s.code);
   const item = h('li.gap-item', {}, h('strong', {}, gapLabel(g, areaName.get(g.areaId))),
     codes.length > 0 && h('span.muted', {}, t('check.gaps.functions', { codes: codes.join(', ') })));
   // loaded on demand: one request per gap
@@ -122,7 +126,7 @@ function gapItem(ctx, dataset, areaName, g) {
     if (open) open.remove();
     else item.append(candidateList({ api: ctx.api, month: ctx.month, gap: g, dataset, onSet: () => ctx.setMonth(ctx.month) }));
   } }, t('check.gaps.candidates'));
-  item.append(toggle);
+  if (ask) item.append(toggle);
   return item;
 }
 
