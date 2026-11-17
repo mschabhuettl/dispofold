@@ -173,6 +173,16 @@ class DataTest {
     }
 
     @Test
+    void previewOfAFullSizeDataset() throws Exception {
+        edit("P0001", "weeklyHours", 30);
+        String demo = java.nio.file.Files.readString(java.nio.file.Path.of("..", "tests", "fixtures", "synthetic",
+                "demo-dataset-2027-01.synthetic.json"));
+        // the demo has P0001 with other weekly hours than the baseline: a conflict
+        given().contentType(ContentType.JSON).body(demo).post("/api/import/preview").then().statusCode(200)
+                .body("changed", equalTo(true)).body("kept", equalTo(1)).body("conflicts.size()", equalTo(1));
+    }
+
+    @Test
     void keepingWithoutChangesIsAPlainImport() throws Exception {
         importDataset(withHours(Map.of("P0003", 20.0)), "?keep=true").statusCode(200).body("kept", equalTo(0));
         given().get("/api/dataset").then().body("changedSinceImport", equalTo(false));

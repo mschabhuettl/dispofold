@@ -150,7 +150,9 @@ class AnonymizerTest {
         assertThat(r.dataset().shifts()).allSatisfy(s -> assertThat(s.name()).isEqualTo(s.code()));
         assertThat(r.dataset().absenceTypes()).allSatisfy(t -> assertThat(t.name()).isEqualTo(t.code()));
         assertThat(r.dataset().holidays()).allSatisfy(h -> assertThat(h.name()).isEqualTo("Feiertag"));
-        // the structure stays
+        // the structure stays, and the shared dataset can be imported
+        assertThat(app.dispofold.importclient.DatasetValidator.validate(r.dataset(),
+                app.dispofold.model.Rules.defaults()).errors()).isEmpty();
         assertThat(r.dataset().restrictions()).hasSameSizeAs(d.restrictions());
         assertThat(r.dataset().history()).hasSameSizeAs(d.history());
         assertThat(r.dataset().periods().get(0).absences()).hasSameSizeAs(d.periods().get(0).absences());

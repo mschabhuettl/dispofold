@@ -67,7 +67,7 @@ export const TEXTS = {
   'data.corrections.none': 'Seit dem letzten Import gibt es keine Änderung für die Korrekturdatei; es wurde keine Datei gespeichert.',
   'data.corrections.notes': 'Nicht in der Korrekturdatei, bitte im Quellsystem nachtragen:',
   'data.anonymize.heading': 'Anonymisieren',
-  'data.anonymize.intro': 'Erstellt den Datensatz und den Plan von {month} mit Pseudonymen statt Namen zum Weitergeben, dazu einen Schlüssel, der bei dir bleibt.',
+  'data.anonymize.intro': 'Erstellt den Datensatz und den Plan von {month} mit Pseudonymen statt Namen zum Weitergeben, dazu einen Schlüssel, der in der Planung bleibt.',
   'data.anonymize.run': 'Pseudonymisieren',
   'data.anonymize.ready': '{count|Person|Personen} pseudonymisiert. Datensatz und Plan können weitergegeben werden.',
   'data.anonymize.dataset': 'Datensatz speichern',
