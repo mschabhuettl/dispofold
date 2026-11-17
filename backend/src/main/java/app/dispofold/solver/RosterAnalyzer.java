@@ -358,7 +358,7 @@ public final class RosterAnalyzer {
         Double nightLoad = nightLoads.get(personId);
         String nightReason = nightLoad != null ? null
                 : staff.getNightExclusion() != null ? staff.getNightExclusion()
-                : !staff.getFairness().nights() ? Staff.NIGHTS_NEVER : null;
+                : staff.getFairness().weight() > 0 && !staff.getFairness().nights() ? Staff.NIGHTS_NEVER : null;
         Double nightMean = nightLoads.isEmpty() ? null
                 : round(nightLoads.values().stream().mapToDouble(Double::doubleValue).average().orElse(0));
         return new PersonStats(personId, round(target), round(credited), round(planned), accountBefore,

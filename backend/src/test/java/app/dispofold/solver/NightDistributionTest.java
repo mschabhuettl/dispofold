@@ -264,6 +264,20 @@ class NightDistributionTest {
             assertThat(never.stats().nightPool()).isFalse();
             assertThat(never.stats().nightReason()).isEqualTo(Staff.NIGHTS_NEVER);
         }
+        // No night shift in the areas: never nights too. Absent all month: not compared, but no reason.
+        PlanningInput plain = input(rules(NightDistribution.EVEN), p -> p, List.of(), List.of());
+        assertThat(facade.explain(plain, "P0008").stats().nightReason()).isEqualTo(Staff.NIGHTS_NEVER);
+        List<app.dispofold.model.Absence> absences = new ArrayList<>(plain.period().absences());
+        absences.removeIf(a -> a.personId().equals(PERSON));
+        for (int day = 1; day <= 31; day++) {
+            absences.add(new app.dispofold.model.Absence(PERSON, LocalDate.of(2027, 1, day),
+                    plain.dataset().absenceTypes().get(0).code()));
+        }
+        app.dispofold.model.Period p = plain.period();
+        PlanningInput absent = new PlanningInput(plain.dataset(), new app.dispofold.model.Period(p.month(), absences,
+                p.wishes(), p.fixed(), p.previousDuties()), plain.rules(), List.of());
+        assertThat(facade.explain(absent, PERSON).stats().nightPool()).isFalse();
+        assertThat(facade.explain(absent, PERSON).stats().nightReason()).isNull();
     }
 
     @Test

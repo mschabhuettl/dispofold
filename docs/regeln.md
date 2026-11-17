@@ -248,8 +248,11 @@ Eine Einstellung der Regeln, `nightDistribution`:
     einige Wochentage, nur für einen Teil des Monats oder nur für eine von mehreren Nachtschichten genügt
     nicht;
   - eine Familienregel „keine Nacht“ gilt an allen Wochentagen (1 bis 7; eine Regel ohne Wochentage zählt hier
-    wie alle Wochentage).
+    wie alle Wochentage, die Regel `family` selbst wirkt aber nur an genannten Wochentagen).
   „Nie Nacht“ geht vor der gewohnten Verteilung.
+- Demomonat mit klaren Verteilungen für 92 von 150 Personen, je 300 s: `HABIT` vergleicht 41 Personen (Nächte je
+  Person 0 bis 10, Mittel 1,5), `EVEN` 120 (0 bis 13, Mittel 2,3); die Strafe der Verteilung sinkt von rund
+  10,0 auf 4,5 Millionen, Einzeldienste 152 und 145, Bedarf in beiden Fällen gedeckt.
 - Die Personenansicht zeigt bei den Nächten „folgt gewohnter Verteilung (10 % Nacht)“, „im Nachtausgleich:
   Belastung x, Mittel y“ (die Last der Fairness Nachtdienste, siehe unten, als Nächte je 30 verfügbare Tage)
   oder „nicht im Nachtausgleich (nie Nacht)“. Die Fairness-Übersicht markiert, wer nicht verglichen wird, und
