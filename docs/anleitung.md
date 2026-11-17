@@ -216,10 +216,36 @@ Dienst im Monat und Schichten, deren Zeit ein Bedarf des Bereichs überschneidet
   **Ein Klick auf eine Zelle der Zeile „offen“** öffnet die Liste **Wer kann gefragt werden?** für die Lücken
   dieses Tages.
 - Mit den Pfeiltasten bewegt man sich wie im Dienstplan durch die Zellen, Enter öffnet die Auswahl.
-- **Drucken** (Druckfunktion des Browsers): A4 quer, der Monat in zwei Tabellen, Tag 1 bis 15 und Tag 16 bis
-  zum Monatsende. Jede Hälfte beginnt auf einer neuen Seite; mit vielen Funktionen reicht eine Hälfte über
-  mehrere Seiten, der Tabellenkopf steht dann auf jeder Seite. Fixierte Dienste sind eingerahmt, die Zeile
-  „offen“ wird mitgedruckt.
+- **Drucken:** siehe [Drucken](#drucken).
+
+## Drucken
+
+![Druckansicht Dienstplan](screenshots/druck-dienstplan.png)
+
+![Druckansicht Plan nach Funktion](screenshots/druck-funktionen.png)
+
+**Dienstplan** und **Plan nach Funktion** haben oben rechts den Knopf **Drucken**. Er öffnet den Druckdialog
+des Browsers (im Desktop-Programm den Druckdialog des Systems) mit einer eigenen Druckansicht; die Druckfunktion
+des Browsers (Strg+P) liefert dasselbe. Im Dialog lässt sich auch „Als PDF speichern“ wählen.
+
+- **Papier:** A4 quer. Der Monat steht in zwei Tabellen, Tag 1 bis 15 und Tag 16 bis zum Monatsende; jede
+  Hälfte beginnt auf einer neuen Seite. Reicht eine Hälfte über mehrere Seiten, steht der Tabellenkopf auf jeder
+  Seite.
+- **Kopf:** eine Zeile mit Ansicht und Monat, dem Stand des Plans („Entwurf“ oder „abgeschlossen“) und dem
+  Druckdatum, darunter eine kurze Legende der Markierungen.
+- **Ohne Bedienelemente:** Menü, Kopfleiste, Schaltflächen und Statuszeile werden nicht gedruckt; gedruckt wird
+  immer hell auf weißem Papier, auch im dunklen Design.
+- **Dienstplan:** dieselben Personen in derselben Reihenfolge und Gruppierung wie am Bildschirm (also auch mit
+  gewähltem **Bereich** oder einer **Suche**). In den Zellen stehen die Kürzel der Schichten, Abwesenheiten mit
+  ihrem Kürzel, Ersatzruhe als „ER“; Wochenenden und Feiertage sind hinterlegt, fixierte Dienste eingerahmt,
+  Konflikte rot. Neben dem Namen stehen die Wochenstunden, rechts die geplanten Stunden des Monats (**Std.**),
+  unten die Zeile **Bedarfslücken** mit der Zahl der Lücken je Tag.
+- **Plan nach Funktion:** die Funktionen nach Bereichen wie am Bildschirm, die Zeile „offen“ mit den Lücken
+  wird mitgedruckt.
+- **Anzeige:** Beide Ansichten haben die Auswahl **Anzeige** („Kürzel“ oder „Nachname Vorname“); der Druck
+  zeigt die Namen so, wie sie gewählt sind. Im **Dienstplan** ist „Nachname Vorname“ voreingestellt, im **Plan
+  nach Funktion** „Kürzel“. Der Browser merkt sich die Wahl je Ansicht.
+- **Rolle „nur lesen“:** gedruckt wird nur, was diese Rolle auch am Bildschirm sieht (Abwesenheiten als „ABW“).
 
 ## Dienste nur auf Anfrage
 

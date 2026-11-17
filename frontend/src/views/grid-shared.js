@@ -124,3 +124,22 @@ export function rovingGrid(container) {
     },
   };
 }
+
+/** The "Drucken" button of the plan views: the browser's print dialog with the print layout of the view. */
+export function printButton() {
+  return h('button.btn.btn-secondary', { type: 'button', title: t('print.buttonHelp'), 'data-print': '', onclick: () => window.print() },
+    t('print.button'));
+}
+
+/** Prints on white paper: the light theme while the print dialog is open. Returns the function that removes it. */
+export function lightThemeWhilePrinting() {
+  let theme = null;
+  const before = () => { theme = document.documentElement.dataset.theme; document.documentElement.dataset.theme = 'light'; };
+  const after = () => { if (theme) document.documentElement.dataset.theme = theme; };
+  window.addEventListener('beforeprint', before);
+  window.addEventListener('afterprint', after);
+  return () => {
+    window.removeEventListener('beforeprint', before);
+    window.removeEventListener('afterprint', after);
+  };
+}

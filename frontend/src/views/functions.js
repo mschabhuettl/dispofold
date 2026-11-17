@@ -4,10 +4,11 @@ import { dayLabel, monthLabel } from '../lib/dates.js';
 import { append, guarded, h } from '../lib/dom.js';
 import { NAME_MODES, buildFunctionRows, gapLine, personLabel, printParts } from '../lib/functions-model.js';
 import { cellRequest, cellsEditable } from '../lib/grid-model.js';
+import { printHeader } from '../lib/print.js';
 import { needsRulesForCategories, onRequestTest } from '../lib/restrictions.js';
 import { t } from '../lib/texts.js';
 import { gapsWithCandidates } from './candidate-list.js';
-import { cellChoice, createPopover, dayClass, dayHeader, rovingGrid } from './grid-shared.js';
+import { cellChoice, createPopover, dayClass, dayHeader, lightThemeWhilePrinting, printButton, rovingGrid } from './grid-shared.js';
 
 const NAME_LABELS = { short: t('functions.names.short'), full: t('functions.names.full') };
 
@@ -36,14 +37,15 @@ export async function render(root, ctx) {
     draw();
   } }, NAME_MODES.map((m) => h('option', { value: m, selected: m === nameMode }, NAME_LABELS[m])));
 
-  root.classList.add('function-view');
+  root.classList.add('function-view', 'print-view');
   append(root, [
     h('h1', {}, title),
     !dataset.people.length && h('p.alert', {}, t('common.noMasterdata')),
     dataset.people.length > 0 && !state.plan.assignments.length && h('p.alert', {}, t('common.noPlan')),
     state.solving && h('p.alert', {}, t('roster.lockedWhileSolving')),
     state.plan.status === 'CLOSED' && h('p.alert', {}, t('roster.closedHint')),
-    h('div.toolbar', {}, h('div.field', {}, h('label', { for: 'fn-names' }, t('functions.names')), nameSelect)),
+    h('div.toolbar', {}, h('div.field', {}, h('label', { for: 'fn-names' }, t('functions.names')), nameSelect), h('span.spacer', {}),
+      printButton()),
     legend(canEdit),
     table,
     print,
@@ -64,7 +66,8 @@ export async function render(root, ctx) {
     const key = focusKey ?? active;
     focusKey = null;
     nav.restore(key);
-    print.replaceChildren(...printParts(model.days).map((days) => printTable(model, days)));
+    print.replaceChildren(h('p.print-header', {}, printHeader(title, state.plan.status)), legend(canEdit),
+      ...printParts(model.days).map((days) => printTable(model, days)));
   }
 
   function rowHeader(row) {
@@ -181,18 +184,12 @@ export async function render(root, ctx) {
         }))))));
   }
 
-  // printed on white paper: the light theme while printing
-  let theme = null;
-  const beforePrint = () => { theme = document.documentElement.dataset.theme; document.documentElement.dataset.theme = 'light'; };
-  const afterPrint = () => { if (theme) document.documentElement.dataset.theme = theme; };
-  window.addEventListener('beforeprint', beforePrint);
-  window.addEventListener('afterprint', afterPrint);
+  const stopPrintTheme = lightThemeWhilePrinting();
   draw();
   return () => {
     disposed = true;
     popover.close();
-    window.removeEventListener('beforeprint', beforePrint);
-    window.removeEventListener('afterprint', afterPrint);
+    stopPrintTheme();
   };
 }
 

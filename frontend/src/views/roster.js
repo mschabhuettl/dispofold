@@ -3,13 +3,16 @@ import { demandFigures, scoreFigures } from '../lib/api.js';
 import { tintStyle } from '../lib/colors.js';
 import { dayLabel, monthLabel } from '../lib/dates.js';
 import { append, fmt, guarded, h, toast } from '../lib/dom.js';
+import { NAME_MODES, personLabel, printParts } from '../lib/functions-model.js';
 import { NEUTRAL_ABSENCE, buildGrid, cellRequest, cellsEditable } from '../lib/grid-model.js';
+import { printHeader } from '../lib/print.js';
 import { needsRulesForCategories, onRequestTest } from '../lib/restrictions.js';
 import { t } from '../lib/texts.js';
 import { gapsWithCandidates } from './candidate-list.js';
-import { cellChoice, createPopover, dayClass, dayHeader, rovingGrid } from './grid-shared.js';
+import { cellChoice, createPopover, dayClass, dayHeader, lightThemeWhilePrinting, printButton, rovingGrid } from './grid-shared.js';
 
 const POLL_INTERVAL_MS = 2000;
+const NAME_LABELS = { short: t('functions.names.short'), full: t('functions.names.full') };
 const STATUS = {
   EMPTY: t('roster.status.empty'),
   SOLVING: t('roster.status.solving'),
@@ -42,6 +45,11 @@ export async function render(root, ctx) {
   const onRequest = onRequestTest(dataset.restrictions, dataset.shifts, rules);
   const status = h('div.statusbar', {});
   const table = h('div.roster-wrap', {});
+  const print = h('div.print-only', {});
+  const title = t('roster.title', { month: monthLabel(month) });
+  // per viewer: "Nachname Vorname" (as before) or the short name in the first column, on screen and in print
+  let nameMode = 'full';
+  try { nameMode = NAME_MODES.includes(localStorage.getItem('roster-names')) ? localStorage.getItem('roster-names') : 'full'; } catch { /* no storage */ }
   const nav = rovingGrid(table);
   // empty fields leave seed, time and move limit to the server's reproducible defaults
   const seedInput = h('input', { id: 'seed', type: 'number', min: 0, placeholder: t('roster.serverDefault') });
@@ -52,8 +60,9 @@ export async function render(root, ctx) {
   const btnStop = h('button.btn.btn-secondary', { type: 'button', onclick: stop }, t('roster.stop'));
   const btnUnpin = h('button.btn.btn-secondary', { type: 'button', onclick: unpin }, t('roster.unpinAll'));
 
+  root.classList.add('roster-view', 'print-view');
   append(root, [
-    h('h1', {}, t('roster.title', { month: monthLabel(month) })),
+    h('h1', {}, title),
     h('div.toolbar', {},
       h('div.field', {}, h('label', { for: 'area' }, t('roster.area')),
         h('select', { id: 'area', onchange: (e) => { areaId = e.target.value; sessionStorage.setItem('roster-area', areaId); drawTable(); } },
@@ -61,6 +70,13 @@ export async function render(root, ctx) {
           dataset.areas.map((a) => h('option', { value: a.id, selected: a.id === areaId }, a.name)))),
       h('div.field', {}, h('label', { for: 'search' }, t('roster.search')),
         h('input', { id: 'search', type: 'search', placeholder: t('roster.searchPlaceholder'), oninput: (e) => { search = e.target.value; drawTable(); } })),
+      h('div.field', {}, h('label', { for: 'roster-names' }, t('functions.names')),
+        h('select', { id: 'roster-names', onchange: (e) => {
+          nameMode = e.target.value;
+          try { localStorage.setItem('roster-names', nameMode); } catch { /* no storage */ }
+          drawTable();
+        } }, NAME_MODES.map((m) => h('option', { value: m, selected: m === nameMode }, NAME_LABELS[m])))),
+      printButton(),
       h('span.spacer', {}),
       canEdit && [
         h('div.field', {}, h('label', { for: 'seed' }, t('roster.seed')), seedInput),
@@ -73,6 +89,7 @@ export async function render(root, ctx) {
     status,
     legend(dataset, canEdit),
     table,
+    print,
   ]);
 
   function drawStatus() {
@@ -105,6 +122,7 @@ export async function render(root, ctx) {
       btnStop.disabled = !state.solving;
       btnUnpin.disabled = state.solving || closed() || !plan.assignments.length;
     }
+    print.querySelector('.print-header')?.replaceChildren(printHeader(title, plan.status));
   }
 
   function drawTable() {
@@ -133,8 +151,8 @@ export async function render(root, ctx) {
       const r = rowIndex++;
       body.push(h('tr', { 'data-row': String(r) },
         h('th.person', { scope: 'row' },
-          h('a', { href: `#/person/${encodeURIComponent(row.person.id)}` }, row.name),
-          ' ', h('span.meta', {}, `${row.person.shortName ?? ''} · ${fmt.num(row.person.weeklyHours)} h`)),
+          h('a', { href: `#/person/${encodeURIComponent(row.person.id)}` }, personLabel(row.person, row.name, nameMode)),
+          ' ', h('span.meta', {}, personMeta(row.person))),
         row.cells.map((c, i) => h('td.cell', { class: dayClass(grid.days[i]) }, cellContent(row, c, grid.days[i], r, i))),
         h('td.sum', {}, fmt.num(row.hours, 1))));
     }
@@ -142,12 +160,51 @@ export async function render(root, ctx) {
       h('th.person', { scope: 'row' }, t('roster.gapsRow')),
       grid.days.map((d) => h('td.cell', { class: dayClass(d) }, gapCell(d, gapDays.get(d.date)))),
       h('td.sum', {}, '')));
-    table.replaceChildren(h('table.roster', { role: 'grid', 'aria-readonly': editable() ? null : 'true' }, h('caption.visually-hidden', {}, t('roster.title', { month: monthLabel(month) })),
+    table.replaceChildren(h('table.roster', { role: 'grid', 'aria-readonly': editable() ? null : 'true' }, h('caption.visually-hidden', {}, title),
       h('thead', {}, head), h('tbody', {}, body)));
+    print.replaceChildren(h('p.print-header', {}, printHeader(title, state.plan.status)), legend(dataset, canEdit),
+      ...printParts(grid.days).map((days) => printTable(grid, days, gapDays)));
     // one tab stop: the last used cell, else the first; keep keyboard focus on the same cell after a redraw
     const key = focusKey ?? active;
     focusKey = null;
     nav.restore(key);
+  }
+
+  /** Meta text after the name: with the full name the short name, then the weekly hours. */
+  function personMeta(p) {
+    const short = nameMode === 'full' ? (p.shortName ?? '') : '';
+    return `${short}${short ? ' · ' : ''}${fmt.num(p.weeklyHours)} h`;
+  }
+
+  /** Plain table of some days for print (no buttons): the same rows, groups and gap counts as on screen. */
+  function printTable(grid, days, gapDays) {
+    const from = grid.days.indexOf(days[0]);
+    const body = [];
+    let group = null;
+    for (const row of grid.rows) {
+      const first = row.person.areaIds[0];
+      if (!areaId && first !== group) {
+        group = first;
+        body.push(h('tr.group', {}, h('th', { colspan: days.length + 2, scope: 'colgroup' }, areaName.get(first) ?? first)));
+      }
+      body.push(h('tr', {},
+        h('th.person', { scope: 'row' }, personLabel(row.person, row.name, nameMode), ' ', h('span.meta', {}, personMeta(row.person))),
+        days.map((d, i) => {
+          const cell = row.cells[from + i];
+          const style = cell.color ? tintStyle(cell.color) : null;
+          const cls = [style && 'tinted', cell.kind === 'absence' && 'absence strong', cell.kind === 'compRest' && 'comp-rest',
+            cell.pinned && 'pinned', cell.conflict && 'strong hard', cell.onRequest && 'on-request'].filter(Boolean).join(' ');
+          return h('td.cell', { class: dayClass(d) }, cell.code ? h('span.cell-code', { class: cls || null, style }, cell.code) : '');
+        }),
+        h('td.sum', {}, fmt.num(row.hours, 1))));
+    }
+    body.push(h('tr', {}, h('th.person', { scope: 'row' }, t('roster.gapsRow')),
+      days.map((d) => h('td.cell', { class: dayClass(d) }, gapDays.get(d.date) ? h('strong.text-danger', {}, String(gapDays.get(d.date))) : '')),
+      h('td.sum', {}, '')));
+    return h('table.roster.plan-print', {},
+      h('caption', {}, `${title}, ${t('functions.printPart', { from: days[0].day, to: days.at(-1).day })}`),
+      h('thead', {}, h('tr', {}, h('th.person', { scope: 'col' }, t('roster.person')), days.map(dayHeader), h('th', { scope: 'col' }, t('roster.hoursShort')))),
+      h('tbody', {}, body));
   }
 
   /** Gap count of a day; planners open the day's gaps with who could be asked. */
@@ -268,11 +325,13 @@ export async function render(root, ctx) {
     }
   }
 
-  drawStatus();
+  const stopPrintTheme = lightThemeWhilePrinting();
   drawTable();
+  drawStatus();
   if (state.solving) timer = setTimeout(poll, POLL_INTERVAL_MS);
   return () => {
     disposed = true;
+    stopPrintTheme();
     clearTimeout(timer);
     timer = null;
     closePopover();

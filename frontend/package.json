@@ -11,6 +11,7 @@
     "screenshots": "node scripts/screenshots.mjs",
     "check:exports": "node scripts/build.mjs && node scripts/check-exports.mjs",
     "check:forms": "node scripts/build.mjs && node scripts/check-forms.mjs",
+    "check:print": "node scripts/build.mjs && node scripts/check-print.mjs",
     "check:desktop": "node scripts/build.mjs && node scripts/check-desktop.mjs"
   },
   "dependencies": {

@@ -195,6 +195,11 @@ export const TEXTS = {
   'functions.names.short': 'Kürzel',
   'functions.names.full': 'Nachname Vorname',
   'functions.printPart': 'Tage {from} bis {to}',
+  'print.button': 'Drucken',
+  'print.buttonHelp': 'Druckansicht: A4 quer, Tag 1 bis 15 und Tag 16 bis Monatsende je auf einer eigenen Seite',
+  'print.header': '{title} · Status: {status} · gedruckt am {date}',
+  'print.status.draft': 'Entwurf',
+  'print.status.closed': 'abgeschlossen',
   'functions.legend.missing': 'Zeile „offen“: fehlende Personen und Zeit, je Lücke',
 
   // Wer kann gefragt werden? (Dienste nur auf Anfrage)

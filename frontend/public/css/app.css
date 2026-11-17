@@ -362,26 +362,32 @@ tr.gap-row th.person { color: var(--danger); font-weight: 600; }
 .center-box .btn { margin-top: .5rem; }
 .center-page > .theme-toggle { position: fixed; top: 1rem; right: 1rem; }
 
-/* Print of the function view: A4 landscape, the month in two tables (days 1-15 and 16 to the end), one page each */
+/* Print of the plan views (Dienstplan, Plan nach Funktion): A4 landscape, a header line (month, status, print date),
+   a legend, then the month in two tables (days 1-15 and 16 to the end), each starting on a new page; the table
+   header repeats on every page. No app chrome. */
 .print-only { display: none; }
-@page functions { size: A4 landscape; margin: 8mm; }
+@page plan { size: A4 landscape; margin: 8mm; }
 @media print {
-  body:has(.function-view) .sidebar, body:has(.function-view) .topbar, body:has(.function-view) .banner,
-  body:has(.function-view) .toast, body:has(.function-view) .skip-link { display: none !important; }
-  body:has(.function-view) { background: #FFFFFF; }
-  body:has(.function-view) main { padding: 0; }
-  .function-view { page: functions; }
-  .function-view > h1, .function-view > .alert, .function-view > .roster-wrap { display: none; }
-  .function-view .print-only { display: block; }
-  .function-view .legend { margin: 0 0 2mm; font-size: 8pt; }
-  table.functions-print { width: 100%; font-size: 7.5pt; break-after: page; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
-  table.functions-print:last-child { break-after: auto; }
-  table.functions-print caption { text-align: left; font-weight: 600; padding-bottom: 2mm; }
-  table.functions-print thead th, table.functions-print th.person, table.functions-print tr.group th { position: static; min-width: 0; }
-  table.functions-print thead th { min-width: 0; }
-  table.functions-print td.cell { height: auto; padding: .5mm 0; }
-  table.functions-print .cell-code { min-width: 0; }
+  body:has(.print-view) .sidebar, body:has(.print-view) .topbar, body:has(.print-view) .banner,
+  body:has(.print-view) .toast, body:has(.print-view) .skip-link, body:has(.print-view) .popover { display: none !important; }
+  body:has(.print-view) { background: #FFFFFF; }
+  body:has(.print-view) main { padding: 0; }
+  .print-view { page: plan; }
+  .print-view > :not(.print-only) { display: none !important; }
+  .print-view .print-only { display: block; }
+  .print-view .print-header { margin: 0 0 1mm; font-size: 9pt; font-weight: 600; }
+  .print-view .legend { margin: 0 0 2mm; font-size: 8pt; gap: .6rem; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  table.functions-print, table.plan-print { width: 100%; font-size: 7.5pt; break-after: page; print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+  table.functions-print:last-child, table.plan-print:last-child { break-after: auto; }
+  table.functions-print caption, table.plan-print caption { text-align: left; font-weight: 600; padding-bottom: 2mm; }
+  table.functions-print thead, table.plan-print thead { display: table-header-group; }
+  table.functions-print thead th, table.functions-print th.person, table.functions-print tr.group th,
+  table.plan-print thead th, table.plan-print th.person, table.plan-print tr.group th { position: static; min-width: 0; }
+  table.functions-print td.cell, table.plan-print td.cell { height: auto; padding: .5mm 0; }
+  table.functions-print .cell-code, table.plan-print .cell-code { min-width: 0; }
+  table.plan-print th.person { white-space: nowrap; }
+  table.plan-print th.person .meta { font-weight: 400; }
   /* gap spans wrap after the count, so a row of daily gaps keeps the half month on the page width */
   table.functions-print tr.gap-row .cell-code { white-space: normal; }
-  table.functions-print tr { break-inside: avoid; }
+  table.functions-print tr, table.plan-print tr { break-inside: avoid; }
 }
