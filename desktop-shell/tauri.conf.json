@@ -2,7 +2,7 @@
   "$schema": "node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Dispofold",
   "mainBinaryName": "dispofold",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "identifier": "app.dispofold",
   "build": { "frontendDist": "pages" },
   "app": {

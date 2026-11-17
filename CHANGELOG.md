@@ -3,7 +3,7 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
-## 0.9.0 (unreleased)
+## 0.9.0 (2026-11-17)
 
 Einfachere Oberfläche: was am Plan nicht stimmt, steht oben; ein Name je Begriff. Die Planungsergebnisse sind
 unverändert.
@@ -43,6 +43,8 @@ unverändert.
   Die Legende zeigt nur, was diese Rolle sieht.
 - **Import/Export:** Keine Dateipfade und Formatangaben mehr auf der Seite; „Demodaten laden“ steht unter
   „Erweitert“.
+- **Schnittstelle:** neuer Lesezugriff `GET /api/plans/{month}/hits` liefert die Treffer des Plans je Regel in
+  einer Anfrage (für die Liste hinter den Knöpfen der Statuszeile).
 - Betrieb: keine Änderung an Datenbank, `docker-compose.yml` oder `.env`.
 
 ## 0.8.0 (2026-11-17)
