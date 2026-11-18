@@ -26,6 +26,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import app.dispofold.model.Dataset;
+import app.dispofold.model.Period;
 import app.dispofold.model.Person;
 import app.dispofold.store.Store;
 import io.quarkus.test.junit.QuarkusTest;
@@ -162,6 +163,104 @@ class DataTest {
         assertThat(store.appliedCorrections()).isEmpty();
         given().get("/api/data/corrections").then().statusCode(200).body("count", equalTo(0))
                 .body("complete", equalTo(false));
+    }
+
+    /** Sets or takes back that a person is no longer taken over from the source. */
+    ValidatableResponse exclude(String id, boolean excluded) {
+        long revision = given().get("/api/dataset").then().extract().jsonPath().getLong("revision");
+        return given().contentType(ContentType.JSON).header("If-Match", String.valueOf(revision))
+                .body(String.valueOf(excluded)).put("/api/dataset/people/" + id + "/excluded").then();
+    }
+
+    /** The test dataset as the source exports it with {@code exclude} for the person: without everything of them. */
+    static Dataset without(String id) {
+        Dataset d = TestData.dataset(MONTH);
+        List<Period> periods = d.periods().stream().map(p -> new Period(p.month(),
+                p.absences().stream().filter(a -> !a.personId().equals(id)).toList(),
+                p.wishes().stream().filter(w -> !w.personId().equals(id)).toList(),
+                p.fixed().stream().filter(f -> !f.personId().equals(id)).toList(), p.previousDuties())).toList();
+        return new Dataset(d.format(), d.version(), d.source(), d.areas(), d.shifts(), d.demand(), d.holidays(),
+                d.absenceTypes(), d.people().stream().filter(p -> !p.id().equals(id)).toList(), d.restrictions(),
+                d.history().stream().filter(h -> !h.personId().equals(id)).toList(), periods);
+    }
+
+    JsonNode person(String id) throws Exception {
+        JsonNode d = mapper.readTree(given().get("/api/dataset").then().statusCode(200).extract().asString());
+        for (JsonNode p : d.path("people")) {
+            if (p.path("id").asText().equals(id)) {
+                return p;
+            }
+        }
+        return null;
+    }
+
+    @Test
+    void aPersonWithHistoryIsExcludedFromTheSourceAndTakenBack() throws Exception {
+        // P0001 has imported history, so it cannot be removed; excluded from the first planning month on
+        exclude("P0001", true).statusCode(200).body("item.excludedFrom", equalTo(MONTH.atDay(1).toString()));
+        given().get("/api/data/corrections").then().statusCode(200).body("count", equalTo(1))
+                .body("withdrawn", equalTo(0)).body("file.people.P0001.exclude", equalTo(true))
+                .body("file.people.P0001.size()", equalTo(1));
+
+        // the source's next dataset leaves the person out and lists the exclusion as applied
+        String next = withApplied(without("P0001"), "\"people\": {\"P0001\": {\"exclude\": true}}, \"demand\": {}");
+        given().contentType(ContentType.JSON).body(next).post("/api/import/preview").then().statusCode(200)
+                .body("kept", equalTo(1)).body("conflicts.size()", equalTo(0)).body("notes.size()", equalTo(0));
+        given().contentType(ContentType.JSON).body(next).post("/api/import/dataset?keep=true").then()
+                .statusCode(200).body("notes.size()", equalTo(0)).body("warnings.size()", equalTo(0));
+        // the person stays with the history, excluded as part of the import
+        assertThat(person("P0001").path("excludedFrom").asText()).isEqualTo(MONTH.atDay(1).toString());
+        given().get("/api/dataset").then().body("changedSinceImport", equalTo(false))
+                .body("history.findAll { it.personId == 'P0001' }.size()", equalTo(1));
+        given().get("/api/data/corrections").then().body("count", equalTo(1)).body("earlier", equalTo(1))
+                .body("file.people.P0001.exclude", equalTo(true));
+        // and again with a plain import of the same file
+        given().contentType(ContentType.JSON).body(next).post("/api/import/dataset").then().statusCode(200);
+        assertThat(person("P0001").path("excludedFrom").asText()).isEqualTo(MONTH.atDay(1).toString());
+
+        // taken back: the file no longer has it, also not from the applied corrections
+        exclude("P0001", false).statusCode(200);
+        assertThat(person("P0001").has("excludedFrom")).isFalse();
+        given().get("/api/data/corrections").then().body("count", equalTo(0)).body("withdrawn", equalTo(1))
+                .body("file.people.size()", equalTo(0));
+        // a dataset exported before that, imported keeping the changes: still taken back, without notes
+        given().contentType(ContentType.JSON).body(next).post("/api/import/preview").then().statusCode(200)
+                .body("kept", equalTo(1)).body("conflicts.size()", equalTo(0)).body("notes.size()", equalTo(0));
+        given().contentType(ContentType.JSON).body(next).post("/api/import/dataset?keep=true").then()
+                .statusCode(200);
+        assertThat(person("P0001").has("excludedFrom")).isFalse();
+        assertThat(store.baseline().orElseThrow().people()).anyMatch(p -> p.id().equals("P0001")
+                && MONTH.atDay(1).equals(p.excludedFrom()));
+        given().get("/api/data/corrections").then().body("count", equalTo(0)).body("withdrawn", equalTo(1));
+        // replacing the changes: excluded again, as the import has it
+        given().contentType(ContentType.JSON).body(next).post("/api/import/dataset?replace=true").then()
+                .statusCode(200);
+        assertThat(person("P0001").path("excludedFrom").asText()).isEqualTo(MONTH.atDay(1).toString());
+
+        // the source takes the person over again
+        importDataset(TestData.dataset(MONTH), "").statusCode(200);
+        assertThat(person("P0001").has("excludedFrom")).isFalse();
+        given().get("/api/data/corrections").then().body("count", equalTo(0)).body("withdrawn", equalTo(0));
+    }
+
+    @Test
+    void anExclusionFromTheAppliedCorrectionsShowsAndCanBeTakenBack() throws Exception {
+        // written into the corrections file by hand: the person is known here, the new import leaves them out
+        String next = withApplied(without("P0001"), "\"people\": {\"P0001\": {\"exclude\": true}}, \"demand\": {}");
+        given().contentType(ContentType.JSON).body(next).post("/api/import/dataset").then().statusCode(200);
+        assertThat(person("P0001").path("excludedFrom").asText()).isEqualTo(MONTH.atDay(1).toString());
+        given().get("/api/dataset").then().body("changedSinceImport", equalTo(false));
+        exclude("P0001", false).statusCode(200);
+        given().get("/api/data/corrections").then().body("count", equalTo(0)).body("withdrawn", equalTo(1))
+                .body("file.people.size()", equalTo(0));
+        // a person the import never had: the exclusion stays in the file
+        importDataset(without("P0002"), "?replace=true").statusCode(200);
+        given().contentType(ContentType.JSON).body(withApplied(without("P0002"),
+                "\"people\": {\"P0002\": {\"exclude\": true}}, \"demand\": {}"))
+                .post("/api/import/dataset").then().statusCode(200);
+        assertThat(person("P0002")).isNull();
+        given().get("/api/data/corrections").then().body("count", equalTo(1))
+                .body("file.people.P0002.exclude", equalTo(true));
     }
 
     @Test

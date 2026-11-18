@@ -21,6 +21,7 @@ class RolesTest {
     static final String[][] WRITES = { { "PUT", "/api/rules" }, { "PUT", "/api/periods/2032-01" },
             { "PUT", "/api/dataset/people/P0001" }, { "POST", "/api/dataset/areas" },
             { "DELETE", "/api/dataset/areas/AN" }, { "PUT", "/api/dataset/people/P0001/restrictions" },
+            { "PUT", "/api/dataset/people/P0001/excluded" },
             { "POST", "/api/import/demo" }, { "POST", "/api/import/dataset" },
             { "POST", "/api/plans/2032-01/solve" }, { "POST", "/api/plans/2032-01/stop" },
             { "PUT", "/api/plans/2032-01/cells" }, { "POST", "/api/plans/2032-01/unpin" },

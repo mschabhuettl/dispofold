@@ -36,7 +36,8 @@ import app.dispofold.model.ShiftType;
  * Master data changed in Dispofold against the baseline (the master data as last imported), in the terms of the
  * corrections file (format {@code dispofold/corrections}, version 2) that the export client applies to a fresh
  * dataset as its last step: per person the changed fields as whole values and the whole list of restrictions,
- * {@code exclude} for people removed here, and all demand rules of an area whose rules changed. A field in the file
+ * {@code exclude} for people removed here or no longer taken over from the source ({@link Person#excludedFrom}), and
+ * all demand rules of an area whose rules changed. A field in the file
  * replaces the value completely; a field the client finds invalid is skipped there without stopping, so everything
  * a target dataset cannot take is left out here and listed as a note instead.
  * <p>
@@ -58,6 +59,12 @@ public final class Corrections {
     public static final String RESTRICTIONS = "restrictions";
     public static final String EXCLUDE = "exclude";
     public static final String DEMAND = "demand";
+    /**
+     * Not a field of the file: in {@link PersonChange#fields} the exclusion of the person was set or taken back since
+     * the import. Set, the file has {@code exclude} for the person; taken back, nothing (the source takes the person
+     * over again).
+     */
+    public static final String EXCLUDED_FROM = "excludedFrom";
     /** Person fields the file cannot change. */
     static final List<String> IDENTITY = List.of("externalId", "firstName", "lastName", "shortName");
     /** Person keys the client accepts (the dataset ids of its source); others are skipped there. */
@@ -67,7 +74,8 @@ public final class Corrections {
      * The changes of one person.
      *
      * @param person the person as in Dispofold, the source of the values
-     * @param fields changed fields from {@link #FIELDS} in that order, then {@link #RESTRICTIONS}
+     * @param fields changed fields from {@link #FIELDS} in that order, then {@link #RESTRICTIONS}, then
+     *        {@link #EXCLUDED_FROM}; for a person excluded in Dispofold only {@link #EXCLUDED_FROM}
      * @param restrictions the person's restrictions in Dispofold, used when {@code fields} has restrictions
      */
     public record PersonChange(Person person, List<String> fields, List<Restriction> restrictions) {
@@ -75,7 +83,8 @@ public final class Corrections {
 
     /**
      * @param people changes per person id, in the client's order
-     * @param excluded ids of people removed in Dispofold, in the client's order
+     * @param excluded ids of people removed in Dispofold, in the client's order (in a file also of people excluded
+     *        at the import and still)
      * @param demand all demand rules per area whose rules changed (an empty list removes the area's demand)
      * @param notes what cannot be carried over
      */
@@ -101,10 +110,12 @@ public final class Corrections {
      *
      * @param count fields, exclusions and demand areas in the file
      * @param earlier of these, the ones taken from the corrections applied to the last import and unchanged since
+     * @param withdrawn exclusions taken back since the import: the file no longer has them
      * @param complete the last import listed the corrections applied to it; without, the file has only the changes
      *        since that import
      */
-    public record Export(ObjectNode file, List<Issue> notes, int count, int earlier, boolean complete) {
+    public record Export(ObjectNode file, List<Issue> notes, int count, int earlier, int withdrawn,
+            boolean complete) {
     }
 
     private Corrections() {
@@ -116,29 +127,39 @@ public final class Corrections {
      */
     public static Export export(Dataset base, Dataset current, JsonNode applied, ObjectMapper mapper) {
         Changes changed = check(diff(base, current), base);
-        Changes changes = applied == null ? changed : withEarlier(changed, applied, base);
+        Changes changes = withEarlier(changed, applied, base);
         List<Issue> notes = new ArrayList<>(changes.notes());
         long foreign = Stream.concat(changes.people().keySet().stream(), changes.excluded().stream())
                 .filter(id -> !CLIENT_ID.matcher(id).matches()).count();
         if (foreign > 0) {
             notes.add(note("corrections.idFormat", "count", foreign));
         }
-        return new Export(file(changes, mapper), List.copyOf(notes), changes.count(),
-                changes.count() - changed.count(), applied != null);
+        int withdrawn = (int) changes.people().values().stream()
+                .filter(c -> c.fields().contains(EXCLUDED_FROM) && c.person().excludedFrom() == null).count();
+        return new Export(file(changes, mapper), List.copyOf(notes), changes.count() - withdrawn,
+                changes.count() - changed.count(), withdrawn, applied != null);
     }
 
     /**
-     * The checked changes plus the corrections still in effect from the corrections file the source applied to the
-     * base ({@code applied}, same format): per person its fields with the base's value (the value from Dispofold
-     * where the changes have the field, and the base's value where they dropped it), its exclusion, and per demand
-     * area the base's rules. A person removed in Dispofold keeps only the exclusion. Other keys of the file, such as
-     * {@code note}, are not taken over.
+     * The checked changes plus the corrections still in effect: the people excluded in the base and unchanged since,
+     * and from the corrections file the source applied to the base ({@code applied}, same format, null if unknown)
+     * per person its fields with the base's value (the value from Dispofold where the changes have the field, and the
+     * base's value where they dropped it), the exclusion of a person the base does not have, and per demand area the
+     * base's rules. A person removed or excluded in Dispofold keeps only the exclusion; one whose exclusion was taken
+     * back has none. Other keys of the file, such as {@code note}, are not taken over.
      */
     static Changes withEarlier(Changes changes, JsonNode applied, Dataset base) {
         Map<String, Person> before = byId(list(base.people()), Person::id);
         Map<String, PersonChange> people = new TreeMap<>(CLIENT_ORDER);
         people.putAll(changes.people());
         List<String> excluded = new ArrayList<>(changes.excluded());
+        // a change of the exclusion is in the changes
+        before.values().stream().filter(b -> b.excludedFrom() != null && !people.containsKey(b.id())
+                && !excluded.contains(b.id())).forEach(b -> excluded.add(b.id()));
+        if (applied == null) {
+            excluded.sort(CLIENT_ORDER);
+            return new Changes(people, excluded, changes.demand(), changes.notes());
+        }
         applied.path("people").fields().forEachRemaining(e -> {
             String id = e.getKey();
             JsonNode entry = e.getValue();
@@ -149,10 +170,10 @@ public final class Corrections {
                 }
                 return;
             }
-            if (b == null || excluded.contains(id)) {
+            PersonChange c = people.get(id);
+            if (b == null || excluded.contains(id) || c != null && c.person().excludedFrom() != null) {
                 return;
             }
-            PersonChange c = people.get(id);
             List<String> fields = c == null ? List.of() : c.fields();
             List<String> all = Stream.concat(FIELDS.stream(), Stream.of(RESTRICTIONS))
                     .filter(f -> fields.contains(f) || entry.has(f)).toList();
@@ -192,6 +213,13 @@ public final class Corrections {
                 excluded.add(old.id());
                 continue;
             }
+            boolean exclusion = !Objects.equals(old.excludedFrom(), p.excludedFrom());
+            if (p.excludedFrom() != null) {
+                if (exclusion) {
+                    people.put(p.id(), new PersonChange(p, List.of(EXCLUDED_FROM), List.of()));
+                }
+                continue;
+            }
             for (String field : IDENTITY) {
                 if (!Objects.equals(identity(old, field), identity(p, field))) {
                     notes.add(note("corrections.identity", "personId", old.id(), "field", field));
@@ -206,6 +234,9 @@ public final class Corrections {
             List<Restriction> own = own(current.restrictions(), p.id());
             if (!counts(own(base.restrictions(), old.id())).equals(counts(own))) {
                 fields.add(RESTRICTIONS);
+            }
+            if (exclusion) {
+                fields.add(EXCLUDED_FROM);
             }
             if (!fields.isEmpty()) {
                 people.put(p.id(), new PersonChange(p, fields, own));
@@ -347,9 +378,17 @@ public final class Corrections {
         ObjectNode file = mapper.createObjectNode().put("format", FORMAT).put("version", VERSION);
         ObjectNode people = file.putObject("people");
         changes.people().forEach((id, change) -> {
+            if (change.person().excludedFrom() != null) {
+                people.putObject(id).put(EXCLUDE, true);
+                return;
+            }
+            List<String> fields = change.fields().stream().filter(f -> !f.equals(EXCLUDED_FROM)).toList();
+            if (fields.isEmpty()) {
+                return; // an exclusion taken back: the source takes the person over again
+            }
             ObjectNode entry = people.putObject(id);
             JsonNode person = mapper.valueToTree(change.person());
-            for (String field : change.fields()) {
+            for (String field : fields) {
                 if (field.equals(RESTRICTIONS)) {
                     var list = entry.putArray(RESTRICTIONS);
                     for (Restriction r : change.restrictions()) {
@@ -389,8 +428,8 @@ public final class Corrections {
     // Apply to a new import
 
     /**
-     * Applies checked changes to a dataset: changed fields and restrictions replaced, excluded people removed with
-     * every entry that refers to them (restrictions, history, absences, wishes, fixed duties, previous duties), the
+     * Applies checked changes to a dataset: changed fields, restrictions and exclusions from the source
+     * ({@link #EXCLUDED_FROM}) replaced, people removed in Dispofold removed with every entry that refers to them (restrictions, history, absences, wishes, fixed duties, previous duties), the
      * demand rules of an area replaced where its first rule stood.
      */
     public static Dataset apply(Changes changes, Dataset target) {
@@ -457,7 +496,8 @@ public final class Corrections {
                 fields.contains("familyRules") ? p.familyRules() : t.familyRules(), t.externalId(),
                 fields.contains("entryDate") ? p.entryDate() : t.entryDate(),
                 fields.contains("exitDate") ? p.exitDate() : t.exitDate(),
-                fields.contains("shiftMix") ? p.shiftMix() : t.shiftMix());
+                fields.contains("shiftMix") ? p.shiftMix() : t.shiftMix(),
+                fields.contains(EXCLUDED_FROM) ? p.excludedFrom() : t.excludedFrom());
     }
 
     /**
@@ -512,6 +552,7 @@ public final class Corrections {
             case "entryDate" -> p.entryDate();
             case "exitDate" -> p.exitDate();
             case "shiftMix" -> mix(p.shiftMix());
+            case EXCLUDED_FROM -> p.excludedFrom();
             default -> throw new IllegalArgumentException(field);
         };
     }

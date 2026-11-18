@@ -1,7 +1,10 @@
 package app.dispofold.api;
 
+import java.time.LocalDate;
 import java.time.YearMonth;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -230,6 +233,10 @@ public class MasterDataService {
                         PlanService.params("kind", kind.param, "key", key),
                         "Die Id im Pfad und im Body muss gleich sein");
             }
+            if (kind == Kind.PEOPLE) {
+                // set and cleared only with exclude()
+                item = ((Person) item).withExcludedFrom(master.people.get(index).excludedFrom());
+            }
             master.items(kind).set(index, item);
             return new Result(key, item, 0);
         });
@@ -248,6 +255,33 @@ public class MasterDataService {
             master.restrictions.addAll(own);
             return new Result(personId, own, 0);
         });
+    }
+
+    /**
+     * Sets or clears that the person is no longer taken over from the source. Set, the person stays with everything
+     * in the closed months and is not planned from the first day after the last closed month on (see
+     * {@link #exclusionStart}); the corrections file has {@code exclude} for them. Setting it again keeps the day.
+     */
+    public MasterChange exclude(String personId, boolean excluded, Long revision) {
+        return change(revision, (master, months, ids) -> {
+            int index = indexOf(Kind.PEOPLE, master, personId);
+            Person p = master.people.get(index);
+            LocalDate from = !excluded ? null : p.excludedFrom() != null ? p.excludedFrom()
+                    : exclusionStart(months.closed, Stream.concat(months.periods.keySet().stream(),
+                            months.plans.keySet().stream()).toList());
+            Person changed = p.withExcludedFrom(from);
+            master.people.set(index, changed);
+            return new Result(personId, changed, 0);
+        });
+    }
+
+    /**
+     * The first day an excluded person is not planned: the first day after the last closed month; without one the
+     * first day of the first planning month, or of the current month.
+     */
+    static LocalDate exclusionStart(Collection<YearMonth> closed, Collection<YearMonth> months) {
+        return closed.stream().max(Comparator.naturalOrder()).map(m -> m.plusMonths(1))
+                .or(() -> months.stream().min(Comparator.naturalOrder())).orElseGet(YearMonth::now).atDay(1);
     }
 
     public Removal remove(String kindPath, String key, boolean confirm, Long revision) {
@@ -316,7 +350,7 @@ public class MasterDataService {
                 : new Person(p.id(), p.firstName(), p.lastName(), p.shortName(), p.weeklyHours(),
                         p.areaIds().stream().filter(a -> !id.equals(a)).toList(), p.hoursAccount(),
                         p.compRestBalance(), p.familyRules(), p.externalId(), p.entryDate(), p.exitDate(),
-                        p.shiftMix() == null ? null : p.shiftMix().withoutArea(id)));
+                        p.shiftMix() == null ? null : p.shiftMix().withoutArea(id), p.excludedFrom()));
         return demand + people;
     }
 

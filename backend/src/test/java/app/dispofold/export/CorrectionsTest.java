@@ -407,6 +407,67 @@ class CorrectionsTest {
     }
 
     @Test
+    void aPersonExcludedInDispofoldIsExcludedUntilTakenBack() throws Exception {
+        ObjectNode source = baseline();
+        String x = id(source, 4);
+        ObjectNode import1 = client(source, MAPPER.readTree(NO_CORRECTIONS));
+        // switched on in Dispofold, also with other fields changed: only the exclusion goes into the file
+        ObjectNode edit1 = import1.deepCopy();
+        person(edit1, 4).put("excludedFrom", "2027-02-01").put("weeklyHours", 20.0);
+        Corrections.Export file1 = export(import1, edit1);
+        assertThat(file1.file().get("people").toString()).isEqualTo("{\"" + x + "\":{\"exclude\":true}}");
+        assertThat(file1.count()).isEqualTo(1);
+        assertThat(file1.earlier()).isZero();
+        assertThat(file1.withdrawn()).isZero();
+        assertThat(file1.notes()).isEmpty();
+
+        // carried over to a new import that still has the person: there it is marked, not removed
+        Dataset oldBase = dataset(import1);
+        Dataset same = dataset(import1);
+        Changes kept = Corrections.check(Corrections.diff(oldBase, dataset(edit1)), same);
+        assertThat(Corrections.conflicts(kept, oldBase, same)).isEmpty();
+        Map<String, Person> merged = byId(Corrections.apply(kept, same).people());
+        assertThat(merged.get(x).excludedFrom()).hasToString("2027-02-01");
+        assertThat(Corrections.apply(kept, same).history()).anyMatch(h -> h.personId().equals(x));
+
+        // the client leaves the person out; Dispofold keeps them excluded in the import (the baseline)
+        ObjectNode import2 = client(source, file1.file());
+        assertThat(import2.get("appliedCorrections").get("people").get(x).toString()).isEqualTo("{\"exclude\":true}");
+        assertThat(import2.without("appliedCorrections").toString()).doesNotContain("\"" + x + "\"");
+        ObjectNode base2 = import2.deepCopy();
+        base2.withArray("people").add(person(edit1, 4).deepCopy().put("weeklyHours", person(import1, 4)
+                .get("weeklyHours").asDouble()));
+        Corrections.Export file2 = export(base2, base2);
+        assertThat(file2.file().get("people").toString()).isEqualTo("{\"" + x + "\":{\"exclude\":true}}");
+        assertThat(file2.count()).isEqualTo(1);
+        assertThat(file2.earlier()).isEqualTo(1);
+        // also without the list of the applied corrections: the exclusion is in the master data
+        assertThat(Corrections.export(dataset(base2), dataset(base2), null, MAPPER).file().get("people").has(x))
+                .isTrue();
+
+        // taken back: not in the file, also not from the applied corrections
+        ObjectNode edit2 = base2.deepCopy();
+        person(edit2, edit2.withArray("people").size() - 1).remove("excludedFrom");
+        Corrections.Export file3 = export(base2, edit2);
+        assertThat(file3.file().get("people").size()).isZero();
+        assertThat(file3.count()).isZero();
+        assertThat(file3.earlier()).isZero();
+        assertThat(file3.withdrawn()).isEqualTo(1);
+        // so the client takes the person over again
+        ObjectNode import3 = client(source, file3.file());
+        assertThat(byId(dataset(import3).people())).containsKey(x);
+    }
+
+    @Test
+    void aPersonNotExcludedIsWrittenAsBefore() throws Exception {
+        Person p = TestData.dataset(YearMonth.of(2027, 1)).people().get(0);
+        assertThat(MAPPER.writeValueAsString(p)).doesNotContain("excludedFrom")
+                .isEqualTo(MAPPER.writeValueAsString(MAPPER.readValue(MAPPER.writeValueAsString(p), Person.class)));
+        assertThat(MAPPER.writeValueAsString(p.withExcludedFrom(java.time.LocalDate.of(2027, 2, 1))))
+                .contains("\"excludedFrom\":\"2027-02-01\"");
+    }
+
+    @Test
     void keepingChangesTheNewImportAlreadyHasIsNoConflict() throws Exception {
         ObjectNode source = baseline();
         ObjectNode import1 = client(source, MAPPER.readTree(NO_CORRECTIONS));

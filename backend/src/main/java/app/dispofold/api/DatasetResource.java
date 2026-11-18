@@ -106,6 +106,19 @@ public class DatasetResource {
         return master.restrictions(personId, restrictions, revision(ifMatch));
     }
 
+    /** Body {@code true}: the person is no longer taken over from the source; {@code false} takes it back. */
+    @PUT
+    @Path("people/{personId}/excluded")
+    @RolesAllowed("planner")
+    public MasterChange excluded(@PathParam("personId") String personId, @HeaderParam("If-Match") String ifMatch,
+            Boolean excluded) {
+        if (excluded == null) {
+            throw ApiErrors.error(Response.Status.BAD_REQUEST, "masterdata.format",
+                    PlanService.params("kind", "excluded"), "Erwartet true oder false");
+        }
+        return master.exclude(personId, excluded, revision(ifMatch));
+    }
+
     /** The revision from {@code If-Match}; null when missing or not a number (the service answers 428). */
     private static Long revision(String ifMatch) {
         try {

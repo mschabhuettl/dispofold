@@ -2,8 +2,16 @@ package app.dispofold.api;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.LocalDate;
+import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -27,15 +35,25 @@ import app.dispofold.export.Corrections.Changes;
 import app.dispofold.export.Corrections.Conflict;
 import app.dispofold.importclient.DatasetValidator;
 import app.dispofold.importclient.Issue;
+import app.dispofold.model.Area;
 import app.dispofold.model.Dataset;
+import app.dispofold.model.HistoryEntry;
 import app.dispofold.model.Period;
+import app.dispofold.model.Person;
+import app.dispofold.model.Plan;
+import app.dispofold.model.PlanStatus;
+import app.dispofold.model.Restriction;
+import app.dispofold.model.ShiftMix;
+import app.dispofold.model.ShiftType;
 import app.dispofold.store.Store;
+import app.dispofold.store.Store.StoredPlan;
 
 /**
  * Imports a dataset in the documented format (docs/datenformat.md) or the bundled synthetic demo data. Every import
  * stores the raw imported master data as the baseline, together with the dataset's section {@code appliedCorrections}
  * (the corrections its source applied) if it has one; with {@code keep} the master data changed in Dispofold since
- * the last import are carried over to the new dataset (see {@link Corrections}).
+ * the last import are carried over to the new dataset (see {@link Corrections}). People excluded from the source
+ * whom an uploaded dataset leaves out stay, see {@link #withExcluded}.
  */
 @Path("/api/import")
 @Produces(MediaType.APPLICATION_JSON)
@@ -94,7 +112,7 @@ public class ImportResource {
                 throw ApiErrors.error(Status.INTERNAL_SERVER_ERROR, "import.demoMissing",
                         "Demodaten fehlen im Programm");
             }
-            return save(mapper.readValue(in, Dataset.class), null, replace, false);
+            return save(mapper.readValue(in, Dataset.class), null, replace, false, false);
         }
     }
 
@@ -108,7 +126,7 @@ public class ImportResource {
     public ImportSummary dataset(@QueryParam("replace") boolean replace, @QueryParam("keep") boolean keep,
             String body) {
         Dataset dataset = parse(body);
-        return save(dataset, appliedCorrections(body), replace, keep);
+        return save(dataset, appliedCorrections(body), replace, keep, true);
     }
 
     /** Dry run of an import with {@code keep}: what would be carried over and where the new import differs. */
@@ -118,7 +136,11 @@ public class ImportResource {
     public ImportPreview preview(String body) {
         Dataset dataset = parse(body);
         synchronized (Store.DATASET_LOCK) {
-            Dataset raw = validated(dataset).dataset();
+            Dataset checked = validated(dataset).dataset();
+            Dataset raw = withExcluded(checked, appliedCorrections(body));
+            if (raw != checked) {
+                validated(raw);
+            }
             Kept kept = kept(raw);
             if (kept != null && !kept.changes().isEmpty()) {
                 // rejected like the import would be
@@ -165,9 +187,9 @@ public class ImportResource {
      * Replaces the master data and the months contained in the dataset; plans stay. Master data changed in Dispofold
      * since the last import are only replaced with {@code replace}, or carried over with {@code keep}.
      */
-    private ImportSummary save(Dataset dataset, JsonNode applied, boolean replace, boolean keep) {
+    private ImportSummary save(Dataset dataset, JsonNode applied, boolean replace, boolean keep, boolean upload) {
         synchronized (Store.DATASET_LOCK) {
-            return replace(dataset, applied, replace, keep);
+            return replace(dataset, applied, replace, keep, upload);
         }
     }
 
@@ -194,8 +216,10 @@ public class ImportResource {
         return new Kept(changes, Corrections.conflicts(changes, base, incoming));
     }
 
-    private ImportSummary replace(Dataset dataset, JsonNode applied, boolean replace, boolean keep) {
-        DatasetValidator.Result result = validated(dataset);
+    private ImportSummary replace(Dataset dataset, JsonNode applied, boolean replace, boolean keep, boolean upload) {
+        DatasetValidator.Result checked = validated(dataset);
+        Dataset retained = upload ? withExcluded(checked.dataset(), applied) : checked.dataset();
+        DatasetValidator.Result result = retained == checked.dataset() ? checked : validated(retained);
         Kept kept = keep ? kept(result.dataset()) : null;
         // Asked only for a valid file: an invalid one is rejected anyway.
         if (kept == null && !replace && store.datasetState().changedSinceImport()) {
@@ -237,9 +261,74 @@ public class ImportResource {
                 kept == null ? 0 : kept.changes().count(), kept == null ? List.of() : kept.changes().notes());
     }
 
+    /**
+     * The import with the people it leaves out who are excluded in Dispofold or whom its section
+     * {@code appliedCorrections} lists as excluded (the source left them out for that): they stay excluded, with
+     * their history, their restrictions of known shifts, and their known areas, so that the closed months keep them.
+     * The exclusion keeps its day from the last import, else from Dispofold, else the first day after the last
+     * closed month. Part of the import (and its baseline), so they are no change since it.
+     */
+    private Dataset withExcluded(Dataset raw, JsonNode applied) {
+        Dataset current = store.dataset().orElse(null);
+        if (current == null) {
+            return raw;
+        }
+        Set<String> listed = new HashSet<>();
+        if (applied != null) {
+            applied.path("people").fields().forEachRemaining(e -> {
+                if (e.getValue().path(Corrections.EXCLUDE).booleanValue()) {
+                    listed.add(e.getKey());
+                }
+            });
+        }
+        Set<String> present = list(raw.people()).stream().map(Person::id).collect(Collectors.toSet());
+        List<Person> left = list(current.people()).stream().filter(p -> !present.contains(p.id())
+                && (p.excludedFrom() != null || listed.contains(p.id()))).toList();
+        if (left.isEmpty()) {
+            return raw;
+        }
+        Map<String, LocalDate> before = new HashMap<>();
+        store.baseline().ifPresent(b -> list(b.people()).stream().filter(p -> p.excludedFrom() != null)
+                .forEach(p -> before.put(p.id(), p.excludedFrom())));
+        List<YearMonth> closed = store.plans().stream().map(StoredPlan::plan)
+                .filter(p -> p.status() == PlanStatus.CLOSED).map(Plan::month).toList();
+        List<YearMonth> months = Stream.of(store.periodMonths().stream(),
+                store.plans().stream().map(p -> p.plan().month()), list(raw.periods()).stream().map(Period::month))
+                .flatMap(m -> m).toList();
+        LocalDate start = MasterDataService.exclusionStart(closed, months);
+        Set<String> areas = list(raw.areas()).stream().map(Area::id).collect(Collectors.toSet());
+        Set<String> shifts = list(raw.shifts()).stream().map(ShiftType::id).collect(Collectors.toSet());
+        YearMonth firstPlanned = list(raw.periods()).stream().map(Period::month).min(YearMonth::compareTo)
+                .orElse(null);
+        List<Person> people = new ArrayList<>(list(raw.people()));
+        List<Restriction> restrictions = new ArrayList<>(list(raw.restrictions()));
+        List<HistoryEntry> history = new ArrayList<>(list(raw.history()));
+        Set<String> ids = left.stream().map(Person::id).collect(Collectors.toSet());
+        for (Person p : left) {
+            ShiftMix mix = p.shiftMix();
+            for (String a : list(p.areaIds())) {
+                mix = mix == null || areas.contains(a) ? mix : mix.withoutArea(a);
+            }
+            people.add(new Person(p.id(), p.firstName(), p.lastName(), p.shortName(), p.weeklyHours(),
+                    list(p.areaIds()).stream().filter(areas::contains).toList(), p.hoursAccount(),
+                    p.compRestBalance(), p.familyRules(), p.externalId(), p.entryDate(), p.exitDate(), mix,
+                    before.getOrDefault(p.id(), p.excludedFrom() != null ? p.excludedFrom() : start)));
+        }
+        list(current.restrictions()).stream().filter(r -> ids.contains(r.personId())
+                && (r.shiftId() == null || shifts.contains(r.shiftId()))).forEach(restrictions::add);
+        list(current.history()).stream().filter(h -> ids.contains(h.personId()) && (firstPlanned == null
+                || h.month() != null && h.month().compareTo(firstPlanned.toString()) < 0)).forEach(history::add);
+        return new Dataset(raw.format(), raw.version(), raw.source(), raw.areas(), raw.shifts(), raw.demand(),
+                raw.holidays(), raw.absenceTypes(), people, restrictions, history, raw.periods());
+    }
+
     /** The master data of a dataset: without periods. */
     private static Dataset master(Dataset d) {
         return new Dataset(d.format(), d.version(), d.source(), d.areas(), d.shifts(), d.demand(), d.holidays(),
                 d.absenceTypes(), d.people(), d.restrictions(), d.history(), List.of());
+    }
+
+    private static <T> List<T> list(List<T> items) {
+        return items == null ? List.of() : items;
     }
 }

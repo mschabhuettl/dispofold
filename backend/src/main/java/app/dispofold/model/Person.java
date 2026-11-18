@@ -3,6 +3,8 @@ package app.dispofold.model;
 import java.time.LocalDate;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * A full-time staff member who is planned.
  *
@@ -16,14 +18,32 @@ import java.util.List;
  * @param entryDate first day of employment, null when employed before the planning month
  * @param exitDate last day of employment, null when open; days outside are not planned and the target is pro rata
  * @param shiftMix usual shares of duties per category and area (for example from the history), or null
+ * @param excludedFrom no longer taken over from the source: the first day the person is not planned (the first day
+ *        after the last closed month when it was set), or null; written only when set
  */
 public record Person(String id, String firstName, String lastName, String shortName, double weeklyHours,
         List<String> areaIds, double hoursAccount, int compRestBalance, List<FamilyRule> familyRules,
-        String externalId, LocalDate entryDate, LocalDate exitDate, ShiftMix shiftMix) {
+        String externalId, LocalDate entryDate, LocalDate exitDate, ShiftMix shiftMix,
+        @JsonInclude(JsonInclude.Include.NON_NULL) LocalDate excludedFrom) {
 
-    /** Employed on this day. */
+    /** A person taken over from the source. */
+    public Person(String id, String firstName, String lastName, String shortName, double weeklyHours,
+            List<String> areaIds, double hoursAccount, int compRestBalance, List<FamilyRule> familyRules,
+            String externalId, LocalDate entryDate, LocalDate exitDate, ShiftMix shiftMix) {
+        this(id, firstName, lastName, shortName, weeklyHours, areaIds, hoursAccount, compRestBalance, familyRules,
+                externalId, entryDate, exitDate, shiftMix, null);
+    }
+
+    /** Employed on this day, and not yet excluded from it on. */
     public boolean employedOn(LocalDate date) {
-        return (entryDate == null || !date.isBefore(entryDate)) && (exitDate == null || !date.isAfter(exitDate));
+        return (entryDate == null || !date.isBefore(entryDate)) && (exitDate == null || !date.isAfter(exitDate))
+                && (excludedFrom == null || date.isBefore(excludedFrom));
+    }
+
+    /** The same person with another {@link #excludedFrom}. */
+    public Person withExcludedFrom(LocalDate from) {
+        return new Person(id, firstName, lastName, shortName, weeklyHours, areaIds, hoursAccount, compRestBalance,
+                familyRules, externalId, entryDate, exitDate, shiftMix, from);
     }
 
 

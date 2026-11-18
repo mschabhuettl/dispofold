@@ -277,6 +277,34 @@ class MasterDataTest {
     }
 
     @Test
+    void anExcludedPersonStaysInTheClosedMonthAndIsNotPlannedAfterIt() throws Exception {
+        closeMonth();
+        String plan = given().get("/api/plans/" + MONTH).then().extract().path("plan.assignments").toString();
+        var history = store.history();
+        YearMonth next = MONTH.plusMonths(1);
+        // from the first day after the last closed month on (RosterBuilderTest: not planned from that day on)
+        at(revision()).body("true").put("/api/dataset/people/P0004/excluded").then().statusCode(200)
+                .body("item.excludedFrom", equalTo(next.atDay(1).toString()));
+        // saving the form does not change it, nor does closing and reopening months
+        ObjectNode p = person("P0004");
+        p.remove("excludedFrom");
+        update("people", "P0004", p).statusCode(200);
+        given().post("/api/plans/" + MONTH + "/reopen").then().statusCode(200);
+        assertThat(person("P0004").path("excludedFrom").asText()).isEqualTo(next.atDay(1).toString());
+        given().post("/api/plans/" + MONTH + "/finalize").then().statusCode(200);
+        assertThat(given().get("/api/plans/" + MONTH).then().extract().path("plan.assignments").toString())
+                .isEqualTo(plan);
+        assertThat(store.history()).isEqualTo(history);
+        // setting it again keeps the day; taking it back clears it
+        at(revision()).body("true").put("/api/dataset/people/P0004/excluded").then().statusCode(200)
+                .body("item.excludedFrom", equalTo(next.atDay(1).toString()));
+        at(revision()).body("false").put("/api/dataset/people/P0004/excluded").then().statusCode(200);
+        assertThat(person("P0004").has("excludedFrom")).isFalse();
+        at(revision()).body("").put("/api/dataset/people/P0004/excluded").then().statusCode(400);
+        at(revision()).body("true").put("/api/dataset/people/P0099/excluded").then().statusCode(404);
+    }
+
+    @Test
     void peopleAndShiftsStayWhileAMonthIsSolving() throws Exception {
         create("people", Map.of("firstName", "Neu", "lastName", "Person", "weeklyHours", 40, "areaIds",
                 List.of("AN"), "hoursAccount", 0, "compRestBalance", 0)).statusCode(200);

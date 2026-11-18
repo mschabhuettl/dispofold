@@ -68,6 +68,23 @@ class RosterBuilderTest {
     }
 
     @Test
+    void aPersonExcludedFromTheSourceIsNotPlannedFromTheDayOn() {
+        Dataset d = TestData.dataset(MONTH);
+        List<Person> people = new ArrayList<>(d.people());
+        people.set(5, people.get(5).withExcludedFrom(MONTH.atDay(1)));
+        // excluded only from the next month on: this month stays as it was
+        people.set(3, people.get(3).withExcludedFrom(MONTH.plusMonths(1).atDay(1)));
+        Roster r = build(withPeople(d, people), d.periods().get(0), List.of());
+
+        assertThat(staff(r, "P0006").getTargetMinutes()).isZero();
+        assertThat(r.getCells().stream().filter(c -> c.getStaff().getId().equals("P0006") && c.isInMonth()))
+                .hasSize(MONTH.lengthOfMonth())
+                .allMatch(c -> c.isOutsideEmployment() && c.isPinned() && c.getShift() == null);
+        assertThat(staff(r, "P0004").getTargetMinutes()).isEqualTo(22 * 480);
+        assertThat(cell(r, "P0004", MONTH.atEndOfMonth()).isOutsideEmployment()).isFalse();
+    }
+
+    @Test
     void balancesComeFromThePreviousMonthsHistory() {
         Dataset d = TestData.dataset(MONTH);
         List<HistoryEntry> history = new ArrayList<>(d.history());

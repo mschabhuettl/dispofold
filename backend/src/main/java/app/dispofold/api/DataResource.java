@@ -37,9 +37,11 @@ public class DataResource {
      * @param notes changes the file cannot express
      * @param count fields, exclusions and demand areas in the file
      * @param earlier of these, the ones from the corrections applied to the last import, unchanged since
+     * @param withdrawn exclusions taken back since the last import, no longer in the file
      * @param complete the last import listed its applied corrections; false: only the changes since that import
      */
-    public record CorrectionsExport(ObjectNode file, List<Issue> notes, int count, int earlier, boolean complete) {
+    public record CorrectionsExport(ObjectNode file, List<Issue> notes, int count, int earlier, int withdrawn,
+            boolean complete) {
     }
 
     /**
@@ -79,7 +81,7 @@ public class DataResource {
         }
         Corrections.Export export = Corrections.export(base, current, applied, mapper);
         return new CorrectionsExport(export.file(), export.notes(), export.count(), export.earlier(),
-                export.complete());
+                export.withdrawn(), export.complete());
     }
 
     /**
