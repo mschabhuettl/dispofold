@@ -6,6 +6,7 @@ imports/
 backend/target/
 frontend/dist/
 frontend/node_modules/
+site/
 tools/demodata/.venv/
 **/__pycache__/
 *.pyc

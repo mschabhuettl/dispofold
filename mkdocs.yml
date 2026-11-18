@@ -1,0 +1,68 @@
+# Documentation site from docs/*.md and README.md (start page, see tools/docs/hooks.py).
+#   pip install -r tools/docs/requirements.txt && mkdocs build --strict    (output in site/, not committed)
+site_name: Dispofold
+site_description: Dienstplanung für Leitstellen
+site_url: https://mschabhuettl.github.io/dispofold/
+repo_url: https://github.com/mschabhuettl/dispofold
+repo_name: dispofold
+edit_uri: ""
+copyright: Dispofold steht unter der AGPL-3.0.
+docs_dir: docs
+hooks:
+  - tools/docs/hooks.py
+
+nav:
+  - Start: index.md
+  - Anleitung: anleitung.md
+  - Regeln: regeln.md
+  - Betrieb: betrieb.md
+  - Desktop: desktop.md
+  - Datenformat: datenformat.md
+  - Entwicklung:
+      - API: api.md
+      - Release: release.md
+
+theme:
+  name: material
+  language: de
+  features:
+    - navigation.top
+    - navigation.footer
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Dunkel
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Hell
+
+plugins:
+  - search:
+      lang: de
+
+markdown_extensions:
+  - tables
+  - attr_list
+  - admonition
+  - pymdownx.highlight
+  - pymdownx.superfences
+  - toc:
+      permalink: true
+      # anchors as on GitHub (umlauts kept), so the links in the Markdown files work in both places
+      slugify: !!python/object/apply:pymdownx.slugs.slugify
+        kwds:
+          case: lower
+
+# With --strict every warning fails the build: missing pages, anchors and images.
+validation:
+  omitted_files: warn
+  absolute_links: warn
+  unrecognized_links: warn
+  anchors: warn
