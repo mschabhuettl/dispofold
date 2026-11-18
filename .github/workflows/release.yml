@@ -19,6 +19,9 @@ permissions:
 #   vars.MACOS_RUNNER      runner label for the macOS installer; without it, the job is skipped
 #   secrets.RELEASE_TOKEN  token for the registry and the release; without it, the job token is used
 #   secrets.UPDATE_SIGNING_KEY  private Ed25519 key for the update bundle; required, the release fails without it
+#   vars.SIGNPATH_ORGANIZATION_ID  switches on the Windows signature with SignPath; without it, nothing changes.
+#     With it also: secrets.SIGNPATH_API_TOKEN, vars.SIGNPATH_PROJECT_SLUG, vars.SIGNPATH_ARTIFACT_CONFIGURATION_SLUG,
+#     optionally vars.SIGNPATH_SIGNING_POLICY_SLUG (default release-signing)
 # Secrets are passed only to the single steps that need them.
 env:
   REGISTRY: ${{ vars.REGISTRY }}
@@ -137,9 +140,11 @@ jobs:
     # Cross-built on Linux, so every platform's Linux runner builds the same artefacts.
     needs: [version, draft]
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # With SignPath the job waits for the approval of the signing request
+    timeout-minutes: ${{ vars.SIGNPATH_ORGANIZATION_ID != '' && 180 || 60 }}
     permissions:
       contents: write
+      actions: read # SignPath reads the unsigned files of this run (only with signing)
     env:
       VERSION: ${{ needs.version.outputs.version }}
     steps:
@@ -166,6 +171,50 @@ jobs:
           cargo install --locked cargo-xwin --version 0.23.1
       - name: Setup and portable ZIP
         run: scripts/desktop/package.sh "$VERSION" windows release-assets
+      # Optional Windows signature with SignPath (docs/release.md); without SIGNPATH_ORGANIZATION_ID these steps
+      # are skipped. The update bundle holds no Windows programs and keeps its own signature (desktop-linux).
+      - name: Unsigned files for SignPath
+        id: unsigned
+        if: vars.SIGNPATH_ORGANIZATION_ID != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: windows-unsigned
+          path: release-assets/
+          if-no-files-found: error
+          retention-days: 1
+          overwrite: true
+      - name: Signing request (waits for the approval in SignPath)
+        if: vars.SIGNPATH_ORGANIZATION_ID != ''
+        uses: signpath/github-action-submit-signing-request@f6d04783b4569d051e0c80105fe66e82819d0092 # v3.0
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG || 'release-signing' }}
+          artifact-configuration-slug: ${{ vars.SIGNPATH_ARTIFACT_CONFIGURATION_SLUG }}
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          parameters: |
+            version: ${{ toJSON(env.VERSION) }}
+          wait-for-completion-timeout-in-seconds: 7200
+          output-artifact-directory: signed
+      - name: Signed files replace the unsigned ones
+        if: vars.SIGNPATH_ORGANIZATION_ID != ''
+        run: |
+          [ "$(ls signed)" = "$(ls release-assets)" ] || { echo "SignPath returned other files:"; ls signed; exit 1; }
+          python3 -I - "signed/Dispofold-$VERSION-windows-setup.exe" "signed/Dispofold-$VERSION-windows-portable.zip" <<'PY'
+          import struct, sys, zipfile
+          def signed(data):  # size of the PE security directory (Authenticode signature)
+              pe = struct.unpack_from("<I", data, 0x3C)[0]
+              optional = pe + 24
+              dirs = optional + (96 if struct.unpack_from("<H", data, optional)[0] == 0x10B else 112)
+              return struct.unpack_from("<I", data, dirs + 4 * 8 + 4)[0] > 0
+          setup, portable = sys.argv[1:]
+          files = {setup: open(setup, "rb").read(),
+                   portable + ":Dispofold/dispofold.exe": zipfile.ZipFile(portable).read("Dispofold/dispofold.exe")}
+          unsigned = [name for name, data in files.items() if not signed(data)]
+          sys.exit(f"not signed: {unsigned}" if unsigned else 0)
+          PY
+          cp signed/* release-assets/
       - name: SHA-256
         run: cd release-assets && sha256sum -- * > "dispofold-$VERSION-windows-SHA256SUMS.txt"
       - name: Upload to the release
