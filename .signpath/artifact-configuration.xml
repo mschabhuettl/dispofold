@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  SignPath artifact configuration for the Windows files of a Dispofold release (draft, see docs/release.md,
+  "Windows-Signatur mit SignPath"). Paste it into the SignPath project as the artifact configuration.
+
+  The release workflow uploads the folder release-assets/ of the Windows job as one GitHub Actions artifact,
+  so the root is that ZIP with the two release files in it. The workflow passes the release version as the
+  parameter "version" (for example 0.14.0).
+
+  Signed are only the files built from this repository:
+  - the setup Dispofold-<version>-windows-setup.exe (NSIS) as a whole; SignPath does not open NSIS installers,
+    so the program inside it and the uninstaller it writes stay unsigned,
+  - dispofold.exe inside the portable ZIP.
+  The Java runtime (runtime/) holds binaries of Eclipse Adoptium and Microsoft that their makers have already
+  signed; they are not listed here and stay as they are.
+
+  Not yet checked against a real signing request: whether SignPath compares product-version and file-version
+  with the version text of the files ("0.14.0") or with the four-part number (0.14.0.0). If the first request
+  fails on these restrictions, use "${version}.0" instead.
+-->
+<artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <parameters>
+    <parameter name="version" required="true" />
+  </parameters>
+  <zip-file>
+    <pe-file path="Dispofold-${version}-windows-setup.exe" product-name="Dispofold" product-version="${version}"
+             file-version="${version}">
+      <authenticode-sign description="Dispofold Setup" description-url="https://github.com/mschabhuettl/dispofold" />
+    </pe-file>
+    <zip-file path="Dispofold-${version}-windows-portable.zip">
+      <directory path="Dispofold">
+        <pe-file path="dispofold.exe" product-name="Dispofold" product-version="${version}" file-version="${version}">
+          <authenticode-sign description="Dispofold" description-url="https://github.com/mschabhuettl/dispofold" />
+        </pe-file>
+      </directory>
+    </zip-file>
+  </zip-file>
+</artifact-configuration>
