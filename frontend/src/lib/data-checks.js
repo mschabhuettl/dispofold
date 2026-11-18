@@ -33,6 +33,14 @@ export function plannableShifts(dataset, person, month, rules = null) {
 /** A family rule "keine Nacht" on every weekday: the person never does nights anyway. */
 const noNightsRule = (p) => (p.familyRules ?? []).some((f) => f.noNights && [1, 2, 3, 4, 5, 6, 7].every((d) => (f.weekdays ?? []).map(Number).includes(d)));
 
+/**
+ * The person never does nights as the solver sees it (RosterBuilder.neverNights): a family rule "keine Nacht" on every
+ * weekday, or NEVER restrictions for every day of the week (weekday 0) leave no night shift of the person's areas; also
+ * true when the areas have no night shift at all.
+ */
+export const neverNightShifts = (dataset, p, month, rules = null) => noNightsRule(p) || !plannableShifts({ ...dataset,
+  restrictions: (dataset.restrictions ?? []).filter((r) => Number(r.weekday ?? 0) === 0) }, p, month, rules).some((s) => shiftCategory(s, rules) === 'NIGHT');
+
 /** A group of shares (categories or areas) that is set and does not sum to 1, or has a share outside 0 to 1. */
 function badSum(map) {
   const values = Object.values(map ?? {});
@@ -82,8 +90,7 @@ export function dataChecks(dataset, { month, rules = null }) {
     const neverNights = noNightsRule(p) || !plannableShifts(dataset, p, month, rules).some(night);
     // never nights beats the night share in both modes (only where the areas have night shifts at all); as the
     // solver (RosterBuilder.neverNights) only NEVER restrictions for every day of the week count, not seven weekdays
-    const solverNever = noNightsRule(p) || !plannableShifts({ ...dataset,
-      restrictions: (dataset.restrictions ?? []).filter((r) => Number(r.weekday ?? 0) === 0) }, p, month, rules).some(night);
+    const solverNever = neverNightShifts(dataset, p, month, rules);
     if (nightShare > 0 && solverNever && own.some((s) => shiftCategory(s, rules) === 'NIGHT')) add('nightNever', 'info', { personId: p.id }, { name });
     else if (nightDistribution === 'EVEN' && nightShare > 0) add('nightIgnored', 'info', { personId: p.id }, { name }, 'rules');
     else if (nightDistribution !== 'EVEN' && hasCategories && nightShare === 0 && !neverNights) add('noNights', 'info', { personId: p.id }, { name });

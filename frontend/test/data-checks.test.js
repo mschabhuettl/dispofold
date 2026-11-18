@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { dataChecks, plannableShifts } from '../src/lib/data-checks.js';
+import { dataChecks, neverNightShifts, plannableShifts } from '../src/lib/data-checks.js';
 
 const month = '2030-03';
 const person = (id, areaIds, extra = {}) => ({ id, firstName: id, lastName: 'Test', areaIds, familyRules: [], shiftMix: null, ...extra });
@@ -115,4 +115,18 @@ test('shifts without a category count with the category derived from their times
   // seven weekday restrictions: no nights either, but the solver keeps the night share (only weekday 0 counts there)
   d.restrictions = [1, 2, 3, 4, 5, 6, 7].map((weekday) => ({ personId: 'NEVERSHARE', shiftId: null, category: 'NIGHT', weekday, kind: 'NEVER' }));
   assert.deepEqual(kinds(dataChecks(d, { month, rules }), 'NEVERSHARE'), []);
+});
+
+test('never nights as the solver: a family rule on every day or NEVER for every day of the week on each night shift', () => {
+  const d = base();
+  const allDays = [1, 2, 3, 4, 5, 6, 7];
+  d.people.push(person('FAM', ['X'], { familyRules: [{ weekdays: allDays, noNights: true }] }),
+    person('FAMPART', ['X'], { familyRules: [{ weekdays: [1, 2, 3, 4, 5], noNights: true }] }),
+    person('CAT', ['X']), person('SHIFT', ['X']), person('WEEK', ['X']), person('DAYONLY', ['Y']));
+  d.restrictions.push({ personId: 'CAT', category: 'NIGHT', weekday: 0, kind: 'NEVER' },
+    { personId: 'SHIFT', shiftId: 'X-N', weekday: 0, kind: 'NEVER' },
+    // seven weekdays one by one are not "every day" for the solver
+    ...allDays.map((weekday) => ({ personId: 'WEEK', shiftId: 'X-N', weekday, kind: 'NEVER' })));
+  const never = Object.fromEntries(d.people.map((p) => [p.id, neverNightShifts(d, p, month)]));
+  assert.deepEqual(never, { OK: false, FAM: true, FAMPART: false, CAT: true, SHIFT: true, WEEK: false, DAYONLY: true });
 });

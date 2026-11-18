@@ -47,14 +47,16 @@ export function mixText(mix, areaName = (id) => id) {
 
 /**
  * Rows for the person view: planned against usual share, per category and area that appears in either.
- * Each row: { group: 'categories' | 'areas', key, name, planned, usual } with shares or null.
+ * Each row: { group: 'categories' | 'areas', key, name, planned, usual, effective } with shares or null (effective: the
+ * shares that apply, from effectiveMix).
  */
-export function mixRows(planned, usual, areaName = (id) => id) {
+export function mixRows(planned, usual, areaName = (id) => id, effective = null) {
   const rows = [];
   const add = (g, keys, name) => {
     for (const k of keys) {
       if (planned?.[g]?.[k] == null && usual?.[g]?.[k] == null) continue;
-      rows.push({ group: g, key: k, name: name(k), planned: planned?.[g]?.[k] ?? null, usual: usual?.[g]?.[k] ?? null });
+      rows.push({ group: g, key: k, name: name(k), planned: planned?.[g]?.[k] ?? null, usual: usual?.[g]?.[k] ?? null,
+        effective: effective?.[g]?.[k] ?? null });
     }
   };
   add('categories', MIX_CATEGORIES, (k) => CATEGORY[k]);
@@ -76,3 +78,16 @@ export const nightShareIgnored = (stats, usual) => stats?.nightReason === 'NEVER
 
 /** The night note of the person's mix section: the never-nights note where it applies, else the one of the mode. */
 export const mixNightNote = (nightDistribution, stats, usual) => (nightShareIgnored(stats, usual) ? t('mix.never.note') : nightNote(nightDistribution));
+
+/**
+ * The usual mix the rules apply, as the solver (RosterBuilder.nights): in EVEN, and for a person who never does nights
+ * (never), a category mix with a night share (also 0) loses it and the other category shares are scaled to sum to 1
+ * (none left: no category shares); the area shares stay. null when the stored mix applies as entered.
+ */
+export function effectiveMix(usual, nightDistribution, never) {
+  const categories = usual?.categories ?? {};
+  if (!(nightDistribution === 'EVEN' || never) || categories.NIGHT == null) return null;
+  const rest = Object.entries(categories).filter(([k]) => k !== 'NIGHT');
+  const sum = rest.reduce((a, [, v]) => a + v, 0);
+  return { categories: sum > 0 ? Object.fromEntries(rest.map(([k, v]) => [k, v / sum])) : {}, areas: usual.areas ?? {} };
+}
