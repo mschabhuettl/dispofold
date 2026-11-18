@@ -26,8 +26,9 @@ Desktop-Version in [desktop.md](desktop.md).
 - Linux mit Docker Engine 24 oder neuer und dem Compose-Plugin (`docker compose`).
 - 2 CPU-Kerne und 4 GB RAM. Der Solver rechnet mit einem Kern je laufender Planung.
 - Etwa 3 GB Plattenplatz für die Images.
-- Zur Laufzeit gibt es keine Aufrufe ins Internet. Mit dem Archiv braucht der Server auch für die Installation
-  keinen Internetzugang: Es enthält alle drei Images.
+- Zur Laufzeit stellt der Server nur eine Verbindung ins Internet her: die Suche nach einer neuen Version (siehe
+  [Neue Version](#neue-version)), abschaltbar mit `DISPOFOLD_UPDATE_CHECK=false`. Mit dem Archiv braucht der Server
+  auch für die Installation keinen Internetzugang: Es enthält alle drei Images.
 
 Der Stack hat drei Dienste: `db` (PostgreSQL 17), `backend` (Java, Solver, REST) und `frontend` (nginx, liefert
 die Oberfläche aus und leitet `/api` an das Backend weiter, Port 8080).
@@ -79,6 +80,7 @@ die Werte selbst wählen wie oben.
 | `SOLVER_SEED` | `1` | Startwert, wenn in der Oberfläche keiner eingetragen ist |
 | `SOLVER_MOVE_LIMIT` | `250000` | Planung endet nach so vielen Zügen (0: aus). Gleicher Startwert, gleiche Daten und gleiches Zuglimit ergeben denselben Plan, sofern die Planung vor dem Zeitlimit endet |
 | `JAVA_OPTS` | `-XX:MaxRAMPercentage=75` | Speicher des Backends |
+| `DISPOFOLD_UPDATE_CHECK` | `true` | Beim Start und einmal am Tag nach einer neuen Version suchen (siehe [Neue Version](#neue-version)); `false` schaltet das ab |
 
 ### Erstinstallation mit dem Archiv
 
@@ -139,13 +141,34 @@ eine Begrenzung je Benutzeradresse braucht, richtet sie im Proxy ein.
 - nginx setzt eine Content-Security-Policy, `X-Frame-Options: DENY` und `X-Content-Type-Options: nosniff`.
 - Die Images sind an die Version (`TAG`) gebunden, die Basis-Images mit Digest.
 
+### Neue Version
+
+Das Backend fragt beim Start und danach einmal am Tag die öffentliche Releases-API von GitHub nach dem neuesten
+Release: eine Anfrage ohne Anmeldung an
+`https://api.github.com/repos/mschabhuettl/dispofold/releases/latest`, mit kurzem Zeitlimit. Gesendet wird nichts,
+GitHub sieht nur die IP-Adresse des Servers. Vorabversionen zählen nicht. Ist das Release neuer als die laufende
+Version, zeigt die Oberfläche der Rolle `planner` oben den Hinweis „Neue Version x.y.z verfügbar“. Er öffnet die
+Notizen des Release, einen Link auf seine Seite und die Schritte unter [Update](#update). Ausgeblendet wird er je
+Version (im jeweiligen Browser), bei der nächsten Version erscheint er wieder. Die Rolle `viewer` sieht ihn nie,
+`GET /api/release` antwortet ihr mit `403`. Einspielen muss die IT das Update selbst, der Server aktualisiert sich
+nie von allein.
+
+- **Abschalten:** `DISPOFOLD_UPDATE_CHECK=false` in `.env` (in Portainer bei den Umgebungsvariablen des Stacks)
+  setzen, dann `docker compose up -d`. Dann stellt der Server keine Verbindung ins Internet her.
+- **Netz:** Die Abfrage braucht eine ausgehende HTTPS-Verbindung (Port 443) des Backend-Containers zu
+  `api.github.com`. Viele IT-Abteilungen erlauben Servern keine ausgehenden Verbindungen. Dann schlägt die
+  Abfrage fehl, das Backend schreibt nur eine Zeile ins Log (`Release check failed` oder `Release check: HTTP
+  <status>`) und läuft sonst normal weiter. Wer den Hinweis nicht braucht, schaltet die Abfrage ab.
+
 ### Update
 
 1. Datenbank sichern (siehe unten).
 2. Neue Images bereitstellen: Archiv prüfen und `docker load -i ...`, oder nach Schritt 3 `docker compose pull`.
-3. In `.env` `TAG` auf die neue Version setzen. Die `docker-compose.yml` aus dem Release übernehmen; neue
-   Einträge aus `env.example` in die eigene `.env` übertragen.
-4. `docker compose up -d`. Das Backend spielt Datenbankänderungen beim Start selbst ein.
+3. In `.env` `TAG` auf die neue Version setzen (in Portainer bei den Umgebungsvariablen des Stacks). Die
+   `docker-compose.yml` aus dem Release übernehmen; neue Einträge aus `env.example` in die eigene `.env`
+   übertragen.
+4. `docker compose up -d` (in Portainer: den Stack neu bereitstellen). Das Backend spielt Datenbankänderungen beim
+   Start selbst ein.
 5. Alte Images entfernen:
    `docker image rm dispofold.invalid/dispofold-backend:<alt> dispofold.invalid/dispofold-frontend:<alt>` (mit Registry deren
    Namen).
@@ -189,7 +212,8 @@ docker image rm dispofold.invalid/dispofold-backend:<version> dispofold.invalid/
 ### Gemeinsam für alle Systeme
 
 - Das Programm bringt seine eigene Java-Laufzeit mit und braucht keinen Server. Es lädt zur Laufzeit nichts
-  aus dem Netz, solange keine Update-Quelle eingetragen ist.
+  aus dem Netz, solange keine Update-Quelle eingetragen ist. Ob es nach neuen Versionen sucht, fragt es einmal
+  beim ersten Start (siehe [Updates](#updates)).
 - Die Oberfläche läuft im Programmfenster. Unter Linux öffnet sie sich standardmäßig im Standardbrowser (siehe
   Linux).
 - **Passwort:** Beim ersten Start legt man ein Passwort fest (mindestens 12 Zeichen). Damit ist die Datenbank
@@ -275,14 +299,21 @@ Gibt es nur, wenn der Eigentümer einen macOS-Runner eingetragen hat (siehe [rel
 Ein Update (`dispofold-<version>-update.zip`) ersetzt die Anwendung, nicht die Daten. Es gilt für alle
 Systeme.
 
-- Unter **Einstellungen > Updates** trägt man eine **Update-Quelle** ein: die Adresse der Releases-API von GitHub
-  (`https://api.github.com/repos/mschabhuettl/dispofold/releases/latest`) oder einen Ordner, etwa eine
-  Netzwerkfreigabe, in den die IT die Update-Dateien legt. Das Programm schickt keine Anmeldedaten mit: Die
-  Releases müssen ohne Anmeldung lesbar sein. Solange das Repository privat ist, geht das nicht; dann einen
-  Ordner verwenden. Mit einer Quelle sucht das Programm beim Start (wenn
-  eingeschaltet) oder mit **Jetzt suchen** und fragt vor dem Einspielen.
-- **Voreingestellt ist keine Quelle.** Dann greift das Programm nie aufs Netz zu und arbeitet vollständig
-  offline.
+- **Erster Start:** Sind noch keine Update-Einstellungen gespeichert (neue Installation oder erstes Update auf
+  eine Version mit dieser Frage), fragt das Programm einmal: „Soll Dispofold automatisch nach neuen Versionen
+  suchen?“ (**Ja** ist vorausgewählt, **Nein**). **Ja** trägt die Releases-API von GitHub
+  (`https://api.github.com/repos/mschabhuettl/dispofold/releases/latest`) als Quelle ein und schaltet die Suche
+  beim Start ein. **Nein** lässt die Quelle leer. Vor der Antwort geht keine Anfrage ins Netz. Wer schon eine
+  Quelle eingetragen oder die Einstellungen einmal gespeichert hat, wird nicht gefragt; eine eingetragene Adresse
+  oder ein Ordner bleibt unverändert.
+- Unter **Einstellungen > Updates** lässt sich das jederzeit ändern: die **Update-Quelle** (die Adresse oben, eine
+  andere Releases-API oder ein Ordner, etwa eine Netzwerkfreigabe, in den die IT die Update-Dateien legt) und
+  **Beim Start nach Updates suchen**. Eine leere Quelle schaltet die Suche ganz ab. Das Programm schickt keine
+  Anmeldedaten mit: Die Releases müssen ohne Anmeldung lesbar sein. Mit einer Quelle sucht das Programm beim Start
+  (wenn eingeschaltet) oder mit **Jetzt suchen**. Gesendet wird dabei nichts, die Quelle sieht nur die IP-Adresse.
+- Findet es eine neuere Version, erscheint oben der Hinweis „Neue Version x.y.z verfügbar“ mit den Notizen des
+  Release und **Jetzt installieren**. Er lässt sich je Version ausblenden.
+- **Ohne Quelle** greift das Programm nie aufs Netz zu und arbeitet vollständig offline.
 - **Update aus Datei einspielen** nimmt eine Update-Datei direkt, für Rechner ohne Netz.
 - Jedes Update ist signiert. Ein verändertes oder unsigniertes Update wird abgelehnt, ebenso eine gleiche oder
   ältere Version.

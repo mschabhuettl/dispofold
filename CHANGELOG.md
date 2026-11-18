@@ -21,6 +21,19 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
   „Angerechnet“ entfällt.
 - **Anleitung:** wie man in Dispofold neu angelegte Personen und geänderte Namen bei einem neuen Datensatz
   behandelt.
+- **Neue Version verfügbar:** Die Planung sieht oben einen Hinweis, wenn es eine neuere Version gibt, mit den
+  Notizen des Release (als Text) und einem Link auf seine Seite. Er lässt sich je Version ausblenden; die Rolle
+  „nur lesen“ sieht ihn nie. Vorabversionen zählen nicht.
+- **Server:** Das Backend fragt beim Start und einmal am Tag die öffentliche Releases-API von GitHub (eine
+  anonyme Anfrage, gesendet wird nichts). Abschalten mit `DISPOFOLD_UPDATE_CHECK=false` in `.env` (neu in
+  `docker-compose.yml` und `env.example`). Der Hinweis nennt die Schritte für das Update; der Server aktualisiert
+  sich nie selbst.
+- **Programm am eigenen Rechner:** Der erste Start ohne gespeicherte Update-Einstellungen, auch nach dem Update auf
+  diese Version, fragt einmal „Soll Dispofold automatisch nach neuen Versionen suchen?“. „Ja“ trägt GitHub als
+  Update-Quelle ein und sucht bei jedem Start, „Nein“ lässt die Quelle leer. Vorher geht keine Anfrage ins Netz;
+  ist schon eine Quelle eingetragen (Adresse oder Ordner), bleibt sie, und das Programm fragt nicht. Der Hinweis
+  bietet „Jetzt installieren“. Bisher fragte „Beim Start nach Updates suchen“ die Quelle nicht wirklich ab; jetzt
+  tut es das.
 
 ## 0.12.0 (2026-11-17)
 

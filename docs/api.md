@@ -14,6 +14,7 @@ anderen Methoden nur für `planner`. Leser bekommen Gesundheits- und Personaldat
 | `POST` | `/j_security_check` | Formular-Login (`j_username`, `j_password`), setzt ein Sitzungs-Cookie |
 | `POST` | `/api/logout` | meldet ab (löscht das Cookie), Antwort `204` |
 | `GET` | `/api/me` | `{ "username": "...", "role": "planner" \| "viewer", "desktop": bool }` |
+| `GET` | `/api/release` | nur Server-Build und Rolle `planner` (Leser: `403`): `{ "current", "available": { "version", "title", "notes", "url" } \| null }`, das Ergebnis der täglichen Suche nach einer neuen Version (`docs/betrieb.md`, Neue Version); `null` auch, wenn sie mit `DISPOFOLD_UPDATE_CHECK=false` abgeschaltet ist |
 
 Die Anmeldeseite ist `/login.html`. Nicht angemeldete Aufrufe von `/api/*` bekommen `401`, andere Seiten
 leiten auf `/login.html` um. Ohne Anmeldung erreichbar sind nur die Anmeldeseite mit ihrem Skript und dem
@@ -201,7 +202,7 @@ Geheimnis je Programmstart aus, das weder in einer Adresse noch in einem Cookie 
 | Methode | Pfad | Antwort |
 |---|---|---|
 | `POST` | `/api/desktop/quit` | `204`, danach beendet sich das Programm |
-| `GET` | `/api/desktop/update?check=true` | `{ "current", "source", "checkOnStart", "available": { "version", "notes" } \| null, "error", "errorCode", "errorParams" }` |
+| `GET` | `/api/desktop/update?check=true` | `{ "current", "source", "checkOnStart", "available": { "version", "notes", "title", "url" } \| null, "error", "errorCode", "errorParams", "ask", "releases" }`; `ask`: noch keine Einstellungen gespeichert, die Oberfläche fragt einmal; `releases`: die Quelle für „Ja“ |
 | `PUT` | `/api/desktop/update/settings` | speichert `{ "source", "checkOnStart" }`; Quelle ist eine URL, ein Ordner oder leer (keine Updates, kein Netzzugriff) |
 | `POST` | `/api/desktop/update/install` | lädt das neueste signierte Update, prüft es, `202`, danach Neustart |
 | `POST` | `/api/desktop/update/file` | Update-Datei als Body (`application/octet-stream`, bis 1 GiB), Prüfung wie oben, `202` oder `400` |
