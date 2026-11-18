@@ -59,7 +59,7 @@ class DesktopResourceTest {
     void updateSettingsArePersisted() throws Exception {
         Files.deleteIfExists(Path.of(DesktopProfile.BASE, "daten/einstellungen.json"));
         // Nothing saved yet: the interface asks once, offering the project's releases API
-        local().get("/api/desktop/update").then().statusCode(200).body("current", equalTo("0.12.0"))
+        local().get("/api/desktop/update").then().statusCode(200).body("current", equalTo("0.13.0"))
                 .body("source", equalTo("")).body("available", nullValue())
                 .body("error", nullValue()).body("ask", is(true))
                 .body("releases", equalTo("https://api.github.com/repos/mschabhuettl/dispofold/releases/latest"));

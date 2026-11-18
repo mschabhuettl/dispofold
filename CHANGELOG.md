@@ -3,7 +3,7 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
-## 0.13.0 (unreleased)
+## 0.13.0 (2026-11-18)
 
 - **Dokumentations-Website:** `docs/` und `README.md` als Website mit Suche, hell und dunkel, unter
   <https://mschabhuettl.github.io/dispofold/>. Sie wird bei jedem Release neu veröffentlicht und zeigt die
@@ -37,6 +37,10 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
   ist schon eine Quelle eingetragen (Adresse oder Ordner), bleibt sie, und das Programm fragt nicht. Der Hinweis
   bietet „Jetzt installieren“. Bisher fragte „Beim Start nach Updates suchen“ die Quelle nicht wirklich ab; jetzt
   tut es das.
+- **Codesignatur:** [Code signing policy](docs/code-signing-policy.md) für den Antrag bei der SignPath
+  Foundation, verlinkt aus README und Release-Notizen.
+- **Bilder:** Screenshots mit Menüpunkt „Anleitung“ und der neuen Stundenkachel; die Desktop-Bilder aus dem echten
+  Programmfenster. Die Browser-Checks laufen auf Deutsch wie die Screenshots.
 
 ## 0.12.0 (2026-11-17)
 
