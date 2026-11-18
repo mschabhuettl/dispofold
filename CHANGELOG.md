@@ -5,7 +5,8 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
 
 ## 0.14.0 (unreleased)
 
-- **Windows-Signatur vorbereitet:** Die Signatur der Windows-Dateien über die SignPath Foundation ist beantragt.
+- **Windows-Signatur vorbereitet:** Die Windows-Dateien bleiben vorerst unsigniert: Die SignPath Foundation hat
+  den ersten Antrag im November 2026 abgelehnt, weil das Projekt noch jung ist; ein neuer Antrag folgt später.
   Der Release-Workflow kann Setup und portables ZIP signieren lassen, bevor die Prüfsummen entstehen; signiert
   werden das Setup und `dispofold.exe` im ZIP. Ohne die SignPath-Einstellungen läuft er wie bisher. Einrichtung,
   Antragstext und Freigabe je Release: [docs/release.md](docs/release.md#windows-signatur-mit-signpath); die

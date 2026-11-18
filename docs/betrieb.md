@@ -360,8 +360,13 @@ Setup, ZIP und dmg sind nicht mit einem Code-Signing-Zertifikat signiert. Die Be
 ersten Start. Die Echtheit lässt sich mit den SHA-256-Prüfsummen aus dem Release prüfen. Die Update-Pakete sind
 davon unabhängig mit einem eigenen Schlüssel signiert und werden immer geprüft.
 
-Die Signatur der Windows-Dateien über die SignPath Foundation ist beantragt (siehe
-[Code signing policy](code-signing-policy.md)). Sobald sie gilt, steht das in den Notizen des Release, und
+Eine Signatur der Windows-Dateien über die SignPath Foundation gibt es derzeit nicht: Die Foundation hat den
+ersten Antrag im November 2026 abgelehnt, weil das Projekt noch jung und wenig bekannt ist. Ein neuer Antrag ist
+geplant, sobald das Projekt bekannter ist (siehe [Code signing policy](code-signing-policy.md)). Bis dahin die
+Prüfsummen vergleichen: unter Windows `Get-FileHash -Algorithm SHA256 .\Dispofold-<version>-windows-setup.exe`
+mit der Zeile in `dispofold-<version>-windows-SHA256SUMS.txt`, unter Linux und macOS
+`sha256sum -c --ignore-missing dispofold-<version>-windows-SHA256SUMS.txt` im Download-Ordner. Sobald eine
+Signatur gilt, steht das in den Notizen des Release, und
 signiert sind dann das Setup und `Dispofold\dispofold.exe` im ZIP. Das vom Setup installierte `dispofold.exe` und
 das Deinstallationsprogramm bleiben unsigniert; `runtime\bin\java.exe`, `runtime\bin\javaw.exe` und die DLLs der
 Java-Laufzeit sind schon heute von Eclipse Adoptium oder Microsoft signiert. Prüfen lässt sich die Signatur so:

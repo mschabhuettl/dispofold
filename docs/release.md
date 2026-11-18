@@ -113,8 +113,11 @@ Die Basis-Images sind in den Dockerfiles mit Digest festgelegt. Für Sicherheits
 
 ## Windows-Signatur mit SignPath
 
-Die SignPath Foundation signiert Open-Source-Projekte kostenlos mit ihrem Zertifikat. Den Antrag stellt der
-Eigentümer selbst; das Repository ist dafür vorbereitet: die
+Die SignPath Foundation signiert Open-Source-Projekte kostenlos mit ihrem Zertifikat. Den ersten Antrag hat
+sie am 2026-11-18 abgelehnt, weil das Projekt noch zu wenig öffentlich sichtbar ist; ein neuer Antrag ist
+willkommen und geplant, sobald das Projekt bekannter ist. Bis dahin bleiben die Windows-Dateien unsigniert und
+die Signaturschritte im Release-Workflow aus. Die Schritte unten gelten für diesen künftigen Antrag. Den Antrag
+stellt der Eigentümer selbst; das Repository ist dafür vorbereitet: die
 [Code signing policy](code-signing-policy.md), die Metadaten der Windows-Dateien (Produktname „Dispofold“,
 Datei- und Produktversion gleich der Release-Version), die Artefaktkonfiguration
 `.signpath/artifact-configuration.xml` und die abschaltbaren Schritte im Release-Workflow.
@@ -127,7 +130,8 @@ Update-Paket enthält keine Windows-Programme und behält seine eigene Signatur.
 
 ### Antrag
 
-Der Antrag geht über das Formular auf <https://signpath.org/apply>. Der Text dafür (Englisch, weil SignPath ihn
+Ein neuer Antrag geht über das Formular auf <https://signpath.org/apply>. Vorher den Text auf den aktuellen
+Stand bringen (Versionen, Verbreitung des Projekts). Der Text dafür (Englisch, weil SignPath ihn
 liest):
 
 ```text

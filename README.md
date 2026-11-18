@@ -30,8 +30,9 @@ kommen als signierte Update-Pakete; ob das Programm danach sucht, fragt es beim 
 greift es nie aufs Netz zu. Die Programme sind nicht mit einem Code-Signing-Zertifikat signiert. Was bei den
 Warnungen von Windows und macOS zu tun ist, steht in [docs/betrieb.md](docs/betrieb.md#unsignierte-programme).
 
-Die Signatur der Windows-Programme über die SignPath Foundation ist beantragt; wie die Programme gebaut und
-signiert werden, steht in der [Code signing policy](docs/code-signing-policy.md).
+Den ersten Antrag auf eine Signatur der Windows-Programme über die SignPath Foundation hat diese abgelehnt, weil
+das Projekt noch jung ist; ein neuer Antrag folgt später. Wie die Programme gebaut werden und wie man Downloads
+prüft, steht in der [Code signing policy](docs/code-signing-policy.md).
 
 ## Dokumentation
 

@@ -5,9 +5,16 @@ gedacht ist.*
 
 ## Signing status
 
-Signing of Windows binaries via SignPath Foundation has been applied for. Until signing is live, the Windows
-setup and the portable ZIP are not signed with a code signing certificate; [docs/betrieb.md](betrieb.md)
+The Windows binaries are currently not signed with a code signing certificate. The SignPath Foundation
+declined the first application in November 2026 because the project is still young and not yet widely known; a
+new application is planned once the project is better known. [docs/betrieb.md](betrieb.md#unsignierte-programme)
 describes what to do about the warnings of Windows and macOS.
+
+Until then, verify a download against the checksums published with each release: every release has a file
+`dispofold-<version>-windows-SHA256SUMS.txt` (and one each for Linux, macOS and the images). On Windows,
+compare the output of `Get-FileHash -Algorithm SHA256 .\Dispofold-<version>-windows-setup.exe` with the line for
+that file; on Linux and macOS, run `sha256sum -c --ignore-missing dispofold-<version>-windows-SHA256SUMS.txt` in
+the download folder.
 
 Once signing is live, the release workflow signs, before it computes the checksums: the Windows setup
 `Dispofold-<version>-windows-setup.exe` and the program `Dispofold\dispofold.exe` inside the portable ZIP. The
