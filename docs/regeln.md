@@ -46,7 +46,8 @@ die Regeln der Gruppe Regelverstoß und der Bedarf haben kein einstellbares Gewi
 - Ein Wochenende, das im Vormonat beginnt (der 1. ist ein Sonntag), zählt mit dem Samstag aus den
   Vormonatsdiensten. Ein Samstag am Monatsende, dessen Sonntag im Folgemonat liegt, wird erst im Folgemonat
   bewertet.
-- Beschäftigung: Tage vor `entryDate` oder nach `exitDate` einer Person werden nicht verplant.
+- Beschäftigung: Tage vor `entryDate` oder nach `exitDate` einer Person werden nicht verplant, ebenso Tage ab
+  `excludedFrom` (nicht mehr aus dem Quellsystem übernommen).
 - Ändern sich nach einer Planung die Eingaben (Stammdaten, Planungsmonat, Regeln, Vormonat), gilt der Plan
   als veraltet, bis er neu geplant wird. Die Planung ist ohne Angabe reproduzierbar: Sie endet nach einer
   festen Zahl von Zügen (`SOLVER_MOVE_LIMIT`), gleicher Stand und gleicher Startwert geben denselben Plan.
@@ -73,7 +74,7 @@ die Regeln der Gruppe Regelverstoß und der Bedarf haben kein einstellbares Gewi
 | `averageWeekHours` | Höchstens 46,16 h je Woche im Durchschnitt des Durchrechnungszeitraums | KV, Durchrechnung | `maxAverageWeekHours` (46,16), `averagingWeeks` (52) |
 | `qualification` | Nur Personen, die für den Bereich eingeteilt werden dürfen | Stammdaten | `areaIds` der Person |
 | `absence` | Kein Dienst und keine Ersatzruhe an Abwesenheitstagen | Abwesenheiten | |
-| `employment` | Kein Dienst vor dem Eintritt oder nach dem Austritt | Stammdaten | `entryDate`, `exitDate` |
+| `employment` | Kein Dienst vor dem Eintritt oder nach dem Austritt | Stammdaten | `entryDate`, `exitDate`, `excludedFrom` |
 | `neverRestriction` | Sperren der Art "nie" (Person, Dienst oder Kategorie, Wochentag, Gültigkeit) | Stammdaten | |
 | `compRestBalance` | Nicht mehr Ersatzruhetage planen als offen sind | Guthaben | `compRestBalance` |
 | `missingShift` | Eine fixierte Schicht gibt es im Schichtkatalog nicht mehr (z. B. nach einem neuen Import) | Plan | |

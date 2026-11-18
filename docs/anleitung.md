@@ -160,8 +160,8 @@ Quellsystem ein, dann kommen sie mit dem nächsten Export, oder legt die Person 
 an beziehungsweise ändert den Namen dort erneut.
 
 Behalten werden Änderungen an Personen (Wochenstunden, Bereiche, Stundenkonto, Ersatzruhe, Eintritt und
-Austritt, gewohnte Verteilung, Familienregeln), an ihren Einschränkungen, entfernte Personen und der Bedarf je
-Bereich. Nicht behalten werden neu angelegte Personen, geänderte Namen und Kürzel sowie Änderungen an Bereichen,
+Austritt, gewohnte Verteilung, Familienregeln), an ihren Einschränkungen, entfernte Personen, Personen, die nicht
+mehr aus dem Quellsystem übernommen werden (oder wieder), und der Bedarf je Bereich. Nicht behalten werden neu angelegte Personen, geänderte Namen und Kürzel sowie Änderungen an Bereichen,
 Schichten, Abwesenheitsarten und Feiertagen.
 
 ## Dienstplan
@@ -449,7 +449,9 @@ möglich), fragt das Programm beim Speichern nach:
 
 **Personen** listet alle Personen mit Kürzel, Bereichen und Wochenstunden. **Suchen** findet nach Name, Kürzel
 oder Bereich (mehrere Wörter müssen alle passen). Ein Klick auf den Namen öffnet die Seite der Person. **Person
-anlegen** öffnet ein leeres Formular für eine neue Person.
+anlegen** öffnet ein leeres Formular für eine neue Person. Personen, die nicht mehr aus dem Quellsystem übernommen
+werden (siehe [Nicht mehr aus dem Quellsystem übernehmen](#nicht-mehr-aus-dem-quellsystem-übernehmen)), stehen
+grau mit „nicht mehr übernommen“ in der Liste; die Zeile über der Liste zählt sie extra.
 
 ### Seite einer Person
 
@@ -513,7 +515,37 @@ betrifft, zeigen danach „Plan veraltet: neu planen“.
 
 **Person entfernen:** Kommt die Person noch in offenen Monaten vor, nennt das Programm die Zahl der Verweise und
 die Monate und fragt, ob sie mit allen Verweisen entfernt werden soll. Kommt sie in einem abgeschlossenen Monat
-vor, lässt sie sich nicht entfernen; dann trägt man den Austritt ein.
+oder in der Historie vor, lässt sie sich nicht entfernen; dann trägt man den Austritt ein oder schaltet
+**Aus dem Quellsystem nicht mehr übernehmen** ein.
+
+### Nicht mehr aus dem Quellsystem übernehmen
+
+Für Personen, die nicht mehr geplant werden sollen, im Quellsystem aber noch geführt werden (etwa nach einem
+Austritt, der dort fehlt), und die sich nicht entfernen lassen, weil sie in abgeschlossenen Monaten oder in der
+Historie vorkommen. Der Schalter steht auf der Seite der Person unter **Übernahme aus dem Quellsystem**, nur für die
+Planung, und wirkt sofort (nach einer Rückfrage):
+
+- **Eingeschaltet:** Die Person bleibt mit allem in den abgeschlossenen Monaten und in der Historie, dort ändert
+  sich nichts. Ab dem ersten Tag nach dem letzten abgeschlossenen Monat (ohne abgeschlossenen Monat ab dem
+  ersten Planungsmonat) wird sie nicht mehr geplant, wie nach einem Austritt; der Tag bleibt, auch wenn später
+  weitere Monate abgeschlossen oder wieder geöffnet werden. Die Seite der Person nennt den Tag. Offene Monate, die
+  schon geplant sind, zeigen „Plan veraltet: neu planen“; Dienste, die sie dort schon hat, meldet die Prüfung als
+  Regelverstoß „Beschäftigungszeitraum“, die nächste Planung lässt sie frei (von Hand gesetzte Dienste nimmt man
+  selbst heraus). Abwesenheiten und Wünsche in offenen Monaten bleiben stehen und wirken nicht mehr. Im
+  Dienstplan steht sie weiter als Zeile ohne Dienste, wie eine Person nach dem Austritt.
+- In der Korrekturdatei steht für sie `"exclude": true`. Das Exportprogramm lässt sie dann im nächsten Datensatz
+  weg; Dispofold behält sie beim Import mit ihrer Historie und weiter ausgeschlossen, ohne Hinweis „fehlt im
+  neuen Datensatz“.
+- **Ausgeschaltet:** Die Person wird wieder geplant, und die nächste Korrekturdatei schließt sie nicht mehr aus,
+  auch wenn der Ausschluss aus einer früheren Korrekturdatei stammt. Bis zum nächsten Export und Import plant
+  Dispofold mit den Daten, die es von ihr hat; danach kommt sie mit den Daten aus dem Quellsystem. Hat sich
+  sonst nichts geändert, speichert **Änderungen als Korrekturdatei exportieren** trotzdem eine Datei (ohne
+  Einträge), denn sie muss die bisherige ersetzen.
+
+Hat das Exportprogramm eine Person ausgeschlossen, die Dispofold kennt (etwa mit einem Eintrag, der von Hand in
+`korrekturen.json` geschrieben wurde), ist der Schalter nach dem Import eingeschaltet und lässt sich genauso
+ausschalten. Solange eine Person ausgeschlossen ist, kommen Änderungen an ihren anderen Feldern nicht in die
+Korrekturdatei; nach dem Ausschalten kommt sie mit den Werten aus dem Quellsystem zurück.
 
 **Wenn jemand anderer inzwischen Stammdaten gespeichert hat**, fragt das Programm wie bei den Eingaben nach:
 **OK** übernimmt die eigene Änderung in die neue Fassung, **Abbrechen** verwirft sie und lädt die neue Fassung.
@@ -631,7 +663,9 @@ importieren, Monat abschließen).
 letzten Import schon angewendeten und die seit dem Import in Dispofold geänderten Stammdaten) als
 `korrekturen.json` für das Exportprogramm; sie ersetzt die bisherige Datei, siehe
 [Neuer Datensatz, Änderungen aus Dispofold behalten](#neuer-datensatz-änderungen-aus-dispofold-behalten). Gibt es
-keine Korrektur, wird keine Datei gespeichert.
+keine Korrektur, wird keine Datei gespeichert; wurde aber ein Ausschluss zurückgenommen (siehe
+[Nicht mehr aus dem Quellsystem übernehmen](#nicht-mehr-aus-dem-quellsystem-übernehmen)), wird eine Datei ohne
+Einträge gespeichert, die die bisherige ersetzt, und die Meldung nennt, wie viele Personen wieder übernommen werden.
 
 **Anonymisieren:** **Pseudonymisieren** erstellt den Datensatz und den Plan des gewählten Monats mit Pseudonymen
 (P001, P002, ...) statt Namen, zum Weitergeben, etwa für eine Fehlersuche. Namen, Kürzel und Ids der Personen

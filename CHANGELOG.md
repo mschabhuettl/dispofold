@@ -3,6 +3,23 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.16.0 (unreleased)
+
+- **Aus dem Quellsystem nicht mehr übernehmen:** neuer Schalter auf der Seite einer Person (nur für die Planung)
+  für Personen, die nicht mehr geplant werden sollen, sich aber nicht entfernen lassen, weil sie in
+  abgeschlossenen Monaten oder in der Historie vorkommen. Die Person bleibt dort unverändert und wird ab dem
+  ersten Tag nach dem letzten abgeschlossenen Monat nicht mehr geplant, wie nach einem Austritt. Die
+  Korrekturdatei enthält für sie `"exclude": true`; lässt das Exportprogramm sie im nächsten Datensatz weg,
+  behält Dispofold sie beim Import mit ihrer Historie und weiter ausgeschlossen. Ausgeschaltet wird sie wieder
+  geplant, und die nächste Korrekturdatei schließt sie nicht mehr aus, auch wenn der Ausschluss aus einer früheren
+  Korrekturdatei stammt (dann speichert der Export auch eine Datei ohne Einträge). Ein Ausschluss, den das
+  Exportprogramm angewendet hat, zeigt den Schalter eingeschaltet. In der Liste der Personen stehen solche
+  Personen grau mit „nicht mehr übernommen“.
+- **Datenformat:** neues optionales Feld `excludedFrom` je Person (Version bleibt 2), nur in Datensätzen aus
+  Dispofold; das JSON-Schema beschreibt es.
+- **REST-Schnittstelle:** `PUT /api/dataset/people/{id}/excluded`; die Korrekturdatei nennt mit `withdrawn` die
+  zurückgenommenen Ausschlüsse.
+
 ## 0.15.0 (2026-11-18)
 
 - **Korrekturdatei vollständig:** **Änderungen als Korrekturdatei exportieren** schreibt alle geltenden

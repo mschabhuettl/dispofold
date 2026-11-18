@@ -30,12 +30,13 @@ Im Docker-Betrieb begrenzt nginx die Anmeldeversuche auf 10 je Minute und Adress
 | `PUT` | `/api/dataset/{kind}/{key}` | ändert ein Objekt (Body: das ganze Objekt), Antwort `MasterChange` |
 | `DELETE` | `/api/dataset/{kind}/{key}?confirm=true` | entfernt ein Objekt, Antwort `{ "revision": n, "removed": n }` |
 | `PUT` | `/api/dataset/people/{personId}/restrictions` | ersetzt die Einschränkungen einer Person (Body: Liste von `Restriction`), Antwort `MasterChange` mit der Liste als `item` |
+| `PUT` | `/api/dataset/people/{personId}/excluded` | Body `true`: die Person wird nicht mehr aus dem Quellsystem übernommen, `false` nimmt das zurück (siehe unten); Antwort `MasterChange` mit der Person als `item` |
 | `GET` | `/api/dataset/export` | Datei-Download: Stammdaten und alle Planungsmonate als `Dataset` (Version 2), nur für `planner` |
 | `POST` | `/api/import/dataset?replace=true` | lädt ein `Dataset`-Dokument (Body, siehe `docs/datenformat.md`), Antwort `ImportSummary` |
 | `POST` | `/api/import/demo?replace=true` | lädt die mitgelieferten synthetischen Demodaten (150 Personen, Jänner 2027), Antwort `ImportSummary` |
 | `POST` | `/api/import/dataset?keep=true` | Import, der die seit dem letzten Import in Dispofold geänderten Stammdaten übernimmt (siehe unten), Antwort `ImportSummary` |
 | `POST` | `/api/import/preview` | Probelauf von `keep=true` ohne zu speichern (Body: `Dataset`), Antwort `{ "changed": bool, "kept": n, "conflicts": [{ "personId", "areaId", "field" }], "notes": [{ code, params }] }`; lehnt wie der Import ab (`import.invalid`), wenn der zusammengeführte Datensatz Fehler hätte |
-| `GET` | `/api/data/corrections` | Alle geltenden Korrekturen (beim letzten Import angewendete und Änderungen seit dem Import) als Korrekturdatei: `{ "file": { "format": "dispofold/corrections", "version": 2, "people": {...}, "demand": {...} }, "notes": [{ code, params }], "count": n, "earlier": n, "complete": true }`, nur für `planner` |
+| `GET` | `/api/data/corrections` | Alle geltenden Korrekturen (beim letzten Import angewendete und Änderungen seit dem Import) als Korrekturdatei: `{ "file": { "format": "dispofold/corrections", "version": 2, "people": {...}, "demand": {...} }, "notes": [{ code, params }], "count": n, "earlier": n, "withdrawn": n, "complete": true }`, nur für `planner` |
 | `GET` | `/api/data/anonymized?month=YYYY-MM` | pseudonymisierter Datensatz (alle Planungsmonate) und Plan des Monats mit getrenntem Schlüssel: `{ "dataset", "plan", "key": "CSV", "people": n }`, nur für `planner` |
 
 Stammdaten bearbeiten:
@@ -48,6 +49,12 @@ Stammdaten bearbeiten:
   im Plan steht: Es wird beim Anlegen angegeben (`masterdata.idMissing`), danach nicht mehr geändert
   (`masterdata.idMismatch`) und ist nach dem Entfernen gesperrt (`masterdata.idTaken`).
 - `MasterChange`: `{ "revision": n, "key": "<key>", "item": { ... } }`.
+- Nicht mehr aus dem Quellsystem übernehmen (`PUT .../excluded`): Das Backend setzt `excludedFrom` der Person auf
+  den ersten Tag nach dem letzten abgeschlossenen Monat (ohne abgeschlossenen Monat auf den ersten Tag des ersten
+  Planungsmonats, ohne Planungsmonat des laufenden Monats); ist es schon gesetzt, bleibt der Tag. Ab diesem Tag
+  gilt die Person als nicht beschäftigt, abgeschlossene Monate davor ändern sich nicht. `false` löscht das Feld.
+  `PUT /api/dataset/people/{id}` übernimmt `excludedFrom` nicht aus dem Body, es bleibt, wie es ist. Ein Body
+  anders als `true` oder `false`: `400` `masterdata.format`.
 - Jede Änderung muss die gelesene Revision mitschicken (Header `If-Match: <n>`). Fehlt sie: `428`
   `masterdata.revisionMissing`; hat inzwischen jemand anderer Stammdaten gespeichert oder importiert: `409`
   `masterdata.conflict`.
@@ -71,20 +78,28 @@ zusammen mit dem Abschnitt `appliedCorrections` des Datensatzes, falls er einen 
 Quelle schon angewendet hat, siehe [Datenformat](datenformat.md#angewendete-korrekturen)).
 Die Korrekturdatei enthält, was seit diesem Stand in Dispofold geändert wurde: je Person die geänderten Felder
 (`weeklyHours`, `areaIds`, `hoursAccount`, `compRestBalance`, `familyRules`, `entryDate`, `exitDate`,
-`shiftMix`), ihre Einschränkungen als ganze Liste, `"exclude": true` für in Dispofold entfernte Personen und
-`demand` je Bereich mit geänderten Bedarfsregeln. Was die Datei nicht ausdrücken kann (neue Personen, geänderte
+`shiftMix`), ihre Einschränkungen als ganze Liste, `"exclude": true` für in Dispofold entfernte Personen und für
+Personen mit `excludedFrom` (dann nur dieser Eintrag) und `demand` je Bereich mit geänderten Bedarfsregeln. Was die Datei nicht ausdrücken kann (neue Personen, geänderte
 Ids, Namen und Kürzel, geänderte Bereiche, Schichten, Abwesenheitsarten und Feiertage, Werte mit Ids, die es im
 Ausgangsstand nicht gibt) steht in `notes` (nur Ids und Feldnamen). Dazu kommen die Korrekturen aus
 `appliedCorrections`, die noch gelten: je Person dieselben Felder mit dem Wert in Dispofold, `"exclude": true`
-und der Bedarf je Bereich. Je Person und Feld (Einschränkungen und Bedarf eines Bereichs als Ganzes) gilt der
+für Personen, die Dispofold nicht kennt, und der Bedarf je Bereich. Ein Ausschluss aus `appliedCorrections` für
+eine Person, die in Dispofold ohne `excludedFrom` vorkommt, ist zurückgenommen und fehlt in der Datei. Je Person und Feld (Einschränkungen und Bedarf eines Bereichs als Ganzes) gilt der
 neuere Wert; ein Feld, das in Dispofold auf den Wert der Quelle zurückgeändert wurde, bleibt mit diesem Wert in
 der Datei. So ist die Datei vollständig und ersetzt die bisherige Korrekturdatei. `count` zählt Felder,
-Ausschlüsse und Bereiche der Datei, `earlier` davon die aus `appliedCorrections`, die seit dem Import nicht
-geändert wurden. `complete` ist `false`, wenn der letzte Import keinen Abschnitt `appliedCorrections` hatte:
+Ausschlüsse und Bereiche der Datei, `earlier` davon die aus `appliedCorrections` und dem Ausgangsstand, die seit
+dem Import nicht geändert wurden, `withdrawn` die seit dem Import zurückgenommenen Ausschlüsse (nicht mehr in der
+Datei; die Datei ersetzt die bisherige auch ohne Einträge). `complete` ist `false`, wenn der letzte Import keinen Abschnitt `appliedCorrections` hatte:
 Dann enthält die Datei nur die Änderungen seit dem Import. `keep=true` wendet die Änderungen seit dem Import auf
 den neuen Datensatz an; ein Feld, das auch der neue Import gegenüber dem alten Ausgangsstand ändert, ist ein
 Konflikt, und der Wert aus Dispofold gilt. Hat der neue Import dort schon den Wert aus Dispofold (etwa weil die
-Korrekturdatei dazwischen angewendet wurde), ist es kein Konflikt. Danach ist der neue, unveränderte Import der Ausgangsstand; wurde
+Korrekturdatei dazwischen angewendet wurde), ist es kein Konflikt. Ein gesetztes oder zurückgenommenes
+`excludedFrom` wird ebenso übernommen. Jeder Import eines Datensatzes (auch Vorschau, `replace=true` und ohne
+Parameter, nicht die Demodaten) behält Personen, die der neue Datensatz nicht enthält, die aber in Dispofold
+`excludedFrom` haben oder die sein Abschnitt `appliedCorrections` mit `"exclude": true` nennt: mit ihrer Historie,
+ihren Einschränkungen auf bekannte Schichten und ihren bekannten Bereichen, mit `excludedFrom` (der Tag aus dem
+alten Ausgangsstand oder aus Dispofold, sonst wie oben berechnet). Sie gehören zum Import und zum Ausgangsstand,
+sind also keine Änderung seit dem Import und kein Hinweis `corrections.personMissing`. Danach ist der neue, unveränderte Import der Ausgangsstand; wurde
 etwas übernommen, bleibt `changedSinceImport` wahr. Installationen aus älteren Versionen haben bis zum nächsten
 Import keinen Ausgangsstand (`409` `corrections.noBaseline`).
 
