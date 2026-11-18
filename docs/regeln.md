@@ -286,14 +286,15 @@ Eine Einstellung der Regeln, `nightDistribution`:
     Er lohnt sich im Median erst beim rund 500- bis 2000-Fachen des Gewichts; zwischen 0,25 und 4 lohnen sich
     praktisch dieselben Tausche.
   - Die Historie (3 Monate) trägt 80 bis 90 % der Last. Sie macht den Ausgleich nicht unmöglich: Ein Monat, der
-    nur auf Fairness achtet, senkte die Strafe um 25 bis 40 %; der fertige Plan liegt aber meist etwas über der
-    Strafe der Historie allein.
+    nur auf Fairness achtet und sonst nichts beachtet, senkte die Strafe höchstens um 25 bis 40 %; der fertige
+    Plan liegt aber meist etwas über der Strafe der Historie allein.
   - Der Solver ist nach 300 s nicht am Ende (die weiche Strafe sinkt auch in der letzten Minute um rund 4 %) und
     verbessert vor allem die großen Posten. Die Fairness schwankt dabei um ± 5 % ohne Richtung.
   - Die Fairness wirkt deshalb wie ein Ausgleich unter sonst gleichwertigen Plänen. Proben mit 120 s: Ohne sie
-    (Gewicht 0) waren die Wochenenden rund 15 % ungleicher, die übrigen kaum; das 100-Fache brachte nur 5 bis
-    13 % mehr Ausgleich. Die Gewichte bleiben darum, wie sie sind. Spürbar mehr Ausgleich bräuchte ein anderes
-    Maß oder Züge über mehrere Tage, nicht ein anderes Gewicht. Nachrechnen: `FairnessAnalysisTest` im Backend.
+    (Gewicht 0) waren die Wochenenden rund 15 % ungleicher, die übrigen kaum; das 100-Fache brachte 5 bis 13 %
+    mehr Ausgleich (ein Lauf, Nächte und unbeliebte Dienste im Rauschen). Der Bereich 0,25 bis 4 ist also viel zu
+    klein, um die Fairness spürbar zu verschieben; die Gewichte bleiben, wie sie sind. Nachrechnen:
+    `FairnessAnalysisTest` im Backend.
 - Nachtdienst: ein Dienst, der mindestens `nightMinHours` (2 h) im Nachtfenster `nightStart` bis `nightEnd`
   (22:00 bis 06:00) liegt.
 - Wochenende gearbeitet: ein Dienst beginnt am Samstag oder Sonntag.
