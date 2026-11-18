@@ -122,6 +122,11 @@ verwenden kann:
    kommen sie mit jedem neuen Datensatz wieder mit. Was die Datei nicht ausdrücken kann (zum Beispiel in
    Dispofold neu angelegte Personen), steht darunter als Liste: Das ist im Quellsystem nachzutragen.
 
+In Dispofold neu angelegte Personen und geänderte Namen können weder die Korrekturdatei noch **Änderungen aus
+Dispofold behalten** übernehmen (die Vorschau des Imports listet sie weiter auf): Man trägt sie im Quellsystem ein,
+dann kommen sie mit dem nächsten Export, oder legt die Person nach dem Import in Dispofold wieder an
+beziehungsweise ändert den Namen dort erneut.
+
 Behalten werden Änderungen an Personen (Wochenstunden, Bereiche, Stundenkonto, Ersatzruhe, Eintritt und
 Austritt, gewohnte Verteilung, Familienregeln), an ihren Einschränkungen, entfernte Personen und der Bedarf je
 Bereich. Nicht behalten werden neu angelegte Personen, geänderte Namen und Kürzel sowie Änderungen an Bereichen,
@@ -421,15 +426,18 @@ anlegen** öffnet ein leeres Formular für eine neue Person.
 Oben stehen Kürzel, Wochenstunden, Bereiche und der Beschäftigungszeitraum. **Bearbeiten** springt zum Formular.
 Die Zahlen gelten für den gewählten Monat:
 
-- **Stunden:** geplante Stunden gegen Ziel und Soll („28,0 h von Ziel 112,9 h (Soll 129,2 h)“; **i** erklärt
-  beide), angerechnete Stunden, Stundenkonto vorher und danach, Dienste, verfügbare Tage, vom Stundenkonto
+- **Stunden:** geplante und angerechnete Stunden gegen Ziel und Soll in einer Kachel („48,4 h (davon 20,4 h
+  angerechnet) von Ziel 112,9 h (Soll 129,2 h)“; diese Summe vergleicht die Planung mit dem Ziel, **i** erklärt
+  beide; Ansichtsrollen sehen nur die geplanten Stunden und das Soll), Stundenkonto vorher und danach, Dienste, verfügbare Tage, vom Stundenkonto
   abgezogene Stunden und der Wochenschnitt im Durchrechnungszeitraum („Historie unvollständig“, wenn die
   Vormonate nicht so weit zurückreichen).
 - **Belastung und Wünsche:** Nächte, Wochenenden im Dienst und frei, Feiertage, unbeliebte Dienste,
   Einzeldienste, erfüllte Wünsche, Ersatzruhe geplant, erworben und offen danach. Die Kachel **Nächte** sagt, ob
   die Person ihrer gewohnten Verteilung folgt, nie Nacht macht oder im Nachtausgleich ist, dann mit ihrer
   Belastung und dem Mittel aller Verglichenen.
-- **Verteilung der Dienste:** der geplante Anteil je Schichtart und Bereich neben der gewohnten Verteilung.
+- **Verteilung der Dienste:** der geplante Anteil je Schichtart und Bereich neben der gewohnten Verteilung. Zählt
+  der Nachtanteil nicht (Nachtdienste „Gleichmäßig“ oder die Person macht nie Nacht), zeigt die Spalte **Gilt
+  (ohne Nächte)** die Anteile, die dann für die Dienste außer Nächten gelten.
 - **Historie (Vormonate):** Nächte, Wochenenden, Feiertage, unbeliebte Dienste und Wünsche der Vormonate, die
   für die Fairness mitzählen.
 - **Warum dieser Dienst?** Für jeden Tag (oder **Ganzer Monat**) steht in Worten, was zutrifft (zum Beispiel
@@ -453,7 +461,9 @@ Unter **Person bearbeiten** steht alles zu einer Person in einem Formular, gespe
   (Feld `shiftMix`). Eine ausgefüllte Gruppe muss zusammen 100 % ergeben, eine leere Gruppe heißt keine
   Verteilung; **Verteilung entfernen** leert alle Felder. Beim Planen nähert die Regel „Gewohnte Verteilung“ die
   Dienste an diese Anteile an. Was mit dem Nachtanteil geschieht, hängt von der Einstellung **Nachtdienste** ab
-  (siehe [Regeln](#regeln)); der Hinweis unter der Überschrift sagt es für die gewählte Einstellung. Für Personen
+  (siehe [Regeln](#regeln)); der Hinweis unter der Überschrift sagt es für die gewählte Einstellung, bei einer
+  Person, die nie Nacht macht, für sie. Zählt der Nachtanteil nicht, nennt eine Zeile unter den Feldern die
+  Anteile, die dann gelten (die übrigen, auf 100 % hochgerechnet). Für Personen
   mit Anteilen je Bereich gilt die Abwechslung Bereiche nicht.
 - **Einschränkungen:** welche Schicht oder Schichtart (zum Beispiel alle Nachtschichten) die Person **Nie** oder
   **Nur auf Anfrage** macht, an jedem Tag oder an einem Wochentag, auf Wunsch nur für eine bestimmte Zeit
