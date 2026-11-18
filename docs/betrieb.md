@@ -360,6 +360,22 @@ Setup, ZIP und dmg sind nicht mit einem Code-Signing-Zertifikat signiert. Die Be
 ersten Start. Die Echtheit lässt sich mit den SHA-256-Prüfsummen aus dem Release prüfen. Die Update-Pakete sind
 davon unabhängig mit einem eigenen Schlüssel signiert und werden immer geprüft.
 
+Die Signatur der Windows-Dateien über die SignPath Foundation ist beantragt (siehe
+[Code signing policy](code-signing-policy.md)). Sobald sie gilt, steht das in den Notizen des Release, und
+signiert sind dann das Setup und `Dispofold\dispofold.exe` im ZIP. Das vom Setup installierte `dispofold.exe` und
+das Deinstallationsprogramm bleiben unsigniert; `runtime\bin\java.exe`, `runtime\bin\javaw.exe` und die DLLs der
+Java-Laufzeit sind schon heute von Eclipse Adoptium oder Microsoft signiert. Prüfen lässt sich die Signatur so:
+
+- **Explorer:** rechte Maustaste auf die Datei, **Eigenschaften**, Registerkarte **Digitale Signaturen**. Dort
+  steht „SignPath Foundation“; **Details** zeigt, ob die Signatur gültig ist. Fehlt die Registerkarte, ist die
+  Datei nicht signiert.
+- **PowerShell:** `Get-AuthenticodeSignature .\Dispofold-<version>-windows-setup.exe | Format-List`. Erwartet:
+  `Status` ist `Valid`, `SignerCertificate` nennt im Subject die SignPath Foundation. Für das ZIP erst entpacken
+  und dann `Get-AuthenticodeSignature .\Dispofold\dispofold.exe` prüfen.
+- Mit gültiger Signatur kann die IT das Setup und das Programm aus dem ZIP auch über eine Herausgeberregel
+  (Zertifikat der SignPath Foundation, Produktname „Dispofold“) freigeben. Für das vom Setup installierte
+  Programm bleibt es bei den Regeln unten.
+
 Für Benutzerinnen und Benutzer:
 
 - **Windows-Setup (SmartScreen):** „Der Computer wurde durch Windows geschützt“. Auf **Weitere Informationen**
