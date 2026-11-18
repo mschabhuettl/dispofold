@@ -51,7 +51,7 @@ section = re.search(r"^## " + re.escape(tag[1:]) + r" .*?\n(.*?)(?=^## |\Z)", te
 notes = section.group(1).strip() + "\n\n" if section else ""
 print(json.dumps({"tag_name": tag, "name": tag, "draft": True,
                   "body": notes + "Installation und Update: docs/betrieb.md\n\n"
-                  "Wie die Programme gebaut und signiert werden: [Code signing policy]"
+                  "Wie die Programme gebaut werden und wie man Downloads und Update-Pakete prüft: [Code signing policy]"
                   "(https://github.com/mschabhuettl/dispofold/blob/main/docs/code-signing-policy.md)"}))
 PY
 )
