@@ -149,7 +149,7 @@ export function createApi({ fetchImpl = (...a) => globalThis.fetch(...a), onUnau
     importDataset: (dataset, replaceChanged, keep = false) => request('POST', `/api/import/dataset${keep ? '?keep=true' : replace(replaceChanged)}`, dataset),
     /** Dry run of an import with keep: { changed, kept, conflicts: [{ personId, areaId, field }], notes } */
     importPreview: (dataset) => request('POST', '/api/import/preview', dataset),
-    /** Changes since the last import: { file, notes, count }; 409 corrections.noBaseline without a stored import */
+    /** Corrections in effect: { file, notes, count, earlier, complete }; 409 corrections.noBaseline without a stored import */
     correctionsFile: () => request('GET', '/api/data/corrections'),
     /** Pseudonymised { dataset, plan, key, people }; 409 anonymize.leak when a name would remain */
     anonymized: (month) => request('GET', `/api/data/anonymized?month=${m(month)}`),

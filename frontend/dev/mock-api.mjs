@@ -12,6 +12,7 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
   // Daten page: the master data of the last import (baseline) and whether they were changed since (PUT people)
   const masterOf = (d) => structuredClone({ ...d, periods: [] });
   let baseline = masterOf(dataset);
+  let applied = null; // the section appliedCorrections of the last import, null without one
   let changedSinceImport = false;
   const plans = new Map();
   const solving = new Map(); // month -> { started, limitMs }
@@ -436,7 +437,8 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
         notes.push({ code: 'corrections.personMissing', params: { personId: c.personId } });
         continue;
       }
-      if (!same(was.get(c.personId)[c.field], target[c.field])) conflicts.push({ personId: c.personId, areaId: null, field: c.field });
+      // a value the new import already has is no conflict
+      if (!same(was.get(c.personId)[c.field], target[c.field]) && !same(c.value, target[c.field])) conflicts.push({ personId: c.personId, areaId: null, field: c.field });
       target[c.field] = structuredClone(c.value);
       kept++;
     }
@@ -580,13 +582,16 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
         dataset = initial ? structuredClone(initial) : makeDataset(query.get('month') ?? month, 1);
         for (const p of dataset.periods) periods.set(p.month, p);
         baseline = masterOf(dataset);
+        applied = null;
         changedSinceImport = false;
         return summary('synthetic');
       }
       if (b === 'dataset') {
-        const k = keep ? keepChanges(body) : null;
-        baseline = masterOf(body);
-        dataset = k ? k.merged : body;
+        const { appliedCorrections = null, ...upload } = body;
+        const k = keep ? keepChanges(upload) : null;
+        baseline = masterOf(upload);
+        applied = appliedCorrections;
+        dataset = k ? k.merged : upload;
         changedSinceImport = Boolean(k?.kept);
         for (const p of dataset.periods ?? []) periods.set(p.month, p);
         return summary(body.source ?? 'upload', ['Hochgeladener Datensatz ersetzt die Stammdaten.'], k?.kept ?? 0, k?.notes ?? []);
@@ -598,8 +603,21 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
       if (b === 'corrections') {
         const { changed, notes } = changes();
         const people = {};
-        for (const x of changed) (people[x.personId] ??= {})[x.field] = x.value;
-        return json({ file: { format: 'dispofold/corrections', version: 2, people, demand: {} }, notes, count: changed.length });
+        // earlier corrections (person fields and exclusions) with the current value, then the changes since
+        let count = 0;
+        const current = new Map(dataset.people.map((p) => [p.id, p]));
+        for (const [id, entry] of Object.entries(applied?.people ?? {})) {
+          if (entry.exclude === true) { people[id] = { exclude: true }; count++; continue; }
+          if (!current.has(id)) continue;
+          for (const field of PERSON_FIELDS.filter((f) => f in entry)) { (people[id] ??= {})[field] = current.get(id)[field] ?? null; count++; }
+        }
+        let earlier = count;
+        for (const x of changed) {
+          if (!(x.field in (people[x.personId] ?? {}))) count++;
+          else earlier--;
+          (people[x.personId] ??= {})[x.field] = x.value;
+        }
+        return json({ file: { format: 'dispofold/corrections', version: 2, people, demand: {} }, notes, count, earlier, complete: applied !== null });
       }
       if (b === 'anonymized') {
         const m = query.get('month') ?? '';

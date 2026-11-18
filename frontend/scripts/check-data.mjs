@@ -1,6 +1,6 @@
-// Playwright check of the Daten page (mock API): sections with intros, corrections file of the changes made in
-// Dispofold, import keeping those changes (preview with conflicts, also from the "master data changed" warning),
-// pseudonymised export with a separate key, and viewers refused.
+// Playwright check of the Daten page (mock API): sections with intros, corrections file of the corrections in effect
+// (earlier ones and the changes made in Dispofold), import keeping those changes (preview with conflicts, also from
+// the "master data changed" warning), pseudonymised export with a separate key, and viewers refused.
 //   npm run build && node scripts/check-data.mjs     (Chromium via `npx playwright install chromium`)
 import { spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
@@ -85,6 +85,7 @@ try {
   check('corrections file content', file.format === 'dispofold/corrections' && file.version === 2 && file.people[p1.id]?.weeklyHours === 30,
     JSON.stringify(file.people));
   check('corrections file without names', !corrections.text.includes(p1.lastName) && !corrections.text.includes(p1.firstName));
+  check('import without the applied corrections: the note says only the changes since', await main.getByText('nennt die schon angewendeten Korrekturen nicht').count() === 1);
 
   // import keeping the change: preview with the conflict, then import
   const upload = structuredClone(fixture);
@@ -130,6 +131,19 @@ try {
   check('no names or ids in the shared files', !fixture.people.some((p) => shared.text.includes(`"${p.lastName}"`) || shared.text.includes(`"${p.id}"`) || plan.text.includes(`"${p.id}"`)));
   check('key separate, with the names', key.text.replace(/^﻿/, '').startsWith('pseudonym;id;externe_id;nachname;vorname;kuerzel') && key.text.includes(p1.lastName)
     && !shared.text.includes('pseudonym;id'));
+
+  // an import that lists its applied corrections: they stay in the file, counted apart from the new changes
+  const listed = structuredClone(fixture);
+  listed.people[1].weeklyHours = 25;
+  listed.appliedCorrections = { format: 'dispofold/corrections', version: 2, people: { [fixture.people[1].id]: { weeklyHours: 25 } }, demand: {} };
+  check('import with the applied corrections', (await api(page, 'POST', '/api/import/dataset?replace=true', listed)).status === 200);
+  await api(page, 'PUT', `/api/dataset/people/${p1.id}`, { ...p1, weeklyHours: 31 });
+  await open(page);
+  const complete = await download(page, () => main.getByRole('button', { name: 'Änderungen als Korrekturdatei exportieren' }).click());
+  const all = JSON.parse(complete.text);
+  check('earlier and new corrections in the file', all.people[fixture.people[1].id]?.weeklyHours === 25 && all.people[p1.id]?.weeklyHours === 31, JSON.stringify(all.people));
+  check('counted apart', await main.getByText('Aus früheren Korrekturen: 1, seit dem letzten Import geändert: 1.').count() === 1);
+  check('no note with the applied corrections', await main.getByText('nennt die schon angewendeten Korrekturen nicht').count() === 0);
 
   // viewers: refused by the server, no Daten page
   const viewer = await login('ansicht');
