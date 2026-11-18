@@ -7,7 +7,7 @@ import { spawn } from 'node:child_process';
 import { createServer } from 'node:net';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright';
+import { launchBrowser } from './browser.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const month = '2027-01';
@@ -37,7 +37,7 @@ function ranges(absences) {
   return out;
 }
 
-const browser = await chromium.launch();
+const browser = await launchBrowser();
 try {
   const context = await browser.newContext({ locale: 'de-DE', viewport: { width: 1600, height: 1000 } });
   await context.addInitScript((m) => sessionStorage.setItem('month', m), month);

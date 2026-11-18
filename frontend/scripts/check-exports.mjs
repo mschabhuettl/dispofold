@@ -7,7 +7,7 @@ import { readFileSync } from 'node:fs';
 import { createServer } from 'node:net';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright';
+import { launchBrowser } from './browser.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const month = '2027-01';
@@ -19,7 +19,7 @@ const server = spawn(process.execPath, [join(root, 'scripts', 'dev-server.mjs'),
 await new Promise((resolve) => server.stdout.on('data', (d) => { if (String(d).includes('dev server on')) resolve(); }));
 const base = `http://localhost:${port}`;
 
-const browser = await chromium.launch();
+const browser = await launchBrowser();
 let failed = false;
 try {
   const context = await browser.newContext({ locale: 'de-DE', acceptDownloads: true });
