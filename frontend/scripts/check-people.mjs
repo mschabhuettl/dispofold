@@ -8,7 +8,7 @@ import { spawn } from 'node:child_process';
 import { createServer } from 'node:net';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright';
+import { launchBrowser } from './browser.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const month = '2027-01';
@@ -25,7 +25,7 @@ const check = (name, ok, detail = '') => {
   if (!ok) failed = true;
 };
 
-const browser = await chromium.launch();
+const browser = await launchBrowser();
 try {
   const login = async (user) => {
     const context = await browser.newContext({ locale: 'de-DE', viewport: { width: 1600, height: 1000 } });

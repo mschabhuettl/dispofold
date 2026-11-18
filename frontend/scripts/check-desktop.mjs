@@ -11,7 +11,7 @@ import { createServer } from 'node:net';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { chromium } from 'playwright';
+import { launchBrowser } from './browser.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const servers = [];
@@ -37,7 +37,7 @@ const check = (name, ok, detail = '') => {
   if (!ok) failed = true;
 };
 
-const browser = await chromium.launch();
+const browser = await launchBrowser();
 try {
   const page = await browser.newPage({ locale: 'de-DE' });
   page.on('dialog', (d) => d.accept());

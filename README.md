@@ -30,6 +30,9 @@ kommen als signierte Update-Pakete, voreingestellt ohne Update-Quelle und damit 
 Programme sind nicht mit einem Code-Signing-Zertifikat signiert. Was bei den Warnungen von Windows und macOS zu
 tun ist, steht in [docs/betrieb.md](docs/betrieb.md#unsignierte-programme).
 
+Die Signatur der Windows-Programme über die SignPath Foundation ist beantragt; wie die Programme gebaut und
+signiert werden, steht in der [Code signing policy](docs/code-signing-policy.md).
+
 ## Dokumentation
 
 Als Website mit Suche: <https://mschabhuettl.github.io/dispofold/> (Stand des neuesten Releases). Dieselben Texte
@@ -44,6 +47,7 @@ liegen als Markdown in `docs/`.
 | Schnittstelle | [docs/api.md](docs/api.md) |
 | Planungsregeln | [docs/regeln.md](docs/regeln.md) |
 | Datenformat | [docs/datenformat.md](docs/datenformat.md) |
+| Codesignatur | [Code signing policy](docs/code-signing-policy.md) |
 
 ## Schnellstart mit Docker
 

@@ -10,7 +10,7 @@
 // navigator.language and Intl.
 import { mkdirSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { chromium } from 'playwright';
+import { launchBrowser } from './browser.mjs';
 
 const base = process.env.BASE_URL ?? 'http://localhost:8080';
 const user = process.env.APP_USER ?? 'planung';
@@ -23,7 +23,7 @@ mkdirSync(outDir, { recursive: true });
 
 const origin = new URL(base).origin;
 const external = [];
-const browser = await chromium.launch({ channel: 'chromium', args: ['--lang=de-DE'], env: { ...process.env, LANG: 'de_DE.UTF-8', LANGUAGE: 'de' } });
+const browser = await launchBrowser();
 const context = await browser.newContext({ viewport: { width: 1600, height: 1000 }, locale: 'de-DE' });
 await context.route('**/*', (route) => {
   const url = route.request().url();
