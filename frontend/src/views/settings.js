@@ -8,6 +8,7 @@ import { t } from '../lib/texts.js';
 export async function render(root, ctx) {
   const { api } = ctx;
   let info = await api.desktopUpdate(false);
+  let checked = false; // "Kein Update verfügbar" only after a search (check=false never asks the source)
 
   const source = h('input', { id: 'update-source', type: 'text', value: info.source ?? '', spellcheck: 'false',
     placeholder: t('settings.source.placeholder') });
@@ -45,7 +46,7 @@ export async function render(root, ctx) {
         a.notes && h('pre', {}, a.notes),
         h('div.row', { style: { marginTop: '.6rem', marginBottom: 0 } },
           button(t('settings.install'), () => install(() => api.desktopInstall()), 'btn-primary')))
-        : !problem && h('p.muted', {}, t('settings.none')),
+        : checked && !problem && h('p.muted', {}, t('settings.none')),
     ]);
   }
 
@@ -67,6 +68,7 @@ export async function render(root, ctx) {
             const res = await guarded(() => api.desktopUpdate(true));
             if (res) {
               info = res;
+              checked = true;
               drawStatus();
             }
           }))),

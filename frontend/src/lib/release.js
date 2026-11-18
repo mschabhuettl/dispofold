@@ -80,7 +80,8 @@ function releaseDialog(available, { current, install, window }) {
 
 /**
  * Desktop, first start without saved update settings: asks once whether to check for new versions automatically.
- * Resolves true for "Ja", false for "Nein". The dialog has no other way out, so nothing is assumed.
+ * Resolves true for "Ja", false for "Nein" and null when the dialog closed without an answer (then nothing is saved
+ * and the next start asks again).
  */
 export function askForChecks() {
   const yes = h('button.btn.btn-primary', { type: 'button', autofocus: true, onclick: () => dialog.close('yes') }, t('release.consent.yes'));
@@ -93,7 +94,7 @@ export function askForChecks() {
   return new Promise((resolve) => {
     dialog.addEventListener('close', () => {
       dialog.remove();
-      resolve(dialog.returnValue === 'yes');
+      resolve({ yes: true, no: false }[dialog.returnValue] ?? null);
     });
     document.body.append(dialog);
     dialog.showModal();

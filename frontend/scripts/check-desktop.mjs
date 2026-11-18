@@ -189,8 +189,15 @@ try {
     === 'Soll Dispofold automatisch nach neuen Versionen suchen?');
   check('"Ja" is preselected', await no.evaluate(() => document.activeElement?.textContent) === 'Ja');
   await no.keyboard.press('Escape');
+  await no.keyboard.press('Escape');
   await no.waitForTimeout(500);
-  check('Escape is no answer', await question.isVisible() && noSeen.saved.length === 0 && noSeen.checks === 0);
+  const escaped = await question.isVisible();
+  check('Escape is no answer', noSeen.saved.length === 0 && noSeen.checks === 0, escaped ? 'still open' : 'closed, nothing saved');
+  if (!escaped) {
+    await no.reload();
+    await question.waitFor();
+    check('closed without an answer: asked again on the next start', true);
+  }
   await question.getByRole('button', { name: 'Nein' }).click();
   await question.waitFor({ state: 'detached' });
   check('"Nein" saves no source', JSON.stringify(noSeen.saved) === '[{"source":"","checkOnStart":true}]', JSON.stringify(noSeen.saved));

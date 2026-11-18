@@ -289,7 +289,9 @@ async function desktopUpdates() {
   let info = await api.desktopUpdate(false).catch(() => null);
   if (!info) return;
   if (info.ask) {
-    const settings = { source: await askForChecks() ? info.releases : '', checkOnStart: true };
+    const answer = await askForChecks();
+    if (answer === null) return; // no answer: nothing saved, nothing checked
+    const settings = { source: answer ? info.releases : '', checkOnStart: true };
     if (await guarded(() => api.desktopSettings(settings)) === undefined) return;
     info = { ...info, ...settings };
   }
