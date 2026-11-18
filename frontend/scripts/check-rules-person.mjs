@@ -265,7 +265,13 @@ try {
   const tiles = page.locator('.kpi .value').filter({ hasText: /Soll|Ziel/ });
   check('one hour tile with Soll and Ziel', await tiles.count() === 1, String(await tiles.count()));
   const tile = (await tiles.first().textContent()).trim();
-  check('hour tile format', /^\d+(,\d)? h von Ziel \d+(,\d)? h \(Soll \d+(,\d)? h\)$/.test(tile), tile);
+  check('hour tile format', /^\d+(,\d)? h \(davon \d+(,\d)? h angerechnet\) von Ziel \d+(,\d)? h \(Soll \d+(,\d)? h\)$/.test(tile), tile);
+  // the first figure is what the rule compares with the Ziel: planned plus credited hours
+  const stats = await page.evaluate(async ([m, id]) => (await (await fetch(`/api/plans/${m}/people/${encodeURIComponent(id)}`)).json()).stats, [month, personId]);
+  const num = (v) => v.toLocaleString('de-AT', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  check('hour tile: planned plus credited, then credited', tile.startsWith(`${num(stats.plannedHours + stats.creditedHours)} h (davon ${num(stats.creditedHours)} h angerechnet)`),
+    `${tile} / ${stats.plannedHours} + ${stats.creditedHours}`);
+  check('no separate tile for credited hours', await page.locator('.kpi .label').filter({ hasText: /^Angerechnet/ }).count() === 0);
   check('no tile is labelled Soll or Ziel', await page.locator('.kpi .label').filter({ hasText: /^(Soll|Ziel)/ }).count() === 0);
   const info = page.getByRole('button', { name: 'Was bedeuten Soll und Ziel?' });
   await info.click();
