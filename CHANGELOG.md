@@ -3,7 +3,7 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
-## 0.14.0 (unreleased)
+## 0.14.0 (2026-11-18)
 
 - **Windows-Signatur vorbereitet:** Die Windows-Dateien bleiben vorerst unsigniert: Die SignPath Foundation hat
   den ersten Antrag im November 2026 abgelehnt, weil das Projekt noch jung ist; ein neuer Antrag folgt später.
