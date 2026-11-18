@@ -293,17 +293,22 @@ public final class Corrections {
         Map<String, Person> people = byId(list(target.people()), Person::id);
 
         List<String> excluded = new ArrayList<>();
-        int remaining = people.size();
+        // people the target takes over from the source; one excluded there is not in the source's dataset
+        int[] remaining = { (int) people.values().stream().filter(p -> p.excludedFrom() == null).count() };
         for (String id : changes.excluded()) {
             if (!people.containsKey(id)) {
                 continue; // already gone there
             }
-            if (remaining == 1) {
+            if (people.get(id).excludedFrom() != null) {
+                excluded.add(id);
+                continue;
+            }
+            if (remaining[0] == 1) {
                 notes.add(note("corrections.lastPerson", "personId", id));
                 continue;
             }
             excluded.add(id);
-            remaining--;
+            remaining[0]--;
         }
 
         Map<String, PersonChange> kept = new TreeMap<>(CLIENT_ORDER);
@@ -314,6 +319,13 @@ public final class Corrections {
                 return;
             }
             Person p = change.person();
+            if (p.excludedFrom() != null && t.excludedFrom() == null) {
+                if (remaining[0] == 1) {
+                    notes.add(note("corrections.lastPerson", "personId", id));
+                    return;
+                }
+                remaining[0]--;
+            }
             List<String> fields = new ArrayList<>(change.fields());
             boolean mixForAreas = fields.contains("areaIds") && !fields.contains("shiftMix")
                     && !list(p.areaIds()).containsAll(mixAreas(t.shiftMix()));
@@ -429,8 +441,9 @@ public final class Corrections {
 
     /**
      * Applies checked changes to a dataset: changed fields, restrictions and exclusions from the source
-     * ({@link #EXCLUDED_FROM}) replaced, people removed in Dispofold removed with every entry that refers to them (restrictions, history, absences, wishes, fixed duties, previous duties), the
-     * demand rules of an area replaced where its first rule stood.
+     * ({@link #EXCLUDED_FROM}) replaced, people removed in Dispofold removed with every entry that refers to them
+     * (restrictions, history, absences, wishes, fixed duties, previous duties), the demand rules of an area replaced
+     * where its first rule stood.
      */
     public static Dataset apply(Changes changes, Dataset target) {
         Set<String> gone = Set.copyOf(changes.excluded());

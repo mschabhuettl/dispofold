@@ -262,9 +262,10 @@ public class ImportResource {
     }
 
     /**
-     * The import with the people it leaves out who are excluded in Dispofold or whom its section
-     * {@code appliedCorrections} lists as excluded (the source left them out for that): they stay excluded, with
-     * their history, their restrictions of known shifts, and their known areas, so that the closed months keep them.
+     * The import with the people it leaves out who are excluded in Dispofold or were at the last import, or whom its
+     * section {@code appliedCorrections} lists as excluded (the source left them out for that): they stay excluded,
+     * with their history, their restrictions of known shifts, and their known areas, so that the closed months keep
+     * them.
      * The exclusion keeps its day from the last import, else from Dispofold, else the first day after the last
      * closed month. Part of the import (and its baseline), so they are no change since it.
      */
@@ -281,15 +282,16 @@ public class ImportResource {
                 }
             });
         }
-        Set<String> present = list(raw.people()).stream().map(Person::id).collect(Collectors.toSet());
-        List<Person> left = list(current.people()).stream().filter(p -> !present.contains(p.id())
-                && (p.excludedFrom() != null || listed.contains(p.id()))).toList();
-        if (left.isEmpty()) {
-            return raw;
-        }
         Map<String, LocalDate> before = new HashMap<>();
         store.baseline().ifPresent(b -> list(b.people()).stream().filter(p -> p.excludedFrom() != null)
                 .forEach(p -> before.put(p.id(), p.excludedFrom())));
+        // also excluded at the last import and taken back since: keeping the changes takes it back again
+        Set<String> present = list(raw.people()).stream().map(Person::id).collect(Collectors.toSet());
+        List<Person> left = list(current.people()).stream().filter(p -> !present.contains(p.id())
+                && (p.excludedFrom() != null || listed.contains(p.id()) || before.containsKey(p.id()))).toList();
+        if (left.isEmpty()) {
+            return raw;
+        }
         List<YearMonth> closed = store.plans().stream().map(StoredPlan::plan)
                 .filter(p -> p.status() == PlanStatus.CLOSED).map(Plan::month).toList();
         List<YearMonth> months = Stream.of(store.periodMonths().stream(),

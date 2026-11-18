@@ -459,6 +459,20 @@ class CorrectionsTest {
     }
 
     @Test
+    void theLastPersonTakenOverIsNotExcluded() throws Exception {
+        Dataset base = TestData.dataset(YearMonth.of(2027, 1));
+        List<Person> all = base.people().stream().map(p -> p.withExcludedFrom(java.time.LocalDate.of(2027, 1, 1)))
+                .toList();
+        Dataset current = new Dataset(base.format(), base.version(), base.source(), base.areas(), base.shifts(),
+                base.demand(), base.holidays(), base.absenceTypes(), all, base.restrictions(), base.history(),
+                base.periods());
+        Corrections.Export export = Corrections.export(base, current, null, MAPPER);
+        assertThat(export.file().get("people").size()).isEqualTo(all.size() - 1);
+        assertThat(export.count()).isEqualTo(all.size() - 1);
+        assertThat(export.notes()).contains(new Issue("corrections.lastPerson", Map.of("personId", "P0006")));
+    }
+
+    @Test
     void aPersonNotExcludedIsWrittenAsBefore() throws Exception {
         Person p = TestData.dataset(YearMonth.of(2027, 1)).people().get(0);
         assertThat(MAPPER.writeValueAsString(p)).doesNotContain("excludedFrom")

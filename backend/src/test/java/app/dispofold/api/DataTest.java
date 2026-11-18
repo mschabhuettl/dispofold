@@ -223,7 +223,11 @@ class DataTest {
         assertThat(person("P0001").has("excludedFrom")).isFalse();
         given().get("/api/data/corrections").then().body("count", equalTo(0)).body("withdrawn", equalTo(1))
                 .body("file.people.size()", equalTo(0));
-        // a dataset exported before that, imported keeping the changes: still taken back, without notes
+        // a dataset exported before that, also one without the list of applied corrections, imported keeping the
+        // changes: still taken back, without notes
+        importDataset(without("P0001"), "?keep=true").statusCode(200).body("notes.size()", equalTo(0));
+        assertThat(person("P0001")).isNotNull();
+        assertThat(person("P0001").has("excludedFrom")).isFalse();
         given().contentType(ContentType.JSON).body(next).post("/api/import/preview").then().statusCode(200)
                 .body("kept", equalTo(1)).body("conflicts.size()", equalTo(0)).body("notes.size()", equalTo(0));
         given().contentType(ContentType.JSON).body(next).post("/api/import/dataset?keep=true").then()
