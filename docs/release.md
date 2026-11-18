@@ -32,6 +32,8 @@ Auf GitHub unter **Settings**, **Secrets and variables**, **Actions**:
 5. Einmalig unter **Settings**, **Pages** die **Source** auf **GitHub Actions** stellen. Ohne diese Einstellung
    scheitert der letzte Schritt des Releases (Dokumentations-Website), das Release selbst ist dann schon
    veröffentlicht.
+   Dazu unter **Settings**, **Environments**, `github-pages` bei **Deployment branches and tags** die Tags
+   `v*` erlauben; sonst lehnt GitHub das Deployment eines Tags ab. Beides ist für dieses Repository eingestellt.
 
 `RELEASE_TOKEN` und `API_URL` braucht es auf GitHub nicht: Das automatische Job-Token darf Releases anlegen und
 Images nach `ghcr.io` pushen, und die Uploads gehen an die Standardadresse der API. Neue Pakete in `ghcr.io` sind
