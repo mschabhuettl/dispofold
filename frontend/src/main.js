@@ -130,7 +130,21 @@ function parseHash() {
   return { route, params: rest.map(decode) };
 }
 
+let releaseAsked = 0;
+/**
+ * Server build, planners only (viewers are not told): what the server's own check found. Asked again on a page change
+ * at most every 10 minutes, so an open session also learns of a release the server finds later; never on a timer, so
+ * an idle page is not sent to the login page.
+ */
+function serverRelease() {
+  if (desktop || !ctx.canEdit || Date.now() - releaseAsked < 600000) return;
+  releaseAsked = Date.now();
+  api.release().then((r) => showReleaseNotice(document.getElementById('banner'), r?.available, { current: r?.current }))
+    .catch(() => {});
+}
+
 async function render() {
+  serverRelease();
   const token = ++renderCount;
   const { route, params } = parseHash();
   for (const a of document.querySelectorAll('#nav a')) {
@@ -225,11 +239,6 @@ async function start() {
       await guarded(() => api.logout());
       location.href = 'login.html';
     });
-    // the server's own check for a newer release; viewers are not told
-    if (ctx.canEdit) {
-      api.release().then((r) => showReleaseNotice(document.getElementById('banner'), r?.available, { current: r?.current }))
-        .catch(() => {});
-    }
   }
   const first = new Map();
   for (const r of ROUTES) if (!first.has(r.group)) first.set(r.group, r);

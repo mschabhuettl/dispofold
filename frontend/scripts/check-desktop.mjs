@@ -267,6 +267,20 @@ try {
     && (await serverDialog.locator('.release-notes').innerText()).startsWith('<img')
     && await serverDialog.locator('a').count() === 0 && (await serverDialog.locator('h2').innerText()) === 'Version 1.4.0'
     && await planner.evaluate(() => window.injected) === undefined);
+  // a release the server finds after the page was opened shows on a later page change
+  const late = await (await browser.newContext({ locale: 'de-DE' })).newPage();
+  await late.clock.install();
+  let found = false;
+  await late.route('**/api/release', (r) => (found ? r.continue() : r.fulfill({ contentType: 'application/json',
+    body: JSON.stringify({ current: '1.2.0', available: null }) })));
+  await login(late, 'planung');
+  await late.waitForTimeout(500);
+  const hiddenFirst = await late.locator('#banner').isHidden();
+  found = true;
+  await late.clock.fastForward('11:00');
+  await late.locator('#nav a[data-group="settings"]').click();
+  await late.locator('#banner:not([hidden])').waitFor({ timeout: 5000 }).catch(() => {});
+  check('a release found later shows on a later page change', hiddenFirst && await late.locator('#banner').isVisible());
   const viewer = await (await browser.newContext({ locale: 'de-DE' })).newPage();
   const viewerAsked = [];
   viewer.on('request', (r) => { if (r.url().includes('/api/release')) viewerAsked.push(r.url()); });
