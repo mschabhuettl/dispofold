@@ -58,9 +58,19 @@ function releaseDialog(available, { current, install, window }) {
   const { version } = available;
   const page = /^https:\/\//.test(available.url ?? '') ? available.url : null;
   const closeButton = h('button.btn.btn-secondary', { type: 'button', onclick: () => dialog.close() }, t('release.close'));
+  // a failed install is told here: the page behind the modal dialog (and its toast) cannot be reached
+  const problem = h('p.alert.alert-error', { role: 'alert', hidden: true });
   const installButton = install && h('button.btn.btn-primary', { type: 'button', onclick: async () => {
     installButton.disabled = true;
-    try { await install(); } finally { installButton.disabled = false; }
+    problem.hidden = true;
+    try {
+      await install();
+    } catch (e) {
+      problem.textContent = e.message || String(e);
+      problem.hidden = false;
+    } finally {
+      installButton.disabled = false;
+    }
   } }, t('release.install'));
   const dialog = h('dialog.dialog.release-dialog', { 'aria-labelledby': 'release-title' },
     h('h2', { id: 'release-title' }, available.title || t('release.title', { version })),
@@ -71,6 +81,7 @@ function releaseDialog(available, { current, install, window }) {
     !install && [h('h3', {}, t('release.steps')),
       h('ol', {}, [t('release.step.backup'), t('release.step.tag', { version }), t('release.step.pull'),
         t('release.step.restart')].map((step) => h('li', {}, step)))],
+    install && problem,
     h('div.toolbar', {}, installButton, closeButton));
   dialog.addEventListener('close', () => dialog.remove());
   document.body.append(dialog);

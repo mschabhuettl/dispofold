@@ -294,6 +294,9 @@ async function desktopUpdates() {
     const settings = { source: answer ? info.releases : '', checkOnStart: true };
     if (await guarded(() => api.desktopSettings(settings)) === undefined) return;
     info = { ...info, ...settings };
+    // the Updates page may have loaded behind the question: show the saved settings there (the modal question kept
+    // anyone from editing the form meanwhile)
+    if (parseHash().route === SETTINGS_ROUTE) render();
   }
   if (!info.source || !info.checkOnStart) return;
   const found = await api.desktopUpdate(true).catch(() => null);
@@ -301,11 +304,13 @@ async function desktopUpdates() {
     window: frontEnd !== 'browser', install: installUpdate });
 }
 
-/** Desktop: "Jetzt installieren" in the notice; the same flow as in Einstellungen > Updates. */
+/**
+ * Desktop: "Jetzt installieren" in the notice; the same flow as in Einstellungen > Updates. A failure is thrown to
+ * the release dialog, which shows it (a toast would sit behind the modal dialog).
+ */
 async function installUpdate() {
   if (!mayLeave()) return;
-  const ok = await guarded(() => api.desktopInstall());
-  if (ok === undefined) return;
+  await api.desktopInstall();
   stopView();
   restartAndReload();
 }

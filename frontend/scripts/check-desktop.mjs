@@ -227,11 +227,37 @@ try {
     && (await release.locator('.release-notes').innerText()).includes('Wochenenden')
     && (await release.locator('code').innerText()) === 'https://github.com/mschabhuettl/dispofold/releases/tag/v1.3.0'
     && await release.locator('ol').count() === 0);
+  // a failed install is told inside the dialog (the toast would sit behind the modal dialog)
+  await yes.route('**/api/desktop/update/install', (r) => r.fulfill({ status: 400, contentType: 'application/json',
+    body: JSON.stringify({ code: 'desktop.update.sourceUnreachable', params: {}, error: 'Die Update-Quelle ist nicht erreichbar.' }) }));
+  await release.getByRole('button', { name: 'Jetzt installieren' }).click();
+  const failure = release.getByRole('alert');
+  await failure.waitFor({ timeout: 5000 }).catch(() => {});
+  check('a failed install is shown in the dialog', await release.isVisible() && await failure.isVisible()
+    && (await failure.innerText()).length > 0, await failure.isVisible() ? await failure.innerText() : 'no message in the dialog');
+  await yes.unroute('**/api/desktop/update/install');
   await release.getByRole('button', { name: 'Jetzt installieren' }).click();
   await yes.getByText('Dispofold startet neu').first().waitFor();
   await yes.locator('#nav a').first().waitFor({ timeout: 30000 });
   await yes.waitForTimeout(800);
   check('installed from the notice; no notice for the running version', await yes.locator('#banner').isHidden());
+
+  // first start on the Updates page: after "Ja" the form shows the saved source, so "Speichern" keeps the check on
+  const formBase = await startServer({ MOCK_DESKTOP: '1', MOCK_FRONTEND: 'window', MOCK_UPDATE_ASK: '1' });
+  const form = await browser.newPage({ locale: 'de-DE' });
+  const formSeen = checks(form);
+  await form.goto(`${formBase}/#/einstellungen`);
+  await form.locator('#update-consent').waitFor();
+  await form.locator('#update-source').waitFor();
+  await form.keyboard.press('Enter');
+  await form.locator('#update-consent').waitFor({ state: 'detached' });
+  await form.waitForFunction(() => document.getElementById('update-source')?.value.startsWith('https://api.github.com/'), null,
+    { timeout: 5000 }).catch(() => {});
+  await form.getByRole('button', { name: 'Speichern' }).click();
+  await form.waitForTimeout(500);
+  check('Updates page behind the question: "Speichern" after "Ja" keeps the GitHub source', formSeen.saved.length === 2
+    && formSeen.saved[1].source === 'https://api.github.com/repos/mschabhuettl/dispofold/releases/latest'
+    && formSeen.saved[1].checkOnStart === true, JSON.stringify(formSeen.saved));
 
   // 11. Docker build: the notice of the server's check for planners, dismissed per version; viewers never see it
   const serverBase = await startServer({ MOCK_RELEASE: '1.3.0' });
