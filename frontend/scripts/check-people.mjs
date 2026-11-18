@@ -1,8 +1,9 @@
 // Playwright check of the Personen pages: the list searches by name, short name and area name and links to the page
 // of each person; planners edit everything about a person in the one form there (master data, usual mix,
 // restrictions with the area switch "ganzer Bereich", which gives the same records as entering each shift by hand
-// and shows "gemischt" when the shifts differ), create and remove a person; viewers get no form, no "Person anlegen"
-// and no personal data from the server. Demo data of the dev server (mock API), month 2027-01 planned.
+// and shows "gemischt" when the shifts differ), create and remove a person; the switch "Aus dem Quellsystem nicht mehr
+// übernehmen" (also for an exclusion the source applied) greys the person out in the list and is in the corrections
+// file until taken back; viewers get no form, no switch, no "Person anlegen" and no personal data from the server. Demo data of the dev server (mock API), month 2027-01 planned.
 //   npm run build && node scripts/check-people.mjs     (Chromium via `npx playwright install chromium`)
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:net';
@@ -141,6 +142,58 @@ try {
   await mixed.selectOption('NONE');
   check('keine removes the restrictions of the area', await form.locator('li', { hasText: /^Nie: / }).count() === 0);
 
+  // "Aus dem Quellsystem nicht mehr übernehmen": saved at once; the list greys the person out, the corrections file
+  // excludes them; switched off, the file no longer does.
+  const other = dataset.people.find((p) => p.id !== person.id);
+  const otherPage = `${base}/#/person/${encodeURIComponent(other.id)}`;
+  const corrections = () => page.evaluate(async () => (await fetch('/api/data/corrections')).json());
+  const toastShown = (text) => page.waitForFunction((x) => document.querySelector('#toast')?.textContent === x, text);
+  await page.goto(otherPage);
+  await page.locator('#f-excluded').waitFor();
+  check('switch off for a person taken over', !(await page.isChecked('#f-excluded'))
+    && (await page.locator('label', { has: page.locator('#f-excluded') }).innerText()).includes('Aus dem Quellsystem nicht mehr übernehmen'));
+  const switched = [];
+  const onSwitch = (r) => { if (r.method() === 'PUT' && r.url().endsWith('/excluded')) switched.push(r.postData()); };
+  page.on('request', onSwitch);
+  await page.locator('#f-excluded').click();
+  await toastShown('Wird nicht mehr übernommen');
+  await page.locator('#f-excluded').waitFor();
+  let excluded = (await getDataset(page)).people.find((p) => p.id === other.id);
+  check('switch on: saved at once, from the first day of a month', switched.join() === 'true' && /^\d{4}-\d{2}-01$/.test(excluded.excludedFrom ?? ''),
+    `${switched.join()} ${excluded.excludedFrom}`);
+  check('switch shows on, the page says so', await page.isChecked('#f-excluded')
+    && await page.getByText('Wird nicht mehr aus dem Quellsystem übernommen').isVisible());
+  check('corrections file excludes the person', JSON.stringify((await corrections()).file.people[other.id]) === '{"exclude":true}');
+  await page.goto(`${base}/#/person`);
+  await page.locator('#person-search').waitFor();
+  const greyed = page.locator('[data-table="people"] tbody tr[data-excluded="true"]');
+  check('list greys the person out with a note', await greyed.count() === 1 && (await greyed.getAttribute('class')).includes('muted')
+    && (await greyed.innerText()).includes(`${personName(other)} nicht mehr übernommen`), await greyed.count());
+  check('list counts the person apart', await page.getByText(`${dataset.people.length} Personen, davon 1 nicht mehr aus dem Quellsystem übernommen`).isVisible());
+  await page.goto(otherPage);
+  await page.locator('#f-excluded').waitFor();
+  await page.locator('#f-excluded').click();
+  await toastShown('Wird wieder übernommen');
+  excluded = (await getDataset(page)).people.find((p) => p.id === other.id);
+  check('switch off: taken back', switched.join() === 'true,false' && !('excludedFrom' in excluded) && !(await page.isChecked('#f-excluded')));
+  check('corrections file no longer excludes the person', !((await corrections()).file.people[other.id]));
+  // an exclusion the source applied (the import leaves the person out and lists it): shown on, taken back the same way
+  const third = dataset.people.find((p) => p.id !== person.id && p.id !== other.id);
+  await page.evaluate(async (id) => {
+    const d = await (await fetch('/api/dataset')).json();
+    const upload = { ...d, people: d.people.filter((p) => p.id !== id), restrictions: d.restrictions.filter((r) => r.personId !== id),
+      appliedCorrections: { format: 'dispofold/corrections', version: 2, people: { [id]: { exclude: true } }, demand: {} } };
+    await fetch('/api/import/dataset?replace=true', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(upload) });
+  }, third.id);
+  await page.goto(`${base}/#/person/${encodeURIComponent(third.id)}`);
+  await page.locator('#f-excluded').waitFor();
+  check('an applied exclusion shows as on', await page.isChecked('#f-excluded'));
+  await page.locator('#f-excluded').click();
+  await toastShown('Wird wieder übernommen');
+  const after = await corrections();
+  check('an applied exclusion is taken back', !after.file.people[third.id] && after.withdrawn === 1, JSON.stringify([after.file.people[third.id], after.withdrawn]));
+  page.off('request', onSwitch);
+
   // Create a person with the one form, then remove it.
   await page.goto(`${base}/#/person`);
   await page.getByRole('link', { name: 'Person anlegen' }).click();
@@ -172,6 +225,7 @@ try {
   check('viewer: no edit form', await viewer.locator('#person-form').count() === 0 && await viewer.getByRole('button', { name: 'Bearbeiten' }).count() === 0
     && await viewer.getByRole('button', { name: 'Person entfernen' }).count() === 0);
   check('viewer: no hours account tile', !(await viewer.locator('#main').innerText()).includes('Stundenkonto'));
+  check('viewer: no switch for the source', await viewer.locator('#f-excluded').count() === 0 && await viewer.locator('#h-source').count() === 0);
   const seen = await getDataset(viewer);
   check('viewer: no restrictions, family rules, balances, mix or external id', seen.restrictions.length === 0
     && seen.people.every((p) => !p.familyRules.length && p.hoursAccount == null && p.compRestBalance == null && p.shiftMix == null && p.externalId == null));

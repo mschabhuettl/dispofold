@@ -398,6 +398,12 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
   const err = (status, error, code = 'mock.error', params = {}) => ({ status, body: { code, params, error } });
   const revisions = new Map(); // month -> revision of the period
   let masterRevision = 0; // revision of the master data
+  /** The first day an excluded person is not planned: after the last closed month, else the first planning month. */
+  const exclusionStart = () => {
+    const closed = [...plans.values()].filter((p) => p.status === 'CLOSED').map((p) => p.month).sort();
+    if (closed.length) return addDays(monthDates(closed.at(-1)).at(-1), 1);
+    return `${[...periods.keys()].sort()[0] ?? month}-01`;
+  };
   let newPeople = 0; // ids PN1, PN2, ... of people created here
   const stale = new Set(); // months whose inputs changed after planning
 
@@ -419,7 +425,8 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
     const out = [];
     for (const p of dataset.people) {
       const old = before.get(p.id);
-      if (old) for (const field of PERSON_FIELDS) if (!same(old[field], p[field])) out.push({ personId: p.id, field, value: p[field] ?? null });
+      // a person no longer taken over has only the exclusion (see the corrections file below)
+      if (old && !p.excludedFrom) for (const field of PERSON_FIELDS) if (!same(old[field], p[field])) out.push({ personId: p.id, field, value: p[field] ?? null });
     }
     const notes = dataset.people.filter((p) => !before.has(p.id)).map((p) => ({ code: 'corrections.personAdded', params: { personId: p.id } }));
     return { changed: out, notes };
@@ -535,6 +542,14 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
       changedSinceImport = true;
       return json({ revision: ++masterRevision, key: c, item: body });
     }
+    if (a === 'dataset' && b === 'people' && d === 'excluded' && method === 'PUT') {
+      const p = dataset.people.find((x) => x.id === c);
+      if (!p) return err(404, `Person ${c} nicht gefunden`, 'masterdata.unknown');
+      if (body === true) p.excludedFrom ??= exclusionStart();
+      else delete p.excludedFrom;
+      changedSinceImport = true;
+      return json({ revision: ++masterRevision, key: c, item: p });
+    }
     if (a === 'dataset' && b === 'people' && !c && method === 'POST') {
       const item = { ...body, id: `PN${++newPeople}` };
       dataset.people.push(item);
@@ -551,7 +566,11 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
     if (a === 'dataset' && b === 'people' && c && !d && method === 'PUT') {
       const i = dataset.people.findIndex((p) => p.id === c);
       if (i < 0) return err(404, `Person ${c} nicht gefunden`);
-      dataset.people[i] = { ...body, id: c };
+      // excludedFrom is set and cleared only with PUT .../excluded
+      const item = { ...body, id: c };
+      delete item.excludedFrom;
+      if (dataset.people[i].excludedFrom) item.excludedFrom = dataset.people[i].excludedFrom;
+      dataset.people[i] = item;
       changedSinceImport = true;
       return json({ revision: ++masterRevision, key: c, item: dataset.people[i] });
     }
@@ -588,6 +607,12 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
       }
       if (b === 'dataset') {
         const { appliedCorrections = null, ...upload } = body;
+        // like the backend: people the upload leaves out who are excluded here or listed as excluded stay, excluded
+        const listed = new Set(Object.entries(appliedCorrections?.people ?? {}).filter(([, e]) => e.exclude === true).map(([id]) => id));
+        const present = new Set(upload.people.map((p) => p.id));
+        for (const p of dataset.people) {
+          if (!present.has(p.id) && (p.excludedFrom || listed.has(p.id))) upload.people.push({ ...p, excludedFrom: p.excludedFrom ?? exclusionStart() });
+        }
         const k = keep ? keepChanges(upload) : null;
         baseline = masterOf(upload);
         applied = appliedCorrections;
@@ -606,18 +631,25 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
         // earlier corrections (person fields and exclusions) with the current value, then the changes since
         let count = 0;
         const current = new Map(dataset.people.map((p) => [p.id, p]));
+        const before = new Map(baseline.people.map((p) => [p.id, p]));
+        // people no longer taken over; exclusions taken back are left out and counted
+        for (const p of dataset.people.filter((x) => x.excludedFrom)) { people[p.id] = { exclude: true }; count++; }
+        const withdrawn = dataset.people.filter((p) => !p.excludedFrom && before.get(p.id)?.excludedFrom).length;
         for (const [id, entry] of Object.entries(applied?.people ?? {})) {
-          if (entry.exclude === true) { people[id] = { exclude: true }; count++; continue; }
-          if (!current.has(id)) continue;
+          if (entry.exclude === true) {
+            if (!current.has(id)) { people[id] = { exclude: true }; count++; }
+            continue;
+          }
+          if (!current.has(id) || current.get(id).excludedFrom) continue;
           for (const field of PERSON_FIELDS.filter((f) => f in entry)) { (people[id] ??= {})[field] = current.get(id)[field] ?? null; count++; }
         }
-        let earlier = count;
+        let earlier = count - dataset.people.filter((p) => p.excludedFrom && !before.get(p.id)?.excludedFrom).length;
         for (const x of changed) {
           if (!(x.field in (people[x.personId] ?? {}))) count++;
           else earlier--;
           (people[x.personId] ??= {})[x.field] = x.value;
         }
-        return json({ file: { format: 'dispofold/corrections', version: 2, people, demand: {} }, notes, count, earlier, complete: applied !== null });
+        return json({ file: { format: 'dispofold/corrections', version: 2, people, demand: {} }, notes, count, earlier, withdrawn, complete: applied !== null });
       }
       if (b === 'anonymized') {
         const m = query.get('month') ?? '';

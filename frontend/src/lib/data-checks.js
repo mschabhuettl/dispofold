@@ -63,7 +63,7 @@ export function dataChecks(dataset, { month, rules = null }) {
     areaId: ref.areaId ?? null, text: TEXT[kind](params), todo: TODO[kind](params), link });
 
   for (const p of dataset.people) {
-    if ((p.exitDate && p.exitDate < dates[0]) || (p.entryDate && p.entryDate > dates.at(-1))) continue;
+    if ((p.exitDate && p.exitDate < dates[0]) || (p.entryDate && p.entryDate > dates.at(-1)) || (p.excludedFrom && p.excludedFrom <= dates[0])) continue;
     const name = personName(p);
     const areas = p.areaIds ?? [];
     const own = dataset.shifts.filter((s) => areas.includes(s.areaId));

@@ -1,7 +1,8 @@
 // Personen: without an id a searchable list, with an id one page per person with the key figures of the month and
-// "Warum dieser Dienst?" (constraint hits by date) and, for planners, one form for everything about the person (master
-// data, entry and exit, areas, usual mix, restrictions, family rules), saved with the revision it was read on
-// (docs/api.md, "Stammdaten bearbeiten"). #/person/neu creates a person.
+// "Warum dieser Dienst?" (constraint hits by date) and, for planners, the switch "Aus dem Quellsystem nicht mehr
+// übernehmen" and one form for everything about the person (master data, entry and exit, areas, usual mix,
+// restrictions, family rules), saved with the revision it was read on (docs/api.md, "Stammdaten bearbeiten").
+// #/person/neu creates a person.
 import { dayLabel, monthLabel, WEEKDAY_SHORT } from '../lib/dates.js';
 import { fmt, h, toast } from '../lib/dom.js';
 import { groupHitsByDate, hitEffect, hitSummary } from '../lib/explain.js';
@@ -14,7 +15,7 @@ import { info } from '../lib/info.js';
 import { effectiveMix, MIX_CATEGORIES, mixFromForm, mixNightNote, mixRows, mixText, nightNote, sharePercent } from '../lib/shift-mix.js';
 import { neverNightShifts } from '../lib/data-checks.js';
 import { t } from '../lib/texts.js';
-import { control, employmentText, problemAlert, readForm } from './masterdata.js';
+import { control, de, employmentText, problemAlert, readForm } from './masterdata.js';
 
 const LEVEL = { HARD: t('person.level.hard'), MEDIUM: t('person.level.medium'), SOFT: t('person.level.soft') };
 const CATEGORY = { EARLY: t('masterdata.category.early'), DAY: t('masterdata.category.day'), LATE: t('masterdata.category.late'), NIGHT: t('masterdata.category.night') };
@@ -56,23 +57,64 @@ export async function render(root, ctx, [personId]) {
         root.querySelector('#h-edit')?.scrollIntoView();
         root.querySelector('#f-firstName')?.focus();
       } }, t('masterdata.edit'))));
+  if (person.excludedFrom) root.append(h('p.alert', {}, t('people.excluded.note', { date: de(person.excludedFrom) })));
   if (explanation.error) root.append(h('p.alert', {}, t('person.noStats', { message: explanation.error })));
   else root.append(...figures(explanation, person, areaNames, constraintLabels, nightDistribution, ctx.canEdit));
-  // the form is for planners only (viewers get no restrictions, family rules or balances anyway)
-  if (ctx.canEdit) root.append(editor(root, ctx, dataset, person.id, rules));
+  // the switch and the form are for planners only (viewers get no restrictions, family rules or balances anyway)
+  if (ctx.canEdit) root.append(sourceSection(root, ctx, dataset, person), editor(root, ctx, dataset, person.id, rules));
   return undefined;
+}
+
+/**
+ * "Aus dem Quellsystem nicht mehr übernehmen": saved at once (with the revision the page was read on); the server sets
+ * the first day the person is not planned. A conflict reloads the page with the newer version.
+ */
+function sourceSection(root, ctx, dataset, person) {
+  const reload = async () => {
+    ctx.invalidateDataset();
+    root.replaceChildren();
+    await render(root, ctx, [person.id]);
+  };
+  const problems = h('div.form-problems', { 'aria-live': 'polite' });
+  const box = h('input', { id: 'f-excluded', type: 'checkbox', checked: Boolean(person.excludedFrom), onchange: async () => {
+    const on = box.checked;
+    const name = personName(person);
+    if (!confirm(on ? t('people.excluded.confirmOn', { name }) : t('people.excluded.confirmOff', { name }))) {
+      box.checked = !on;
+      return;
+    }
+    box.disabled = true;
+    try {
+      await ctx.api.setExcluded(person.id, on, dataset.revision ?? 0);
+    } catch (e) {
+      box.checked = !on;
+      box.disabled = false;
+      if (e.code !== 'masterdata.conflict') return problems.replaceChildren(problemAlert(e));
+      toast(t('masterdata.conflict.reloaded'), true);
+      return reload();
+    }
+    toast(on ? t('people.excluded.on') : t('people.excluded.off'));
+    return reload();
+  } });
+  return h('section.section', { 'aria-labelledby': 'h-source' }, h('h2', { id: 'h-source' }, t('people.section.source')),
+    h('p.muted', {}, t('people.excluded.help')),
+    h('div.with-info', {}, h('label', {}, box, ` ${t('people.excluded.switch')}`), info(t('help.field.people.excluded'), t('people.excluded.switch'))),
+    problems);
 }
 
 /** The list of people: name, short name, areas and weekly hours, searchable by name, short name and area name. */
 async function renderList(root, ctx) {
   const dataset = await ctx.dataset();
   const areaNames = new Map(dataset.areas.map((a) => [a.id, a.name]));
+  // people no longer taken over from the source: greyed out, with a note after the name
   const rows = [...dataset.people].sort(byName).map((p) => {
     const areas = p.areaIds.map((id) => areaNames.get(id) ?? id).join(', ');
     return { text: [personName(p), p.shortName ?? '', areas].join(' ').toLocaleLowerCase('de'),
-      tr: h('tr', {}, h('td', {}, h('a', { href: `#/person/${encodeURIComponent(p.id)}` }, personName(p))), h('td', {}, p.shortName ?? ''),
-        h('td', {}, areas), h('td.num', {}, fmt.num(p.weeklyHours, 1))) };
+      tr: h('tr', { class: p.excludedFrom ? 'muted' : null, 'data-excluded': p.excludedFrom ? 'true' : null },
+        h('td', {}, h('a', { href: `#/person/${encodeURIComponent(p.id)}` }, personName(p)), p.excludedFrom && [' ', h('span.badge', {}, t('people.excluded.badge'))]),
+        h('td', {}, p.shortName ?? ''), h('td', {}, areas), h('td.num', {}, fmt.num(p.weeklyHours, 1))) };
   });
+  const excluded = dataset.people.filter((p) => p.excludedFrom).length;
   const none = h('p.muted', { hidden: true }, t('people.noMatch'));
   const search = h('input', { id: 'person-search', type: 'search', autocomplete: 'off', placeholder: t('people.searchPlaceholder'), oninput: () => {
     const terms = search.value.trim().toLocaleLowerCase('de').split(/\s+/).filter(Boolean);
@@ -83,7 +125,7 @@ async function renderList(root, ctx) {
     }
     none.hidden = shown > 0;
   } });
-  root.append(h('h1', {}, t('people.title')), h('p.muted', {}, t('people.count', { count: rows.length })),
+  root.append(h('h1', {}, t('people.title')), h('p.muted', {}, excluded ? t('people.countExcluded', { count: rows.length, excluded }) : t('people.count', { count: rows.length })),
     h('div.toolbar', {}, h('div.field', {}, h('label', { for: 'person-search' }, t('people.search')), search),
       ctx.canEdit && h('a.btn.btn-primary.btn-small', { href: `#/person/${NEW}` }, t('people.new'))),
     h('div', { style: { overflowX: 'auto' } }, h('table.data', { 'data-table': 'people' },

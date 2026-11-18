@@ -49,8 +49,12 @@ test('people without areas, without shifts in their areas, or with every shift e
 
 test('people not employed in the month are not checked', () => {
   const d = base();
-  d.people.push(person('GONE', [], { exitDate: '2030-02-28' }), person('LATER', [], { entryDate: '2030-04-01' }));
+  d.people.push(person('GONE', [], { exitDate: '2030-02-28' }), person('LATER', [], { entryDate: '2030-04-01' }),
+    person('EXCLUDED', [], { excludedFrom: '2030-03-01' }));
   assert.deepEqual(dataChecks(d, { month }).filter((f) => f.personId), []);
+  // excluded only from the next month on: checked in this one
+  d.people.push(person('NEXT', [], { excludedFrom: '2030-04-01' }));
+  assert.deepEqual(dataChecks(d, { month }).filter((f) => f.personId).map((f) => f.personId), ['NEXT']);
 });
 
 test('usual distributions that do not fit', () => {

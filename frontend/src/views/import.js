@@ -149,11 +149,13 @@ export async function render(root, ctx) {
           correctionsResult.replaceChildren(errorAlert(e));
           return;
         }
-        if (r.count) saveBlob(correctionsBlob(r.file), CORRECTIONS_FILE);
+        // without entries but with exclusions taken back the file still replaces the previous one
+        if (r.count || r.withdrawn) saveBlob(correctionsBlob(r.file), CORRECTIONS_FILE);
         const names = shortNames(current);
         correctionsResult.replaceChildren(h('div.alert', {},
-          h('p', {}, r.count ? t('data.corrections.done', { count: r.count }) : t('data.corrections.none')),
+          h('p', {}, r.count ? t('data.corrections.done', { count: r.count }) : r.withdrawn ? t('data.corrections.empty') : t('data.corrections.none')),
           r.count && r.complete ? h('p', {}, t('data.corrections.split', { earlier: r.earlier, changed: r.count - r.earlier })) : null,
+          r.withdrawn ? h('p', {}, t('data.corrections.withdrawn', { count: r.withdrawn })) : null,
           r.complete ? null : h('p', {}, t('data.corrections.sinceImport')),
           r.notes.length ? [h('p', {}, t('data.corrections.notes')), list(r.notes.map((n) => noteText(n, names)))] : null));
       })),

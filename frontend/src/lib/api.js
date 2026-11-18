@@ -143,13 +143,15 @@ export function createApi({ fetchImpl = (...a) => globalThis.fetch(...a), onUnau
     updateMaster: (kind, key, item, revision) => request('PUT', `/api/dataset/${k(kind)}/${k(key)}`, item, revision),
     deleteMaster: (kind, key, revision, confirmed) => request('DELETE', `/api/dataset/${k(kind)}/${k(key)}${confirmed ? '?confirm=true' : ''}`, undefined, revision),
     saveRestrictions: (personId, list, revision) => request('PUT', `/api/dataset/people/${k(personId)}/restrictions`, list, revision),
+    /** No longer taken over from the source (true) or again (false); the server sets the day excludedFrom */
+    setExcluded: (personId, excluded, revision) => request('PUT', `/api/dataset/people/${k(personId)}/excluded`, excluded, revision),
     exportDataset: () => download('/api/dataset/export', 'dispofold-datensatz.json'),
     importDemo: (replaceChanged) => request('POST', `/api/import/demo${replace(replaceChanged)}`),
     /** keep: carry the master data changed in Dispofold since the last import over to the new dataset */
     importDataset: (dataset, replaceChanged, keep = false) => request('POST', `/api/import/dataset${keep ? '?keep=true' : replace(replaceChanged)}`, dataset),
     /** Dry run of an import with keep: { changed, kept, conflicts: [{ personId, areaId, field }], notes } */
     importPreview: (dataset) => request('POST', '/api/import/preview', dataset),
-    /** Corrections in effect: { file, notes, count, earlier, complete }; 409 corrections.noBaseline without a stored import */
+    /** Corrections in effect: { file, notes, count, earlier, withdrawn, complete }; 409 corrections.noBaseline without a stored import */
     correctionsFile: () => request('GET', '/api/data/corrections'),
     /** Pseudonymised { dataset, plan, key, people }; 409 anonymize.leak when a name would remain */
     anonymized: (month) => request('GET', `/api/data/anonymized?month=${m(month)}`),

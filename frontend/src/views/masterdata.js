@@ -287,7 +287,7 @@ export function readForm(form, defs) {
   return out;
 }
 
-const de = (iso) => `${iso.slice(8, 10)}.${iso.slice(5, 7)}.${iso.slice(0, 4)}`;
+export const de = (iso) => `${iso.slice(8, 10)}.${iso.slice(5, 7)}.${iso.slice(0, 4)}`;
 
 /** Employment period of a person: entry and exit date, either may be open. */
 export function employmentText(p) {

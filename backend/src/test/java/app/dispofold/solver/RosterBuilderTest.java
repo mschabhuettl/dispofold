@@ -79,7 +79,7 @@ class RosterBuilderTest {
         assertThat(staff(r, "P0006").getTargetMinutes()).isZero();
         assertThat(r.getCells().stream().filter(c -> c.getStaff().getId().equals("P0006") && c.isInMonth()))
                 .hasSize(MONTH.lengthOfMonth())
-                .allMatch(c -> c.isOutsideEmployment() && c.isPinned() && c.getShift() == null);
+                .allSatisfy(c -> assertThat(c.isOutsideEmployment() && c.isPinned() && c.getShift() == null).isTrue());
         assertThat(staff(r, "P0004").getTargetMinutes()).isEqualTo(22 * 480);
         assertThat(cell(r, "P0004", MONTH.atEndOfMonth()).isOutsideEmployment()).isFalse();
     }
