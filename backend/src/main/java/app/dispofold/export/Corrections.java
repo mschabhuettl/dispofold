@@ -40,6 +40,9 @@ import app.dispofold.model.ShiftType;
  * replaces the value completely; a field the client finds invalid is skipped there without stopping, so everything
  * a target dataset cannot take is left out here and listed as a note instead.
  * <p>
+ * The exported file also holds the corrections the source applied to the last import (its section
+ * {@code appliedCorrections}, see {@link #withEarlier}), so it is complete and replaces the previous file.
+ * <p>
  * The same changes carry the edits over to a new import ({@link #apply}); a field also changed between the old
  * baseline and the new import is a conflict, and the value from Dispofold wins.
  * <p>
@@ -93,23 +96,81 @@ public final class Corrections {
     public record Conflict(String personId, String areaId, String field) {
     }
 
-    /** The corrections file and the notes about what it leaves out. */
-    public record Export(ObjectNode file, List<Issue> notes, int count) {
+    /**
+     * The corrections file and the notes about what it leaves out.
+     *
+     * @param count fields, exclusions and demand areas in the file
+     * @param earlier of these, the ones taken from the corrections applied to the last import and unchanged since
+     * @param complete the last import listed the corrections applied to it; without, the file has only the changes
+     *        since that import
+     */
+    public record Export(ObjectNode file, List<Issue> notes, int count, int earlier, boolean complete) {
     }
 
     private Corrections() {
     }
 
-    /** The changes of {@code current} against {@code base}, checked against the base as target, as a file. */
-    public static Export export(Dataset base, Dataset current, ObjectMapper mapper) {
-        Changes changes = check(diff(base, current), base);
+    /**
+     * The changes of {@code current} against {@code base}, checked against the base as target, with the corrections
+     * applied to the base ({@code applied}, null if unknown), as a file.
+     */
+    public static Export export(Dataset base, Dataset current, JsonNode applied, ObjectMapper mapper) {
+        Changes changed = check(diff(base, current), base);
+        Changes changes = applied == null ? changed : withEarlier(changed, applied, base);
         List<Issue> notes = new ArrayList<>(changes.notes());
         long foreign = Stream.concat(changes.people().keySet().stream(), changes.excluded().stream())
                 .filter(id -> !CLIENT_ID.matcher(id).matches()).count();
         if (foreign > 0) {
             notes.add(note("corrections.idFormat", "count", foreign));
         }
-        return new Export(file(changes, mapper), List.copyOf(notes), changes.count());
+        return new Export(file(changes, mapper), List.copyOf(notes), changes.count(),
+                changes.count() - changed.count(), applied != null);
+    }
+
+    /**
+     * The checked changes plus the corrections still in effect from the corrections file the source applied to the
+     * base ({@code applied}, same format): per person its fields with the base's value (the value from Dispofold
+     * where the changes have the field, and the base's value where they dropped it), its exclusion, and per demand
+     * area the base's rules. A person removed in Dispofold keeps only the exclusion. Other keys of the file, such as
+     * {@code note}, are not taken over.
+     */
+    static Changes withEarlier(Changes changes, JsonNode applied, Dataset base) {
+        Map<String, Person> before = byId(list(base.people()), Person::id);
+        Map<String, PersonChange> people = new TreeMap<>(CLIENT_ORDER);
+        people.putAll(changes.people());
+        List<String> excluded = new ArrayList<>(changes.excluded());
+        applied.path("people").fields().forEachRemaining(e -> {
+            String id = e.getKey();
+            JsonNode entry = e.getValue();
+            Person b = before.get(id);
+            if (entry.path(EXCLUDE).booleanValue()) {
+                if (b == null && !excluded.contains(id)) {
+                    excluded.add(id);
+                }
+                return;
+            }
+            if (b == null || excluded.contains(id)) {
+                return;
+            }
+            PersonChange c = people.get(id);
+            List<String> fields = c == null ? List.of() : c.fields();
+            List<String> all = Stream.concat(FIELDS.stream(), Stream.of(RESTRICTIONS))
+                    .filter(f -> fields.contains(f) || entry.has(f)).toList();
+            if (all.size() > fields.size()) {
+                people.put(id, new PersonChange(c == null ? b : merge(b, c.person(), fields), all,
+                        fields.contains(RESTRICTIONS) ? c.restrictions() : own(base.restrictions(), id)));
+            }
+        });
+        excluded.sort(CLIENT_ORDER);
+        Set<String> areas = list(base.areas()).stream().map(Area::id).collect(Collectors.toSet());
+        Map<String, List<DemandRule>> rules = byArea(base.demand());
+        Map<String, List<DemandRule>> demand = new LinkedHashMap<>(changes.demand());
+        applied.path(DEMAND).fieldNames().forEachRemaining(area -> {
+            if (areas.contains(area)) {
+                demand.putIfAbsent(area, rules.getOrDefault(area, List.of()));
+            }
+        });
+        return new Changes(people, excluded, demand, changes.notes());
     }
 
     // Diff
@@ -400,9 +461,9 @@ public final class Corrections {
     }
 
     /**
-     * The checked changes whose value also changed between the old baseline and the new import: per person field
-     * (also {@code restrictions}), {@code exclude} when the import changed an excluded person, {@code demand} per
-     * area.
+     * The checked changes whose value also changed between the old baseline and the new import to a value other than
+     * the one from Dispofold (a correction the source applied in the meantime is no conflict): per person field (also
+     * {@code restrictions}), {@code exclude} when the import changed an excluded person, {@code demand} per area.
      */
     public static List<Conflict> conflicts(Changes changes, Dataset oldBase, Dataset incoming) {
         Map<String, Person> was = byId(list(oldBase.people()), Person::id);
@@ -410,10 +471,13 @@ public final class Corrections {
         List<Conflict> conflicts = new ArrayList<>();
         changes.people().forEach((id, c) -> {
             for (String field : c.fields()) {
+                Map<Restriction, Long> incomingRules = counts(own(incoming.restrictions(), id));
                 boolean same = field.equals(RESTRICTIONS)
-                        ? counts(own(oldBase.restrictions(), id)).equals(counts(own(incoming.restrictions(), id)))
+                        ? counts(own(oldBase.restrictions(), id)).equals(incomingRules)
                         : Objects.equals(value(was.get(id), field), value(is.get(id), field));
-                if (!same) {
+                boolean taken = field.equals(RESTRICTIONS) ? counts(c.restrictions()).equals(incomingRules)
+                        : Objects.equals(value(c.person(), field), value(is.get(id), field));
+                if (!same && !taken) {
                     conflicts.add(new Conflict(id, null, field));
                 }
             }
@@ -427,9 +491,10 @@ public final class Corrections {
         }
         Map<String, List<DemandRule>> before = byArea(oldBase.demand());
         Map<String, List<DemandRule>> after = byArea(incoming.demand());
-        for (String area : changes.demand().keySet()) {
-            if (!counts(before.getOrDefault(area, List.of())).equals(counts(after.getOrDefault(area, List.of())))) {
-                conflicts.add(new Conflict(null, area, DEMAND));
+        for (var e : changes.demand().entrySet()) {
+            Map<DemandRule, Long> now = counts(after.getOrDefault(e.getKey(), List.of()));
+            if (!counts(before.getOrDefault(e.getKey(), List.of())).equals(now) && !counts(e.getValue()).equals(now)) {
+                conflicts.add(new Conflict(null, e.getKey(), DEMAND));
             }
         }
         return conflicts;

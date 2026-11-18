@@ -122,7 +122,46 @@ class DataTest {
         given().get("/api/data/corrections").then().statusCode(200).body("count", equalTo(1))
                 .body("file.people.P0002.weeklyHours", equalTo(30.0f))
                 .body("notes.code", hasItem("corrections.idFormat"))
+                .body("earlier", equalTo(0)).body("complete", equalTo(false))
                 .body(not(containsString("Testperson")));
+    }
+
+    /** The test dataset with the section of the corrections its source applied. */
+    String withApplied(Dataset d, String applied) throws Exception {
+        ObjectNode body = mapper.valueToTree(d);
+        body.set("appliedCorrections", mapper.readTree("{\"format\": \"dispofold/corrections\", \"version\": 2, "
+                + applied + "}"));
+        return body.toString();
+    }
+
+    @Test
+    void theCorrectionsFileKeepsTheCorrectionsAppliedToTheImport() throws Exception {
+        // P0003 corrected and P0007 excluded by the source before this import
+        given().contentType(ContentType.JSON).body(withApplied(withHours(Map.of("P0003", 20.0)),
+                "\"people\": {\"P0003\": {\"weeklyHours\": 20.0}, \"P0007\": {\"exclude\": true}}, \"demand\": {}"))
+                .post("/api/import/dataset?replace=true").then().statusCode(200);
+        assertThat(store.appliedCorrections().orElseThrow().path("people").has("P0003")).isTrue();
+        assertThat(store.baseline()).contains(master(withHours(Map.of("P0003", 20.0))));
+        given().get("/api/data/corrections").then().statusCode(200).body("count", equalTo(2))
+                .body("earlier", equalTo(2)).body("complete", equalTo(true))
+                .body("file.people.P0003.weeklyHours", equalTo(20.0f))
+                .body("file.people.P0007.exclude", equalTo(true));
+        edit("P0002", "weeklyHours", 30);
+        edit("P0003", "weeklyHours", 25);
+        given().get("/api/data/corrections").then().statusCode(200).body("count", equalTo(3))
+                .body("earlier", equalTo(1)).body("file.people.P0002.weeklyHours", equalTo(30.0f))
+                .body("file.people.P0003.weeklyHours", equalTo(25.0f));
+
+        // an import keeping the changes takes the new import's list; an import without one has none
+        given().contentType(ContentType.JSON).body(withApplied(withHours(Map.of("P0002", 30.0, "P0003", 25.0)),
+                "\"people\": {\"P0002\": {\"weeklyHours\": 30.0}, \"P0003\": {\"weeklyHours\": 25.0}}"))
+                .post("/api/import/dataset?keep=true").then().statusCode(200);
+        given().get("/api/data/corrections").then().statusCode(200).body("count", equalTo(2))
+                .body("earlier", equalTo(2)).body("complete", equalTo(true));
+        importDataset(TestData.dataset(MONTH), "?replace=true").statusCode(200);
+        assertThat(store.appliedCorrections()).isEmpty();
+        given().get("/api/data/corrections").then().statusCode(200).body("count", equalTo(0))
+                .body("complete", equalTo(false));
     }
 
     @Test

@@ -19,6 +19,7 @@ import jakarta.ws.rs.core.Response.Status;
 
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import app.dispofold.export.Corrections;
@@ -32,7 +33,8 @@ import app.dispofold.store.Store;
 
 /**
  * Imports a dataset in the documented format (docs/datenformat.md) or the bundled synthetic demo data. Every import
- * stores the raw imported master data as the baseline; with {@code keep} the master data changed in Dispofold since
+ * stores the raw imported master data as the baseline, together with the dataset's section {@code appliedCorrections}
+ * (the corrections its source applied) if it has one; with {@code keep} the master data changed in Dispofold since
  * the last import are carried over to the new dataset (see {@link Corrections}).
  */
 @Path("/api/import")
@@ -71,6 +73,10 @@ public class ImportResource {
     private record Kept(Changes changes, List<Conflict> conflicts) {
     }
 
+    /** The section of an uploaded dataset that is not part of {@link Dataset}. */
+    private record Applied(JsonNode appliedCorrections) {
+    }
+
     @Inject
     Store store;
 
@@ -88,7 +94,7 @@ public class ImportResource {
                 throw ApiErrors.error(Status.INTERNAL_SERVER_ERROR, "import.demoMissing",
                         "Demodaten fehlen im Programm");
             }
-            return save(mapper.readValue(in, Dataset.class), replace, false);
+            return save(mapper.readValue(in, Dataset.class), null, replace, false);
         }
     }
 
@@ -101,7 +107,8 @@ public class ImportResource {
     @Consumes(MediaType.APPLICATION_JSON)
     public ImportSummary dataset(@QueryParam("replace") boolean replace, @QueryParam("keep") boolean keep,
             String body) {
-        return save(parse(body), replace, keep);
+        Dataset dataset = parse(body);
+        return save(dataset, appliedCorrections(body), replace, keep);
     }
 
     /** Dry run of an import with {@code keep}: what would be carried over and where the new import differs. */
@@ -142,13 +149,25 @@ public class ImportResource {
         }
     }
 
+    /** The section {@code appliedCorrections} of a parsed upload if it has the form of a corrections file, else null. */
+    private JsonNode appliedCorrections(String body) {
+        JsonNode section;
+        try {
+            section = mapper.readValue(body, Applied.class).appliedCorrections();
+        } catch (JsonProcessingException e) {
+            return null;
+        }
+        return section != null && Corrections.FORMAT.equals(section.path("format").asText())
+                && section.path("people").isObject() ? section : null;
+    }
+
     /**
      * Replaces the master data and the months contained in the dataset; plans stay. Master data changed in Dispofold
      * since the last import are only replaced with {@code replace}, or carried over with {@code keep}.
      */
-    private ImportSummary save(Dataset dataset, boolean replace, boolean keep) {
+    private ImportSummary save(Dataset dataset, JsonNode applied, boolean replace, boolean keep) {
         synchronized (Store.DATASET_LOCK) {
-            return replace(dataset, replace, keep);
+            return replace(dataset, applied, replace, keep);
         }
     }
 
@@ -175,7 +194,7 @@ public class ImportResource {
         return new Kept(changes, Corrections.conflicts(changes, base, incoming));
     }
 
-    private ImportSummary replace(Dataset dataset, boolean replace, boolean keep) {
+    private ImportSummary replace(Dataset dataset, JsonNode applied, boolean replace, boolean keep) {
         DatasetValidator.Result result = validated(dataset);
         Kept kept = keep ? kept(result.dataset()) : null;
         // Asked only for a valid file: an invalid one is rejected anyway.
@@ -187,11 +206,11 @@ public class ImportResource {
         DatasetValidator.Result merged = kept == null || kept.changes().isEmpty() ? result
                 : validated(Corrections.apply(kept.changes(), raw));
         return plans.withMonths(raw.periods().stream().map(Period::month).toList(),
-                () -> saveChecked(raw, merged, kept));
+                () -> saveChecked(raw, merged, kept, applied));
     }
 
     /** Called with the locks of all imported months held, so no solve or closing can start in between. */
-    private ImportSummary saveChecked(Dataset raw, DatasetValidator.Result result, Kept kept) {
+    private ImportSummary saveChecked(Dataset raw, DatasetValidator.Result result, Kept kept, JsonNode applied) {
         Dataset d = result.dataset();
         for (Period p : d.periods()) {
             if (plans.isSolving(p.month())) {
@@ -206,7 +225,7 @@ public class ImportResource {
         }
         Dataset master = master(d);
         Dataset baseline = master(raw);
-        store.saveImport(master, MasterDataService.track(store.datasetState().ids(), master), baseline,
+        store.saveImport(master, MasterDataService.track(store.datasetState().ids(), master), baseline, applied,
                 master.equals(baseline));
         for (Period p : d.periods()) {
             if (!plans.isClosed(p.month())) {

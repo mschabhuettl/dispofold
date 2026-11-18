@@ -147,7 +147,7 @@ class CorrectionsTest {
         Dataset current = dataset(currentJson);
         String removed = id(baseJson, 9);
 
-        Corrections.Export export = Corrections.export(base, current, MAPPER);
+        Corrections.Export export = Corrections.export(base, current, null, MAPPER);
         JsonNode file = export.file();
         // shape the client expects
         assertThat(file.get("format").asText()).isEqualTo("dispofold/corrections");
@@ -166,6 +166,9 @@ class CorrectionsTest {
                 new Issue("corrections.identity", Map.of("personId", id(currentJson, 10), "field", "shortName")),
                 new Issue("corrections.master", Map.of("kind", "shift", "key", "AN-F", "change", "changed")));
         assertThat(export.notes()).noneMatch(n -> n.code().equals("corrections.idFormat"));
+        // a baseline without the list of applied corrections: only the changes, and the export says so
+        assertThat(export.complete()).isFalse();
+        assertThat(export.earlier()).isZero();
 
         ObjectNode applied = baseJson.deepCopy();
         ClientApply.Outcome outcome = ClientApply.apply(applied, file);
@@ -217,7 +220,7 @@ class CorrectionsTest {
         person(d, 3).set("areaIds", MAPPER.readTree("[]"));
         person(d, 3).putNull("shiftMix");
 
-        Corrections.Export export = Corrections.export(dataset(baseJson), dataset(d), MAPPER);
+        Corrections.Export export = Corrections.export(dataset(baseJson), dataset(d), null, MAPPER);
         assertThat(export.notes()).contains(new Issue("corrections.unknownArea", Map.of("personId", id(d, 0))),
                 new Issue("corrections.unknownShift", Map.of("personId", id(d, 1))),
                 new Issue("corrections.demandArea", Map.of("areaId", "NB")),
@@ -259,7 +262,7 @@ class CorrectionsTest {
         Dataset base = TestData.dataset(YearMonth.of(2033, 3));
         Dataset none = new Dataset(base.format(), base.version(), base.source(), base.areas(), base.shifts(),
                 base.demand(), base.holidays(), base.absenceTypes(), List.of(), List.of(), base.history(), List.of());
-        Corrections.Export export = Corrections.export(base, none, MAPPER);
+        Corrections.Export export = Corrections.export(base, none, null, MAPPER);
         assertThat(export.file().get("people").size()).isEqualTo(5);
         assertThat(export.notes()).contains(new Issue("corrections.lastPerson", Map.of("personId", "P0006")),
                 new Issue("corrections.idFormat", Map.of("count", 5L)));
@@ -297,6 +300,153 @@ class CorrectionsTest {
         assertThat(merged.periods().get(0).absences()).noneMatch(a -> a.personId().equals(excluded));
         assertThat(merged.periods().get(0).previousDuties()).noneMatch(a -> a.personId().equals(excluded));
         assertThat(incoming.history()).anyMatch(h -> h.personId().equals(excluded));
+    }
+
+    static final String NO_CORRECTIONS = "{\"format\": \"dispofold/corrections\", \"version\": 2, \"people\": {}, "
+            + "\"demand\": {}}";
+
+    /** What the client exports from the unchanged source with the file: the dataset with the applied corrections. */
+    static ObjectNode client(ObjectNode source, JsonNode file) {
+        ObjectNode d = source.deepCopy();
+        ClientApply.Outcome outcome = ClientApply.apply(d, file);
+        assertThat(outcome.skipped()).isEmpty();
+        d.set("appliedCorrections", ClientApply.section(file, outcome));
+        return d;
+    }
+
+    /** Dispofold's corrections file after importing {@code imported} and editing it to {@code current}. */
+    static Corrections.Export export(ObjectNode imported, ObjectNode current) throws Exception {
+        return Corrections.export(dataset(imported), dataset(current), imported.get("appliedCorrections"), MAPPER);
+    }
+
+    /** Sets min and max of the first demand rule of the area. */
+    static void demand(ObjectNode d, String area, int staff) {
+        for (JsonNode r : d.withArray("demand")) {
+            if (r.get("areaId").asText().equals(area)) {
+                ((ObjectNode) r).put("min", staff).put("max", staff);
+                return;
+            }
+        }
+        throw new AssertionError("no demand in " + area);
+    }
+
+    static void out(String name, Object value) throws Exception {
+        String out = System.getProperty("corrections.out");
+        if (out != null) {
+            Files.createDirectories(Path.of(out));
+            MAPPER.writerWithDefaultPrettyPrinter().writeValue(Path.of(out, name).toFile(), value);
+        }
+    }
+
+    @Test
+    void theFileHoldsEarlierAndNewCorrectionsOverThreeRounds() throws Exception {
+        ObjectNode source = baseline(); // the source system, unchanged in all rounds
+        String a = id(source, 0);
+        String b = id(source, 1);
+        String x = id(source, 9);
+        double sourceHours = person(source, 0).get("weeklyHours").asDouble();
+        assertThat(sourceHours).isNotEqualTo(30.0);
+
+        // round 1: first import (no corrections yet); A, an exclusion and the demand of an area corrected
+        ObjectNode import1 = client(source, MAPPER.readTree(NO_CORRECTIONS));
+        ObjectNode edit1 = import1.deepCopy();
+        person(edit1, 0).put("weeklyHours", 30.0);
+        edit1.withArray("people").remove(9);
+        ArrayNode restrictions = edit1.withArray("restrictions");
+        for (int i = restrictions.size() - 1; i >= 0; i--) {
+            if (restrictions.get(i).get("personId").asText().equals(x)) {
+                restrictions.remove(i);
+            }
+        }
+        demand(edit1, "LF", 2);
+        Corrections.Export file1 = export(import1, edit1);
+        assertThat(file1.complete()).isTrue();
+        assertThat(file1.count()).isEqualTo(3);
+        assertThat(file1.earlier()).isZero();
+        out("round1-korrekturen.json", file1.file());
+
+        // round 2: exported with that file and imported; B corrected, the same area's demand again
+        ObjectNode import2 = client(source, file1.file());
+        assertThat(import2.get("appliedCorrections").get("people").get(x).toString()).isEqualTo("{\"exclude\":true}");
+        ObjectNode edit2 = import2.deepCopy();
+        person(edit2, 1).put("hoursAccount", 5.5);
+        demand(edit2, "LF", 3);
+        Corrections.Export file2 = export(import2, edit2);
+        JsonNode people = file2.file().get("people");
+        assertThat(people.get(a).toString()).isEqualTo("{\"weeklyHours\":30.0}");
+        assertThat(people.get(b).toString()).isEqualTo("{\"hoursAccount\":5.5}");
+        assertThat(people.get(x).toString()).as("still excluded").isEqualTo("{\"exclude\":true}");
+        assertThat(people.size()).isEqualTo(3);
+        assertThat(file2.file().get("demand").get("LF").get(0).get("min").asInt()).as("the newer value").isEqualTo(3);
+        assertThat(file2.count()).isEqualTo(4);
+        assertThat(file2.earlier()).as("A and the exclusion; the area was changed again").isEqualTo(2);
+        out("round2-korrekturen.json", file2.file());
+
+        // round 3: both corrections in the dataset; A changed back to the source's value
+        ObjectNode import3 = client(source, file2.file());
+        Dataset dataset3 = dataset(import3);
+        Map<String, Person> got = byId(dataset3.people());
+        assertThat(got.get(a).weeklyHours()).isEqualTo(30.0);
+        assertThat(got.get(b).hoursAccount()).isEqualTo(5.5);
+        assertThat(got).doesNotContainKey(x);
+        assertThat(byArea(dataset3.demand())).isEqualTo(byArea(dataset(edit2).demand()));
+        ObjectNode edit3 = import3.deepCopy();
+        person(edit3, 0).put("weeklyHours", sourceHours);
+        Corrections.Export file3 = export(import3, edit3);
+        assertThat(file3.file().get("people").get(a).get("weeklyHours").asDouble()).as("explicit value")
+                .isEqualTo(sourceHours);
+        assertThat(file3.count()).isEqualTo(4);
+        assertThat(file3.earlier()).isEqualTo(3);
+        out("round3-korrekturen.json", file3.file());
+
+        // round 4: the value equal to the source stays in the file
+        ObjectNode import4 = client(source, file3.file());
+        Corrections.Export file4 = export(import4, import4);
+        assertThat(file4.file()).isEqualTo(file3.file());
+        assertThat(file4.earlier()).isEqualTo(4);
+    }
+
+    @Test
+    void keepingChangesTheNewImportAlreadyHasIsNoConflict() throws Exception {
+        ObjectNode source = baseline();
+        ObjectNode import1 = client(source, MAPPER.readTree(NO_CORRECTIONS));
+        ObjectNode edit1 = import1.deepCopy();
+        person(edit1, 0).put("weeklyHours", 30.0);
+        demand(edit1, "LF", 2);
+        // the next export with the corrections file, imported keeping the changes
+        ObjectNode import2 = client(source, export(import1, edit1).file());
+        Dataset oldBase = dataset(import1);
+        Dataset incoming = dataset(import2);
+
+        Changes changes = Corrections.check(Corrections.diff(oldBase, dataset(edit1)), incoming);
+        assertThat(changes.count()).isEqualTo(2);
+        assertThat(Corrections.conflicts(changes, oldBase, incoming)).isEmpty();
+        assertThat(Corrections.apply(changes, incoming)).as("applied once").isEqualTo(incoming);
+    }
+
+    @Test
+    void anEarlierCorrectionChangedToWhatTheFileCannotTakeKeepsItsValue() throws Exception {
+        ObjectNode source = baseline();
+        String pid = id(source, 1);
+        JsonNode file = MAPPER.readTree("{\"format\": \"dispofold/corrections\", \"version\": 2, \"people\": {\"" + pid
+                + "\": {\"restrictions\": [{\"shiftId\": null, \"category\": \"NIGHT\", \"weekday\": 0, \"kind\": "
+                + "\"NEVER\", \"validFrom\": null, \"validTo\": null}]}}, \"demand\": {}}");
+        ObjectNode imported = client(source, file);
+        // in Dispofold: a new shift in the person's restrictions, which the file cannot carry
+        ObjectNode d = imported.deepCopy();
+        d.withArray("areas").add(MAPPER.readTree("{\"id\": \"NB\", \"name\": \"Neu\", \"color\": \"#000000\"}"));
+        d.withArray("shifts").add(MAPPER.readTree("{\"id\": \"SN1\", \"areaId\": \"NB\", \"code\": \"N1\", "
+                + "\"name\": \"n\", \"start\": \"07:00\", \"end\": \"15:00\", \"category\": null, \"color\": null, "
+                + "\"unpopular\": false}"));
+        d.withArray("restrictions").add(MAPPER.readTree("{\"personId\": \"" + pid + "\", \"shiftId\": \"SN1\", "
+                + "\"category\": null, \"weekday\": 0, \"kind\": \"NEVER\", \"validFrom\": null, \"validTo\": null}"));
+
+        Corrections.Export export = export(imported, d);
+        assertThat(export.notes()).contains(new Issue("corrections.unknownShift", Map.of("personId", pid)));
+        JsonNode kept = export.file().get("people").get(pid).get("restrictions");
+        assertThat(kept).hasSize(1);
+        assertThat(kept.get(0).get("category").asText()).isEqualTo("NIGHT");
+        assertThat(export.earlier()).isEqualTo(1);
     }
 
     private static Map<String, Person> byId(List<Person> people) {

@@ -17,7 +17,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import app.dispofold.model.Dataset;
 import app.dispofold.model.HistoryEntry;
@@ -52,6 +54,9 @@ public class Store {
 
     /** Held while master data is read, changed and written back (edits, imports). */
     public static final Object DATASET_LOCK = new Object();
+
+    /** Key of the dataset section that lists the corrections its source applied, kept in the stored baseline. */
+    public static final String APPLIED_CORRECTIONS = "appliedCorrections";
 
     /**
      * Counters of generated ids per kind and the short codes that may not be used again per kind.
@@ -99,7 +104,7 @@ public class Store {
      */
     public long saveDataset(Dataset dataset, Ids ids, boolean imported) {
         if (imported) {
-            return saveImport(dataset, ids, dataset, true);
+            return saveImport(dataset, ids, dataset, null, true);
         }
         String doc = json(dataset);
         String idState = json(ids);
@@ -118,13 +123,16 @@ public class Store {
      *
      * @param dataset the master data to store: the import, or the import with changes kept from Dispofold
      * @param baseline the raw imported master data
+     * @param applied the import's section {@code appliedCorrections} (the corrections its source applied), stored
+     *        with the baseline; null if it has none
      * @param unchanged the master data equal the import and count as unchanged since it; false (changes kept)
      *        leaves the revision of the import behind, so that {@link DatasetState#changedSinceImport()} stays true
      * @return the new revision
      */
-    public long saveImport(Dataset dataset, Ids ids, Dataset baseline, boolean unchanged) {
+    public long saveImport(Dataset dataset, Ids ids, Dataset baseline, JsonNode applied, boolean unchanged) {
         String doc = json(dataset);
-        String base = json(baseline);
+        String base = applied == null ? json(baseline)
+                : json(((ObjectNode) mapper.valueToTree(baseline)).set(APPLIED_CORRECTIONS, applied));
         String idState = json(ids);
         DatasetState before = datasetState();
         long next = before.revision() + 1;
@@ -140,6 +148,12 @@ public class Store {
     /** The master data as last imported; empty before the first import and after an upgrade until the next one. */
     public Optional<Dataset> baseline() {
         return queryOne("select baseline from dataset where id = 1 and baseline is not null", Dataset.class);
+    }
+
+    /** The section {@code appliedCorrections} of the last import; empty when it had none. */
+    public Optional<JsonNode> appliedCorrections() {
+        return queryOne("select baseline from dataset where id = 1 and baseline is not null", JsonNode.class)
+                .map(base -> base.get(APPLIED_CORRECTIONS));
     }
 
     public Optional<Period> period(YearMonth month) {

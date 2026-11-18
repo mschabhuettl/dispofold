@@ -12,6 +12,7 @@ import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response.Status;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -23,8 +24,8 @@ import app.dispofold.model.Plan;
 import app.dispofold.store.Store;
 
 /**
- * Files for outside Dispofold (planners only): the master data changed since the last import as a corrections file,
- * and a pseudonymised dataset and plan with a separate key.
+ * Files for outside Dispofold (planners only): the corrections in effect (those applied to the last import and the
+ * master data changed since) as a corrections file, and a pseudonymised dataset and plan with a separate key.
  */
 @Path("/api/data")
 @Produces(MediaType.APPLICATION_JSON)
@@ -35,8 +36,10 @@ public class DataResource {
      * @param file the corrections file
      * @param notes changes the file cannot express
      * @param count fields, exclusions and demand areas in the file
+     * @param earlier of these, the ones from the corrections applied to the last import, unchanged since
+     * @param complete the last import listed its applied corrections; false: only the changes since that import
      */
-    public record CorrectionsExport(ObjectNode file, List<Issue> notes, int count) {
+    public record CorrectionsExport(ObjectNode file, List<Issue> notes, int count, int earlier, boolean complete) {
     }
 
     /**
@@ -59,18 +62,24 @@ public class DataResource {
     @Inject
     ObjectMapper mapper;
 
-    /** The changes of the master data since the last import, as a corrections file (version 2). */
+    /**
+     * The corrections applied to the last import and the changes of the master data since, as a corrections file
+     * (version 2).
+     */
     @GET
     @Path("corrections")
     public CorrectionsExport corrections() {
         Dataset base;
         Dataset current;
+        JsonNode applied;
         synchronized (Store.DATASET_LOCK) {
             current = plans.dataset();
             base = store.baseline().orElseThrow(ImportResource::noBaseline);
+            applied = store.appliedCorrections().orElse(null);
         }
-        Corrections.Export export = Corrections.export(base, current, mapper);
-        return new CorrectionsExport(export.file(), export.notes(), export.count());
+        Corrections.Export export = Corrections.export(base, current, applied, mapper);
+        return new CorrectionsExport(export.file(), export.notes(), export.count(), export.earlier(),
+                export.complete());
     }
 
     /**

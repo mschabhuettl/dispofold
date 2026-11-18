@@ -187,6 +187,28 @@ final class ClientApply {
         return new Outcome(applied, skipped);
     }
 
+    /**
+     * The section {@code appliedCorrections} the client writes into the dataset: the applied entries of the file in
+     * its own format, version 2.
+     */
+    static ObjectNode section(JsonNode file, Outcome outcome) {
+        ObjectNode section = JsonNodeFactory.instance.objectNode().put("format", "dispofold/corrections")
+                .put("version", 2);
+        ObjectNode people = section.putObject("people");
+        ObjectNode demand = section.putObject("demand");
+        for (String entry : outcome.applied()) {
+            if (entry.startsWith("demand:")) {
+                String area = entry.substring("demand:".length());
+                demand.set(area, file.get("demand").get(area));
+            } else {
+                String[] key = entry.split(" ");
+                ObjectNode person = people.has(key[0]) ? (ObjectNode) people.get(key[0]) : people.putObject(key[0]);
+                person.set(key[1], file.get("people").get(key[0]).get(key[1]));
+            }
+        }
+        return section;
+    }
+
     private static String check(String field, JsonNode v, ObjectNode person, JsonNode entry, Set<String> areaIds,
             Set<String> shiftIds) {
         switch (field) {
