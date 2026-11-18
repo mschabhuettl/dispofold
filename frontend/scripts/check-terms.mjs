@@ -51,7 +51,7 @@ try {
   };
   /** Every page of the navigation: each menu entry and the tabs of its group. */
   const pages = async (page) => {
-    const groups = await page.locator('#nav a').evaluateAll((as) => as.map((a) => a.getAttribute('href').slice(2)));
+    const groups = await page.locator('#nav a[href^="#/"]').evaluateAll((as) => as.map((a) => a.getAttribute('href').slice(2)));
     const paths = [];
     for (const first of groups) {
       await open(page, first);
@@ -94,7 +94,7 @@ try {
   }
   const routes = await pages(page);
   check('planner navigation has Daten', routes.includes('import'), routes.join(' '));
-  check('planner menu', (await page.locator('#nav').innerText()).split('\n').join(' | ') === 'Dienstplan | Prüfen | Eingaben | Personen | Einstellungen',
+  check('planner menu', (await page.locator('#nav').innerText()).split('\n').join(' | ') === 'Dienstplan | Prüfen | Eingaben | Personen | Einstellungen | Anleitung',
     await page.locator('#nav').innerText());
   // the month picker shows on month pages only
   for (const [path, shown] of [['plan', true], ['eingaben', true], ['regeln', false], ['stammdaten', false], ['import', true]]) {
@@ -159,7 +159,7 @@ try {
   const viewer = await login('ansicht');
   const viewerRoutes = await pages(viewer);
   check('viewer navigation: Dienstplan, Personen, Fairness', !viewerRoutes.includes('import')
-    && (await viewer.locator('#nav').innerText()).split('\n').join(' | ') === 'Dienstplan | Personen | Fairness', viewerRoutes.join(' '));
+    && (await viewer.locator('#nav').innerText()).split('\n').join(' | ') === 'Dienstplan | Personen | Fairness | Anleitung', viewerRoutes.join(' '));
   await open(viewer, 'import');
   check('viewer address of Import/Export shows the Dienstplan', viewer.url().endsWith('#/plan')
     && (await viewer.locator('#main h1').innerText()).startsWith('Dienstplan'), viewer.url());

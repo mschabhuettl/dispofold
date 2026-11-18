@@ -4,6 +4,7 @@ import { datasetCache as createDatasetCache } from './lib/dataset-cache.js';
 import { addMonths, monthLabel } from './lib/dates.js';
 import { restartAndReload, frontEndMode, showPage } from './lib/desktop.js';
 import { guarded, h, toast } from './lib/dom.js';
+import { guideHref, SECTIONS } from './lib/guide.js';
 import { applyTexts, t } from './lib/texts.js';
 import { initThemeToggle } from './lib/theme.js';
 import * as roster from './views/roster.js';
@@ -17,6 +18,7 @@ import * as inputs from './views/inputs.js';
 import * as masterdata from './views/masterdata.js';
 import * as importExport from './views/import.js';
 import * as settings from './views/settings.js';
+import * as guide from './views/guide.js';
 
 // Pages in menu groups: the menu shows one entry per group, the pages of a group are tabs above the page. month: the
 // page belongs to the selected month (the month picker shows only there). viewer: the page is offered to viewers too,
@@ -34,15 +36,21 @@ const ROUTES = [
   { path: 'import', group: 'settings', label: t('nav.import'), tab: t('nav.tab.data'), view: importExport, month: true },
 ];
 const SETTINGS_ROUTE = { path: 'einstellungen', group: 'settings', label: t('nav.settings'), tab: t('nav.tab.updates'), view: settings };
+// desktop only: the guide built into the program; in a browser the menu links to the documentation site instead
+const GUIDE_ROUTE = { path: 'anleitung', group: 'guide', label: t('nav.guide'), view: guide };
 /** The intro under the title of each page, by path. */
 const INTROS = { plan: t('help.page.plan'), funktionen: t('help.page.funktionen'), zeitachse: t('help.page.zeitachse'),
   pruefen: t('help.page.pruefen'), fairness: t('help.page.fairness'), eingaben: t('help.page.eingaben'), person: t('help.page.person'),
-  regeln: t('help.page.regeln'), stammdaten: t('help.page.stammdaten'), import: t('help.page.import'), einstellungen: t('help.page.einstellungen') };
+  regeln: t('help.page.regeln'), stammdaten: t('help.page.stammdaten'), import: t('help.page.import'), einstellungen: t('help.page.einstellungen'),
+  anleitung: t('help.page.anleitung') };
 const GROUPS = { plan: t('nav.group.plan'), check: t('nav.group.check'), inputs: t('nav.group.inputs'), people: t('nav.group.people'),
-  fairness: t('nav.group.fairness'), settings: t('nav.group.settings') };
+  fairness: t('nav.group.fairness'), settings: t('nav.group.settings'), guide: t('nav.guide') };
 
 let desktop = false;
 let frontEnd = 'window'; // desktop only: 'window' or 'browser' (GET /__shell/mode)
+/** Link to the guide or one of its sections: in the desktop program its built-in copy, else the site in a new tab. */
+const guideLink = (anchor = '') => (desktop ? { href: guideHref(true, anchor) }
+  : { href: guideHref(false, anchor), target: '_blank', rel: 'noopener', title: t('nav.guide.newTab') });
 const api = createApi({
   onUnauthorized: () => {
     // the desktop program has no login page: the request did not come through its window
@@ -88,6 +96,8 @@ const ctx = {
   mayLeave: () => mayLeave(),
   /** Ends the current view (timers, listeners) before the page is replaced, e.g. for a restart. */
   stop: () => stopView(),
+  /** Desktop only: 'window' or 'browser', see frontEnd. */
+  frontEnd: 'window',
 };
 
 let bannerTimer = null;
@@ -146,7 +156,8 @@ async function render() {
       return;
     }
     // the short intro of the page under its title, again after a view draws itself anew
-    const intro = h('p.page-intro.muted', {}, INTROS[route.path]);
+    const section = SECTIONS[route.path];
+    const intro = h('p.page-intro.muted', {}, INTROS[route.path], section && [' ', h('a', guideLink(section), t('help.guideLink'))]);
     const placeIntro = () => {
       const title = container.querySelector('h1');
       if (title && title.nextElementSibling !== intro) title.after(intro);
@@ -203,7 +214,8 @@ async function start() {
   desktop = me.desktop === true;
   if (desktop) {
     frontEnd = await frontEndMode();
-    ROUTES.push(SETTINGS_ROUTE);
+    ctx.frontEnd = frontEnd;
+    ROUTES.push(SETTINGS_ROUTE, GUIDE_ROUTE);
     const quitButton = document.getElementById('quit');
     quitButton.hidden = false;
     quitButton.addEventListener('click', quit);
@@ -218,8 +230,9 @@ async function start() {
   }
   const first = new Map();
   for (const r of ROUTES) if (!first.has(r.group)) first.set(r.group, r);
-  document.getElementById('nav').replaceChildren(...[...first.values()].map((r) =>
-    h('li', {}, h('a', { href: `#/${r.path}`, 'data-group': r.group }, GROUPS[r.group]))));
+  const items = [...first.values()].map((r) => h('li', {}, h('a', { href: `#/${r.path}`, 'data-group': r.group }, GROUPS[r.group])));
+  if (!desktop) items.push(h('li', {}, h('a', { ...guideLink(), 'data-group': 'guide' }, t('nav.guide'))));
+  document.getElementById('nav').replaceChildren(...items);
 
   const months = (await guarded(() => api.months())) ?? [];
   monthInput.addEventListener('change', () => setMonth(monthInput.value));

@@ -35,6 +35,9 @@ signiert werden, steht in der [Code signing policy](docs/code-signing-policy.md)
 
 ## Dokumentation
 
+Als Website mit Suche: <https://mschabhuettl.github.io/dispofold/> (Stand des neuesten Releases). Dieselben Texte
+liegen als Markdown in `docs/`.
+
 | Für | Dokument |
 |---|---|
 | Dienstplanung | [docs/anleitung.md](docs/anleitung.md): so funktioniert es, typischer Ablauf, jede Seite des Menüs |
@@ -143,6 +146,7 @@ Tabelle aus, außer den Screenshots:
 | Programmfenster | `cd desktop-shell && cargo test --locked` (braucht die Entwicklungspakete von WebKitGTK 4.1) |
 | Desktop Ende-zu-Ende | `backend/src/test/desktop/e2e.sh`: Selbsttest des Programmfensters aus dem gebauten deb, dazu Update, verändertes Update, Rollback und Passwortwechsel mit Wegwerf-Schlüssel (braucht ein gebautes `frontend/dist`; `DISPOFOLD_E2E_DEB=<deb>` nimmt ein fertiges Paket) |
 | Desktop-Pakete | `scripts/desktop/package.sh <version> linux\|windows\|macos <ordner>` (Windows wird unter Linux gebaut) |
+| Dokumentations-Website | `pip install -r tools/docs/requirements.txt && mkdocs build --strict` (Ausgabe in `site/`) |
 | Repository-Prüfung | `scripts/check-repo.sh` (Text) und `scripts/check-images.sh` (Text in Bildern per OCR, braucht `tesseract-ocr` mit Deutsch und Englisch, `librsvg2-bin`, Pillow); Selbsttest `scripts/test-check-images.sh` |
 | Screenshots | `cd frontend && npx playwright install chromium && BASE_URL=http://localhost:8080 APP_USER=planer APP_PASSWORD=... MONTH=2027-01 node scripts/screenshots.mjs` |
 | Stack mit Rauchtest | `docker compose up -d --build --wait`, dann `scripts/smoke-test.sh http://localhost:8080 planer <passwort>` (ersetzt die Stammdaten durch Demodaten) |

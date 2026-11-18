@@ -7,6 +7,8 @@ GitHub Actions führt die Workflows in `.github/workflows/` aus:
   Programmfensters (`cargo test`), Linux-Pakete mit Selbsttest des installierten Programms, Prüfung der
   Browser-Oberfläche und Desktop-Ende-zu-Ende-Test (Update, Rollback, Passwortwechsel, mit einem
   Wegwerf-Schlüssel je Lauf), Start des ganzen Stacks mit Rauchtest. Mit `WINDOWS_TEST` zusätzlich der Windows-Test (siehe unten).
+  Dazu baut die CI die Dokumentations-Website (`mkdocs build --strict`, siehe `mkdocs.yml`); eine fehlende Seite,
+  ein fehlender Anker oder ein fehlendes Bild lässt sie scheitern.
 - **Release** (`release.yml`) bei einem Tag `v*`, siehe [Release](#release).
 
 Die Workflows enthalten keine Adressen. Was je Installation verschieden ist, kommt aus den Einstellungen des
@@ -27,6 +29,9 @@ Auf GitHub unter **Settings**, **Secrets and variables**, **Actions**:
    (`windows-latest`) und startet den Selbsttest.
 4. Optional die Variable `MACOS_RUNNER` mit dem Label eines macOS-Runners, z. B. `macos-latest`; ohne sie wird
    das macOS-Paket übersprungen.
+5. Einmalig unter **Settings**, **Pages** die **Source** auf **GitHub Actions** stellen. Ohne diese Einstellung
+   scheitert der letzte Schritt des Releases (Dokumentations-Website), das Release selbst ist dann schon
+   veröffentlicht.
 
 `RELEASE_TOKEN` und `API_URL` braucht es auf GitHub nicht: Das automatische Job-Token darf Releases anlegen und
 Images nach `ghcr.io` pushen, und die Uploads gehen an die Standardadresse der API. Neue Pakete in `ghcr.io` sind
@@ -75,6 +80,9 @@ Der Release-Workflow macht dann:
 4. Erst wenn alle Teile erfolgreich waren (macOS darf fehlen), wird der Entwurf **veröffentlicht**. Scheitert ein
    Teil, bleibt es beim Entwurf. Ausnahme: Die Images liegen dann schon in der Registry (Schritt 3), sind aber
    noch keinem veröffentlichten Release zugeordnet.
+5. Nach dem Veröffentlichen baut der Job `pages` die Dokumentations-Website aus `docs/` und `README.md` dieses Tags
+   und stellt sie auf GitHub Pages: <https://mschabhuettl.github.io/dispofold/>. Die Website zeigt immer die
+   Dokumentation des neuesten Releases.
 
 **Wenn ein Release scheitert:** Ursache beheben und den fehlgeschlagenen Lauf (oder einzelne Jobs) auf GitHub
 neu starten. Das ist sicher: Ein Upload ersetzt eine vorhandene Datei gleichen Namens im Release, statt zu scheitern.

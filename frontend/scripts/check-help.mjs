@@ -2,7 +2,8 @@
 // opens its text by click and by keyboard (Enter, Space), closes it by Escape (the focus stays on the button) and by a
 // click elsewhere; a tap opens and closes it on a touch screen, where the text stays inside the window; one help is
 // open at a time; the text is not in the page while closed; an open help survives the redraws of the status line while
-// solving; every page has its intro under the title, also after a view draws itself anew.
+// solving; every page has its intro under the title, also after a view draws itself anew. Planners and viewers have the
+// menu entry Anleitung and a link in each intro, both to the documentation site in a new tab.
 // Demo data of the dev server (mock API), month 2027-01 planned.
 //   npm run build && node scripts/check-help.mjs     (Chromium via `npx playwright install chromium`)
 import { spawn } from 'node:child_process';
@@ -113,7 +114,7 @@ try {
   const intro = (p) => p.locator('#main h1 + p.page-intro').count();
   const viewer = await login('ansicht');
   for (const [who, p] of [['planner', page], ['viewer', viewer]]) {
-    const groups = await p.locator('#nav a').evaluateAll((as) => as.map((a) => a.getAttribute('href').slice(2)));
+    const groups = await p.locator('#nav a[href^="#/"]').evaluateAll((as) => as.map((a) => a.getAttribute('href').slice(2)));
     for (const g of groups) {
       await open(p, g);
       const tabs = await p.locator('.page-tabs a').evaluateAll((as) => as.map((a) => a.getAttribute('href').slice(2)));
@@ -123,6 +124,21 @@ try {
       }
     }
   }
+  // The guide on the documentation site: menu entry and the link in the intro, for planners and viewers
+  const site = 'https://mschabhuettl.github.io/dispofold/anleitung/';
+  for (const [who, p] of [['planner', page], ['viewer', viewer]]) {
+    await open(p, 'plan');
+    const entry = p.locator('#nav a', { hasText: 'Anleitung' });
+    check(`${who}: menu entry Anleitung to the site in a new tab`, await entry.count() === 1
+      && await entry.getAttribute('href') === site && await entry.getAttribute('target') === '_blank'
+      && await entry.getAttribute('rel') === 'noopener');
+    const link = p.locator('#main h1 + p.page-intro a');
+    check(`${who}: intro links to its section of the guide`, await link.innerText() === 'Mehr dazu in der Anleitung'
+      && await link.getAttribute('href') === `${site}#dienstplan` && await link.getAttribute('target') === '_blank');
+  }
+  await open(page, 'fairness');
+  check('planner: Fairness intro links to its section', await page.locator('#main h1 + p.page-intro a').getAttribute('href') === `${site}#fairness`);
+
   await open(page, 'stammdaten');
   await page.locator('[data-new="areas"]').click();
   await page.locator('tr.edit-row').getByRole('button', { name: 'Abbrechen' }).click();

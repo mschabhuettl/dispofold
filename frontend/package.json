@@ -29,6 +29,7 @@
   },
   "devDependencies": {
     "esbuild": "0.25.10",
+    "marked": "18.1.2",
     "playwright": "1.65.0"
   }
 }
