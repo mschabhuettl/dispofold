@@ -3,7 +3,7 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
-## 0.15.0 (unreleased)
+## 0.15.0 (2026-11-18)
 
 - **Korrekturdatei vollständig:** **Änderungen als Korrekturdatei exportieren** schreibt alle geltenden
   Korrekturen: die, die das Exportprogramm beim letzten Import schon angewendet hatte, und die Änderungen seit dem
