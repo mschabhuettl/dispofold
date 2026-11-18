@@ -101,7 +101,7 @@ function figures(explanation, person, areaNames, constraintLabels, nightDistribu
   // Ziel: the goal the soft rule aims at in this plan; personal (hours account), so null for viewers. Soll: the contract target.
   const goal = s.scaledGoalHours ?? s.goalHours;
   // planners: planned plus credited hours, what the rule compares with the Ziel; viewers get neither credited nor Ziel
-  const hoursTile = h('div.kpi.kpi-hours', {}, h('div.label', {}, t('person.kpi.hours'), info(t('help.figure.hours'), t('person.kpi.hoursInfo'), 'hours-help')),
+  const hoursTile = h('div.kpi.kpi-hours', {}, h('div.label', {}, t('person.kpi.hours'), info(canEdit ? t('help.figure.hours') : t('help.figure.hoursViewer'), t('person.kpi.hoursInfo'), 'hours-help')),
     h('div.value', {}, goal != null
       ? t('person.kpi.hoursOfGoal', { hours: fmt.num(s.plannedHours + s.creditedHours, 1), credited: fmt.num(s.creditedHours, 1), goal: fmt.num(goal, 1), target: fmt.num(s.targetHours, 1) })
       : t('person.kpi.hoursOfTarget', { planned: fmt.num(s.plannedHours, 1), target: fmt.num(s.targetHours, 1) })));

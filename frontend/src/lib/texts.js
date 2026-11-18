@@ -277,6 +277,7 @@ export const TEXTS = {
   'help.plan.blockDays': 'Um wie viele Tage die Dienstblöcke aller Personen kürzer oder länger sind als unter Regeln eingestellt. Je weniger, desto besser.',
 
   'help.figure.hours': 'Geplante plus angerechnete Stunden; angerechnet: Abwesenheiten, die das Soll senken, und Ersatzruhe, je Arbeitstag Wochenstunden durch 5. Diese Summe vergleicht die Planung mit dem Ziel. Soll: die vertraglichen Stunden des Monats. Ziel: das Soll, korrigiert um einen Teil des Stundenkontos; braucht der Bedarf weniger Arbeit als alle Ziele zusammen, für diesen Plan verkleinert.',
+  'help.figure.hoursViewer': 'Stunden der geplanten Dienste im Monat. Soll: die vertraglichen Stunden des Monats aus Wochenstunden und Arbeitstagen.',
   'help.figure.plannedHours': 'Stunden der geplanten Dienste im Monat, ohne angerechnete Abwesenheiten.',
   'help.figure.accountBefore': 'Stundenkonto zu Beginn des Monats: der Stand nach dem abgeschlossenen Vormonat, sonst der Stand aus den Personendaten. Plus: mehr gearbeitet als vereinbart.',
   'help.figure.accountAfter': 'Stundenkonto nach diesem Plan: vorher plus geplante und angerechnete Stunden, minus Soll und minus Stunden, die vom Konto gehen.',
@@ -378,7 +379,7 @@ export const TEXTS = {
   'mix.never.note': 'Die Person macht keine Nachtdienste: Der Nachtanteil der gewohnten Verteilung zählt nicht. Die übrigen Anteile je Schichtart gelten für die Dienste außer Nächten.',
   'mix.never.tile': 'nicht im Nachtausgleich (nie Nacht); der Nachtanteil der gewohnten Verteilung ({percent}) zählt nicht',
   'mix.never.title': 'nicht im Nachtausgleich: nie Nacht; der Nachtanteil der gewohnten Verteilung zählt nicht, weil die Person keine Nachtdienste macht',
-  'mix.never.form': 'Die Person macht keine Nachtdienste (Familienregel „keine Nacht“ an allen Tagen oder „nie“ für jede Nachtschicht ihrer Bereiche): Sie ist nicht im Nachtausgleich, ein Nachtanteil zählt nicht. Die übrigen Anteile je Schichtart gelten für die Dienste außer Nächten; wer solche Anteile hat, ist nicht in der „Abwechslung Dienste“.',
+  'mix.never.form': 'Die Person macht keine Nachtdienste (Familienregel „keine Nacht“ an allen Tagen, „nie“ für jede Nachtschicht ihrer Bereiche oder keine Nachtschicht in ihren Bereichen): Sie ist nicht im Nachtausgleich, ein Nachtanteil zählt nicht. Die übrigen Anteile je Schichtart gelten für die Dienste außer Nächten; wer solche Anteile hat, ist nicht in der „Abwechslung Dienste“.',
   'mix.effective.form': 'Es gelten für die Dienste außer Nächten: {shares}.',
   'mix.never.help': 'Wer nie Nacht macht, dem zählt der Nachtanteil der gewohnten Verteilung nicht; die übrigen Anteile gelten für die Dienste außer Nächten.',
 

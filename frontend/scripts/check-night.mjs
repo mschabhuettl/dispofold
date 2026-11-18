@@ -57,11 +57,16 @@ try {
     const neverMix = plain[3];
     await put(`/api/dataset/people/${neverMix.id}`, { ...neverMix, shiftMix: { categories: { DAY: 0.9, NIGHT: 0.1 }, areas: {} },
       familyRules: [{ weekdays: [1, 2, 3, 4, 5, 6, 7], latestEnd: null, earliestStart: null, noNights: true, note: '' }] });
+    // never nights through a NEVER restriction on the night category for every day
+    const blocked = plain[4];
+    const revision = (await (await fetch('/api/dataset')).json()).revision;
+    await fetch(`/api/dataset/people/${blocked.id}/restrictions`, { method: 'PUT', headers: { 'Content-Type': 'application/json', 'If-Match': String(revision) },
+      body: JSON.stringify([{ personId: blocked.id, category: 'NIGHT', weekday: 0, kind: 'NEVER' }]) });
     const rules = await (await fetch('/api/rules')).json();
     await put('/api/rules', { ...rules, nightDistribution: 'HABIT' });
     await fetch(`/api/plans/${m}/solve`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: '{"seed":1,"timeLimitSeconds":1}' });
-    return { mix: mix.id, never: never.id, plain: plain[2].id, neverMix: neverMix.id };
+    return { mix: mix.id, never: never.id, plain: plain[2].id, neverMix: neverMix.id, blocked: blocked.id };
   }, month);
   await page.waitForTimeout(1500);
   const setMode = (mode) => page.evaluate(async (m) => {
@@ -124,6 +129,8 @@ try {
   check('no line while the shares do not sum to 100 %', await formLine(page) === null, await formLine(page));
   await tile(page, people.never);
   check('HABIT never nights without a mix: the form has the never-nights note', (await formNote(page)).includes(neverForm) && await formLine(page) === null);
+  const blockedTile = await tile(page, people.blocked);
+  check('never nights by restriction: tile and form note', blockedTile === 'nicht im Nachtausgleich (nie Nacht)' && (await formNote(page)).includes(neverForm), blockedTile);
   const habitPlain = await tile(page, people.plain);
   check('HABIT: person without a mix is in the comparison', pool.test(habitPlain ?? ''), habitPlain);
   let marked = await marks(page);

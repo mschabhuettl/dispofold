@@ -122,10 +122,10 @@ verwenden kann:
    kommen sie mit jedem neuen Datensatz wieder mit. Was die Datei nicht ausdrücken kann (zum Beispiel in
    Dispofold neu angelegte Personen), steht darunter als Liste: Das ist im Quellsystem nachzutragen.
 
-In Dispofold neu angelegte Personen und geänderte Namen können weder die Korrekturdatei noch **Änderungen aus
-Dispofold behalten** übernehmen (die Vorschau des Imports listet sie weiter auf): Man trägt sie im Quellsystem ein,
-dann kommen sie mit dem nächsten Export, oder legt die Person nach dem Import in Dispofold wieder an
-beziehungsweise ändert den Namen dort erneut.
+In Dispofold neu angelegte Personen und geänderte Namen lassen sich weder mit der Korrekturdatei noch mit
+**Änderungen aus Dispofold behalten** übernehmen (die Vorschau des Imports listet sie weiter auf): Man trägt sie im
+Quellsystem ein, dann kommen sie mit dem nächsten Export, oder legt die Person nach dem Import in Dispofold wieder
+an beziehungsweise ändert den Namen dort erneut.
 
 Behalten werden Änderungen an Personen (Wochenstunden, Bereiche, Stundenkonto, Ersatzruhe, Eintritt und
 Austritt, gewohnte Verteilung, Familienregeln), an ihren Einschränkungen, entfernte Personen und der Bedarf je
