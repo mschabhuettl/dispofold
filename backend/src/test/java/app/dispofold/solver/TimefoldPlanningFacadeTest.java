@@ -2,6 +2,8 @@ package app.dispofold.solver;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.lang.reflect.RecordComponent;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -9,7 +11,9 @@ import java.util.concurrent.TimeUnit;
 
 import app.dispofold.model.Dataset;
 import app.dispofold.model.DemandRule;
+import app.dispofold.model.Person;
 import app.dispofold.model.PersonExplanation;
+import app.dispofold.model.PersonStats;
 import app.dispofold.model.PlanAnalysis;
 import app.dispofold.model.PlanAssignment;
 import app.dispofold.planning.PlanningInput;
@@ -78,6 +82,46 @@ class TimefoldPlanningFacadeTest {
         String area = input.dataset().areas().get(0).id();
         assertThat(facade.coverage(solved, area)).isNotEmpty()
                 .allSatisfy(s -> assertThat(s.planned()).isGreaterThanOrEqualTo(s.required()));
+    }
+
+    /** A person no longer taken over from the source counts as not employed in the month: never planned. */
+    @Test
+    void anExcludedPersonIsNotPlanned() throws Exception {
+        TimefoldPlanningFacade facade = new TimefoldPlanningFacade();
+        PlanningInput base = Fixtures.input(Fixtures.SMALL);
+        Dataset d = base.dataset();
+        LocalDate first = base.period().month().atDay(1);
+        Person x = d.people().stream().filter(p -> base.period().fixed().stream().noneMatch(f -> f.personId()
+                .equals(p.id()))).findFirst().orElseThrow();
+        String shiftId = d.shifts().stream().filter(s -> x.areaIds().contains(s.areaId())).findFirst().orElseThrow()
+                .id();
+        List<Person> people = new ArrayList<>(d.people());
+        people.replaceAll(p -> p.id().equals(x.id()) ? p.withExcludedFrom(first) : p);
+        Dataset excluded = new Dataset(d.format(), d.version(), d.source(), d.areas(), d.shifts(), d.demand(),
+                d.holidays(), d.absenceTypes(), people, d.restrictions(), d.history(), d.periods());
+        // a duty a planner set before the exclusion: the employment rule names it
+        PlanningInput input = new PlanningInput(excluded, base.period(), base.rules(),
+                List.of(new PlanAssignment(x.id(), first.plusDays(9), shiftId, false, true)));
+
+        PlanAnalysis analysis = facade.analyze(input);
+        for (PersonStats s : analysis.people()) {
+            for (RecordComponent c : PersonStats.class.getRecordComponents()) {
+                if (c.getAccessor().invoke(s) instanceof Double v) {
+                    assertThat(v).as(s.personId() + " " + c.getName()).isFinite();
+                }
+            }
+        }
+        PersonStats stats = analysis.people().stream().filter(s -> s.personId().equals(x.id())).findFirst()
+                .orElseThrow();
+        assertThat(stats.targetHours()).isZero();
+        assertThat(stats.availableDays()).isZero();
+        assertThat(facade.explain(input, x.id()).hits())
+                .filteredOn(h -> h.constraintId().equals(ConstraintCatalog.EMPLOYMENT)).hasSize(1);
+
+        SolveProgress result = solve(facade, input, new SolveOptions(1, 5, 0, 0));
+        assertThat(result.assignments()).filteredOn(a -> a.personId().equals(x.id()))
+                .filteredOn(a -> a.shiftId() != null || a.compRest()).singleElement()
+                .satisfies(a -> assertThat(a.date()).isEqualTo(first.plusDays(9)));
     }
 
     @Test
