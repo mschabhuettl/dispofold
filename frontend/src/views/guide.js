@@ -14,6 +14,10 @@ export async function render(container, ctx, [anchor] = []) {
     ? h('a', { href: GUIDE_URL, target: '_blank', rel: 'noopener' }, GUIDE_URL)
     : h('code', {}, GUIDE_URL);
   container.append(body.querySelector('h1'), h('p.muted.guide-online', {}, t('guide.online'), ' ', online), body);
+  // the same for the links of the guide to the other documents on the site
+  if (ctx.frontEnd !== 'browser') {
+    for (const a of body.querySelectorAll('a[target="_blank"]')) a.replaceWith(a.textContent, ' (', h('code', {}, a.href), ')');
+  }
   // a section: shown once the shell has put the page in place
   const target = anchor && body.querySelector(`[id="${CSS.escape(anchor)}"]`);
   const timer = target && setTimeout(() => target.scrollIntoView({ block: 'start' }), 0);

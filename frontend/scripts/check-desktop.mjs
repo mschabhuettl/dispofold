@@ -118,7 +118,7 @@ try {
       && await entry.getAttribute('target') === null);
     check(`${mode}: intro links to its section`, await g.locator('#main h1 + p.page-intro a').getAttribute('href') === '#/anleitung/regeln');
     await entry.click();
-    await opened();
+    await g.waitForFunction(() => location.hash === '#/anleitung' && document.querySelector('#main .guide'));
     check(`${mode}: guide title`, await g.locator('#main h1').innerText() === 'Anleitung für die Dienstplanung');
     check(`${mode}: guide menu entry marked`, await entry.getAttribute('aria-current') === 'page');
     const images = await g.locator('.guide img').evaluateAll(async (imgs) => {
@@ -139,6 +139,9 @@ try {
     await g.waitForTimeout(300);
     const section = await g.locator('[id="prüfen"]').evaluate((e) => e.getBoundingClientRect().top);
     check(`${mode}: section with umlaut by address`, section > 0 && section < 200, String(section));
+    const external = await g.locator('.guide a[target="_blank"]').count();
+    check(`${mode}: links to the other documents ${mode === 'browser' ? 'open the site' : 'as addresses to copy'}`, mode === 'browser'
+      ? external >= 5 : external === 0 && await g.locator('.guide code', { hasText: 'https://mschabhuettl.github.io/dispofold/regeln/' }).count() === 1);
     check(`${mode}: no request leaves the program`, outside.length === 0, outside.join(', '));
     if (mode === 'window') {
       await g.route('**/anleitung/anleitung.html', (r) => r.fulfill({ status: 404, body: 'not found' }));
@@ -148,6 +151,19 @@ try {
         alert.includes('fehlt') && alert.includes('https://mschabhuettl.github.io/dispofold/anleitung/'), alert);
     }
     await g.close();
+    // a section opened from a page intro before the images were ever loaded (new context, empty cache)
+    const fresh = await browser.newContext({ locale: 'de-DE', viewport: { width: 1400, height: 900 } });
+    const f = await fresh.newPage();
+    await f.goto(`${guideBase}/#/regeln`);
+    await f.waitForFunction(() => document.querySelector('#main h1') && !document.querySelector('#main > p.muted'));
+    await f.locator('#main h1 + p.page-intro a').click();
+    await f.waitForFunction(() => location.hash === '#/anleitung/regeln' && document.getElementById('regeln'));
+    await f.locator('.guide img').evaluateAll((imgs) => Promise.all(imgs.map((i) => (i.complete ? null
+      : new Promise((r) => { i.onload = r; i.onerror = r; })))));
+    await f.waitForTimeout(300);
+    const after = await f.locator('#regeln').evaluate((e) => e.getBoundingClientRect().top);
+    check(`${mode}: section from the intro stays in view once the images have loaded`, after > 0 && after < 200, String(after));
+    await fresh.close();
   }
 } finally {
   await browser.close();
