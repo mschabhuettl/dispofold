@@ -11,9 +11,12 @@ Dispofold steht unter `AGPL-3.0-only`. Die Lizenzen unten sind damit vereinbar:
   SIL OFL 1.1 für Schriften, CC BY 4.0 für Icons) dürfen in ein AGPL-Werk aufgenommen werden.
 - MPL 2.0 (fünf Crates, H2 mit Wahl der MPL 2.0) erlaubt die Weitergabe unter der GPL-Familie (Abschnitt 3.3);
   keine dieser Komponenten trägt den Vermerk "Incompatible With Secondary Licenses".
-- Eclipse Temurin (GPL 2.0 mit Classpath Exception), der WebView2-Bootstrapper von Microsoft und die Pakete der
-  Basis-Images sind eigenständige Programme, die nur mitgeliefert werden (Zusammenstellung nach Abschnitt 5 der
-  AGPL), nicht Teil von Dispofold.
+- Eclipse Temurin (GPL 2.0 mit Classpath Exception) und die Pakete der Basis-Images sind eigenständige Programme,
+  die nur mitgeliefert werden (Zusammenstellung nach Abschnitt 5 der AGPL), nicht Teil von Dispofold.
+- Die C- und C++-Laufzeit von Microsoft (in `dispofold.exe` statisch gelinkt, in der Java-Laufzeit für Windows als
+  DLLs) sind Systembibliotheken im Sinne der GPL-Familie.
+- Der WebView2-Bootstrapper von Microsoft wird nicht mitgeliefert: Das Windows-Setup lädt ihn nur, wenn WebView2
+  fehlt.
 
 ## Im Repository enthalten
 
@@ -37,10 +40,13 @@ Dispofold steht unter `AGPL-3.0-only`. Die Lizenzen unten sind damit vereinbar:
 | H2 Database | über Quarkus | MPL 2.0 oder EPL 1.0 | verschlüsselte Datenbank der Desktop-Version |
 | Eclipse Temurin JDK 21 (über jlink, für Linux, Windows und macOS) | 21.0.13+9 | GPL 2.0 mit Classpath Exception | mitgelieferte Java-Laufzeit der Desktop-Version (`runtime/`); Lizenztexte im Ordner `legal/` der Laufzeit |
 | Tauri und die Rust-Crates des Programmfensters | siehe unten | siehe unten | Programmfenster der Desktop-Version (`desktop-shell/`) |
-| NSIS (Laufzeit des Windows-Setups) | 3 | zlib-Lizenz | Windows-Setup |
+| NSIS (Laufzeit des Windows-Setups mit den Plugins System, nsDialogs, StartMenu und NSISdl) | 3.10 | zlib-Lizenz; LZMA-Entpacker CPL 1.0 mit Ausnahme für das Linken | Windows-Setup |
 | nsis_tauri_utils | über Tauri | MIT oder Apache 2.0 | Windows-Setup |
-| Microsoft Edge WebView2 (Bootstrapper) | über Tauri | Lizenzbedingungen von Microsoft | lädt im Windows-Setup WebView2 nach, wenn es fehlt; WebView2 selbst wird nicht mitgeliefert |
+| Microsoft Edge WebView2 (Bootstrapper) | über Tauri | Lizenzbedingungen von Microsoft | nicht mitgeliefert: Nur wenn WebView2 fehlt, lädt das Windows-Setup den Bootstrapper von `go.microsoft.com` und führt ihn aus; er installiert WebView2 |
+| Microsoft Visual C++ Runtime und Universal C Runtime (`vcruntime140.dll`, `vcruntime140_1.dll`, `msvcp140.dll`, `ucrtbase.dll`, `api-ms-win-*.dll`) | mit Temurin 21.0.13+9 | weitergebbare Systembibliotheken nach den Lizenzbedingungen von Microsoft | Teil der Java-Laufzeit für Windows (`runtime\bin`), von Microsoft signiert |
+| Microsoft C-Laufzeit (statisch) und Windows SDK (über `cargo-xwin`) | CRT 14.44.17.14, SDK 10.0.26100 | Lizenzbedingungen von Microsoft | statisch in `dispofold.exe` gelinkt (`static_vcruntime`); das SDK liefert nur die Importbibliotheken beim Bauen |
 | Flyway | über Quarkus | Apache 2.0 | Datenbankmigrationen |
+| Brotli4j mit der nativen Brotli-Bibliothek für Linux (`libbrotli.so` im JAR) | 1.23.0 | Apache 2.0, Brotli selbst MIT | über Quarkus; liegt in allen Desktop-Paketen, wird nur unter Linux geladen |
 | PostgreSQL JDBC-Treiber | über Quarkus | BSD-2-Clause | Datenbankzugriff |
 | PostgreSQL (Docker-Image `postgres:17-alpine`) | 17 | PostgreSQL License | Datenbank |
 | nginx (Docker-Image `nginxinc/nginx-unprivileged:1.30-alpine`) | 1.30 | BSD-2-Clause | Auslieferung der Oberfläche, Weiterleitung an das Backend |
@@ -51,6 +57,29 @@ Dispofold steht unter `AGPL-3.0-only`. Die Lizenzen unten sind damit vereinbar:
 
 Bei Bryntum gilt: Ausgeliefert wird nur die Community-Stufe. Die Pakete `-trial` und `-thin-trial` sind
 kommerzielle Testversionen und dürfen nicht verwendet werden, ebenso die Stufen Business und Enterprise ohne Lizenz.
+
+## Java-Bibliotheken der Anwendung
+
+Neben den oben genannten liefert die Anwendung (Images, Desktop-Pakete, Update-Paket) rund 200 Java-Bibliotheken
+aus, die Quarkus, Timefold und Apache POI mitbringen. Die vollständige Liste mit den Lizenzangaben der Maven-POMs
+erzeugt `cd backend && ./mvnw -q org.codehaus.mojo:license-maven-plugin:2.4.0:add-third-party
+-Dlicense.excludedScopes=test,provided,system` in `target/generated-sources/license/THIRD-PARTY.txt`. Stand
+0.13.0 stehen alle unter Apache 2.0 außer:
+
+| Bibliothek | Version | Lizenz |
+|---|---|---|
+| Vert.x Core, Web, Web Client, Web Common, Auth Common, Bridge Common, URI Template | 4.5.35 | EPL 1.0 bzw. 2.0 oder Apache 2.0 |
+| Jakarta Annotations, Interceptors, Resource, Transaction, RESTful WS, Expression Language, JSON Processing; Eclipse Parsson | verschieden | EPL 2.0 oder GPL 2.0 mit Classpath Exception |
+| SmallRye JDK Classfile API Backport | 26 | GPL 2.0 mit Classpath Exception |
+| Jakarta Activation, Jakarta XML Binding, Eclipse Angus Activation, JAXB Core, JAXB Runtime, TXW2, istack commons runtime | verschieden | EDL 1.0 (BSD-3-Clause) |
+| JTS Topology Suite (`jts-core`, über Apache POI) | 1.19.0 | EDL 1.0 oder EPL 2.0 |
+| curvesapi (über Apache POI) | 1.08 | BSD-3-Clause |
+| CRaC API (`org.crac`) | 1.5.0 | BSD-2-Clause |
+| HdrHistogram | 2.2.2 | BSD-2-Clause oder CC0 |
+| GraalVM SDK (`nativeimage`, `word`) | 25.0.4.1 | Universal Permissive License 1.0 |
+| Reactive Streams | 1.0.4 | MIT-0 |
+| SLF4J API | 2.0.18 | MIT |
+| JBoss Transaction SPI | 8.0.0.Final | Apache 2.0 (das POM nennt "Public Domain", das Repository des Projekts Apache 2.0) |
 
 ## Weitergabe als Images
 
