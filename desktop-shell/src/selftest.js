@@ -56,6 +56,20 @@
         if (!me.desktop) throw new Error('not the desktop mode');
         return { detail: `role ${me.role}` };
       })) &&
+      (await step('update question', async () => {
+        // a fresh data folder: the page asks once whether to check for new versions; "Nein" keeps the test offline
+        for (let i = 0; i < 40 && !document.getElementById('update-consent'); i++) await sleep(250);
+        const no = document.querySelector('#update-consent .btn-secondary');
+        if (!no) throw new Error('not asked on the first start');
+        no.click();
+        let s = null;
+        for (let i = 0; i < 40 && (!s || s.ask); i++) {
+          await sleep(250);
+          s = await api('GET', '/api/desktop/update?check=false');
+        }
+        if (s.ask || s.source) throw new Error('answer not saved');
+        return { detail: 'asked once, answered Nein' };
+      })) &&
       (await step('demo data', async () => {
         const s = await api('POST', '/api/import/demo');
         return { detail: JSON.stringify(s).slice(0, 200) };

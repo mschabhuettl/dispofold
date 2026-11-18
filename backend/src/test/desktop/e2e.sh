@@ -87,7 +87,7 @@ HOME="$WORK/home" xvfb-run -a dbus-run-session -- "$WORK/installed/usr/bin/dispo
   --data "$WORK/selftest-data" >"$WORK/selftest.log" 2>&1 && code=0 || code=$?
 check "window self-test ends with 0" test "$code" = 0
 check "window self-test result ok" sh -c "jq -e '.ok == true' '$WORK/selftest.json' >/dev/null"
-for step in "password requested" "backend verified" "open app" "demo data" "solve" "export" "quit" "launcher exit"; do
+for step in "password requested" "backend verified" "open app" "update question" "demo data" "solve" "export" "quit" "launcher exit"; do
   check "self-test step $step passed" sh -c "jq -e --arg s '$step' 'any(.steps[]; .name == \$s and .ok)' '$WORK/selftest.json' >/dev/null"
 done
 echo "      self-test: $(jq -c '{steps: [.steps[] | {name, ms, ok}], plan}' "$WORK/selftest.json" 2>/dev/null)"

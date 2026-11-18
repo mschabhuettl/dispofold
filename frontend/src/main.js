@@ -5,6 +5,7 @@ import { addMonths, monthLabel } from './lib/dates.js';
 import { restartAndReload, frontEndMode, showPage } from './lib/desktop.js';
 import { guarded, h, toast } from './lib/dom.js';
 import { guideHref, SECTIONS } from './lib/guide.js';
+import { askForChecks, showReleaseNotice } from './lib/release.js';
 import { applyTexts, t } from './lib/texts.js';
 import { initThemeToggle } from './lib/theme.js';
 import * as roster from './views/roster.js';
@@ -100,10 +101,7 @@ const ctx = {
   frontEnd: 'window',
 };
 
-let bannerTimer = null;
-
 function stopView() {
-  clearTimeout(bannerTimer);
   renderCount++; // a view still loading is discarded
   if (cleanup) cleanup();
   cleanup = null;
@@ -219,7 +217,7 @@ async function start() {
     const quitButton = document.getElementById('quit');
     quitButton.hidden = false;
     quitButton.addEventListener('click', quit);
-    updateBanner(true);
+    desktopUpdates();
   } else {
     const logout = document.getElementById('logout');
     logout.hidden = false;
@@ -227,6 +225,11 @@ async function start() {
       await guarded(() => api.logout());
       location.href = 'login.html';
     });
+    // the server's own check for a newer release; viewers are not told
+    if (ctx.canEdit) {
+      api.release().then((r) => showReleaseNotice(document.getElementById('banner'), r?.available, { current: r?.current }))
+        .catch(() => {});
+    }
   }
   const first = new Map();
   for (const r of ROUTES) if (!first.has(r.group)) first.set(r.group, r);
@@ -268,27 +271,32 @@ async function quit() {
   else showPage(t('desktop.quit.title'), null);
 }
 
-/** Desktop: banner when the start check found an update; the check may still be running right after the start. */
-async function updateBanner(retry) {
-  const info = await api.desktopUpdate(false).catch(() => null);
-  const banner = document.getElementById('banner');
-  if (!banner) return;
-  if (info?.available) {
-    const install = h('button.btn.btn-primary.btn-small', { type: 'button', onclick: async () => {
-      if (!mayLeave()) return;
-      install.disabled = true;
-      const ok = await guarded(() => api.desktopInstall());
-      install.disabled = false;
-      if (ok === undefined) return;
-      stopView();
-      restartAndReload();
-    } }, t('settings.install'));
-    banner.replaceChildren(h('span', {}, t('desktop.banner', { version: info.available.version })), install,
-      h('a', { href: '#/einstellungen' }, t('desktop.banner.details')));
-    banner.hidden = false;
-  } else if (retry && info?.checkOnStart && !info.error && !info.errorCode) {
-    bannerTimer = setTimeout(() => updateBanner(false), 30000);
+/**
+ * Desktop: without saved update settings asks once whether to check for new versions ("Ja" sets the project's
+ * releases API, "Nein" no source); then, with a source and the check on start switched on, asks the source once.
+ * Nothing goes to the network before that answer.
+ */
+async function desktopUpdates() {
+  let info = await api.desktopUpdate(false).catch(() => null);
+  if (!info) return;
+  if (info.ask) {
+    const settings = { source: await askForChecks() ? info.releases : '', checkOnStart: true };
+    if (await guarded(() => api.desktopSettings(settings)) === undefined) return;
+    info = { ...info, ...settings };
   }
+  if (!info.source || !info.checkOnStart) return;
+  const found = await api.desktopUpdate(true).catch(() => null);
+  showReleaseNotice(document.getElementById('banner'), found?.available, { current: found?.current,
+    window: frontEnd !== 'browser', install: installUpdate });
+}
+
+/** Desktop: "Jetzt installieren" in the notice; the same flow as in Einstellungen > Updates. */
+async function installUpdate() {
+  if (!mayLeave()) return;
+  const ok = await guarded(() => api.desktopInstall());
+  if (ok === undefined) return;
+  stopView();
+  restartAndReload();
 }
 
 applyTexts();

@@ -2,6 +2,7 @@
 import { restartAndReload } from '../lib/desktop.js';
 import { append, guarded, h } from '../lib/dom.js';
 import { updateProblem } from '../lib/codes.js';
+import { info as help } from '../lib/info.js';
 import { t } from '../lib/texts.js';
 
 export async function render(root, ctx) {
@@ -53,8 +54,9 @@ export async function render(root, ctx) {
       h('section.section', { 'aria-labelledby': 'h-update' }, h('h2', { id: 'h-update' }, t('settings.updates')),
         status,
         h('div.field', {}, h('label', { for: 'update-source' }, t('settings.source')), source,
-          h('span.muted', {}, t('settings.source.help'))),
-        h('label.check', {}, checkOnStart, t('settings.checkOnStart')),
+          h('span.muted', {}, t('settings.source.help', { url: info.releases ?? '' }))),
+        h('div.with-info', {}, h('label.check', {}, checkOnStart, t('settings.checkOnStart')),
+          help(t('help.field.settings.checkOnStart'), t('settings.checkOnStart'))),
         h('div.row', {},
           button(t('common.save'), async () => {
             const body = { source: source.value.trim(), checkOnStart: checkOnStart.checked };
