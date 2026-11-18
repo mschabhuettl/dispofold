@@ -145,6 +145,22 @@ try {
   check('counted apart', await main.getByText('Aus früheren Korrekturen: 1, seit dem letzten Import geändert: 1.').count() === 1);
   check('no note with the applied corrections', await main.getByText('nennt die schon angewendeten Korrekturen nicht').count() === 0);
 
+  // a person excluded and taken back again since the import: nothing left, but a file without entries that replaces
+  // one saved in between
+  const none = structuredClone(fixture);
+  none.appliedCorrections = { format: 'dispofold/corrections', version: 2, people: {}, demand: {} };
+  check('import with no applied corrections', (await api(page, 'POST', '/api/import/dataset?replace=true', none)).status === 200);
+  const p2 = fixture.people[2];
+  await api(page, 'PUT', `/api/dataset/people/${p2.id}/excluded`, true);
+  await open(page);
+  const excluding = JSON.parse((await download(page, () => main.getByRole('button', { name: 'Änderungen als Korrekturdatei exportieren' }).click())).text);
+  check('exclusion in the file', JSON.stringify(excluding.people) === JSON.stringify({ [p2.id]: { exclude: true } }), JSON.stringify(excluding.people));
+  await api(page, 'PUT', `/api/dataset/people/${p2.id}/excluded`, false);
+  await open(page);
+  const empty = JSON.parse((await download(page, () => main.getByRole('button', { name: 'Änderungen als Korrekturdatei exportieren' }).click())).text);
+  check('taken back: a file without entries replaces it', Object.keys(empty.people).length === 0
+    && await main.getByText('Korrekturdatei ohne Einträge gespeichert').count() === 1, JSON.stringify(empty.people));
+
   // viewers: refused by the server, no Daten page
   const viewer = await login('ansicht');
   const refused = await Promise.all([api(viewer, 'GET', '/api/data/corrections'), api(viewer, 'GET', `/api/data/anonymized?month=${month}`),

@@ -540,7 +540,8 @@ Planung, und wirkt sofort (nach einer Rückfrage):
   auch wenn der Ausschluss aus einer früheren Korrekturdatei stammt. Bis zum nächsten Export und Import plant
   Dispofold mit den Daten, die es von ihr hat; danach kommt sie mit den Daten aus dem Quellsystem. Hat sich
   sonst nichts geändert, speichert **Änderungen als Korrekturdatei exportieren** trotzdem eine Datei (ohne
-  Einträge), denn sie muss die bisherige ersetzen.
+  Einträge), denn sie muss die bisherige ersetzen. Das gilt auch, wenn der Schalter seit dem Import ein- und
+  wieder ausgeschaltet wurde und dazwischen eine Korrekturdatei gespeichert wurde.
 
 Hat das Exportprogramm eine Person ausgeschlossen, die Dispofold kennt (etwa mit einem Eintrag, der von Hand in
 `korrekturen.json` geschrieben wurde), ist der Schalter nach dem Import eingeschaltet und lässt sich genauso
@@ -663,9 +664,11 @@ importieren, Monat abschließen).
 letzten Import schon angewendeten und die seit dem Import in Dispofold geänderten Stammdaten) als
 `korrekturen.json` für das Exportprogramm; sie ersetzt die bisherige Datei, siehe
 [Neuer Datensatz, Änderungen aus Dispofold behalten](#neuer-datensatz-änderungen-aus-dispofold-behalten). Gibt es
-keine Korrektur, wird keine Datei gespeichert; wurde aber ein Ausschluss zurückgenommen (siehe
+keine Korrektur, wird keine Datei gespeichert; wurde seit dem Import aber etwas geändert und wieder
+zurückgenommen, etwa ein Ausschluss (siehe
 [Nicht mehr aus dem Quellsystem übernehmen](#nicht-mehr-aus-dem-quellsystem-übernehmen)), wird eine Datei ohne
-Einträge gespeichert, die die bisherige ersetzt, und die Meldung nennt, wie viele Personen wieder übernommen werden.
+Einträge gespeichert, die eine dazwischen gespeicherte ersetzt, und die Meldung nennt, wie viele Personen wieder
+übernommen werden.
 
 **Anonymisieren:** **Pseudonymisieren** erstellt den Datensatz und den Plan des gewählten Monats mit Pseudonymen
 (P001, P002, ...) statt Namen, zum Weitergeben, etwa für eine Fehlersuche. Namen, Kürzel und Ids der Personen
