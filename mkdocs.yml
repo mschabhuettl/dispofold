@@ -21,10 +21,13 @@ nav:
   - Entwicklung:
       - API: api.md
       - Release: release.md
+      - Code signing policy: code-signing-policy.md
 
 theme:
   name: material
   language: de
+  # system fonts: the site loads nothing from font services
+  font: false
   features:
     - navigation.top
     - navigation.footer
