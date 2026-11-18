@@ -2,49 +2,71 @@ package app.dispofold.api;
 
 import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.nullValue;
+
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
+import java.util.Map;
 
 import org.junit.jupiter.api.Test;
 
-import app.dispofold.api.ReleaseCheck.Release;
-import io.quarkus.test.junit.QuarkusMock;
+import com.sun.net.httpserver.HttpServer;
+
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.junit.QuarkusTestProfile;
+import io.quarkus.test.junit.TestProfile;
 import io.quarkus.test.security.TestSecurity;
 
-/** GET /api/release: planners see a newer release, viewers get nothing. The tests never contact GitHub. */
+/**
+ * GET /api/release with the check switched on against a local stand-in for GitHub: the check on start finds the
+ * release, planners see it, viewers get nothing. The tests never contact GitHub.
+ */
 @QuarkusTest
+@TestProfile(ReleaseResourceTest.LocalGitHub.class)
 class ReleaseResourceTest {
 
-    private static void offer(Release release) {
-        QuarkusMock.installMockForType(new ReleaseCheck() {
-            @Override
-            public Release latest() {
-                return release;
-            }
+    /** The check on, its URL on a local server that offers release 99.0.0. */
+    public static class LocalGitHub implements QuarkusTestProfile {
+        private static HttpServer server;
 
-            @Override
-            public String current() {
-                return "0.12.0";
+        @Override
+        public synchronized Map<String, String> getConfigOverrides() {
+            if (server == null) {
+                try {
+                    server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+                server.createContext("/repos/mschabhuettl/dispofold/releases/latest", ex -> {
+                    byte[] b = ("{\"tag_name\":\"v99.0.0\",\"name\":\"Dispofold 99.0.0\",\"prerelease\":false,"
+                            + "\"body\":\"Neu\",\"html_url\":\"https://github.com/mschabhuettl/dispofold/releases/tag/v99.0.0\"}")
+                            .getBytes(StandardCharsets.UTF_8);
+                    ex.sendResponseHeaders(200, b.length);
+                    ex.getResponseBody().write(b);
+                    ex.close();
+                });
+                server.start();
             }
-        }, ReleaseCheck.class);
+            return Map.of("dispofold.update-check.enabled", "true", "dispofold.update-check.url",
+                    "http://127.0.0.1:" + server.getAddress().getPort() + "/repos/mschabhuettl/dispofold/releases/latest");
+        }
     }
 
     @Test
     @TestSecurity(user = "planer", roles = "planner")
-    void plannersSeeANewerRelease() {
-        offer(null);
-        given().get("/api/release").then().statusCode(200).body("current", equalTo("0.12.0"))
-                .body("available", nullValue());
-        offer(new Release("0.13.0", "Dispofold 0.13.0", "Neu", "https://github.com/mschabhuettl/dispofold/releases/tag/v0.13.0"));
-        given().get("/api/release").then().statusCode(200).body("available.version", equalTo("0.13.0"))
-                .body("available.title", equalTo("Dispofold 0.13.0")).body("available.notes", equalTo("Neu"))
-                .body("available.url", equalTo("https://github.com/mschabhuettl/dispofold/releases/tag/v0.13.0"));
+    void plannersSeeTheReleaseFoundOnStart() {
+        org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(20)).until(() -> "99.0.0".equals(
+                given().get("/api/release").then().statusCode(200).extract().path("available.version")));
+        given().get("/api/release").then().body("current", equalTo("0.12.0"))
+                .body("available.title", equalTo("Dispofold 99.0.0")).body("available.notes", equalTo("Neu"))
+                .body("available.url", equalTo("https://github.com/mschabhuettl/dispofold/releases/tag/v99.0.0"));
     }
 
     @Test
     @TestSecurity(user = "leser", roles = "viewer")
     void viewersGetNoReleaseInformation() {
-        offer(new Release("0.13.0", null, null, null));
         given().get("/api/release").then().statusCode(403);
     }
 

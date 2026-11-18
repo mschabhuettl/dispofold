@@ -5,6 +5,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -90,10 +91,12 @@ public class ReleaseCheck {
         if (!Version.isValid(applicationVersion)) {
             return;
         }
+        CompletableFuture<HttpResponse<byte[]>> answer = null;
         try {
-            HttpResponse<byte[]> r = http.sendAsync(HttpRequest.newBuilder(URI.create(url))
-                    .timeout(Duration.ofSeconds(10)).header("Accept", "application/json").GET().build(),
-                    HttpResponse.BodyHandlers.ofByteArray()).get(15, TimeUnit.SECONDS);
+            answer = http.sendAsync(HttpRequest.newBuilder(URI.create(url)).timeout(Duration.ofSeconds(10))
+                    .header("Accept", "application/json").GET().build(), HttpResponse.BodyHandlers.ofByteArray());
+            // the request timeout ends with the headers; this one covers the body too
+            HttpResponse<byte[]> r = answer.get(15, TimeUnit.SECONDS);
             if (r.statusCode() != 200) {
                 LOG.infof("Release check: HTTP %d", r.statusCode());
                 return;
@@ -103,6 +106,10 @@ public class ReleaseCheck {
             Thread.currentThread().interrupt();
         } catch (Exception e) {
             LOG.infof("Release check failed (%s)", e.getClass().getSimpleName());
+        } finally {
+            if (answer != null) {
+                answer.cancel(true);
+            }
         }
     }
 
