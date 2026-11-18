@@ -92,6 +92,8 @@ Der Release-Workflow macht dann:
 
 **Wenn ein Release scheitert:** Ursache beheben und den fehlgeschlagenen Lauf (oder einzelne Jobs) auf GitHub
 neu starten. Das ist sicher: Ein Upload ersetzt eine vorhandene Datei gleichen Namens im Release, statt zu scheitern.
+Mit SignPath gilt für den Windows-Teil die Einschränkung unter
+[Was sich am Release ändert](#was-sich-am-release-ändert).
 Muss der Code geändert werden, das Tag auf dem alten Commit lassen und eine neue Version taggen (zum Beispiel
 `v1.0.1`). Ein schon veröffentlichtes Tag nicht verschieben.
 
@@ -170,7 +172,8 @@ is approved individually in SignPath. MFA is enabled on GitHub and will be enabl
 ### Nach der Zusage
 
 Auf SignPath (<https://app.signpath.io>). Was die Foundation bei der Zusage schon angelegt hat (Organisation,
-Projekt, Policies), nur prüfen und die Slugs übernehmen:
+Projekt, Policies), nur prüfen und die Slugs übernehmen. Die Namen der Menüs und Rollen folgen der Dokumentation von SignPath
+(<https://docs.signpath.io>) und können in der Oberfläche abweichen:
 
 1. Für das eigene Konto die Zwei-Faktor-Anmeldung einschalten; auf GitHub ebenso (verlangt SignPath für alle
    Beteiligten).
@@ -214,7 +217,9 @@ der Vorlage der Release-Notizen (`scripts/release/publish-release.sh`) und in `d
 - Ablauf und Tag bleiben gleich. Neu: Der Windows-Teil lädt Setup und ZIP als Artefakt `windows-unsigned` hoch,
   schickt sie an SignPath und **wartet auf die Freigabe**. SignPath benachrichtigt die Approver; der Eigentümer
   gibt die Anfrage in SignPath unter **Signing Requests** frei (oder lehnt sie ab). Der Job wartet höchstens 2 Stunden; ohne
-  Freigabe scheitert er und das Release bleibt Entwurf. Dann den Job neu starten, das stellt eine neue Anfrage.
+  Freigabe scheitert er und das Release bleibt Entwurf. Dann den Job neu starten, das baut neu und stellt eine
+  neue Anfrage. Verbietet die Signing Policy Wiederholungen (Prüfung `disallow_reruns`), lehnt SignPath die
+  Anfrage eines neu gestarteten Jobs ab; dann braucht es ein neues Tag (neue Version).
 - Erst nach der Signatur prüft der Workflow, dass Setup und `dispofold.exe` im ZIP eine Signatur tragen, ersetzt
   die unsignierten Dateien und bildet `dispofold-<version>-windows-SHA256SUMS.txt`. Die Prüfsummen gelten damit
   für die signierten Dateien.

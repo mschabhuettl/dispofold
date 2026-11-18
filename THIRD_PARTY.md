@@ -13,8 +13,8 @@ Dispofold steht unter `AGPL-3.0-only`. Die Lizenzen unten sind damit vereinbar:
   keine dieser Komponenten trägt den Vermerk "Incompatible With Secondary Licenses".
 - Eclipse Temurin (GPL 2.0 mit Classpath Exception) und die Pakete der Basis-Images sind eigenständige Programme,
   die nur mitgeliefert werden (Zusammenstellung nach Abschnitt 5 der AGPL), nicht Teil von Dispofold.
-- Die C- und C++-Laufzeit von Microsoft (in `dispofold.exe` statisch gelinkt, in der Java-Laufzeit für Windows als
-  DLLs) sind Systembibliotheken im Sinne der GPL-Familie.
+- Die C- und C++-Laufzeit von Microsoft (die Visual-C++-Laufzeit in `dispofold.exe` statisch gelinkt, in der
+  Java-Laufzeit für Windows als DLLs) sind Systembibliotheken im Sinne der GPL-Familie.
 - Der WebView2-Bootstrapper von Microsoft wird nicht mitgeliefert: Das Windows-Setup lädt ihn nur, wenn WebView2
   fehlt.
 
@@ -40,11 +40,11 @@ Dispofold steht unter `AGPL-3.0-only`. Die Lizenzen unten sind damit vereinbar:
 | H2 Database | über Quarkus | MPL 2.0 oder EPL 1.0 | verschlüsselte Datenbank der Desktop-Version |
 | Eclipse Temurin JDK 21 (über jlink, für Linux, Windows und macOS) | 21.0.13+9 | GPL 2.0 mit Classpath Exception | mitgelieferte Java-Laufzeit der Desktop-Version (`runtime/`); Lizenztexte im Ordner `legal/` der Laufzeit |
 | Tauri und die Rust-Crates des Programmfensters | siehe unten | siehe unten | Programmfenster der Desktop-Version (`desktop-shell/`) |
-| NSIS (Laufzeit des Windows-Setups mit den Plugins System, nsDialogs, StartMenu und NSISdl) | 3.10 | zlib-Lizenz; LZMA-Entpacker CPL 1.0 mit Ausnahme für das Linken | Windows-Setup |
+| NSIS (Laufzeit des Windows-Setups mit den Plugins System, nsDialogs, StartMenu und NSISdl) | 3 | zlib-Lizenz; LZMA-Entpacker CPL 1.0 mit Ausnahme für das Linken | Windows-Setup |
 | nsis_tauri_utils | über Tauri | MIT oder Apache 2.0 | Windows-Setup |
 | Microsoft Edge WebView2 (Bootstrapper) | über Tauri | Lizenzbedingungen von Microsoft | nicht mitgeliefert: Nur wenn WebView2 fehlt, lädt das Windows-Setup den Bootstrapper von `go.microsoft.com` und führt ihn aus; er installiert WebView2 |
 | Microsoft Visual C++ Runtime und Universal C Runtime (`vcruntime140.dll`, `vcruntime140_1.dll`, `msvcp140.dll`, `ucrtbase.dll`, `api-ms-win-*.dll`) | mit Temurin 21.0.13+9 | weitergebbare Systembibliotheken nach den Lizenzbedingungen von Microsoft | Teil der Java-Laufzeit für Windows (`runtime\bin`), von Microsoft signiert |
-| Microsoft C-Laufzeit (statisch) und Windows SDK (über `cargo-xwin`) | CRT 14.44.17.14, SDK 10.0.26100 | Lizenzbedingungen von Microsoft | statisch in `dispofold.exe` gelinkt (`static_vcruntime`); das SDK liefert nur die Importbibliotheken beim Bauen |
+| Microsoft Visual-C++-Laufzeit (statisch) und Windows SDK (über `cargo-xwin`) | CRT 14.44.17.14, SDK 10.0.26100 | Lizenzbedingungen von Microsoft | Visual-C++-Laufzeit statisch in `dispofold.exe` gelinkt (`static_vcruntime`); die Universal C Runtime nimmt es aus Windows; das SDK liefert beim Bauen nur Importbibliotheken |
 | Flyway | über Quarkus | Apache 2.0 | Datenbankmigrationen |
 | Brotli4j mit der nativen Brotli-Bibliothek für Linux (`libbrotli.so` im JAR) | 1.23.0 | Apache 2.0, Brotli selbst MIT | über Quarkus; liegt in allen Desktop-Paketen, wird nur unter Linux geladen |
 | PostgreSQL JDBC-Treiber | über Quarkus | BSD-2-Clause | Datenbankzugriff |
