@@ -3,6 +3,18 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.13.0 (unreleased)
+
+- **Personenformular:** Wer nie Nacht macht, bekommt bei der gewohnten Verteilung einen eigenen Hinweis statt des
+  Hinweises zur Einstellung der Nachtdienste.
+- **Gewohnte Verteilung:** Zählt der Nachtanteil nicht (Nachtdienste „Gleichmäßig“ oder nie Nacht), zeigen die
+  Personenseite (Spalte „Gilt (ohne Nächte)“) und das Formular die Anteile, die dann gelten.
+- **Personenseite:** Eine Kachel **Stunden** mit geplanten und angerechneten Stunden gegen Ziel und Soll („48,4 h
+  (davon 20,4 h angerechnet) von Ziel 112,9 h (Soll 129,2 h)“), wie die Planung sie vergleicht; die eigene Kachel
+  „Angerechnet“ entfällt.
+- **Anleitung:** wie man in Dispofold neu angelegte Personen und geänderte Namen bei einem neuen Datensatz
+  behandelt.
+
 ## 0.12.0 (2026-11-17)
 
 Nachträge zur neuen Oberfläche: stärkere Wichtigkeit für die faire Verteilung, „nie Nacht“ geht der gewohnten

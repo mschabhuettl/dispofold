@@ -183,6 +183,29 @@ class DataTest {
     }
 
     @Test
+    void previewListsAddedPeopleAndChangedNames() throws Exception {
+        JsonNode d = mapper.readTree(given().get("/api/dataset").then().statusCode(200).extract().asString());
+        ObjectNode p = (ObjectNode) d.path("people").get(0).deepCopy();
+        String id = p.path("id").asText();
+        p.put("lastName", "Umbenannt");
+        given().contentType(ContentType.JSON).header("If-Match", d.path("revision").asText()).body(p)
+                .put("/api/dataset/people/" + id).then().statusCode(200);
+        long revision = given().get("/api/dataset").then().extract().jsonPath().getLong("revision");
+        ObjectNode added = p.deepCopy();
+        added.remove("id");
+        added.put("lastName", "Neu");
+        added.put("shortName", "NEU");
+        added.putNull("externalId");
+        String addedId = given().contentType(ContentType.JSON).header("If-Match", String.valueOf(revision)).body(added)
+                .post("/api/dataset/people").then().statusCode(200).extract().jsonPath().getString("key");
+        // neither can be kept: the preview keeps listing them
+        given().contentType(ContentType.JSON).body(mapper.writeValueAsString(TestData.dataset(MONTH)))
+                .post("/api/import/preview").then().statusCode(200)
+                .body("notes.findAll { it.code == 'corrections.personAdded' }.params.personId", hasItem(addedId))
+                .body("notes.findAll { it.code == 'corrections.identity' }.params.field", hasItem("lastName"));
+    }
+
+    @Test
     void keepingWithoutChangesIsAPlainImport() throws Exception {
         importDataset(withHours(Map.of("P0003", 20.0)), "?keep=true").statusCode(200).body("kept", equalTo(0));
         given().get("/api/dataset").then().body("changedSinceImport", equalTo(false));

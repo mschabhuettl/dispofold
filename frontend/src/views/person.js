@@ -11,7 +11,8 @@ import { CATEGORIES, conflictDecision, fromForm, inUseQuestion, itemLabel, restr
 import { areaRestriction, setAreaRestriction } from '../lib/restrictions.js';
 import { nightStatus } from '../lib/fairness.js';
 import { info } from '../lib/info.js';
-import { MIX_CATEGORIES, mixNightNote, mixRows, nightNote, sharePercent } from '../lib/shift-mix.js';
+import { effectiveMix, MIX_CATEGORIES, mixFromForm, mixNightNote, mixRows, mixText, nightNote, sharePercent } from '../lib/shift-mix.js';
+import { neverNightShifts } from '../lib/data-checks.js';
 import { t } from '../lib/texts.js';
 import { control, employmentText, problemAlert, readForm } from './masterdata.js';
 
@@ -30,10 +31,11 @@ export async function render(root, ctx, [personId]) {
   if (!personId) return renderList(root, ctx);
   const { api, month } = ctx;
   const dataset = await ctx.dataset();
-  const nightDistribution = (await api.rules().catch(() => null))?.nightDistribution;
+  const rules = await api.rules().catch(() => null);
+  const nightDistribution = rules?.nightDistribution;
   const back = h('p', {}, h('a', { href: '#/person' }, t('people.all')));
   if (personId === NEW && ctx.canEdit) {
-    root.append(h('h1', {}, t('people.new')), back, editor(root, ctx, dataset, null, nightDistribution));
+    root.append(h('h1', {}, t('people.new')), back, editor(root, ctx, dataset, null, rules));
     return undefined;
   }
   const person = dataset.people.find((p) => p.id === personId);
@@ -57,7 +59,7 @@ export async function render(root, ctx, [personId]) {
   if (explanation.error) root.append(h('p.alert', {}, t('person.noStats', { message: explanation.error })));
   else root.append(...figures(explanation, person, areaNames, constraintLabels, nightDistribution, ctx.canEdit));
   // the form is for planners only (viewers get no restrictions, family rules or balances anyway)
-  if (ctx.canEdit) root.append(editor(root, ctx, dataset, person.id, nightDistribution));
+  if (ctx.canEdit) root.append(editor(root, ctx, dataset, person.id, rules));
   return undefined;
 }
 
@@ -98,14 +100,15 @@ function figures(explanation, person, areaNames, constraintLabels, nightDistribu
   const hours = (v) => `${fmt.num(v, 1)} h`;
   // Ziel: the goal the soft rule aims at in this plan; personal (hours account), so null for viewers. Soll: the contract target.
   const goal = s.scaledGoalHours ?? s.goalHours;
-  const hoursTile = h('div.kpi.kpi-hours', {}, h('div.label', {}, t('person.kpi.hours'), info(t('help.figure.hours'), t('person.kpi.hoursInfo'), 'hours-help')),
+  // planners: planned plus credited hours, what the rule compares with the Ziel; viewers get neither credited nor Ziel
+  const hoursTile = h('div.kpi.kpi-hours', {}, h('div.label', {}, t('person.kpi.hours'), info(canEdit ? t('help.figure.hours') : t('help.figure.hoursViewer'), t('person.kpi.hoursInfo'), 'hours-help')),
     h('div.value', {}, goal != null
-      ? t('person.kpi.hoursOfGoal', { planned: fmt.num(s.plannedHours, 1), goal: fmt.num(goal, 1), target: fmt.num(s.targetHours, 1) })
+      ? t('person.kpi.hoursOfGoal', { hours: fmt.num(s.plannedHours + s.creditedHours, 1), credited: fmt.num(s.creditedHours, 1), goal: fmt.num(goal, 1), target: fmt.num(s.targetHours, 1) })
       : t('person.kpi.hoursOfTarget', { planned: fmt.num(s.plannedHours, 1), target: fmt.num(s.targetHours, 1) })));
   return [
     h('section.section', { 'aria-labelledby': 'h-hours' }, h('h2', { id: 'h-hours' }, t('person.section.hours')),
       h('div.kpis', {},
-        hoursTile, canEdit && kpi(t('person.kpi.credited'), hours(s.creditedHours), t('help.figure.creditedHours')),
+        hoursTile,
         // the hours account is personal: planners only (viewers get null from the server)
         canEdit && kpi(t('person.kpi.accountBefore'), hours(s.accountBefore), t('help.figure.accountBefore')), canEdit && kpi(t('person.kpi.accountAfter'), hours(s.accountAfter), t('help.figure.accountAfter')),
         kpi(t('person.kpi.duties'), fmt.num(s.duties), t('help.figure.duties')),
@@ -146,16 +149,22 @@ function nightsTile(s, usual) {
   return h('div.kpi.kpi-nights', {}, h('div.label', {}, t('person.kpi.nights'), info(t('help.figure.nights'), t('person.kpi.nights'))), h('div.value', {}, fmt.num(s.nights)), status && h('p.kpi-help', {}, status));
 }
 
-/** Planned against usual share of the duties per category and area; nothing to show without either. */
+/**
+ * Planned against usual share of the duties per category and area, and the shares that apply where the night share does
+ * not count (EVEN, never nights); nothing to show without either.
+ */
 function mixSection(stats, usual, areaNames, nightDistribution) {
-  const rows = mixRows(stats.plannedMix, usual, (id) => areaNames.get(id) ?? id);
+  const effective = effectiveMix(usual, nightDistribution, stats.nightReason === 'NEVER');
+  const rows = mixRows(stats.plannedMix, usual, (id) => areaNames.get(id) ?? id, effective);
   if (!rows.length) return null;
   return h('section.section', { 'aria-labelledby': 'h-mix' }, h('h2', { id: 'h-mix' }, t('person.section.mix'),
     info(t('help.figure.plannedMix'), t('person.section.mix'))),
     Object.keys(usual?.categories ?? {}).length > 0 && h('p.muted', {}, mixNightNote(nightDistribution, stats, usual)),
     // viewers get no usual mix: no empty column
-    h('table.data', {}, h('thead', {}, h('tr', {}, h('th', {}, t('person.mix.group')), h('th.num', {}, t('person.mix.planned')), usual && h('th.num', {}, t('person.mix.usual')))),
-      h('tbody', {}, rows.map((r) => h('tr', {}, h('td', {}, r.name), h('td.num', {}, sharePercent(r.planned)), usual && h('td.num', {}, sharePercent(r.usual)))))));
+    h('table.data', {}, h('thead', {}, h('tr', {}, h('th', {}, t('person.mix.group')), h('th.num', {}, t('person.mix.planned')), usual && h('th.num', {}, t('person.mix.usual')),
+      effective && h('th.num', {}, t('person.mix.effective')))),
+    h('tbody', {}, rows.map((r) => h('tr', {}, h('td', {}, r.name), h('td.num', {}, sharePercent(r.planned)), usual && h('td.num', {}, sharePercent(r.usual)),
+      effective && h('td.num', {}, r.effective == null && r.group === 'categories' && r.usual != null ? t('person.mix.ignored') : sharePercent(r.effective)))))));
 }
 
 /**
@@ -163,7 +172,7 @@ function mixSection(stats, usual, areaNames, nightDistribution) {
  * family rules. Saving sends the person (PUT or POST) and then, if they changed, the restrictions with the revision of
  * the first answer; a 409 masterdata.conflict is resolved as on the Stammdaten page.
  */
-function editor(root, ctx, initial, personId, nightDistribution) {
+function editor(root, ctx, initial, personId, rules) {
   const { api } = ctx;
   let dataset = initial;
   let key = personId;
@@ -239,7 +248,8 @@ function editor(root, ctx, initial, personId, nightDistribution) {
     base && h('span.muted', { style: wide }, `${t('masterdata.col.id')}: ${base.id}`),
     master.map((f) => control(f, values[f.name])), employment.map((f) => control(f, values[f.name])),
     h('div', { style: wide }, control(areaField(), values.areaIds)),
-    mixEditor(dataset, values.shiftMix, nightDistribution), restrictionsBlock, familyEditor(values.familyRules ?? []),
+    // the night note and the shares that apply, from the person as stored (a new person: the note of the mode)
+    mixEditor(dataset, values.shiftMix, rules?.nightDistribution, base != null && neverNightShifts(dataset, base, ctx.month, rules)), restrictionsBlock, familyEditor(values.familyRules ?? []),
     h('div.toolbar', { style: wide }, h('button.btn.btn-primary', { type: 'submit' }, t('common.save')),
       h('button.btn.btn-secondary', { type: 'button', onclick: () => (key == null ? ctx.navigate('person') : draw()) }, t('common.cancel')),
       base && h('button.btn.btn-secondary', { type: 'button', onclick: remove }, t('people.remove'))),
@@ -418,8 +428,11 @@ const readFamily = (form) => [...form.querySelectorAll('fieldset.family-rule')].
 /** Help of each category field of the usual distribution. */
 const MIX_HELP = { EARLY: t('help.field.mix.early'), DAY: t('help.field.mix.day'), LATE: t('help.field.mix.late'), NIGHT: t('help.field.mix.night') };
 
-/** Usual shift mix of the person form: a percentage per category and per area, cleared with one button. */
-function mixEditor(dataset, mix, nightDistribution) {
+/**
+ * Usual shift mix of the person form: a percentage per category and per area, cleared with one button. never: the
+ * person never does nights; then, as in EVEN, a line under the inputs names the category shares that apply.
+ */
+function mixEditor(dataset, mix, nightDistribution, never) {
   let n = 0;
   const field = (wrapper, attr, key, name, value, help) => {
     const id = `f-mix-${n++}`;
@@ -431,10 +444,25 @@ function mixEditor(dataset, mix, nightDistribution) {
     MIX_CATEGORIES.map((c) => field({}, 'data-mix-cat', c, CATEGORY[c], mix?.categories?.[c] ?? '', MIX_HELP[c])),
     dataset.areas.map((a) => field({ 'data-mix-area': a.id }, 'data-mix-area', a.id, `${a.name} (${a.id})`, mix?.areas?.[a.id] ?? '',
       t('help.field.mix.area', { name: a.name }))));
+  const applies = h('p.muted', { id: 'mix-effective' });
+  const update = () => {
+    let shares = '';
+    try {
+      const values = Object.fromEntries([...inputs.querySelectorAll('input[data-mix-cat]')].map((i) => [i.dataset.mixCat, i.value]));
+      shares = mixText({ categories: effectiveMix(mixFromForm({ categories: values }, []), nightDistribution, never)?.categories });
+    } catch {
+      // a share out of range or a sum other than 100 %: saving names it
+    }
+    applies.textContent = shares && t('mix.effective.form', { shares });
+    applies.hidden = !shares;
+  };
+  inputs.addEventListener('input', update);
   const clear = h('button.btn.btn-secondary.btn-small', { type: 'button',
-    onclick: () => inputs.querySelectorAll('input').forEach((i) => { i.value = ''; }) }, t('masterdata.shiftMix.remove'));
-  return h('div', { style: wide }, h('strong', {}, t('masterdata.col.shiftMix')), info(t('help.field.people.shiftMix'), t('masterdata.col.shiftMix')), h('p.muted', {}, t('masterdata.shiftMix.help'), ' ', nightNote(nightDistribution)),
-    inputs, clear);
+    onclick: () => { inputs.querySelectorAll('input').forEach((i) => { i.value = ''; }); update(); } }, t('masterdata.shiftMix.remove'));
+  update();
+  return h('div', { style: wide }, h('strong', {}, t('masterdata.col.shiftMix')), info(t('help.field.people.shiftMix'), t('masterdata.col.shiftMix')),
+    h('p.muted', {}, t('masterdata.shiftMix.help'), ' ', never ? t('mix.never.form') : nightNote(nightDistribution)),
+    inputs, applies, clear);
 }
 
 function readMix(form) {
