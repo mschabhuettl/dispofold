@@ -136,12 +136,21 @@ verwenden kann:
 1. **Beim Import behalten:** unter **Einstellungen**, **Daten** den neuen Datensatz wählen, das Häkchen
    **Änderungen aus Dispofold behalten** setzen (es ist gesetzt, sobald seit dem letzten Import etwas geändert
    wurde) und **Datensatz importieren**. Eine Vorschau nennt, wie viele Änderungen übernommen werden, wo auch der
-   neue Datensatz etwas geändert hat (dort gilt der Wert aus Dispofold) und was nicht übernommen werden kann.
-   **Jetzt importieren** führt den Import aus.
-2. **Im Quellsystem nachtragen:** **Änderungen als Korrekturdatei exportieren** speichert die Änderungen seit dem
-   letzten Import als Datei `korrekturen.json`. Das Exportprogramm wendet sie bei jedem weiteren Export an, so
-   kommen sie mit jedem neuen Datensatz wieder mit. Was die Datei nicht ausdrücken kann (zum Beispiel in
-   Dispofold neu angelegte Personen), steht darunter als Liste: Das ist im Quellsystem nachzutragen.
+   neue Datensatz etwas geändert hat (dort gilt der Wert aus Dispofold, außer der neue Datensatz hat schon
+   denselben Wert) und was nicht übernommen werden kann. **Jetzt importieren** führt den Import aus.
+2. **Im Quellsystem nachtragen:** **Änderungen als Korrekturdatei exportieren** speichert alle geltenden
+   Korrekturen als Datei `korrekturen.json`: die, die das Exportprogramm beim letzten Import schon angewendet
+   hatte, und die Änderungen seit dem Import, je Person und Feld mit dem neueren Wert. Die neue Datei ersetzt die
+   bisherige `korrekturen.json` einfach; zusammenführen muss man nichts. Das Exportprogramm wendet sie bei jedem
+   weiteren Export an, so kommen sie mit jedem neuen Datensatz wieder mit. Die Meldung nennt, wie viele Einträge
+   aus früheren Korrekturen stammen und wie viele seit dem Import geändert wurden. Was die Datei nicht
+   ausdrücken kann (zum Beispiel in Dispofold neu angelegte Personen), steht darunter als Liste: Das ist im
+   Quellsystem nachzutragen.
+
+   Nennt der letzte Import die schon angewendeten Korrekturen nicht (ein älteres Exportprogramm oder eine andere
+   Quelle), sagt die Meldung das: Dann enthält die Datei nur die Änderungen seit dem Import und darf eine
+   bisherige Korrekturdatei nicht ersetzen. Abhilfe: das Exportprogramm aktualisieren, mit der bisherigen
+   Korrekturdatei neu exportieren und importieren, dann die Korrekturdatei speichern.
 
 In Dispofold neu angelegte Personen und geänderte Namen lassen sich weder mit der Korrekturdatei noch mit
 **Änderungen aus Dispofold behalten** übernehmen (die Vorschau des Imports listet sie weiter auf): Man trägt sie im
@@ -616,10 +625,11 @@ importieren, Monat abschließen).
   Verstößen“ und trägt den Hinweis „Achtung: … Regelverstöße, Plan nicht verwendbar“; in CSV steht dieser Hinweis
   in der ersten Zeile.
 
-**Korrekturdatei:** **Änderungen als Korrekturdatei exportieren** speichert die seit dem letzten Import in
-Dispofold geänderten Stammdaten als `korrekturen.json` für das Exportprogramm, siehe
+**Korrekturdatei:** **Änderungen als Korrekturdatei exportieren** speichert alle geltenden Korrekturen (die beim
+letzten Import schon angewendeten und die seit dem Import in Dispofold geänderten Stammdaten) als
+`korrekturen.json` für das Exportprogramm; sie ersetzt die bisherige Datei, siehe
 [Neuer Datensatz, Änderungen aus Dispofold behalten](#neuer-datensatz-änderungen-aus-dispofold-behalten). Gibt es
-keine Änderung, wird keine Datei gespeichert.
+keine Korrektur, wird keine Datei gespeichert.
 
 **Anonymisieren:** **Pseudonymisieren** erstellt den Datensatz und den Plan des gewählten Monats mit Pseudonymen
 (P001, P002, ...) statt Namen, zum Weitergeben, etwa für eine Fehlersuche. Namen, Kürzel und Ids der Personen

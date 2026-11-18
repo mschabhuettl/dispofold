@@ -3,6 +3,22 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.15.0 (unreleased)
+
+- **Korrekturdatei vollständig:** **Änderungen als Korrekturdatei exportieren** schreibt alle geltenden
+  Korrekturen: die, die das Exportprogramm beim letzten Import schon angewendet hatte, und die Änderungen seit dem
+  Import, je Person und Feld mit dem neueren Wert (Einschränkungen und Bedarf eines Bereichs als Ganzes). Ein auf
+  den Wert der Quelle zurückgeänderter Wert bleibt ausdrücklich in der Datei. Die neue Datei ersetzt die
+  bisherige `korrekturen.json`; von Hand zusammenführen muss man nichts mehr. Die Meldung nennt, wie viele
+  Einträge aus früheren Korrekturen stammen und wie viele seit dem Import geändert wurden.
+- **Datenformat:** neuer optionaler Abschnitt `appliedCorrections` im Datensatz (Version bleibt 2): die
+  Korrekturen, die die Quelle angewendet hat, im Format der Korrekturdatei. Dispofold speichert ihn mit dem Stand
+  des Imports. Fehlt er (ältere Exportprogramme, andere Quellen), enthält die Korrekturdatei wie bisher nur die
+  Änderungen seit dem Import, und die Meldung sagt das. Ältere Versionen von Dispofold ignorieren den Abschnitt.
+  Das JSON-Schema beschreibt jetzt auch die Korrekturdatei.
+- **Import mit "Änderungen aus Dispofold behalten":** Eine Änderung, die der neue Datensatz schon mit demselben
+  Wert enthält (etwa über die Korrekturdatei), gilt nicht mehr als Konflikt.
+
 ## 0.14.0 (2026-11-18)
 
 - **Windows-Signatur vorbereitet:** Die Windows-Dateien bleiben vorerst unsigniert: Die SignPath Foundation hat

@@ -148,6 +148,35 @@ Der Bedarf gilt je Bereich und Tageszeit, nicht je Schicht. Der Solver wählt un
 Bereichs. An einem Feiertag ersetzen die `HOL`-Regeln eines Bereichs dessen Wochentagsregeln (falls der
 Bereich `HOL`-Regeln hat). Regeln mit `date` ersetzen für diesen Bereich an diesem Tag alle anderen.
 
+### Angewendete Korrekturen
+
+Ein Datensatz kann zusätzlich den Abschnitt `appliedCorrections` haben (optional, ab Dispofold 0.15.0
+ausgewertet): die Korrekturen, die die Quelle beim Erstellen schon angewendet hat, im Format der
+Korrekturdatei (`dispofold/corrections`, Version 2), nur die tatsächlich angewendeten Einträge. Die Werte
+stehen also schon in den Personen und im Bedarf; der Import wendet den Abschnitt nicht noch einmal an und
+prüft seine Einträge nicht.
+
+```json
+"appliedCorrections": {
+  "format": "dispofold/corrections", "version": 2,
+  "people": { "P0001": { "weeklyHours": 30.0 }, "P0003": { "exclude": true } },
+  "demand": { "TV": [ { "days": ["MON"], "date": null, "from": "07:00", "to": "19:00", "min": 2, "max": 2 } ] }
+}
+```
+
+- `people` je Person die korrigierten Felder (`weeklyHours`, `areaIds`, `hoursAccount`, `compRestBalance`,
+  `familyRules`, `entryDate`, `exitDate`, `shiftMix`, `restrictions` als ganze Liste ohne `personId`) oder
+  `"exclude": true` für eine Person, die deshalb im Datensatz fehlt.
+- `demand` je Bereich alle Bedarfsregeln ohne `areaId`.
+
+Dispofold speichert den Abschnitt mit dem Stand des Imports. Die Korrekturdatei, die Dispofold danach
+exportiert, enthält diese Korrekturen und die Änderungen seit dem Import und ersetzt damit die bisherige
+Korrekturdatei (siehe [REST-Schnittstelle](api.md#stammdaten-und-import)). Fehlt der Abschnitt (ältere
+Quellen) oder ist er kein Objekt mit `format` `dispofold/corrections` und `people`, enthält die
+Korrekturdatei nur die Änderungen seit dem Import.
+Die Version des Datensatzes bleibt 2: Ältere Versionen von Dispofold ignorieren den Abschnitt wie jeden
+unbekannten Schlüssel.
+
 ### Prüfung beim Import
 
 Version 1 wird nicht mehr angenommen. Ein Datensatz wird nur als Ganzes übernommen: Findet die Prüfung

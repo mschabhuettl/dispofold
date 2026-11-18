@@ -35,7 +35,7 @@ Im Docker-Betrieb begrenzt nginx die Anmeldeversuche auf 10 je Minute und Adress
 | `POST` | `/api/import/demo?replace=true` | lädt die mitgelieferten synthetischen Demodaten (150 Personen, Jänner 2027), Antwort `ImportSummary` |
 | `POST` | `/api/import/dataset?keep=true` | Import, der die seit dem letzten Import in Dispofold geänderten Stammdaten übernimmt (siehe unten), Antwort `ImportSummary` |
 | `POST` | `/api/import/preview` | Probelauf von `keep=true` ohne zu speichern (Body: `Dataset`), Antwort `{ "changed": bool, "kept": n, "conflicts": [{ "personId", "areaId", "field" }], "notes": [{ code, params }] }`; lehnt wie der Import ab (`import.invalid`), wenn der zusammengeführte Datensatz Fehler hätte |
-| `GET` | `/api/data/corrections` | Änderungen seit dem letzten Import als Korrekturdatei: `{ "file": { "format": "dispofold/corrections", "version": 2, "people": {...}, "demand": {...} }, "notes": [{ code, params }], "count": n }`, nur für `planner` |
+| `GET` | `/api/data/corrections` | Alle geltenden Korrekturen (beim letzten Import angewendete und Änderungen seit dem Import) als Korrekturdatei: `{ "file": { "format": "dispofold/corrections", "version": 2, "people": {...}, "demand": {...} }, "notes": [{ code, params }], "count": n, "earlier": n, "complete": true }`, nur für `planner` |
 | `GET` | `/api/data/anonymized?month=YYYY-MM` | pseudonymisierter Datensatz (alle Planungsmonate) und Plan des Monats mit getrenntem Schlüssel: `{ "dataset", "plan", "key": "CSV", "people": n }`, nur für `planner` |
 
 Stammdaten bearbeiten:
@@ -66,15 +66,25 @@ Stammdaten bearbeiten:
   Import ohne `replace=true` mit `409` `import.masterChanged` ab. Ein Planungsmonat im Datensatz, der hier
   abgeschlossen ist, muss gleich sein wie der gespeicherte (er bleibt dann unverändert), sonst `import.closed`.
 
-Stand des letzten Imports: Jeder Import speichert die importierten Stammdaten unverändert als Ausgangsstand.
+Stand des letzten Imports: Jeder Import speichert die importierten Stammdaten unverändert als Ausgangsstand,
+zusammen mit dem Abschnitt `appliedCorrections` des Datensatzes, falls er einen hat (die Korrekturen, die die
+Quelle schon angewendet hat, siehe [Datenformat](datenformat.md#angewendete-korrekturen)).
 Die Korrekturdatei enthält, was seit diesem Stand in Dispofold geändert wurde: je Person die geänderten Felder
 (`weeklyHours`, `areaIds`, `hoursAccount`, `compRestBalance`, `familyRules`, `entryDate`, `exitDate`,
 `shiftMix`), ihre Einschränkungen als ganze Liste, `"exclude": true` für in Dispofold entfernte Personen und
 `demand` je Bereich mit geänderten Bedarfsregeln. Was die Datei nicht ausdrücken kann (neue Personen, geänderte
 Ids, Namen und Kürzel, geänderte Bereiche, Schichten, Abwesenheitsarten und Feiertage, Werte mit Ids, die es im
-Ausgangsstand nicht gibt) steht in `notes` (nur Ids und Feldnamen). `keep=true` wendet dieselben Änderungen auf
+Ausgangsstand nicht gibt) steht in `notes` (nur Ids und Feldnamen). Dazu kommen die Korrekturen aus
+`appliedCorrections`, die noch gelten: je Person dieselben Felder mit dem Wert in Dispofold, `"exclude": true`
+und der Bedarf je Bereich. Je Person und Feld (Einschränkungen und Bedarf eines Bereichs als Ganzes) gilt der
+neuere Wert; ein Feld, das in Dispofold auf den Wert der Quelle zurückgeändert wurde, bleibt mit diesem Wert in
+der Datei. So ist die Datei vollständig und ersetzt die bisherige Korrekturdatei. `count` zählt Felder,
+Ausschlüsse und Bereiche der Datei, `earlier` davon die aus `appliedCorrections`, die seit dem Import nicht
+geändert wurden. `complete` ist `false`, wenn der letzte Import keinen Abschnitt `appliedCorrections` hatte:
+Dann enthält die Datei nur die Änderungen seit dem Import. `keep=true` wendet die Änderungen seit dem Import auf
 den neuen Datensatz an; ein Feld, das auch der neue Import gegenüber dem alten Ausgangsstand ändert, ist ein
-Konflikt, und der Wert aus Dispofold gilt. Danach ist der neue, unveränderte Import der Ausgangsstand; wurde
+Konflikt, und der Wert aus Dispofold gilt. Hat der neue Import dort schon den Wert aus Dispofold (etwa weil die
+Korrekturdatei dazwischen angewendet wurde), ist es kein Konflikt. Danach ist der neue, unveränderte Import der Ausgangsstand; wurde
 etwas übernommen, bleibt `changedSinceImport` wahr. Installationen aus älteren Versionen haben bis zum nächsten
 Import keinen Ausgangsstand (`409` `corrections.noBaseline`).
 
