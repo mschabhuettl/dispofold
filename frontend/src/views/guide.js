@@ -14,8 +14,8 @@ export async function render(container, ctx, [anchor] = []) {
     ? h('a', { href: GUIDE_URL, target: '_blank', rel: 'noopener' }, GUIDE_URL)
     : h('code', {}, GUIDE_URL);
   container.append(body.querySelector('h1'), h('p.muted.guide-online', {}, t('guide.online'), ' ', online), body);
-  // after the shell has put the page in place
+  // a section: shown once the shell has put the page in place
   const target = anchor && body.querySelector(`[id="${CSS.escape(anchor)}"]`);
-  const timer = setTimeout(() => (target ?? container).scrollIntoView({ block: 'start' }), 0);
+  const timer = target && setTimeout(() => target.scrollIntoView({ block: 'start' }), 0);
   return () => clearTimeout(timer);
 }

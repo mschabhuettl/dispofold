@@ -529,7 +529,9 @@ details.rules-advanced section { margin-top: 1.2rem; }
 .page-intro { max-width: 60rem; }
 /* the guide built into the desktop program (views/guide.js) */
 .guide { max-width: 60rem; line-height: 1.55; }
-.guide :is(h2, h3, h4) { scroll-margin-top: 1rem; }
+.guide :is(h2, h3, h4) { scroll-margin-top: 1rem; margin-top: 1.6em; }
+.guide h2 { font-size: 1.35rem; }
+.guide h3 { font-size: 1.12rem; }
 .guide img { display: block; max-width: 100%; height: auto; border: 1px solid var(--border); border-radius: 6px; }
 .guide table { border-collapse: collapse; margin: .5rem 0; }
 .guide th, .guide td { padding: .32rem .55rem; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }

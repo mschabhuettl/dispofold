@@ -81,7 +81,8 @@ for (const page of ['index.html', 'login.html']) {
 }
 
 // The guide built into the program (lib/guide.js): docs/anleitung.md as an HTML fragment, its images next to it.
-// Anchors become routes of the page, links to the other documents go to the documentation site.
+// Anchors become routes of the page, links to the other documents go to the documentation site (whose strict build
+// checks them; the Docker build has only anleitung.md and its images).
 const docs = join(root, '..', 'docs');
 const guideDir = dirname(join(dist, GUIDE_FILE));
 const images = new Set();
@@ -93,7 +94,7 @@ const guide = new Marked({
     } else if (token.type === 'link' && !/^https?:/.test(token.href)) {
       const [file, anchor] = token.href.split('#');
       if (!file) token.href = `#/anleitung/${anchor}`;
-      else if (/^[a-z]+\.md$/.test(file) && existsSync(join(docs, file))) token.href = `${SITE}${file.slice(0, -3)}/${anchor ? `#${anchor}` : ''}`;
+      else if (/^[a-z-]+\.md$/.test(file)) token.href = `${SITE}${file.slice(0, -3)}/${anchor ? `#${anchor}` : ''}`;
       else throw new Error(`anleitung.md links to ${token.href}, which the built-in guide cannot show`);
     }
   },
