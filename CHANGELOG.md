@@ -21,6 +21,9 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
   „Angerechnet“ entfällt.
 - **Anleitung:** wie man in Dispofold neu angelegte Personen und geänderte Namen bei einem neuen Datensatz
   behandelt.
+- **Regeln, Fairness:** [docs/regeln.md](docs/regeln.md) erklärt mit Messungen im Demomonat, warum die
+  Wichtigkeit „Faire Verteilung“ die Fairness kaum bewegt (kleiner Anteil an der Strafe, geringe Wirkung eines
+  einzelnen Dienstes, Historie). Die Gewichte bleiben unverändert.
 
 ## 0.12.0 (2026-11-17)
 

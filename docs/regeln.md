@@ -275,6 +275,26 @@ Eine Einstellung der Regeln, `nightDistribution`:
   siehe Nachtverteilung). Die Strafe ist die Wurzel aus der Summe der quadrierten Abweichungen vom Mittelwert:
   0, wenn alle gleich belastet sind. Die Erklärung je Person zeigt die Abweichung vom Mittelwert und nur bei
   Personen über dem Mittelwert einen Treffer.
+- Wirkung der Wichtigkeit „Faire Verteilung“ (Messung im Demomonat mit klaren Verteilungen, 300 s): Das 0,25-,
+  1- oder 4-Fache (Gewichte 1, 3 oder 12, unbeliebte 1, 2 oder 8) ändert die Fairness nicht über das Rauschen
+  zwischen zwei Läufen. Die Gründe:
+  - Die vier Fairness-Regeln sind zusammen rund 0,5 % der weichen Strafe. Den Rest tragen gewohnte Verteilung
+    (47 %), Sollstunden (24 %), Blocklänge (15 %), einzelne freie Tage (8 %) und Wünsche (6 %).
+  - Die Strafe ist eine Wurzel über alle Verglichenen. Wandert ein Dienst von einer Person über dem Mittel zu
+    einer darunter, sinkt sie typisch nur um 15 bis 50 Punkte (mal Gewicht: 50 bis 150). Ein solcher Tausch zweier
+    Personen am selben Tag kostet dagegen vor allem bei Sollstunden und Verteilung im Median 60 000 bis 110 000.
+    Er lohnt sich im Median erst beim rund 500- bis 2000-Fachen des Gewichts; zwischen 0,25 und 4 lohnen sich
+    praktisch dieselben Tausche.
+  - Die Historie (3 Monate) trägt 80 bis 90 % der Last. Sie macht den Ausgleich nicht unmöglich: Ein Monat, der
+    nur auf Fairness achtet und sonst nichts beachtet, senkte die Strafe höchstens um 25 bis 40 %; der fertige
+    Plan liegt aber meist etwas über der Strafe der Historie allein.
+  - Der Solver ist nach 300 s nicht am Ende (die weiche Strafe sinkt auch in der letzten Minute um rund 4 %) und
+    verbessert vor allem die großen Posten. Die Fairness schwankt dabei um ± 5 % ohne Richtung.
+  - Die Fairness wirkt deshalb wie ein Ausgleich unter sonst gleichwertigen Plänen. Proben mit 120 s: Ohne sie
+    (Gewicht 0) waren die Wochenenden rund 15 % ungleicher, die übrigen kaum; das 100-Fache brachte 5 bis 13 %
+    mehr Ausgleich (ein Lauf, Nächte und unbeliebte Dienste im Rauschen). Der Bereich 0,25 bis 4 ist also viel zu
+    klein, um die Fairness spürbar zu verschieben; die Gewichte bleiben, wie sie sind. Nachrechnen:
+    `FairnessAnalysisTest` im Backend.
 - Nachtdienst: ein Dienst, der mindestens `nightMinHours` (2 h) im Nachtfenster `nightStart` bis `nightEnd`
   (22:00 bis 06:00) liegt.
 - Wochenende gearbeitet: ein Dienst beginnt am Samstag oder Sonntag.
