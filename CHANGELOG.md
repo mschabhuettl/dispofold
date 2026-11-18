@@ -3,6 +3,24 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.14.0 (unreleased)
+
+- **Windows-Signatur vorbereitet:** Die Signatur der Windows-Dateien über die SignPath Foundation ist beantragt.
+  Der Release-Workflow kann Setup und portables ZIP signieren lassen, bevor die Prüfsummen entstehen; signiert
+  werden das Setup und `dispofold.exe` im ZIP. Ohne die SignPath-Einstellungen läuft er wie bisher. Einrichtung,
+  Antragstext und Freigabe je Release: [docs/release.md](docs/release.md#windows-signatur-mit-signpath); die
+  Artefaktkonfiguration liegt in `.signpath/artifact-configuration.xml`.
+- **Code signing policy:** nennt die Dateien, die signiert werden, und dass das Windows-Setup nur dann den
+  WebView2-Bootstrapper von Microsoft lädt, wenn WebView2 fehlt, mit den Datenschutzerklärungen von Microsoft und
+  GitHub.
+- **Metadaten der Desktop-Programme:** Der Copyright-Vermerk nennt die AGPL-3.0 statt „Alle Rechte vorbehalten“
+  (Windows-Dateien, deb, rpm, dmg).
+- **THIRD_PARTY.md:** dazu die Java-Bibliotheken, die nicht unter Apache 2.0 stehen, die Laufzeitbibliotheken von
+  Microsoft in der Java-Laufzeit für Windows, die Plugins des Windows-Setups und Brotli; der WebView2-Bootstrapper
+  wird nicht mitgeliefert, sondern bei Bedarf geladen.
+- **Betrieb:** Unter [Unsignierte Programme](docs/betrieb.md#unsignierte-programme) steht, wie man die Signatur
+  prüft, sobald sie gilt.
+
 ## 0.13.0 (2026-11-18)
 
 - **Dokumentations-Website:** `docs/` und `README.md` als Website mit Suche, hell und dunkel, unter
