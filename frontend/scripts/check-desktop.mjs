@@ -2,6 +2,8 @@
 // restart answers (503 desktop.restarting) show a status and no error, the download event of the shell shows a toast,
 // a bad update file shows its German error, installing an update reloads, and quitting shows the closing state.
 // Also: in browser mode (GET /__shell/mode) quitting says the tab can be closed; the Docker build never asks the shell.
+// The menu entry Anleitung and the links in the page intros show the guide built into the program (with its images,
+// no request leaves the program), sections by address, and a clear message when the built-in guide is missing.
 //   npm run build && node scripts/check-desktop.mjs     (Chromium via `npx playwright install chromium`)
 import { spawn } from 'node:child_process';
 import { writeFileSync } from 'node:fs';
@@ -100,6 +102,53 @@ try {
   await Promise.all([docker.waitForURL((u) => !u.pathname.endsWith('login.html')), docker.click('button[type=submit]')]);
   await docker.locator('#nav a').first().waitFor();
   check('Docker build does not ask /__shell/mode', asked.length === 0, asked.join(', '));
+
+  // 8. the guide built into the program, in the window and in browser mode
+  for (const mode of ['window', 'browser']) {
+    const guideBase = await startServer({ MOCK_DESKTOP: '1', MOCK_FRONTEND: mode });
+    const g = await browser.newPage({ locale: 'de-DE', viewport: { width: 1400, height: 900 } });
+    g.on('pageerror', (e) => check('no page error', false, e.message));
+    const outside = [];
+    g.on('request', (r) => { if (new URL(r.url()).hostname !== 'localhost') outside.push(r.url()); });
+    const opened = () => g.waitForFunction(() => document.querySelector('#main h1') && !document.querySelector('#main > p.muted'));
+    await g.goto(`${guideBase}/#/regeln`);
+    await opened();
+    const entry = g.locator('#nav a', { hasText: 'Anleitung' });
+    check(`${mode}: menu entry Anleitung to the built-in guide`, await entry.getAttribute('href') === '#/anleitung'
+      && await entry.getAttribute('target') === null);
+    check(`${mode}: intro links to its section`, await g.locator('#main h1 + p.page-intro a').getAttribute('href') === '#/anleitung/regeln');
+    await entry.click();
+    await opened();
+    check(`${mode}: guide title`, await g.locator('#main h1').innerText() === 'Anleitung für die Dienstplanung');
+    check(`${mode}: guide menu entry marked`, await entry.getAttribute('aria-current') === 'page');
+    const images = await g.locator('.guide img').evaluateAll(async (imgs) => {
+      await Promise.all(imgs.map((i) => (i.complete ? null : new Promise((r) => { i.onload = r; i.onerror = r; }))));
+      return imgs.map((i) => i.naturalWidth);
+    });
+    check(`${mode}: guide images shown`, images.length >= 10 && images.every((w) => w > 0), images.join(' '));
+    const online = g.locator('.guide-online').locator(mode === 'browser' ? 'a' : 'code');
+    check(`${mode}: online address ${mode === 'browser' ? 'as a link' : 'to copy'}`,
+      (await online.innerText()) === 'https://mschabhuettl.github.io/dispofold/anleitung/');
+    await g.locator('.guide a[href="#/anleitung/planen"]').first().click();
+    await g.waitForFunction(() => location.hash === '#/anleitung/planen' && document.getElementById('planen'));
+    await g.waitForTimeout(300);
+    const top = await g.locator('#planen').evaluate((e) => e.getBoundingClientRect().top);
+    check(`${mode}: a link in the guide shows its section`, top > 0 && top < 200, String(top));
+    await g.goto(`${guideBase}/#/anleitung/pr%C3%BCfen`);
+    await opened();
+    await g.waitForTimeout(300);
+    const section = await g.locator('[id="prüfen"]').evaluate((e) => e.getBoundingClientRect().top);
+    check(`${mode}: section with umlaut by address`, section > 0 && section < 200, String(section));
+    check(`${mode}: no request leaves the program`, outside.length === 0, outside.join(', '));
+    if (mode === 'window') {
+      await g.route('**/anleitung/anleitung.html', (r) => r.fulfill({ status: 404, body: 'not found' }));
+      await g.goto(`${guideBase}/#/anleitung`);
+      const alert = await g.locator('#main .alert-error').innerText();
+      check('missing built-in guide: clear message with the online address',
+        alert.includes('fehlt') && alert.includes('https://mschabhuettl.github.io/dispofold/anleitung/'), alert);
+    }
+    await g.close();
+  }
 } finally {
   await browser.close();
   for (const s of servers) s.kill();

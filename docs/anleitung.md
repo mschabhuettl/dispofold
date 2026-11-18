@@ -71,15 +71,20 @@ Ruhezeiten am Monatsanfang. Monate werden der Reihe nach abgeschlossen.
 
 ### Menü, Planungsmonat und Hilfe
 
-Links steht das Menü: **Dienstplan**, **Prüfen**, **Eingaben**, **Personen** und **Einstellungen**. Hat ein
-Menüpunkt mehrere Seiten, stehen sie als Reiter oben auf der Seite (zum Beispiel **Personen**, **Funktionen** und
-**Zeitachse** im Dienstplan).
+Links steht das Menü: **Dienstplan**, **Prüfen**, **Eingaben**, **Personen**, **Einstellungen** und **Anleitung**.
+Hat ein Menüpunkt mehrere Seiten, stehen sie als Reiter oben auf der Seite (zum Beispiel **Personen**,
+**Funktionen** und **Zeitachse** im Dienstplan).
+
+Der letzte Menüpunkt **Anleitung** führt zu dieser Anleitung. Am Server öffnet er die Dokumentations-Website in
+einem neuen Tab (mit Suche, Stand des neuesten Releases). Im Programm am eigenen Rechner zeigt er die eingebaute
+Anleitung genau dieser Version, die auch ohne Internet geht; die Adresse der Website steht darüber.
 
 Auf den Seiten eines Monats steht oben der **Planungsmonat**. Mit den Pfeilen daneben wechselt man den Monat.
 Alles auf diesen Seiten bezieht sich auf den gewählten Monat. Seiten, die nicht von einem Monat abhängen (Regeln,
 Stammdaten, Updates), zeigen die Auswahl nicht.
 
-Unter jedem Seitentitel sagt ein kurzer Text, wozu die Seite da ist. Ein **i** neben einer Regel, einer
+Unter jedem Seitentitel sagt ein kurzer Text, wozu die Seite da ist; **Mehr dazu in der Anleitung** am Ende führt
+zum passenden Abschnitt. Ein **i** neben einer Regel, einer
 Einstellung, einer Zahl oder einem Formularfeld öffnet eine Erklärung: was die Zahl zählt oder was ein höherer
 oder niedrigerer Wert bewirkt. Das **i** geht mit Klick, Tippen oder Tastatur (Tab, dann Enter oder Leertaste);
 Escape oder ein Klick daneben schließt die Erklärung.
@@ -613,7 +618,7 @@ startet danach neu. Einzelheiten in [desktop.md](desktop.md).
 ## Rolle „nur lesen“
 
 Im Serverbetrieb gibt es neben der Planung die Rolle **nur lesen** (`viewer`). Ihr Menü hat **Dienstplan** (mit
-den Reitern Personen, Funktionen und Zeitachse), **Personen** und **Fairness**. Sie kann nichts ändern, nicht
+den Reitern Personen, Funktionen und Zeitachse), **Personen**, **Fairness** und **Anleitung**. Sie kann nichts ändern, nicht
 planen, nicht abschließen und nicht exportieren; im Menü **Ausgabe** steht nur **Drucken**. Aus
 Datenschutzgründen sieht sie außerdem nicht:
 

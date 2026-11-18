@@ -3,6 +3,16 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.13.0 (unreleased)
+
+- **Dokumentations-Website:** `docs/` und `README.md` als Website mit Suche, hell und dunkel, unter
+  <https://mschabhuettl.github.io/dispofold/>. Sie wird bei jedem Release neu veröffentlicht und zeigt die
+  Dokumentation des neuesten Releases; die CI baut sie bei jedem Push im strengen Modus (fehlende Seiten, Anker
+  oder Bilder lassen sie scheitern).
+- **Menüpunkt „Anleitung“** für Planung und „nur lesen“, dazu „Mehr dazu in der Anleitung“ im Text unter jedem
+  Seitentitel, zum passenden Abschnitt. Am Server führen beide auf die Website (neuer Tab). Das Programm am eigenen
+  Rechner zeigt die eingebaute Anleitung genau dieser Version, auch ohne Internet.
+
 ## 0.12.0 (2026-11-17)
 
 Nachträge zur neuen Oberfläche: stärkere Wichtigkeit für die faire Verteilung, „nie Nacht“ geht der gewohnten

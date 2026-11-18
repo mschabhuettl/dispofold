@@ -41,6 +41,8 @@ export const TEXTS = {
   'nav.tab.masterdata': 'Stammdaten',
   'nav.tab.data': 'Daten',
   'nav.tab.updates': 'Updates',
+  'nav.guide': 'Anleitung',
+  'nav.guide.newTab': 'Öffnet die Anleitung auf der Dokumentations-Website in einem neuen Tab',
 
   // Prüfen (stage 3: problem list, open demand, master data checks) and the fairness loads
   'check.title': 'Prüfen: {month}',
@@ -203,6 +205,8 @@ export const TEXTS = {
   'help.page.stammdaten': 'Was sich selten ändert: Bereiche, Abwesenheitsarten, Schichten, Bedarf und Feiertage. Personen werden unter „Personen“ bearbeitet.',
   'help.page.import': 'Daten laden und sichern: einen Datensatz importieren oder exportieren, Änderungen als Korrekturdatei speichern, Daten pseudonymisiert weitergeben, den Plan eines Monats exportieren oder importieren und einen Monat abschließen.',
   'help.page.einstellungen': 'Updates für das Programm: woher sie kommen, ob beim Start gesucht wird, und ein Update aus einer Datei für Rechner ohne Internet.',
+  'help.page.anleitung': 'Die Anleitung genau dieser Version, im Programm enthalten und auch ohne Internet lesbar.',
+  'help.guideLink': 'Mehr dazu in der Anleitung',
 
   'help.constraint.dailyRest': 'Zwischen dem Ende eines Dienstes und dem Beginn des nächsten liegt mindestens die tägliche Ruhezeit, auch über den Monatswechsel. Immer einzuhalten, kein Gewicht. Eine längere Ruhezeit lässt weniger Dienstfolgen zu, z. B. kein Frühdienst nach einem Spätdienst.',
   'help.constraint.weeklyRest': 'In jeder Kalenderwoche (Montag bis Sonntag) hat jede Person eine zusammenhängende Ruhe von mindestens dieser Dauer. Immer einzuhalten, kein Gewicht. Je länger die Ruhe sein muss, desto weniger Dienste passen in eine Woche.',
@@ -977,6 +981,8 @@ export const TEXTS = {
   'desktop.unauthorized.restart': 'Bitte Dispofold neu starten.',
   'desktop.restarting': 'Dispofold startet neu …',
   'desktop.download.saved': 'Gespeichert: {name} im Ordner {folder}',
+  'guide.online': 'Online mit Suche und allen weiteren Dokumenten (Stand des neuesten Releases):',
+  'guide.missing': 'Die eingebaute Anleitung fehlt in diesem Programm. Online steht sie unter {url}.',
   'desktop.unauthorized.title': 'Kein Zugriff',
   'desktop.unauthorized.text': 'Bitte Dispofold über das Programm öffnen.',
   'desktop.restart.title': 'Dispofold startet neu …',

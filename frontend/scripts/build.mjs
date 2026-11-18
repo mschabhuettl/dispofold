@@ -4,6 +4,8 @@ import { createHash } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Marked } from 'marked';
+import { GUIDE_FILE, SITE, slug } from '../src/lib/guide.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
@@ -76,5 +78,38 @@ for (const page of ['index.html', 'login.html']) {
     if (!existsSync(join(dist, src))) throw new Error(`${page} loads ${src}, which was not built`);
   }
   writeFileSync(file, html);
+}
+
+// The guide built into the program (lib/guide.js): docs/anleitung.md as an HTML fragment, its images next to it.
+// Anchors become routes of the page, links to the other documents go to the documentation site.
+const docs = join(root, '..', 'docs');
+const guideDir = dirname(join(dist, GUIDE_FILE));
+const images = new Set();
+const guide = new Marked({
+  walkTokens(token) {
+    if (token.type === 'image') {
+      images.add(token.href);
+      token.href = `${relative(dist, guideDir)}/${token.href}`;
+    } else if (token.type === 'link' && !/^https?:/.test(token.href)) {
+      const [file, anchor] = token.href.split('#');
+      if (!file) token.href = `#/anleitung/${anchor}`;
+      else if (/^[a-z]+\.md$/.test(file) && existsSync(join(docs, file))) token.href = `${SITE}${file.slice(0, -3)}/${anchor ? `#${anchor}` : ''}`;
+      else throw new Error(`anleitung.md links to ${token.href}, which the built-in guide cannot show`);
+    }
+  },
+  renderer: {
+    heading({ tokens, depth, text }) {
+      return `<h${depth} id="${slug(text)}">${this.parser.parseInline(tokens)}</h${depth}>\n`;
+    },
+    link({ href, tokens }) {
+      return /^https?:/.test(href) ? `<a href="${href}" target="_blank" rel="noopener">${this.parser.parseInline(tokens)}</a>` : false;
+    },
+  },
+});
+mkdirSync(guideDir, { recursive: true });
+writeFileSync(join(dist, GUIDE_FILE), guide.parse(readFileSync(join(docs, 'anleitung.md'), 'utf8')));
+for (const image of images) {
+  mkdirSync(dirname(join(guideDir, image)), { recursive: true });
+  cpSync(join(docs, image), join(guideDir, image));
 }
 console.log('built', dist, names);
