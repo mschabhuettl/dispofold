@@ -2,11 +2,13 @@
 import { restartAndReload } from '../lib/desktop.js';
 import { append, guarded, h } from '../lib/dom.js';
 import { updateProblem } from '../lib/codes.js';
+import { info as help } from '../lib/info.js';
 import { t } from '../lib/texts.js';
 
 export async function render(root, ctx) {
   const { api } = ctx;
   let info = await api.desktopUpdate(false);
+  let checked = false; // "Kein Update verfügbar" only after a search (check=false never asks the source)
 
   const source = h('input', { id: 'update-source', type: 'text', value: info.source ?? '', spellcheck: 'false',
     placeholder: t('settings.source.placeholder') });
@@ -44,7 +46,7 @@ export async function render(root, ctx) {
         a.notes && h('pre', {}, a.notes),
         h('div.row', { style: { marginTop: '.6rem', marginBottom: 0 } },
           button(t('settings.install'), () => install(() => api.desktopInstall()), 'btn-primary')))
-        : !problem && h('p.muted', {}, t('settings.none')),
+        : checked && !problem && h('p.muted', {}, t('settings.none')),
     ]);
   }
 
@@ -53,8 +55,9 @@ export async function render(root, ctx) {
       h('section.section', { 'aria-labelledby': 'h-update' }, h('h2', { id: 'h-update' }, t('settings.updates')),
         status,
         h('div.field', {}, h('label', { for: 'update-source' }, t('settings.source')), source,
-          h('span.muted', {}, t('settings.source.help'))),
-        h('label.check', {}, checkOnStart, t('settings.checkOnStart')),
+          h('span.muted', {}, t('settings.source.help', { url: info.releases ?? '' }))),
+        h('div.with-info', {}, h('label.check', {}, checkOnStart, t('settings.checkOnStart')),
+          help(t('help.field.settings.checkOnStart'), t('settings.checkOnStart'))),
         h('div.row', {},
           button(t('common.save'), async () => {
             const body = { source: source.value.trim(), checkOnStart: checkOnStart.checked };
@@ -65,6 +68,7 @@ export async function render(root, ctx) {
             const res = await guarded(() => api.desktopUpdate(true));
             if (res) {
               info = res;
+              checked = true;
               drawStatus();
             }
           }))),

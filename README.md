@@ -26,9 +26,9 @@ Mitarbeiterinnen und Mitarbeiter. Die Dienstplanung prüft, ändert, fixiert, sc
 
 Die Desktop-Varianten bringen ihre eigene Java-Laufzeit mit, laufen ohne Server in einem eigenen Programmfenster
 (unter Linux standardmäßig im Standardbrowser) und speichern die Daten verschlüsselt mit einem Passwort. Updates
-kommen als signierte Update-Pakete, voreingestellt ohne Update-Quelle und damit ganz ohne Netzzugriff. Die
-Programme sind nicht mit einem Code-Signing-Zertifikat signiert. Was bei den Warnungen von Windows und macOS zu
-tun ist, steht in [docs/betrieb.md](docs/betrieb.md#unsignierte-programme).
+kommen als signierte Update-Pakete; ob das Programm danach sucht, fragt es beim ersten Start, ohne Zustimmung
+greift es nie aufs Netz zu. Die Programme sind nicht mit einem Code-Signing-Zertifikat signiert. Was bei den
+Warnungen von Windows und macOS zu tun ist, steht in [docs/betrieb.md](docs/betrieb.md#unsignierte-programme).
 
 Die Signatur der Windows-Programme über die SignPath Foundation ist beantragt; wie die Programme gebaut und
 signiert werden, steht in der [Code signing policy](docs/code-signing-policy.md).
@@ -128,8 +128,11 @@ Alle Bilder zeigen synthetische Daten.
 - Logs und Fehlermeldungen nennen nur Ids und Codes, keine Namen und keine Pfade.
 - Die Rolle `viewer` sieht keine Wünsche, keine Einschränkungen, keine Familienregeln und keinen Grund einer
   Abwesenheit. Exportieren kann nur die Rolle `planner`.
-- Keine externen Dienste, keine Aufrufe ins Internet zur Laufzeit. Die Desktop-Version greift nur aufs Netz zu,
-  wenn eine Update-Quelle eingetragen ist.
+- Keine externen Dienste. Die einzige Verbindung ins Internet zur Laufzeit ist die Suche nach einer neuen
+  Version: eine anonyme Anfrage an die Releases-API von GitHub, gesendet werden keine Daten, GitHub sieht nur die
+  IP-Adresse. Der Server sucht beim Start und einmal am Tag, abschaltbar mit `DISPOFOLD_UPDATE_CHECK=false`. Die
+  Desktop-Version fragt beim ersten Start, ob sie suchen soll, und greift nur mit Zustimmung oder einer selbst
+  eingetragenen Update-Quelle aufs Netz zu.
 
 ## Entwicklung und Tests
 

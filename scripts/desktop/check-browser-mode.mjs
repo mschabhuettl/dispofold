@@ -54,6 +54,11 @@ try {
   await page.click('#submit');
   await page.waitForFunction(() => document.getElementById('user-name')?.textContent, null, { timeout: 180000 });
   check(true, 'unlocked, interface loaded');
+  // first start: asked once whether to check for new versions; "Nein" keeps the run offline
+  await page.locator('#update-consent').getByRole('button', { name: 'Nein' }).click({ timeout: 30000 });
+  await page.locator('#update-consent').waitFor({ state: 'detached' });
+  const settings = await page.evaluate(() => fetch('/api/desktop/update?check=false').then((r) => r.json()));
+  check(!settings.ask && settings.source === '', 'first start asked about update checks, "Nein" saved');
   const cookies = await ctx.cookies();
   const s = cookies.find((c) => c.name === 'dispofold_s');
   check(s && s.httpOnly && s.sameSite === 'Strict' && s.domain === hostName, 'session cookie host-only, HttpOnly, SameSite=Strict');

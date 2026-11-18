@@ -41,11 +41,22 @@ approved by the owner individually.
 
 Dispofold transfers no data to other networked systems unless specifically requested by the user.
 
-- The server version (Docker) makes no calls to the internet at runtime. Its data stays in its own PostgreSQL
+- The desktop program (the signed Windows binaries among them) keeps its data encrypted in its local data
+  folder. It makes no network request before the user has agreed. On the first start without saved update
+  settings (a new installation, or the first start after updating to a version with this question) it asks
+  once: "Soll Dispofold automatisch nach neuen Versionen suchen?" ("Should Dispofold check for new versions
+  automatically?", Yes or No). Only "Ja" sets the project's GitHub releases API as the update source and turns
+  on the check at start; "Nein" leaves the source empty, and then the program never uses the network. An
+  update source the user entered earlier is kept and not asked about. The choice can be changed at any time in
+  Einstellungen → Updates; clearing the update source switches the check off again.
+- The server version (Docker) checks for a new release on start and once a day. This is an operator setting,
+  not part of the signed Windows binaries: it is on by default and switched off with
+  `DISPOFOLD_UPDATE_CHECK=false` in the Compose `.env` file ([docs/betrieb.md](betrieb.md#neue-version)).
+  Apart from that check it makes no calls to the internet at runtime. Its data stays in its own PostgreSQL
   database.
-- The desktop program keeps its data encrypted in its local data folder. It only uses the network when the
-  user enters an update source in Einstellungen → Updates; by default no source is set, so it makes no network
-  requests at all. Clearing the update source switches the check off again. An update check only downloads
-  the update information and, when the user installs an update, the update package; no data is sent.
-- If a later version adds an automatic check for new versions, this section will describe it and how to
-  switch it off.
+- What a check sends: one anonymous HTTPS GET request to
+  `https://api.github.com/repos/mschabhuettl/dispofold/releases/latest`, without credentials, cookies or any
+  data of the user; it carries only the standard headers of the Java HTTP client. GitHub sees the IP address the
+  request comes from. When the user installs an
+  update in the desktop program, it also downloads the update package from the release. Nothing is uploaded,
+  and updates are never installed without the user's action (the server never updates itself).

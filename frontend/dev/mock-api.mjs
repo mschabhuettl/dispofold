@@ -4,7 +4,8 @@ import { addDays, dayCode, epochMinutes, formatLocalDateTime, isWeekend, monthDa
   shiftInterval, weekday } from '../src/lib/dates.js';
 import { CONSTRAINTS, DEFAULT_RULES, TEMPLATE, makeDataset } from './mock-data.mjs';
 
-export function createMockApi({ dataset: initial = null, month = '2026-12', desktop = false, updateSource = '' } = {}) {
+export function createMockApi({ dataset: initial = null, month = '2026-12', desktop = false, updateSource = '', askUpdates = false,
+  release = '' } = {}) {
   let dataset = initial ? structuredClone(initial) : makeDataset(month);
   let rules = structuredClone(DEFAULT_RULES);
   const periods = new Map(dataset.periods.map((p) => [p.month, p]));
@@ -365,10 +366,17 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
   }
 
   // Desktop mode: update state of the program (see docs/api.md, desktop endpoints).
-  const NEXT = { version: '1.3.0', notes: 'Neue Auswertung der Wochenenden.\nKleinere Korrekturen.' };
-  // no update source by default: the program never goes online (the start check reports noSource, not a fault)
+  const releasePage = (v) => `https://github.com/mschabhuettl/dispofold/releases/tag/v${v}`;
+  const NEXT = { version: '1.3.0', notes: 'Neue Auswertung der Wochenenden.\nKleinere Korrekturen.', title: 'Dispofold 1.3.0',
+    url: releasePage('1.3.0') };
+  // no update source by default: the program never goes online (the start check reports noSource, not a fault);
+  // ask: no settings saved yet (askUpdates), the page asks once whether to check automatically
   const update = { current: '1.2.0', source: updateSource, checkOnStart: true, available: null,
-    errorCode: null, errorParams: null, error: null };
+    errorCode: null, errorParams: null, error: null, ask: askUpdates && !updateSource,
+    releases: 'https://api.github.com/repos/mschabhuettl/dispofold/releases/latest' };
+  // Server build: what the server's release check found (GET /api/release, planners only)
+  const serverRelease = { current: '1.2.0', available: release ? { version: release, title: `Dispofold ${release}`,
+    notes: 'Neu\n- Auswertung der Wochenenden in der Fairness-Übersicht\n- Kleinere Korrekturen', url: releasePage(release) } : null };
   const check = () => {
     Object.assign(update, { available: null, errorCode: null, errorParams: null, error: null });
     if (!update.source) Object.assign(update, { errorCode: 'desktop.update.noSource', error: 'Keine Update-Quelle' });
@@ -477,8 +485,12 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
       if (!desktop) return err(404, `Unbekannter Pfad ${path}`);
       if (b === 'quit' && method === 'POST') return json(null, 204);
       if (b === 'update' && !c && method === 'GET') {
-        if (query.get('check') === 'true') check();
-        return json({ ...update });
+        // as the backend: only check=true asks the source
+        if (query.get('check') === 'true') {
+          check();
+          return json({ ...update });
+        }
+        return json({ ...update, available: null, errorCode: null, errorParams: null, error: null });
       }
       if (b === 'update' && c === 'settings' && method === 'PUT') {
         const source = String(body?.source ?? '').trim();
@@ -487,6 +499,7 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
         }
         update.source = source;
         update.checkOnStart = Boolean(body?.checkOnStart);
+        update.ask = false;
         return json(null, 204);
       }
       if (b === 'update' && c === 'install' && method === 'POST') {
@@ -500,6 +513,10 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
         restart(NEXT.version);
         return json(null, 202);
       }
+    }
+    if (a === 'release' && !b && method === 'GET') {
+      if (desktop) return err(404, `Unbekannter Pfad ${path}`);
+      return role === 'planner' ? json(serverRelease) : err(403, 'Nur für Planung');
     }
     if (a === 'logout') return json(null, 204);
     if (a === 'dataset' && !b && method === 'GET') {

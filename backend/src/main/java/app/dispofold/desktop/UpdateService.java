@@ -57,11 +57,12 @@ public class UpdateService {
     record SettingsFile(Settings update) {
     }
 
-    public record Available(String version, String notes) {
+    /** {@code title} and {@code url} (the https release page) come from a releases API, else they are null. */
+    public record Available(String version, String notes, String title, String url) {
     }
 
     /** A newer bundle at the source; {@code location} is a URL or a file path. */
-    record Found(Version version, String notes, String location) {
+    record Found(Version version, String notes, String location, String title, String page) {
     }
 
     /**
@@ -102,6 +103,10 @@ public class UpdateService {
 
     @ConfigProperty(name = "quarkus.application.version")
     String applicationVersion;
+
+    /** The project's releases API: the source set when the user agrees to the automatic check. */
+    @ConfigProperty(name = "dispofold.update-check.url")
+    String releasesApi;
 
     BundleVerifier verifier = new BundleVerifier();
 
@@ -150,19 +155,31 @@ public class UpdateService {
     }
 
     public synchronized Settings settings() {
+        // No built-in source: without one the program never contacts the network.
+        return stored().orElse(new Settings("", true));
+    }
+
+    /**
+     * The settings the user saved (the answer to the first-start question or a save in Einstellungen, an empty
+     * source included); empty when there are none yet, then the interface asks.
+     */
+    public synchronized Optional<Settings> stored() {
         Path file = settingsFile();
         try {
             if (Files.exists(file)) {
                 SettingsFile s = mapper.readValue(file.toFile(), SettingsFile.class);
                 if (s.update() != null && s.update().source() != null) {
-                    return s.update();
+                    return Optional.of(s.update());
                 }
             }
         } catch (IOException e) {
             LOG.warn("daten/einstellungen.json is unreadable, using defaults");
         }
-        // No built-in source: without one the program never contacts the network.
-        return new Settings("", true);
+        return Optional.empty();
+    }
+
+    public String releasesApi() {
+        return releasesApi;
     }
 
     public synchronized void save(Settings settings) throws IOException {
@@ -219,7 +236,7 @@ public class UpdateService {
                 if (m.matches() && Version.isValid(m.group(1))) {
                     Version v = Version.parse(m.group(1));
                     if (v.isNewerThan(current()) && !bad.contains(v) && (best == null || v.isNewerThan(best.version()))) {
-                        best = new Found(v, null, p.toString());
+                        best = new Found(v, null, p.toString(), null, null);
                     }
                 }
             }
@@ -282,7 +299,10 @@ public class UpdateService {
                     break;
                 }
                 String notes = release.path("body").asText("");
-                return Optional.of(new Found(v, notes.isBlank() ? null : notes, download));
+                String title = release.path("name").asText("");
+                String page = release.path("html_url").asText("");
+                return Optional.of(new Found(v, notes.isBlank() ? null : notes, download,
+                        title.isBlank() ? null : title, page.startsWith("https://") ? page : null));
             }
         }
         throw new UpdateException("update.assetMissing", Map.of("version", v.toString()),

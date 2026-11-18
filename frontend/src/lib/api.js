@@ -176,6 +176,8 @@ export function createApi({ fetchImpl = (...a) => globalThis.fetch(...a), onUnau
     finalize: (month) => request('POST', `/api/plans/${m(month)}/finalize`),
     reopen: (month) => request('POST', `/api/plans/${m(month)}/reopen`),
     importPlan: (month, plan) => request('POST', `/api/plans/${m(month)}/import`, plan),
+    /** Server build, planners only: { current, available: { version, title, notes, url } | null }. */
+    release: () => request('GET', '/api/release'),
     // desktop program only
     desktopQuit: () => request('POST', '/api/desktop/quit'),
     desktopUpdate: (check) => request('GET', `/api/desktop/update?check=${check ? 'true' : 'false'}`),

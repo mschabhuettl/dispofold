@@ -34,6 +34,7 @@ services:
       SOLVER_SEED: ${SOLVER_SEED:-1}
       SOLVER_MOVE_LIMIT: ${SOLVER_MOVE_LIMIT:-250000}
       JAVA_OPTS: ${JAVA_OPTS:--XX:MaxRAMPercentage=75}
+      DISPOFOLD_UPDATE_CHECK: ${DISPOFOLD_UPDATE_CHECK:-true}
     read_only: true
     tmpfs:
       - /tmp

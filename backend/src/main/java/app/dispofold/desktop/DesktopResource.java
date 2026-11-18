@@ -34,9 +34,13 @@ import app.dispofold.desktop.UpdateService.UpdateException;
 @Blocking
 public class DesktopResource {
 
-    /** {@code error} (German) with {@code errorCode} and {@code errorParams} as in the error bodies, or all null. */
+    /**
+     * {@code error} (German) with {@code errorCode} and {@code errorParams} as in the error bodies, or all null.
+     * {@code ask}: no settings saved yet, so the interface asks once whether to check automatically; {@code releases}
+     * is the source it saves on "Ja".
+     */
     public record UpdateInfo(String current, String source, boolean checkOnStart, Available available, String error,
-            String errorCode, Map<String, Object> errorParams) {
+            String errorCode, Map<String, Object> errorParams, boolean ask, String releases) {
     }
 
     public record Staged(String version) {
@@ -63,15 +67,15 @@ public class DesktopResource {
         UpdateException error = null;
         if (check) {
             try {
-                available = updates.find(s.source()).map(f -> new Available(f.version().toString(), f.notes()))
-                        .orElse(null);
+                available = updates.find(s.source())
+                        .map(f -> new Available(f.version().toString(), f.notes(), f.title(), f.page())).orElse(null);
             } catch (UpdateException e) {
                 error = e;
             }
         }
         return new UpdateInfo(updates.current().toString(), s.source(), s.checkOnStart(), available,
                 error == null ? null : error.getMessage(), error == null ? null : "desktop." + error.code(),
-                error == null ? null : error.params());
+                error == null ? null : error.params(), updates.stored().isEmpty(), updates.releasesApi());
     }
 
     @PUT

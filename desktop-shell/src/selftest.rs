@@ -1,6 +1,6 @@
 //! `--selftest <result.json> --data <empty folder>`: runs the real chain (launcher, backend, window) and drives the
-//! page through the scheme: open the app, load demo data, plan 2027-01, export JSON through the download path,
-//! quit through the interface. Writes `{ok, steps, plan}` and ends with 0 only if every step passed.
+//! page through the scheme: open the app, answer the update question with "Nein", load demo data, plan 2027-01,
+//! export JSON through the download path, quit through the interface. Writes `{ok, steps, plan}` and ends with 0 only if every step passed.
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::path::{Path, PathBuf};
@@ -11,8 +11,9 @@ use tauri::http::{Response, StatusCode};
 use tauri::AppHandle;
 
 /// Steps that must all be present and passed.
-const REQUIRED: [&str; 8] =
-    ["password requested", "backend verified", "open app", "demo data", "solve", "export", "quit", "launcher exit"];
+const REQUIRED: [&str; 9] =
+    ["password requested", "backend verified", "open app", "update question", "demo data", "solve", "export", "quit",
+        "launcher exit"];
 const TIMEOUT: Duration = Duration::from_secs(20 * 60);
 
 /// Injected only in self-test mode; runs on every page of the own origin and drives the app once.

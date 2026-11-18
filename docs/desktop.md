@@ -224,7 +224,7 @@ Sicherung galt. Nach einem Passwortwechsel brauchen ältere Sicherungen das alte
 |---|---|---|
 | `GET` | `/api/me` | zusätzlich `"desktop": true` (im Server-Build `false`) |
 | `POST` | `/api/desktop/quit` | `204`, danach beendet sich die App (Code 0) und mit ihr der Launcher |
-| `GET` | `/api/desktop/update?check=true\|false` | `{ "current", "source", "checkOnStart", "available": { "version", "notes" } \| null, "error", "errorCode", "errorParams" }` (die drei `error*` sind `null` ohne Fehler) |
+| `GET` | `/api/desktop/update?check=true\|false` | `{ "current", "source", "checkOnStart", "available": { "version", "notes", "title", "url" } \| null, "error", "errorCode", "errorParams", "ask", "releases" }` (die drei `error*` sind `null` ohne Fehler; `title` und `url`, die https-Seite des Release, nur von einer Releases-API) |
 | `PUT` | `/api/desktop/update/settings` | Body `{ "source": "...", "checkOnStart": bool }`, Antwort die gespeicherten Einstellungen. `400` bei ungültiger Quelle |
 | `POST` | `/api/desktop/update/install` | lädt das neueste Update der Quelle, prüft es, `202 { "version" }`, dann Neustart (Code 3). `400` mit Grund |
 | `POST` | `/api/desktop/update/file` | Body: die Update-Datei (`application/octet-stream`, bis 1 GB), sonst wie `install` |
@@ -235,9 +235,22 @@ der Grund in `errorCode` und `errorParams` (deutscher Ersatztext in `error`). Fe
 in `docs/api.md`, Abschnitt "Fehlercodes"). Weder Codes noch Texte enthalten Pfade oder Meldungen von
 Ausnahmen. Die Oberfläche zeigt ihn beim automatischen Prüfen nicht an.
 
-Die Update-Quelle ist eine http(s)-Adresse oder ein Ordner. Voreingestellt ist keine Quelle: Solange keine
+Die Update-Quelle ist eine http(s)-Adresse oder ein Ordner. Eingebaut ist keine Quelle: Solange keine
 eingetragen ist, stellt das Programm keine Verbindung ins Netz her, und `check=true` antwortet mit dem Fehlercode
 `desktop.update.noSource`. Eine leere Quelle in den Einstellungen schaltet die Prüfung wieder ab.
+
+**Zustimmung beim ersten Start:** Hat `einstellungen.json` noch kein `update.source` (neue Installation, oder ein
+Update aus einer Version, in der nie gespeichert wurde), ist `ask` `true`. Die Oberfläche fragt dann einmal „Soll
+Dispofold automatisch nach neuen Versionen suchen?“ (Ja vorausgewählt, Esc gilt nicht als Antwort) und speichert
+die Antwort mit `PUT update/settings`: Ja als `{ "source": <releases>, "checkOnStart": true }`, Nein als
+`{ "source": "", "checkOnStart": true }`. `releases` ist die Releases-API des Projekts
+(`dispofold.update-check.url`, `https://api.github.com/repos/mschabhuettl/dispofold/releases/latest`). Jede
+gespeicherte Quelle zählt als Antwort, auch eine leere oder eine eigene Adresse oder ein Ordner; gefragt wird dann
+nicht mehr, und nichts wird überschrieben. Vor der Antwort fragt die Oberfläche nur `check=false` ab, das nie
+ins Netz geht. Danach sucht sie bei jedem Start einmal mit `check=true`, wenn eine Quelle eingetragen und
+`checkOnStart` an ist, und zeigt eine neuere Version als Hinweis mit „Jetzt installieren“ (dieselbe Installation
+wie unter Einstellungen > Updates). Die Suche des Server-Builds (`ReleaseCheck`, `/api/release`) gibt es im
+Desktop-Build nicht.
 
 - **Adresse:** eine Releases-API im Format von GitHub (Gitea liefert dasselbe Format), entweder ein einzelnes Release (`.../releases/latest`)
   oder eine Liste davon. Aus `tag_name` wird die Version gelesen (mit oder ohne `v`), `body` sind die Notizen.
@@ -374,8 +387,8 @@ also nur mit einem neuen Installer.
   Passwortwechsel.
   Teil 1 baut mit `scripts/desktop/package.sh` das deb, entpackt es und lässt den Selbsttest des echten
   Programmfensters laufen (`dispofold --selftest`, unter Xvfb und D-Bus): Passwort, Prüfung der App, Oberfläche,
-  Demodaten, Planen, Export, Beenden. Teil 2 prüft, was der Selbsttest nicht abdeckt (Updates, manipulierte Datei,
-  Rollback, falsches Passwort, Passwortwechsel, abgelehnte Host-, Origin- und Session-Header); dort spielt
+  Frage nach der Update-Suche (mit Nein beantwortet), Demodaten, Planen, Export, Beenden. Teil 2 prüft, was der
+  Selbsttest nicht abdeckt (Updates, manipulierte Datei, Rollback, falsches Passwort, Passwortwechsel, abgelehnte Host-, Origin- und Session-Header); dort spielt
   `backend/src/test/desktop/ShellDriver.java` das Fenster über das Zeilenprotokoll. Das deb zu bauen braucht
   mehrere GB: `TMPDIR` auf eine Platte legen; `DISPOFOLD_E2E_DEB=<deb>` nimmt ein fertiges deb.
   Es erzeugt bei jedem Lauf ein Wegwerf-Schlüsselpaar und baut die Testversionen mit dessen öffentlichem

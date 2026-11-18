@@ -4,6 +4,8 @@
 // /q/health/ready answer (503 for a few seconds after an update "restarts" the program; API requests then get 503
 // desktop.restarting as from the desktop shell, also after POST /api/dev/restart?ms=4000). No update source by default;
 // MOCK_UPDATE_SOURCE=https://updates.example.invalid/x offers version 1.3.0 (a source starting with http://offline fails).
+// MOCK_UPDATE_ASK=1 (desktop, no source): no update settings saved yet, so the page asks once whether to check.
+// MOCK_RELEASE=1.3.0 (server build): the server's release check found that version (GET /api/release, planners only).
 // MOCK_FRONTEND=window|browser answers GET /__shell/mode like the desktop shell (unset: 404 like an older shell).
 // Uses tests/fixtures/synthetic/*dataset*.synthetic.json when present, otherwise a generated mini dataset.
 import http from 'node:http';
@@ -35,7 +37,8 @@ function fixtureDataset() {
 const fixture = fixtureDataset();
 const desktop = process.env.MOCK_DESKTOP === '1';
 const handle = createMockApi({ dataset: fixture, month: process.env.MOCK_MONTH ?? fixture?.periods?.[0]?.month ?? '2027-01', desktop,
-  updateSource: process.env.MOCK_UPDATE_SOURCE ?? '' });
+  updateSource: process.env.MOCK_UPDATE_SOURCE ?? '', askUpdates: process.env.MOCK_UPDATE_ASK === '1',
+  release: process.env.MOCK_RELEASE ?? '' });
 
 function role(req) {
   if (desktop) return 'planner';
