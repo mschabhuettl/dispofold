@@ -3,6 +3,12 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.13.0 (unreleased)
+
+- **Regeln, Fairness:** [docs/regeln.md](docs/regeln.md) erklärt mit Messungen im Demomonat, warum die
+  Wichtigkeit „Faire Verteilung“ die Fairness kaum bewegt (kleiner Anteil an der Strafe, geringe Wirkung eines
+  einzelnen Dienstes, Historie). Die Gewichte bleiben unverändert.
+
 ## 0.12.0 (2026-11-17)
 
 Nachträge zur neuen Oberfläche: stärkere Wichtigkeit für die faire Verteilung, „nie Nacht“ geht der gewohnten
