@@ -18,6 +18,7 @@ build() {
     --output type=docker,rewrite-timestamp=true \
     -t "$PREFIX/dispofold-$service:$VERSION" -t "$PREFIX/dispofold-$service:latest" "$@"
 }
-# Both are built from the repository root (demo dataset, LICENSE, THIRD_PARTY.md).
-build backend -f backend/Dockerfile .
+# Both are built from the repository root (demo dataset, LICENSE, THIRD_PARTY.md). MAVEN_SEED, if set, is a Maven
+# repository the backend build starts from (the release passes the runner's; see backend/Dockerfile).
+build backend -f backend/Dockerfile ${MAVEN_SEED:+--build-context "m2seed=$MAVEN_SEED"} .
 build frontend -f frontend/Dockerfile .
