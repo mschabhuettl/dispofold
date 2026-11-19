@@ -1,0 +1,7 @@
+# CI only, on top of docker-compose.build.yml: the backend image build starts from the runner's Maven repository
+# (stage m2seed in backend/Dockerfile) instead of fetching everything from Maven Central.
+services:
+  backend:
+    build:
+      additional_contexts:
+        m2seed: ${HOME}/.m2/repository

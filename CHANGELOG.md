@@ -37,6 +37,14 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
   mit bis zu 5 Versuchen (`scripts/fetch-maven.sh`). Das Backend-Image hält das lokale Maven-Repository in einem
   BuildKit-Cache und lädt die Abhängigkeiten mit bis zu 3 Versuchen, statt einen Fehler dabei zu übergehen. Ein
   wirklich fehlendes Artefakt lässt den Build weiterhin scheitern; was gebaut wird, ändert sich nicht.
+- **Image-Build in CI und Release fast ohne Anfragen an Maven Central:** Maven Central begrenzt die Anfragen je
+  Adresse, und der Image-Build auf einem frischen Runner lud bisher den ganzen Baum. Der Job `compose` und der
+  Release-Job `images` füllen jetzt das Maven-Repository des Runners (eigener Actions-Cache, beim ersten Lauf aus
+  dem der Maven-Jobs, dann `go-offline` und `package`) und geben es dem Backend-Build als Build-Kontext `m2seed` mit (`.github/compose-maven-seed.yml`,
+  `MAVEN_SEED` in `scripts/release/build-images.sh`). Ohne diesen Kontext baut das Image wie bisher und lädt alles
+  selbst. Die sonst von der Maven-Version abhängigen Plugins (clean, install, deploy, site, dependency) sind in
+  `backend/pom.xml` fest, damit Wrapper und Image dieselben auflösen. Im Image ändert sich nur die in die Anwendung
+  eingebettete `pom.xml`.
 
 ## 0.16.0 (2026-11-19)
 
