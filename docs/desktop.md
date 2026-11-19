@@ -218,6 +218,27 @@ Bricht der Wechsel zwischen den beiden Umbenennungen ab, holt der nächste Start
 Sicherungen unter `daten/sicherungen/` sind verschlüsselt, und zwar mit dem Passwort, das beim Anlegen der
 Sicherung galt. Nach einem Passwortwechsel brauchen ältere Sicherungen das alte Passwort. Zum Weitergeben von Daten gibt es den Export (siehe `docs/api.md`).
 
+Sichern, Wiederherstellen, den Test einer Wiederherstellung und den Umzug auf einen anderen Rechner beschreibt
+[betrieb.md](betrieb.md#umzug-auf-einen-neuen-rechner) Schritt für Schritt: jeweils die Ordner `daten/` und
+`versionen/` bei beendetem Programm kopieren.
+
+## Protokolle
+
+| Quelle | Ziel |
+|---|---|
+| App (Quarkus) | stderr (`%desktop.quarkus.log.console.stderr=true`), vom Launcher an `daten/logs/app-<version>.log` angehängt (`ProcessRunner`, `Redirect.appendTo`). Eine Datei je Version, nie gekürzt oder gelöscht. Format wie im Server-Build (`quarkus.log.console.format`) |
+| App, Standardausgabe | nur die `ready`-Zeile für den Launcher; andere Zeilen verwirft er (`app stdout: line ignored` auf seiner stderr) |
+| Launcher (`--shell`) | stdout ist das Zeilenprotokoll, `System.out` ist auf stderr umgelenkt. Seine stderr erbt das Programmfenster |
+| Programmfenster | stderr mit dem Präfix `[window]`. Unter Windows ist das Release-Build eine GUI-Anwendung (`windows_subsystem = "windows"`) ohne Konsole, die Ausgabe geht verloren. Unter Linux und macOS sieht man sie beim Start im Terminal |
+| `--change-password` | Dialoge, ohne Bildschirm stderr und Konsole (`SystemUi`); die App schreibt dabei wie sonst in `daten/logs/app-<version>.log` |
+
+Meldungen an den Benutzer (`warning`, `failed`) nennen bei einem Absturz, einem gescheiterten Start, einem
+zurückgenommenen Update und einem gescheiterten Passwortwechsel die Datei `daten/logs/app-<version>.log`
+(`Supervisor`). Ins Protokoll kommen nur interne Ids und Codes, keine Namen und keine Inhalte von Anfragen; das
+Geheimnis und die Passwörter gehen nur über stdin (der Launcher entfernt `DISPOFOLD_PASSWORD` und
+`DISPOFOLD_NEW_PASSWORD` aus der Umgebung der App). Wo die Ordner je System liegen und wie man Protokolle
+weitergibt: [betrieb.md](betrieb.md#protokolle-des-desktop-programms).
+
 ## REST-Erweiterungen (nur Desktop, Rolle `planner`)
 
 | Methode | Pfad | Antwort |
