@@ -3,7 +3,7 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
-## 0.16.0 (unreleased)
+## 0.16.0 (2026-11-19)
 
 - **Aus dem Quellsystem nicht mehr übernehmen:** neuer Schalter auf der Seite einer Person (nur für die Planung)
   für Personen, die nicht mehr geplant werden sollen, sich aber nicht entfernen lassen, weil sie in
