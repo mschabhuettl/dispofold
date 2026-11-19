@@ -17,9 +17,12 @@ Monat ist danach nur noch lesbar.
 ![Das Fenster vor dem Abschluss, alle Punkte erfüllt](../screenshots/beispiel-abschluss.png)
 
 Ist ein Punkt offen, steht darunter „Es gibt offene Punkte. Der Monat lässt sich trotzdem abschließen, wenn das so
-gewollt ist.“; der Knopf geht dann erst nach dem Häkchen **Trotzdem abschließen**. Das ist für bewusste
-Entscheidungen gedacht, etwa eine Lücke, die außerhalb von Dispofold besetzt wurde. Während einer Planung lässt
-sich kein Monat abschließen.
+gewollt ist.“; der Knopf geht dann erst nach dem Häkchen **Trotzdem abschließen**.
+
+![Das Fenster mit einem offenen Punkt](../screenshots/abschluss-offen.png)
+
+Das ist für bewusste Entscheidungen gedacht, etwa eine Lücke, die außerhalb von Dispofold besetzt wurde. Während
+einer Planung lässt sich kein Monat abschließen.
 
 Danach steht im Status **abgeschlossen**:
 

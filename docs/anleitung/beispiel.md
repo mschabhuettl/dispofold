@@ -104,7 +104,8 @@ Ist die Planung fertig, meldet das Programm „Planung beendet“, und die Zeile
    Qualitätsregeln.
 2. **Gruppieren nach** und die Auswahlen daneben zeigen die Liste nach Regel, Person oder Tag.
 3. Jede Gruppe klappt mit einem Klick auf. **Überbesetzung · Bedarf** nennt Zeiten, in denen mehr Personen da sind
-   als vorgesehen; bei den Demodaten ist das gewollt, denn Personen unter ihrem Ziel brauchen Stunden.
+   als vorgesehen. Das entsteht, wo eine Schicht über mehrere Abschnitte des Bedarfs reicht: Braucht der nächste
+   Abschnitt weniger Personen, sind dort mehr da als nötig. Kleine Werte sind kein Fehler.
 4. **Offener Bedarf:** „Kein offener Bedarf.“
 5. **Stammdaten:** keine Auffälligkeiten.
 
@@ -147,8 +148,9 @@ Behoben wird der Regelverstoß in der Zelle:
 ![Wer für die Lücke gefragt werden kann](../screenshots/beispiel-anfrage.png)
 
 Die Liste **Auf Anfrage verfügbar** nennt Personen, die diese Schicht nur auf Anfrage machen und an dem Tag frei
-sind. Steht dort jemand, fragt man die Person und klickt bei Zusage auf den Namen: Der Dienst ist gesetzt und
-fixiert. Ist die Liste leer („Niemand passt.“, wie im Bild), gibt es zwei Wege:
+sind; hier ist es Waltraud Erlenhuber, die Technik und Systeme nur auf Anfrage macht. Man fragt die Person und
+klickt bei Zusage auf ihren Namen: Der Dienst ist gesetzt und fixiert, im Plan mit einer kleinen Ecke unten links.
+Ist die Liste leer („Niemand passt.“), gibt es zwei Wege:
 
 - jemanden von Hand einteilen, der den Dienst normal machen darf (die Zelle anklicken, Schicht wählen) und
   danach in der Zeile über dem Plan prüfen, dass kein Regelverstoß entstanden ist; oder
@@ -162,7 +164,7 @@ frei ist und den Dienst machen darf:
 ![Nach dem neuen Planen](../screenshots/beispiel-neu-geplant.png)
 
 1. Wieder grün: „Plan verwendbar: keine Regelverstöße, keine Lücken“. Der Hinweis „Plan veraltet“ ist weg.
-2. An den Krankentagen steht „K“; die Dienste haben andere übernommen.
+2. An den Krankentagen steht „K“; die Dienste haben andere übernommen, am zweiten Tag die Person auf Anfrage.
 
 Neu planen ändert auch andere Zellen, die nicht fixiert sind. Soll ein Teil des Plans sicher bleiben (etwa weil er
 schon ausgehängt ist), vorher diese Zellen fixieren (Zelle anklicken, **Fixieren**).

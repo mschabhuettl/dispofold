@@ -88,8 +88,10 @@ Wichtig, damit der Bedarf so wirkt wie gedacht:
 - **Ein Datum ersetzt den ganzen Tag.** Gibt es für einen Bereich Bedarf „an einem Datum“, gilt an diesem Tag für
   den Bereich nur noch dieser Bedarf; der Bedarf nach Tagen fällt an dem Tag weg. Für eine Veranstaltung am 20.,
   die tagsüber eine Person mehr braucht, also alle Zeiträume des 20. eintragen, nicht nur den zusätzlichen.
-- **Höchstbesetzung:** Ohne Höchstwert ist alles über der Mindestbesetzung Überbesetzung. Einen Höchstwert setzt
-  man, wo mehr Personen erwünscht sind, wenn sie ohnehin Stunden brauchen (Personen unter ihrem Ziel).
+- **Höchstbesetzung:** Ohne Höchstwert ist jede Person über der Mindestbesetzung Überbesetzung, und die Planung
+  vermeidet sie, auch wenn Personen dadurch unter ihrem Ziel bleiben. Mit einem Höchstwert darf sie bis dorthin
+  einteilen, ohne dass es als Überbesetzung zählt. Einen Höchstwert setzt man also, wo zusätzliche Personen
+  willkommen sind.
 - **Wann ändern:** wenn sich die Besetzung dauerhaft ändert. Bedarf, der in Dispofold geändert wurde, kommt in die
   [Korrekturdatei](daten.md#korrekturdatei), sodass der nächste Datensatz ihn schon enthält.
 

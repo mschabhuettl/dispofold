@@ -2,8 +2,9 @@
 
 Oben die Fragen, die beim Planen oft kommen, darunter die Meldungen des Programms nach Bereich: was sie bedeuten
 und was zu tun ist. Die Meldungen stehen hier so, wie sie im Programm erscheinen; „…“ steht für einen Namen, ein
-Datum oder eine Zahl. Fehlermeldungen erscheinen unten rechts und bleiben, bis man sie schließt; Fehler eines
-Imports oder Formulars stehen als Liste auf der Seite.
+Datum oder eine Zahl. *Kursiv* steht, was keine Meldung ist, sondern beschreibt, was man sieht. Fehlermeldungen
+erscheinen unten rechts und bleiben, bis man sie schließt; Fehler eines Imports oder Formulars stehen als Liste auf
+der Seite.
 
 ## Häufige Fragen
 
@@ -58,17 +59,23 @@ rechts steht die Rolle). Die Rolle vergibt die IT. Siehe [Rolle „nur lesen“]
 
 ## Anmeldung
 
+![Die Meldung nach einem falschen Passwort](../screenshots/anmelden-fehler.png)
+
 | Meldung | Ursache | Was tun |
 |---|---|---|
 | Anmeldung fehlgeschlagen. Bitte Benutzername und Passwort prüfen. | Benutzername oder Passwort falsch | erneut eingeben; ein vergessenes Passwort setzt die IT neu |
-| Fehler 429 im Browser | mehr als zehn Anmeldeversuche in einer Minute | eine Minute warten |
-| die Anmeldeseite erscheint mitten in der Arbeit | die Sitzung ist nach zwei Stunden ohne Aktivität abgelaufen | neu anmelden; nicht Gespeichertes ist verloren |
+| *Fehler 429 im Browser* | mehr als zehn Anmeldeversuche in einer Minute | eine Minute warten |
+| *die Anmeldeseite erscheint mitten in der Arbeit* | die Sitzung ist nach zwei Stunden ohne Aktivität abgelaufen | neu anmelden; nicht Gespeichertes ist verloren |
 | Server nicht erreichbar | der Server oder das Netz antwortet nicht | Verbindung prüfen, Seite neu laden, sonst die IT fragen |
 | Keine Berechtigung für diese Aktion | die Rolle „nur lesen“ hat versucht, etwas zu ändern | mit einem Benutzer der Planung anmelden |
 
 ## Import
 
 Ein abgelehnter Import nennt alle Fehler auf einmal, nur mit Ids, ohne Namen. Nichts wird übernommen.
+
+![Ein abgelehnter Import](../screenshots/daten-fehler.png)
+
+![Die Rückfrage, wenn Stammdaten in Dispofold geändert wurden](../screenshots/daten-rueckfrage.png)
 
 | Meldung | Ursache | Was tun |
 |---|---|---|
@@ -77,7 +84,7 @@ Ein abgelehnter Import nennt alle Fehler auf einmal, nur mit Ids, ohne Namen. Ni
 | Die Datei ist kein Dispofold-Datensatz. | eine andere Datei, etwa ein exportierter Plan | einen Datensatz aus dem Exportprogramm oder aus **Datensatz exportieren** wählen |
 | Der Datensatz stammt aus einer nicht unterstützten Version von Dispofold. | die Datei ist neuer oder älter, als dieses Programm lesen kann | Dispofold aktualisieren oder mit passender Version exportieren |
 | Person …: Wochenstunden müssen größer als 0 sein | ein Fehler in den Daten einer Person | im Quellsystem korrigieren |
-| … verweist auf den unbekannten Bereich … (Person, Schicht, Abwesenheitsart ebenso) | ein Eintrag nennt etwas, das es im Datensatz nicht gibt | im Quellsystem den Eintrag oder den fehlenden Bereich ergänzen |
+| … verweist auf den unbekannten Bereich … (*ebenso Person, Schicht, Abwesenheitsart*) | ein Eintrag nennt etwas, das es im Datensatz nicht gibt | im Quellsystem den Eintrag oder den fehlenden Bereich ergänzen |
 | Person …: Die gewohnte Verteilung ist ungültig | die Anteile ergeben nicht 100 % oder nennen einen fremden Bereich | im Quellsystem korrigieren |
 | Schicht … dauert … h, erlaubt sind höchstens … h. | eine Schicht ist länger als die Höchstdauer eines Dienstes | die Schicht oder die Regel prüfen |
 | Der Monat … ist abgeschlossen; der Import würde ihn ändern. | die Datei enthält einen abgeschlossenen Monat mit anderen Eingaben | den Monat wieder öffnen oder eine Datei ohne diesen Monat importieren |
@@ -85,7 +92,7 @@ Ein abgelehnter Import nennt alle Fehler auf einmal, nur mit Ids, ohne Namen. Ni
 | Stammdaten wurden geändert. … | seit dem letzten Import wurde in Dispofold etwas geändert | siehe [Import](daten.md#import): exportieren, behalten oder bewusst ersetzen |
 | Der Stand des letzten Imports ist nicht gespeichert (…) | die Installation stammt aus einer älteren Version | einmal neu importieren, danach gehen Vorschau und Korrekturdatei |
 | Die Daten sind zu groß (höchstens 50 MB). | die Datei ist zu groß | die IT fragen |
-| … Warnung(en): | der Import ist gelungen, aber etwas ist auffällig, etwa zwei Abwesenheiten am selben Tag | die genannten Einträge im Quellsystem prüfen |
+| … Warnungen: | der Import ist gelungen, aber etwas ist auffällig, etwa zwei Abwesenheiten am selben Tag | die genannten Einträge im Quellsystem prüfen |
 
 ## Speichern und Konflikte
 
@@ -96,16 +103,18 @@ Ein abgelehnter Import nennt alle Fehler auf einmal, nur mit Ids, ohne Namen. Ni
 | Die Änderung wurde nicht gespeichert: … Fehler. | das Formular enthält einen Fehler, die Liste nennt ihn | den Fehler im Formular beheben und speichern |
 | … wird noch …-mal verwendet (in …). Mit allen Verweisen entfernen? | der Eintrag steht noch in offenen Monaten oder anderen Stammdaten | **OK** entfernt ihn mit allen Verweisen, sonst abbrechen |
 | Der Eintrag kommt in abgeschlossenen Monaten vor (…) und kann nicht entfernt werden. | der Eintrag gehört zur Historie | stehen lassen; bei Personen den Austritt eintragen oder nicht mehr übernehmen |
-| Der Bereich … hat noch … Schicht(en). Bitte zuerst diese Schichten entfernen. | ein Bereich mit Schichten | zuerst die Schichten entfernen |
+| Der Bereich … hat noch … Schichten. Bitte zuerst diese Schichten entfernen. | ein Bereich mit Schichten | zuerst die Schichten entfernen |
 | Das Kürzel … ist vergeben oder war schon vergeben und bleibt gesperrt. | Kürzel von Bereichen und Abwesenheitsarten sind eindeutig, auch nach dem Entfernen | ein anderes Kürzel wählen |
 | Es gibt ungespeicherte Änderungen. Trotzdem verlassen? | die Seite hat Änderungen, die noch nicht gespeichert sind | **Abbrechen** und speichern, oder **OK**, um sie zu verwerfen |
 
 ## Planen
 
+![Ein Regelverstoß in der Auswahl einer Zelle](../screenshots/beispiel-zelle.png)
+
 | Meldung | Ursache | Was tun |
 |---|---|---|
-| … Regelverstöße (rot über dem Plan) | ein Dienst verletzt eine Regel, meist von Hand gesetzt, durch eine Vorgabe oder eine nachträgliche Abwesenheit | die Knöpfe darunter oder **Prüfen** nennen Person und Tag; ändern oder neu planen. Siehe [Probleme](planen.md#probleme) |
-| … Lücken (… Personenstunden) (gelb) | der Bedarf ist nicht gedeckt; es war niemand mehr frei, der den Dienst machen darf | **Auf Anfrage verfügbar** an der Lücke, von Hand einteilen oder den Bedarf prüfen |
+| … Regelverstöße (*rot über dem Plan*) | ein Dienst verletzt eine Regel, meist von Hand gesetzt, durch eine Vorgabe oder eine nachträgliche Abwesenheit | die Knöpfe darunter oder **Prüfen** nennen Person und Tag; ändern oder neu planen. Siehe [Probleme](planen.md#probleme) |
+| … Lücken (… Personenstunden) (*gelb*) | der Bedarf ist nicht gedeckt; es war niemand mehr frei, der den Dienst machen darf | **Auf Anfrage verfügbar** an der Lücke, von Hand einteilen oder den Bedarf prüfen |
 | Plan veraltet: neu planen | Eingaben, Stammdaten, Regeln, die Historie oder der Vormonat haben sich nach der Planung geändert | neu planen. Siehe [Plan veraltet](planen.md#hinweis-plan-veraltet-neu-planen) |
 | Konflikt: …, aber Dienst … geplant. Das ist ein Regelverstoß. | ein Dienst an einem Tag mit Abwesenheit | **Dienst entfernen (frei)** in der Auswahl der Zelle |
 | Niemand passt. Gefragt werden können nur Personen, die den Dienst nur auf Anfrage machen und an dem Tag frei sind. | an der Lücke gibt es niemanden auf Anfrage | jemanden von Hand einteilen oder die Lücke bewusst offen lassen |
@@ -143,13 +152,15 @@ Beim Start und während der Arbeit:
 | Dispofold läuft bereits mit diesem Datenordner. Bitte das schon geöffnete Fenster verwenden. | das Programm ist schon offen | das offene Fenster verwenden |
 | Der Datenordner liegt auf einem Netzlaufwerk. Das kann die Datenbank beschädigen. … | der Datenordner liegt nicht lokal | die IT fragen; ein lokaler Ordner ist empfohlen |
 | Dispofold startet neu … | ein Update wird eingespielt oder das Programm startet seinen Hintergrunddienst neu | warten, die Seite lädt von selbst |
-| Kein Zugriff. Bitte Dispofold über das Programm öffnen. | die Seite wurde nicht über das Programm geöffnet, etwa aus einem Lesezeichen | Dispofold über das Programm starten |
-| Dispofold {Version} wurde unerwartet beendet (Code …). / … konnte nicht gestartet werden. | ein Fehler im Hintergrunddienst | neu starten; kommt es wieder, die IT mit dem Protokoll fragen (siehe [betrieb.md](../betrieb.md#protokolle-des-desktop-programms)) |
+| Kein Zugriff: Bitte Dispofold über das Programm öffnen. | die Seite wurde nicht über das Programm geöffnet, etwa aus einem Lesezeichen | Dispofold über das Programm starten |
+| Dispofold … wurde unerwartet beendet (Code …). / Dispofold … konnte nicht gestartet werden. | ein Fehler im Hintergrunddienst | neu starten; kommt es wieder, die IT mit dem Protokoll fragen (siehe [betrieb.md](../betrieb.md#protokolle-des-desktop-programms)) |
 | Die Programmdateien von Dispofold sind unvollständig. … / Programmfenster und Hintergrunddienst von Dispofold passen nicht zusammen. … | die Installation ist beschädigt | Dispofold neu installieren; die Daten bleiben |
 | Die Daten wurden zuletzt mit der neueren Version … geöffnet. Version … kann sie nicht verwenden. … | eine ältere Version wurde auf neueren Daten gestartet | die neuere Version installieren |
 | Gespeichert: … im Ordner … | ein Export wurde gespeichert | die Datei liegt im Ordner Downloads |
 
 Updates:
+
+![Die Frage beim ersten Start, ob Dispofold nach Updates suchen soll](../screenshots/desktop-frage.png)
 
 | Meldung | Ursache | Was tun |
 |---|---|---|

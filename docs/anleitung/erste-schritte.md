@@ -38,6 +38,9 @@ wo das Programm läuft.
    wird zweimal eingegeben. Mit diesem Passwort sind die Daten verschlüsselt. **Ohne dieses Passwort sind die Daten
    verloren.** Es gibt keine Möglichkeit, es wiederherzustellen, auch nicht durch die IT. Das Passwort also sicher
    aufbewahren, etwa in einem Passwortmanager.
+
+   ![Das Passwort beim ersten Start](../screenshots/desktop-passwort.png)
+
 2. **Jeder weitere Start:** Dispofold fragt nach dem Passwort. Bei einem falschen Passwort meldet es „Das Passwort
    ist falsch.“ Ein Benutzername und eine Rolle gibt es nicht; am eigenen Rechner hat man immer die Rolle
    Planung, oben rechts steht „lokal“.
@@ -45,8 +48,11 @@ wo das Programm läuft.
 
 Unter Windows und macOS erscheint Dispofold in einem eigenen Fenster. Unter Linux öffnet sich die Oberfläche im
 Standardbrowser; ein kleines Fenster „Dispofold läuft“ hält das Programm dann in Betrieb: **Öffnen** zeigt die
-Oberfläche wieder im Browser, **Beenden** beendet das Programm. Ein zweiter Start öffnet kein zweites Programm,
-sondern holt das laufende nach vorn.
+Oberfläche wieder im Browser, **Beenden** beendet das Programm.
+
+![Das kleine Fenster „Dispofold läuft“ unter Linux](../screenshots/desktop-laeuft.png)
+
+Ein zweiter Start öffnet kein zweites Programm, sondern holt das laufende nach vorn.
 
 Beim ersten Start fragt Dispofold außerdem einmal, ob es nach neuen Versionen suchen soll:
 
