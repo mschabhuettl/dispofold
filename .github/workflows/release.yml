@@ -72,12 +72,16 @@ jobs:
       VERSION: ${{ needs.version.outputs.version }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      # Before the version is written into pom.xml, so that the cache key matches the one of the CI jobs.
       - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
         with:
           distribution: temurin
           java-version: "21"
-          cache: maven
+      # The cache of the CI job compose. Before the version is written into pom.xml, so that the key matches.
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.m2/repository
+          key: maven-image-seed-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: setup-java-${{ runner.os }}-
       - name: Maven of the wrapper (with retries)
         run: scripts/fetch-maven.sh
       - name: Maven repository for the image build

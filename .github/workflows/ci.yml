@@ -309,7 +309,13 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
-          cache: maven
+      # Own key: the cache of the Maven jobs lacks what the image build needs beyond the tests (about 900 files).
+      # Starts from theirs; saved after a successful run, so that the next run and the release fetch nothing.
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.m2/repository
+          key: maven-image-seed-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
+          restore-keys: setup-java-${{ runner.os }}-
       - name: Maven of the wrapper (with retries)
         run: scripts/fetch-maven.sh
       - name: Maven repository for the image build

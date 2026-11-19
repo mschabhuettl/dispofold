@@ -13,11 +13,12 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
   wirklich fehlendes Artefakt lässt den Build weiterhin scheitern; was gebaut wird, ändert sich nicht.
 - **Image-Build in CI und Release fast ohne Anfragen an Maven Central:** Maven Central begrenzt die Anfragen je
   Adresse, und der Image-Build auf einem frischen Runner lud bisher den ganzen Baum. Der Job `compose` und der
-  Release-Job `images` füllen jetzt das Maven-Repository des Runners (Actions-Cache, dann `go-offline` und
-  `package`) und geben es dem Backend-Build als Build-Kontext `m2seed` mit (`.github/compose-maven-seed.yml`,
+  Release-Job `images` füllen jetzt das Maven-Repository des Runners (eigener Actions-Cache, beim ersten Lauf aus
+  dem der Maven-Jobs, dann `go-offline` und `package`) und geben es dem Backend-Build als Build-Kontext `m2seed` mit (`.github/compose-maven-seed.yml`,
   `MAVEN_SEED` in `scripts/release/build-images.sh`). Ohne diesen Kontext baut das Image wie bisher und lädt alles
   selbst. Die sonst von der Maven-Version abhängigen Plugins (clean, install, deploy, site, dependency) sind in
-  `backend/pom.xml` fest, damit Wrapper und Image dieselben auflösen. Das Image ändert sich nicht.
+  `backend/pom.xml` fest, damit Wrapper und Image dieselben auflösen. Im Image ändert sich nur die in die Anwendung
+  eingebettete `pom.xml`.
 
 ## 0.16.0 (2026-11-19)
 
