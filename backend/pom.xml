@@ -31,6 +31,13 @@
     <version.resources.plugin>3.5.0</version.resources.plugin>
     <version.surefire.plugin>3.5.6</version.surefire.plugin>
     <version.jar.plugin>3.4.2</version.jar.plugin>
+    <!-- Otherwise given by the Maven version. Fixed, so that the wrapper's Maven and the image's Maven resolve the
+         same plugins: the image build in CI starts from the runner's Maven repository (backend/Dockerfile). -->
+    <version.clean.plugin>3.2.0</version.clean.plugin>
+    <version.install.plugin>3.1.4</version.install.plugin>
+    <version.deploy.plugin>3.1.4</version.deploy.plugin>
+    <version.site.plugin>3.12.1</version.site.plugin>
+    <version.dependency.plugin>3.7.0</version.dependency.plugin>
   </properties>
 
   <dependencyManagement>
@@ -234,6 +241,26 @@
             <java.util.logging.manager>org.jboss.logmanager.LogManager</java.util.logging.manager>
           </systemPropertyVariables>
         </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-clean-plugin</artifactId>
+        <version>${version.clean.plugin}</version>
+      </plugin>
+      <plugin>
+        <artifactId>maven-install-plugin</artifactId>
+        <version>${version.install.plugin}</version>
+      </plugin>
+      <plugin>
+        <artifactId>maven-deploy-plugin</artifactId>
+        <version>${version.deploy.plugin}</version>
+      </plugin>
+      <plugin>
+        <artifactId>maven-site-plugin</artifactId>
+        <version>${version.site.plugin}</version>
+      </plugin>
+      <plugin>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>${version.dependency.plugin}</version>
       </plugin>
     </plugins>
   </build>
