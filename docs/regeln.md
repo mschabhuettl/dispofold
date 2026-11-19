@@ -63,6 +63,11 @@ die Regeln der Gruppe Regelverstoß und der Bedarf haben kein einstellbares Gewi
 
 ## Regelverstoß
 
+Diese Regeln haben weder ein Gewicht noch eine Wichtigkeit: Ein Plan mit einem Verstoß ist immer schlechter als
+einer ohne, gleich wie viel Bedarf dafür offen bleibt oder wie viel Qualität es kostet. Ein Verstoß entsteht
+deshalb praktisch nur durch von Hand gesetzte Dienste und Vorgaben; die Analyse zeigt ihn. Ändern lassen sich nur
+die Parameter (Seite Regeln, „Gesetz und Betriebsvereinbarung“).
+
 | Id | Regel | Quelle | Parameter (Standard) |
 |---|---|---|---|
 | `dailyRest` | Mindestens 11 h Ruhe zwischen zwei Diensten | KV, Ruhezeit | `minDailyRestHours` (11) |
@@ -103,6 +108,35 @@ Einzelheiten:
   Feiertagsarbeit neu erworbene Ersatzruhe wird bewusst nicht im selben Monat verplant (einfach und
   nachvollziehbar; sie steht in den Kennzahlen als `compRestEarned`).
 
+Beispiele, was jede Regel verhindert (Personen und Schichten erfunden, Standardwerte):
+
+- **Beispiel `dailyRest`:** Anna hat Spät 14-22 und am nächsten Morgen Früh 06-14. Dazwischen lägen nur 8 h Ruhe,
+  also 180 Minuten zu wenig; der Solver plant ihr das nicht.
+- **Beispiel `weeklyRest`:** Ben hat Montag bis Freitag Früh 06-14 und am Samstag Spät 14-22. Der Sonntag ist frei,
+  die längste Ruhe der Woche (Samstag 22 Uhr bis Sonntag 24 Uhr) sind aber nur 26 h. Ohne den Samstag wären es
+  58 h (Freitag 14 Uhr bis Sonntag 24 Uhr).
+- **Beispiel `maxDutyLength`:** Steht im Schichtkatalog eine Schicht Lang 06-20 (14 h), plant der Solver sie nie
+  ein. Setzt die Planung sie von Hand, ist das ein Verstoß von 120 Minuten.
+- **Beispiel `maxWeekHours`:** Carla hat in einer Woche fünfmal Tag 07-19, das sind 60 h. Ein sechster Dienst in
+  derselben Woche ist ausgeschlossen, auch wenn dafür Bedarf offen bleibt.
+- **Beispiel `maxMonthHours`:** Dora arbeitet Teilzeit, ihr Ziel im Monat sind 80 h. Mit 10 % Toleranz bekommt sie
+  höchstens 88 h, auch wenn der Bereich jemanden für eine Lücke sucht.
+- **Beispiel `freeSundays`:** Emil hätte im Monat mit vier Sonntagen an drei Sonntagen Dienst. Mit dem Standard 2
+  darf er an höchstens zwei arbeiten; auch eine Nacht 19-07 von Samstag auf Sonntag nimmt den Sonntag.
+- **Beispiel `averageWeekHours`:** Frida hat im Durchrechnungszeitraum schon fast 46,16 h je Woche gearbeitet. In
+  diesem Monat bekommt sie nur so viele Stunden, dass der Durchschnitt nicht darüber steigt.
+- **Beispiel `qualification`:** Gustav ist nur für Bereich A eingeteilt. In Bereich B bekommt er keinen Dienst,
+  auch wenn dort jemand fehlt.
+- **Beispiel `absence`:** Hanna hat am 10. Urlaub. An diesem Tag gibt es für sie weder Dienst noch Ersatzruhe.
+- **Beispiel `employment`:** Ida tritt am 15. ein. Vorher bekommt sie keinen Dienst, ebenso nach einem Austritt
+  und ab dem Tag, ab dem sie nicht mehr aus dem Quellsystem übernommen wird.
+- **Beispiel `neverRestriction`:** Jonas hat die Sperre „nie Nacht am Freitag“. Freitags plant der Solver ihm
+  keine Nacht 19-07.
+- **Beispiel `compRestBalance`:** Klara hat zwei Ersatzruhetage offen. Der Solver plant ihr höchstens zwei, nicht
+  drei.
+- **Beispiel `missingShift`:** Am 3. ist ein Dienst Früh 06-14 fixiert, nach einem neuen Import fehlt diese Schicht
+  im Katalog. Statt den Tag still frei zu machen, meldet die Analyse einen Verstoß.
+
 ## Bedarf: Lücken und Überbesetzung
 
 | Id | Regel | Gewicht (fest) |
@@ -123,6 +157,16 @@ Einzelheiten:
 - Von Hand gesetzte Dienste und Vorgaben dürfen überbesetzen; sie erscheinen dann in der Gruppe Bedarf und in
   der Analyse. Die Statuszeile zeigt ungedeckten Bedarf und Überbesetzung getrennt in Personenstunden.
 - Gespeicherte Gewichte für `overstaffing` und `uselessDuty` (früher Qualität) werden ignoriert.
+- Die Gewichte dieser Gruppe sind fest, es gibt keine Wichtigkeit. Keine Wichtigkeit und kein Gewicht einer
+  Qualitätsregel lässt eine Lücke offen oder eine Überbesetzung zu, um Wünsche, Blöcke oder Stunden zu verbessern.
+- **Beispiel `demand`:** Bereich A braucht in der Nacht 19-07 zwei Personen, geplant ist eine: 720 Personenminuten
+  Lücke. Ist jemand frei und darf (Ruhezeit, Qualifikation, Sperren), plant der Solver ihn ein, auch wenn das
+  einen Wunsch, einen Block oder das Ziel dieser Person kostet.
+- **Beispiel `overstaffing`:** Bereich A braucht tagsüber drei Personen, ohne Höchstbesetzung. Lukas liegt unter
+  seinem Ziel, bekommt dort aber trotzdem keinen vierten Tagdienst: Jede Minute über dem Bedarf wiegt mehr als
+  alle Qualitätsregeln zusammen.
+- **Beispiel `uselessDuty`:** Ein Dienst Spät 14-22 in Bereich B, wo es zwischen 14 und 22 Uhr gar keinen Bedarf
+  gibt, zählt mit 480 Minuten. Meist fehlt dann in den Stammdaten der Bedarf für diese Zeit.
 
 - Die Bedarfsfenster eines Tages werden an allen Beginn- und Endzeiten der Schichten des Bereichs und an
   den Fenstergrenzen geteilt. In jedem Abschnitt ist die Besetzung konstant.
@@ -156,6 +200,31 @@ der Erklärung je Person.
 | `shiftMix` | Gewohnte Verteilung | quadrierte Abweichung in Zehntel-Diensten je Kategorie und Bereich, siehe unten | 100 |
 | `family` | Familienregel | je Dienst gegen die Regel | 800 |
 | `onRequest` | Dienst nur auf Anfrage, von Hand gesetzt | je solchem Dienst; Gewicht fest, nicht einstellbar | 1000 |
+
+**Wichtigkeit.** Die Seite Regeln fasst neun Qualitätsregeln zu Planungszielen zusammen. Die Wichtigkeit eines
+Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerundet auf ganze Zahlen:
+
+| Planungsziel | Regeln | weniger / normal / mehr | Gewichte |
+|---|---|---|---|
+| Dienstblöcke | `blockLength`, `isolatedDayOff` | 0,5 / 1 / 2 | 3000 / 6000 / 12000 und 5000 / 10000 / 20000 |
+| Wünsche | `wishes` | 0,5 / 1 / 2 | 150 / 300 / 600 |
+| Faire Verteilung | `fairNights`, `fairWeekends`, `fairHolidays`, `fairUnpopular` | 0,25 / 1 / 4 | 1 / 3 / 12, unbeliebte 1 / 2 / 8 |
+| Stunden treffen | `targetHours` | 0,5 / 1 / 2 | 10 / 20 / 40 |
+| Familienregeln | `family` | 0,5 / 1 / 2 | 400 / 800 / 1600 |
+
+- `forwardRotation`, `splitWeekend`, `compRestUse`, `shiftVariety`, `areaVariety` und `shiftMix` gehören zu keinem
+  Ziel: Sie haben keine Wichtigkeit, nur ihr Gewicht unter Erweitert. `onRequest` hat ein festes Gewicht.
+- Was die Wichtigkeit sicher bewirkt: Sie verschiebt nur das Verhältnis der Qualitätsregeln untereinander. Regeln
+  der Gruppe Regelverstoß und der Bedarf gehen wegen der strengen Reihenfolge der Gruppen immer vor; keine Wahl
+  erlaubt einen Verstoß oder lässt eine Lücke offen.
+- Es zählen nur die Verhältnisse: das Doppelte bei einem Ziel wirkt wie die Hälfte bei allen anderen
+  Qualitätsregeln zugleich. Werden alle Gewichte mit derselben Zahl malgenommen, bleibt die Reihenfolge aller
+  Pläne gleich.
+- Gemessen ist die Wirkung bisher nur für die faire Verteilung (siehe Fairness): dort ändert sie nichts über das
+  Rauschen zwischen zwei Läufen. Für die anderen Ziele ist das 0,5- und 2-Fache nicht gemessen; was unten dazu
+  steht, folgt aus den Formeln und ist eine Erwartung, keine Messung. Nachmessen lässt es sich mit
+  `WeightFactorBenchmarkTest` im Backend (z. B. `-Dsolver.weightFactor=2 -Dsolver.weightFactor.ids=wishes`).
+- Die Wahl einer Wichtigkeit überschreibt Gewichte, die unter Erweitert von Hand gesetzt wurden.
 
 ### Stunden treffen
 
@@ -191,6 +260,14 @@ der Erklärung je Person.
   Obergrenze bleibt beim echten Ziel. Personenansicht und Analyse zeigen beide Ziele.
 - Die Strafe ist die Abweichung in Viertelstunden (vom verkleinerten Ziel), quadriert, damit sie sich auf viele Personen verteilt statt
   bei wenigen hängen zu bleiben. Beispiel: 4 h Abweichung sind 16 Viertelstunden, Strafe 256 mal Gewicht.
+- **Beispiel:** Mia und Noah bleiben zusammen 8 h unter ihren Zielen. Mia allein 8 h darunter kostet 32² = 1024
+  mal Gewicht, Mia und Noah je 4 h darunter nur 2 × 256 = 512. Die Regel verhindert also, dass eine Person weit
+  daneben liegt, während andere ihr Ziel genau treffen.
+- **Wichtigkeit („Stunden treffen“, Gewicht 10, 20 oder 40):** Nicht gemessen. Erwartbar: „mehr“ bringt die
+  Stunden näher an das Ziel und nimmt dafür eher schlechtere Blöcke, unerfüllte Wünsche und Abweichungen von der
+  gewohnten Verteilung in Kauf; „weniger“ umgekehrt. Die Obergrenze über dem Ziel und der Ausgleich des
+  Stundenkontos, die beim Ziel auf der Seite Regeln stehen, sind Parameter und ändern sich mit der Wichtigkeit
+  nicht.
 
 ### Freie Sonntage
 
@@ -224,6 +301,11 @@ der Erklärung je Person.
   Verteilung je Bereich hat, zählt nicht für die Abwechslung der Bereiche. Wochenenden, Feiertage und
   unbeliebte Dienste bleiben fair verteilt. Personen ohne Verteilung werden geplant wie bisher.
 - Die Personenansicht zeigt die geplante Verteilung neben der gewohnten.
+- **Beispiel:** Olga macht seit Jahren fast nur Tagdienste (90 % Tag, 10 % Nacht). Die Regel verhindert, dass sie
+  in einem Monat plötzlich zur Hälfte Nächte bekommt, nur weil das bei anderen Regeln etwas spart.
+- **Wichtigkeit:** Die Regel gehört zu keinem Planungsziel, ihr Gewicht steht nur unter Erweitert. Gemessen ist
+  nur, was oben steht (Gewicht 100 und 200 gegen den Ausgangswert 0,55); ein Gewicht unter 100 ist nicht
+  gemessen. Erwartbar weicht die Verteilung dann stärker ab, zugunsten von Blöcken und Stunden.
 
 ### Nachtverteilung
 
@@ -276,6 +358,16 @@ Eine Einstellung der Regeln, `nightDistribution`:
   siehe Nachtverteilung). Die Strafe ist die Wurzel aus der Summe der quadrierten Abweichungen vom Mittelwert:
   0, wenn alle gleich belastet sind. Die Erklärung je Person zeigt die Abweichung vom Mittelwert und nur bei
   Personen über dem Mittelwert einen Treffer.
+- **Beispiel `fairNights`:** Paul und Rita, beide Vollzeit und im Nachtausgleich: Paul hatte in den letzten drei
+  Monaten zwölf Nächte, Rita vier. Neue Nächte gehen eher an Rita als an Paul.
+- **Beispiel `fairWeekends`:** Sven hat in den letzten drei Monaten an acht Wochenenden gearbeitet, Tina an drei.
+  Das nächste Wochenende im Dienst bekommt eher Tina.
+- **Beispiel `fairHolidays`:** Uwe hatte im Vormonat Dienst an einem Feiertag, Vera nicht. Am nächsten Feiertag
+  ist eher Vera dran.
+- **Beispiel `fairUnpopular`:** Die Schicht Kurz 18-22 ist im Katalog als unbeliebt markiert. Sie geht nicht immer
+  an dieselben, sondern verteilt sich auf alle, die sie machen können.
+- Die Beispiele zeigen, was die Regeln vergleichen und bevorzugen. Wie wenig das den fertigen Plan bewegt, steht
+  im nächsten Punkt.
 - Wirkung der Wichtigkeit „Faire Verteilung“ (Messung im Demomonat mit klaren Verteilungen, 300 s): Das 0,25-,
   1- oder 4-Fache (Gewichte 1, 3 oder 12, unbeliebte 1, 2 oder 8) ändert die Fairness nicht über das Rauschen
   zwischen zwei Läufen. Die Gründe:
@@ -306,33 +398,70 @@ Eine Einstellung der Regeln, `nightDistribution`:
 - Je Person zählen höchstens `maxWishesPerPerson` Wünsche des Monats (Standard 6), die ersten nach Datum.
 - Arten: frei, Dienst, bestimmte Schicht, bestimmte Schicht nicht.
 - Ziel ist eine gleiche Erfüllungsquote je Person, nicht die Reihenfolge der Eingabe. Die Strafe ist
-  (nicht erfüllte Wünsche)² / (Wünsche), jeweils mit den Vormonaten. Ein weiterer unerfüllter Wunsch kostet
-  bei der Person am meisten, deren Quote schon am schlechtesten ist.
+  100 × (U² - V²) / W: U die nicht erfüllten Wünsche mit den Vormonaten, V die nicht erfüllten der Vormonate
+  allein, W alle Wünsche mit den Vormonaten. Ein weiterer unerfüllter Wunsch kostet bei der Person am meisten,
+  deren Quote schon am schlechtesten ist.
+- **Beispiel:** Sara und Tom wünschen beide den 24. frei, aber nur eine Person kann frei bekommen. Beide hatten
+  in den Vormonaten zehn Wünsche; Sara bekam alle erfüllt, Tom drei nicht. Toms Wunsch geht vor: Bei ihm kostet
+  der unerfüllte Wunsch 100 × (16 - 9) / 11 = 63, bei Sara 100 × 1 / 11 = 9 (mal Gewicht). Ein Wunsch, der
+  einen Regelverstoß oder eine Lücke bedeuten würde, bleibt bei jedem Gewicht unerfüllt.
+- **Wichtigkeit („Wünsche“, Gewicht 150, 300 oder 600):** Das 0,5- und 2-Fache ist nicht gemessen. Erwartbar
+  erfüllt „mehr“ mehr Wünsche und nimmt dafür eher einzelne freie Tage, Blöcke außerhalb der Blocklänge und
+  Abweichungen vom Ziel in Kauf. Dass Wünsche und Blöcke gegeneinander stehen, legt 0.6.0 nahe: Mit viel
+  höheren Blockgewichten (und zugleich dem verkleinerten Ziel) stiegen die unerfüllten Wünsche von 24 auf 38.
 
 ### Blöcke, Rotation, Wochenenden
 
 - Blöcke: aufeinanderfolgende Tage mit Dienst. Kürzer als `minBlock` (2) oder länger als `maxBlock` (4)
   kostet je Tag Unterschied. Ein Block, der am Monatsende endet, gilt nicht als zu kurz, weil er im
   Folgemonat weitergehen kann. Ersatzruhe zählt als freier Tag.
-- Einzelner freier Tag: genau ein freier Tag zwischen zwei Diensten.
+- Einzelner freier Tag: genau ein freier Tag zwischen zwei Diensten. Auch ein einzelner Urlaubs- oder
+  Ersatzruhetag zwischen zwei Diensten zählt so.
+- **Beispiel `blockLength`:** Wim hätte Dienst am Montag, Mittwoch und Freitag, mit je einem freien Tag dazwischen:
+  drei Einzeldienste, je ein Tag zu kurz (dazu zwei einzelne freie Tage). Ein Block von sechs Tagen wäre zwei
+  Tage zu lang. Beides vermeidet die Regel, sie bevorzugt etwa drei Tage Dienst und dann mehrere freie.
+- **Beispiel `isolatedDayOff`:** Xenia hätte Dienst am Montag und Dienstag, frei am Mittwoch, Dienst am Donnerstag
+  und Freitag. Der einzelne freie Mittwoch erholt wenig; die Regel zieht die freien Tage zusammen.
 - Gewichte (ab 0.6.0): Einzelner freier Tag 10000 je Fall, Blocklänge 6000 je Tag. Mit dem verkleinerten
   Ziel prägen sie den Plan sichtbar: Im Demomonat sanken die einzelnen freien Tage von 261 auf 76, die
   Tage außerhalb der Blocklänge (2 bis 4) von 602 auf 328; der Preis: unerfüllte Wünsche stiegen von 24 auf 38. Mit
   deutlich weniger Bedarf als Arbeit sanken die einzelnen freien Tage von 123 auf 16. Wer die Gewichte auf der
   Seite Regeln einmal gespeichert hat, behält die gespeicherten Werte; dort lassen sie sich auf die neuen
   Standards setzen. Die Analyse zeigt beide Zahlen (`singleDaysOff`, `blockDays`).
+- **Wichtigkeit („Dienstblöcke“, Gewichte 3000, 6000 oder 12000 je Tag und 5000, 10000 oder 20000 je
+  einzelnem freien Tag):** Gemessen ist nur der Sprung von den alten Standards (600 und 400, also das 10- und
+  25-Fache) auf die heutigen, zusammen mit dem verkleinerten Ziel, mit den Zahlen oben. Das 0,5- und 2-Fache
+  ist nicht gemessen. Erwartbar wirkt es in dieselbe Richtung, aber schwächer: „mehr“ gibt weniger Einzeldienste
+  und einzelne freie Tage und kostet eher Wünsche und Stunden nahe am Ziel, „weniger“ umgekehrt.
 - Vorwärtsrotation: die Reihenfolge Früh, Tag, Spät, Nacht. Ein Wechsel von einem Tag auf den nächsten in
   eine frühere Kategorie kostet. Nacht auf Früh ohne genug Ruhe ist ohnehin als Regelverstoß verboten.
 - Kategorie einer Schicht: aus dem Schichtkatalog; fehlt sie, gilt Nacht (siehe oben), Früh (Beginn vor
   7:00), Tag (Ende bis 19:00), sonst Spät.
+- **Beispiel `forwardRotation`:** Yvonne hat Spät 12-20 und am nächsten Tag Tag 08-16. Die Ruhezeit von 12 h ist
+  eingehalten, der Wechsel geht aber rückwärts (Spät auf Tag) und kostet. Tag 08-16 und danach Spät 12-20 kostet
+  nichts.
+- **Wichtigkeit:** Die Regel gehört zu keinem Planungsziel, ihr Gewicht (500) steht nur unter Erweitert. Nicht
+  gemessen; erwartbar gibt ein höheres Gewicht weniger Rückwärtswechsel, auf Kosten von Blöcken, Wünschen und
+  Stunden.
 - Ganze Wochenenden: Samstag und Sonntag desselben Wochenendes, von denen nur einer einen Dienst hat (ein
   Wochenende über den Monatsbeginn zählt mit dem Samstag aus dem Vormonat). Ist einer der beiden Tage ein Abwesenheitstag, zählt das Wochenende nicht. Die faire Verteilung der
   gearbeiteten Wochenenden steckt in `fairWeekends`.
+- **Beispiel `splitWeekend`:** Zoe hätte am Samstag Dienst und am Sonntag frei. Die Regel bevorzugt ein ganz
+  freies oder ein ganz gearbeitetes Wochenende: Mit nur einem freien Tag ist das Wochenende kaum Erholung.
+- **Wichtigkeit:** Die Regel gehört zu keinem Planungsziel, ihr Gewicht (300) steht nur unter Erweitert. Nicht
+  gemessen; erwartbar gibt ein höheres Gewicht mehr ganze Wochenenden, auf Kosten von Blöcken, Wünschen und
+  Stunden. Die freien Sonntage (Regelverstoß) gelten bei jedem Gewicht.
 
 ### Ersatzruhe
 
 - Personen mit offenem Guthaben bekommen Ersatzruhetage geplant (Bonus je Tag), höchstens bis zum Guthaben
   (Gruppe Regelverstoß).
+- **Beispiel `compRestUse`:** Anton hat drei Ersatzruhetage offen. Ohne den Bonus plante der Solver sie nur, wo
+  sie anderswo helfen (ein Ersatzruhetag zählt für das Ziel wie ein angerechneter Tag); so könnten sie Monat für
+  Monat stehen bleiben. Der Bonus verhindert das.
+- **Wichtigkeit:** Die Regel gehört zu keinem Planungsziel, ihr Gewicht (500 je Tag) steht nur unter Erweitert.
+  Nicht gemessen; erwartbar baut ein höheres Gewicht mehr Ersatzruhe ab, höchstens bis zum Guthaben. Bei 0 plant
+  der Solver Ersatzruhe nur, wenn sie aus anderen Gründen passt.
 - KV, Feiertagsarbeit: Arbeit an einem Feiertag, der kein Sonntag ist, bringt einen Ersatzruhetag
   (`holidayWorkEarnsCompRest`, Standard ja). Das ist eine Kennzahl (`compRestEarned`) und erhöht das
   Guthaben nach dem Monat, aber keine Regel im Solver.
@@ -354,16 +483,35 @@ Eine Einstellung der Regeln, `nightDistribution`:
 - Familienregel je Person und Wochentag: spätestes Dienstende, frühester Dienstbeginn, keine Nacht. Die
   Uhrzeiten beziehen sich auf den Tag des Dienstbeginns; ein Nachtdienst endet also immer nach einem
   spätesten Ende am selben Tag.
+- **Beispiel `family`:** Clara holt montags ihr Kind ab und hat die Familienregel „spätestes Ende 16:00“. Spät
+  14-22 am Montag verstößt dagegen und kostet; Früh 06-14 nicht. Fehlt am Montag sonst jemand für den Spätdienst
+  und kann nur Clara ihn machen, bekommt sie ihn trotzdem, bei jedem Gewicht, weil der Bedarf vorgeht.
+- **Wichtigkeit („Familienregeln“, Gewicht 400, 800 oder 1600):** Nicht gemessen. Die Wichtigkeit entscheidet nur
+  zwischen Plänen mit gleicher Besetzung: „mehr“ bricht die Regel erwartbar seltener für bessere Blöcke, Wünsche
+  oder Stunden, „weniger“ öfter. Soll ein Dienst auch bei einer Lücke ausgeschlossen sein, braucht es eine Sperre
+  „nie“ (Regelverstoß).
 - Sperren der Art "nur auf Anfrage" plant der Solver nie ein, auch nicht, wenn sonst eine Bedarfslücke bleibt:
   Die Planung fragt die Person und trägt den Dienst dann von Hand ein (fixiert) oder als Vorgabe in den
   Eingaben. Ein solcher Dienst ist kein Regelverstoß; er erscheint als Treffer der Regel `onRequest`, damit
   er sichtbar bleibt. Ihr Gewicht ist fest; ein gespeichertes Gewicht für `onRequest` wird ignoriert. Ein nicht
   fixierter Anfrage-Dienst aus einem früheren Plan fällt bei der nächsten Planung weg. Zu jeder Lücke zeigt die
   Oberfläche, wer gefragt werden kann (siehe [api.md](api.md), `candidates`).
+- **Beispiel `onRequest`:** David macht Nacht 19-07 nur auf Anfrage. Der Solver plant ihm nie eine Nacht, auch
+  nicht für eine Lücke. Sagt David zu, setzt die Planung den Dienst von Hand; der Treffer zeigt dann, dass es eine
+  Ausnahme ist. Das feste Gewicht ändert keinen Plan, weil der Solver solche Dienste ohnehin nie setzt.
 - Sperren gelten für eine Schicht oder für alle Schichten einer Kategorie (z. B. keine Nachtdienste), je
   Wochentag und optional nur von `validFrom` bis `validTo`.
 - Abwechslung: gezählt werden Paare von Diensten im selben Bereich und derselben Kategorie (Früh, Tag, Spät,
   Nacht) bzw. im selben Bereich, einschließlich der Dienste des Vormonats.
+- **Beispiel `shiftVariety`:** Emma hat keine gewohnte Verteilung. Zehn Frühdienste in Bereich A ergeben
+  10 × 9 / 2 = 45 Paare, fünf Früh und fünf Spät nur 2 × 10 = 20. Die Regel verhindert, dass jemand ohne Grund
+  immer dieselbe Art Dienst bekommt.
+- **Beispiel `areaVariety`:** Felix darf in Bereich A und B arbeiten und hat keine Anteile je Bereich. Zehn Dienste
+  nur in A ergeben 45 Paare, fünf in A und fünf in B nur 20; so bleibt er in beiden Bereichen geübt.
+- **Wichtigkeit:** Beide Regeln gehören zu keinem Planungsziel, ihre Gewichte (5 und 1 je Paar) stehen nur unter
+  Erweitert. Nicht gemessen; erwartbar bringt ein höheres Gewicht mehr Abwechslung, auf Kosten von Blöcken,
+  Wünschen und Stunden. Für Personen mit Anteilen je Schichtart bzw. je Bereich gelten sie nicht (siehe Gewohnte
+  Verteilung).
 
 ## Offene Punkte für die Betriebsvereinbarung
 
