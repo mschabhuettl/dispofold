@@ -3,7 +3,8 @@
 // a bad update file shows its German error, installing an update reloads, and quitting shows the closing state.
 // Also: in browser mode (GET /__shell/mode) quitting says the tab can be closed; the Docker build never asks the shell.
 // The menu entry Anleitung and the links in the page intros show the guide built into the program (with its images,
-// no request leaves the program), sections by address, and a clear message when the built-in guide is missing.
+// no request leaves the program): every page with its links to the overview and the neighbouring pages, sections by
+// address, the intro of every page leading to its section, and a clear message when the built-in guide is missing.
 // Updates: the first start asks once whether to check (nothing is checked before the answer, "Nein" keeps it off,
 // "Ja" sets the GitHub source), the notice of a new version with "Jetzt installieren"; in the Docker build the notice
 // of the server's check for planners, dismissed per version, never for viewers.
@@ -15,6 +16,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
+import { PAGES, SECTIONS, guideHref } from '../src/lib/guide.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const servers = [];
@@ -120,35 +122,73 @@ try {
     const entry = g.locator('#nav a', { hasText: 'Anleitung' });
     check(`${mode}: menu entry Anleitung to the built-in guide`, await entry.getAttribute('href') === '#/anleitung'
       && await entry.getAttribute('target') === null);
-    check(`${mode}: intro links to its section`, await g.locator('#main h1 + p.page-intro a').getAttribute('href') === '#/anleitung/regeln');
+    check(`${mode}: intro links to its page`, await g.locator('#main h1 + p.page-intro a').getAttribute('href') === '#/anleitung/einstellungen');
     await entry.click();
     await g.waitForFunction(() => location.hash === '#/anleitung' && document.querySelector('#main .guide'));
     check(`${mode}: guide title`, await g.locator('#main h1').innerText() === 'Anleitung für die Dienstplanung');
     check(`${mode}: guide menu entry marked`, await entry.getAttribute('aria-current') === 'page');
+    const online = g.locator('.guide-online').locator(mode === 'browser' ? 'a' : 'code');
+    check(`${mode}: online address ${mode === 'browser' ? 'as a link' : 'to copy'}`,
+      (await online.innerText()) === 'https://mschabhuettl.github.io/dispofold/anleitung/');
+    // the overview links to every page; each page has its title, the address of the same page on the site and the
+    // links to the overview and the neighbouring pages
+    const pageLinks = await g.locator('.guide a[href^="#/anleitung/"]').evaluateAll((as) => [...new Set(as.map((a) => a.getAttribute('href')))]);
+    check(`${mode}: the overview links to every page`, PAGES.slice(1).every(([id]) => pageLinks.includes(`#/anleitung/${id}`)), pageLinks.join(' '));
+    for (const [i, [id, title]] of PAGES.entries()) {
+      await g.goto(`${guideBase}/${guideHref(true, id)}`);
+      await g.waitForFunction((t) => document.querySelector('#main h1')?.textContent === t && document.querySelector('#main .guide-pages'), title);
+      const nav = await g.locator('#main .guide-pages a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
+      const expected = [i > 0 && '#/anleitung', i > 1 && guideHref(true, PAGES[i - 1][0]), i + 1 < PAGES.length && guideHref(true, PAGES[i + 1][0])].filter(Boolean);
+      const address = (await online.innerText()) === guideHref(false, id);
+      check(`${mode}: page ${id} with title, site address and page links`, address && JSON.stringify(nav) === JSON.stringify(expected), nav.join(' '));
+    }
+    // a page with many images: all shown
+    await g.goto(`${guideBase}/#/anleitung/plan-bearbeiten`);
+    await opened();
     const images = await g.locator('.guide img').evaluateAll(async (imgs) => {
       await Promise.all(imgs.map((i) => (i.complete ? null : new Promise((r) => { i.onload = r; i.onerror = r; }))));
       return imgs.map((i) => i.naturalWidth);
     });
-    check(`${mode}: guide images shown`, images.length >= 10 && images.every((w) => w > 0), images.join(' '));
-    const online = g.locator('.guide-online').locator(mode === 'browser' ? 'a' : 'code');
-    check(`${mode}: online address ${mode === 'browser' ? 'as a link' : 'to copy'}`,
-      (await online.innerText()) === 'https://mschabhuettl.github.io/dispofold/anleitung/');
-    await g.locator('.guide a[href="#/anleitung/planen"]').first().click();
-    await g.waitForFunction(() => location.hash === '#/anleitung/planen' && document.getElementById('planen'));
+    check(`${mode}: guide images shown`, images.length >= 5 && images.every((w) => w > 0), images.join(' '));
+    // "next" from the bottom of a long page shows the next page from its top
+    await g.locator('#main .guide-pages a').last().click();
+    await g.waitForFunction(() => location.hash === '#/anleitung/auswertungen' && document.querySelector('#main .guide'));
     await g.waitForTimeout(300);
-    const top = await g.locator('#planen').evaluate((e) => e.getBoundingClientRect().top);
+    check(`${mode}: the next page starts at its top`, await g.evaluate(() => window.scrollY) === 0);
+    // a link to a section of another page
+    await g.goto(`${guideBase}/#/anleitung`);
+    await opened();
+    await g.locator('.guide a[href="#/anleitung/planen/probleme"]').first().click();
+    await g.waitForFunction(() => location.hash === '#/anleitung/planen/probleme' && document.getElementById('probleme'));
+    await g.waitForTimeout(300);
+    const top = await g.locator('#probleme').evaluate((e) => e.getBoundingClientRect().top);
     check(`${mode}: a link in the guide shows its section`, top > 0 && top < 200, String(top));
-    await g.goto(`${guideBase}/#/anleitung/pr%C3%BCfen`);
+    await g.goto(`${guideBase}/#/anleitung/personen/nicht-mehr-aus-dem-quellsystem-%C3%BCbernehmen`);
     await opened();
     await g.waitForTimeout(300);
-    const section = await g.locator('[id="prüfen"]').evaluate((e) => e.getBoundingClientRect().top);
+    const section = await g.locator('[id="nicht-mehr-aus-dem-quellsystem-übernehmen"]').evaluate((e) => e.getBoundingClientRect().top);
     check(`${mode}: section with umlaut by address`, section > 0 && section < 200, String(section));
+    await g.goto(`${guideBase}/#/anleitung`);
+    await opened();
     const external = await g.locator('.guide a[target="_blank"]').count();
     check(`${mode}: links to the other documents ${mode === 'browser' ? 'open the site' : 'as addresses to copy'}`, mode === 'browser'
-      ? external >= 5 : external === 0 && await g.locator('.guide code', { hasText: 'https://mschabhuettl.github.io/dispofold/regeln/' }).count() === 1);
+      ? external >= 1 : external === 0 && await g.locator('.guide code', { hasText: 'https://mschabhuettl.github.io/dispofold/regeln/' }).count() >= 1);
+    // every page of the program: its intro links to a page of the guide, which shows the section
+    for (const [path, target] of Object.entries(SECTIONS)) {
+      await g.goto(`${guideBase}/#/${path}`);
+      await opened();
+      const intro = g.locator('#main h1 + p.page-intro a');
+      const href = await intro.getAttribute('href');
+      await intro.click();
+      const [page, anchor] = target.split('#');
+      const landed = await g.waitForFunction(([p, a]) => document.querySelector('#main .guide')
+        && (a ? document.getElementById(a) : document.querySelector('#main h1'))
+        && location.hash.startsWith(`#/anleitung/${p}`), [page, anchor], { timeout: 10000 }).then(() => true, () => false);
+      check(`${mode}: ${path} intro leads to ${target}`, landed && href === guideHref(true, target), href);
+    }
     check(`${mode}: no request leaves the program`, outside.length === 0, outside.join(', '));
     if (mode === 'window') {
-      await g.route('**/anleitung/anleitung.html', (r) => r.fulfill({ status: 404, body: 'not found' }));
+      await g.route('**/anleitung/index.html', (r) => r.fulfill({ status: 404, body: 'not found' }));
       await g.goto(`${guideBase}/#/anleitung`);
       const alert = await g.locator('#main .alert-error').innerText();
       check('missing built-in guide: clear message with the online address',
@@ -158,14 +198,14 @@ try {
     // a section opened from a page intro before the images were ever loaded (new context, empty cache)
     const fresh = await browser.newContext({ locale: 'de-DE', viewport: { width: 1400, height: 900 } });
     const f = await fresh.newPage();
-    await f.goto(`${guideBase}/#/regeln`);
+    await f.goto(`${guideBase}/#/pruefen`);
     await f.waitForFunction(() => document.querySelector('#main h1') && !document.querySelector('#main > p.muted'));
     await f.locator('#main h1 + p.page-intro a').click();
-    await f.waitForFunction(() => location.hash === '#/anleitung/regeln' && document.getElementById('regeln'));
+    await f.waitForFunction(() => location.hash === '#/anleitung/planen/probleme' && document.getElementById('probleme'));
     await f.locator('.guide img').evaluateAll((imgs) => Promise.all(imgs.map((i) => (i.complete ? null
       : new Promise((r) => { i.onload = r; i.onerror = r; })))));
     await f.waitForTimeout(300);
-    const after = await f.locator('#regeln').evaluate((e) => e.getBoundingClientRect().top);
+    const after = await f.locator('#probleme').evaluate((e) => e.getBoundingClientRect().top);
     check(`${mode}: section from the intro stays in view once the images have loaded`, after > 0 && after < 200, String(after));
     await fresh.close();
   }

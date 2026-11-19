@@ -41,7 +41,7 @@ liegen als Markdown in `docs/`.
 
 | Für | Dokument |
 |---|---|
-| Dienstplanung | [docs/anleitung.md](docs/anleitung.md): so funktioniert es, typischer Ablauf, jede Seite des Menüs |
+| Dienstplanung | [docs/anleitung/](docs/anleitung/index.md): so funktioniert es, typischer Ablauf, jede Seite des Menüs |
 | IT | [docs/betrieb.md](docs/betrieb.md): Installation, Update, Sicherung, Deinstallation jeder Auslieferung |
 | Betreuung und Releases | [docs/release.md](docs/release.md): CI, Repository-Einstellungen, Release |
 | Technik Desktop | [docs/desktop.md](docs/desktop.md): Programmfenster, Launcher, Datenordner, Updates |

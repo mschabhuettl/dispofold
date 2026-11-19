@@ -13,7 +13,20 @@ hooks:
 
 nav:
   - Start: index.md
-  - Anleitung: anleitung.md
+  - Anleitung:
+      - Überblick: anleitung/index.md
+      - Erste Schritte: anleitung/erste-schritte.md
+      - Personen: anleitung/personen.md
+      - Bereiche, Schichten und Bedarf: anleitung/stammdaten.md
+      - Abwesenheiten, Wünsche und Vorgaben: anleitung/eingaben.md
+      - Planen und Prüfen: anleitung/planen.md
+      - Plan bearbeiten: anleitung/plan-bearbeiten.md
+      - Auswertungen: anleitung/auswertungen.md
+      - Monat abschließen: anleitung/monatsabschluss.md
+      - Daten und Korrekturdatei: anleitung/daten.md
+      - Regeln einstellen: anleitung/einstellungen.md
+      - Updates: anleitung/updates.md
+      - Rolle „nur lesen“: anleitung/nur-lesen.md
   - Regeln: regeln.md
   - Betrieb: betrieb.md
   - Desktop: desktop.md

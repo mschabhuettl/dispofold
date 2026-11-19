@@ -16,7 +16,7 @@ der Download ein GitHub-Konto mit Lesezugriff, den der Eigentümer einrichtet.
 | macOS | `Dispofold-<version>-macos.dmg` (nur, wenn ein macOS-Runner eingetragen ist) | ein Arbeitsplatz | verschlüsselte Datei im Benutzerordner |
 | Update für alle Desktop-Varianten | `dispofold-<version>-update.zip` (signiert) | Updates ohne neuen Installer | |
 
-Die Bedienung für die Dienstplanung steht in [anleitung.md](anleitung.md), technische Einzelheiten der
+Die Bedienung für die Dienstplanung steht in [der Anleitung](anleitung/index.md), technische Einzelheiten der
 Desktop-Version in [desktop.md](desktop.md).
 
 ## Server mit Docker

@@ -540,3 +540,5 @@ details.rules-advanced section { margin-top: 1.2rem; }
 .guide th, .guide td { padding: .32rem .55rem; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
 .guide-online code { user-select: all; }
 @media print { .info-btn, .info-text, .page-intro { display: none !important; } }
+.guide-pages { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; max-width: 60rem; margin-top: 2rem; padding-top: .8rem; border-top: 1px solid var(--border); }
+.guide-pages a:last-child:not(:first-child) { margin-left: auto; }

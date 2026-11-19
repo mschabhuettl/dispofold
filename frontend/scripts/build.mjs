@@ -5,7 +5,7 @@ import { cpSync, existsSync, mkdirSync, readFileSync, renameSync, rmSync, writeF
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Marked } from 'marked';
-import { GUIDE_FILE, SITE, slug } from '../src/lib/guide.js';
+import { PAGES, SITE, guideFile, slug } from '../src/lib/guide.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = join(root, 'dist');
@@ -80,31 +80,44 @@ for (const page of ['index.html', 'login.html']) {
   writeFileSync(file, html);
 }
 
-// The guide built into the program (lib/guide.js): docs/anleitung.md as an HTML fragment, its images next to it.
-// Anchors become routes of the page, links to the other documents go to the documentation site (whose strict build
-// checks them; the Docker build has only anleitung.md and its images).
+// The guide built into the program (lib/guide.js): each page of docs/anleitung/ as an HTML fragment, its images next to
+// them. Links between the pages become routes of the program (#/anleitung/<page>/<anchor>) and must land on a heading;
+// links to the other documents go to the documentation site (whose strict build checks them; the Docker build has
+// only docs/anleitung/ and the images).
 const docs = join(root, '..', 'docs');
-const guideDir = dirname(join(dist, GUIDE_FILE));
+const guideDocs = join(docs, 'anleitung');
+const guideDir = dirname(join(dist, guideFile('index')));
+const pageIds = PAGES.map(([id]) => id);
 const images = new Set();
 const sizes = new Map(); // width and height of each image (PNG header), so the page keeps its layout while they load
+const headings = new Map(); // page -> anchors of its headings
+const links = []; // [page, target page, anchor] of every link between the pages, checked once all are parsed
+let current = '';
 const guide = new Marked({
   walkTokens(token) {
     if (token.type === 'image') {
-      const png = readFileSync(join(docs, token.href));
-      if (png.toString('latin1', 1, 4) !== 'PNG') throw new Error(`anleitung.md shows ${token.href}, which is not a PNG`);
-      images.add(token.href);
-      token.href = `${relative(dist, guideDir)}/${token.href}`;
+      const file = relative(docs, join(guideDocs, token.href)).split('\\').join('/');
+      const png = readFileSync(join(docs, file));
+      if (png.toString('latin1', 1, 4) !== 'PNG') throw new Error(`anleitung/${current}.md shows ${token.href}, which is not a PNG`);
+      images.add(file);
+      token.href = `${relative(dist, guideDir).split('\\').join('/')}/${file}`;
       sizes.set(token.href, [png.readUInt32BE(16), png.readUInt32BE(20)]);
     } else if (token.type === 'link' && !/^https?:/.test(token.href)) {
-      const [file, anchor] = token.href.split('#');
-      if (!file) token.href = `#/anleitung/${anchor}`;
-      else if (/^[a-z-]+\.md$/.test(file)) token.href = `${SITE}${file.slice(0, -3)}/${anchor ? `#${anchor}` : ''}`;
-      else throw new Error(`anleitung.md links to ${token.href}, which the built-in guide cannot show`);
+      const [file, anchor = ''] = token.href.split('#');
+      const page = file ? file.replace(/\.md$/, '') : current;
+      if (!file || (/^[a-z-]+\.md$/.test(file) && pageIds.includes(page))) {
+        links.push([current, page, anchor]);
+        token.href = `#/anleitung${page === 'index' && !anchor ? '' : `/${page}`}${anchor ? `/${anchor}` : ''}`;
+      } else if (/^\.\.\/[a-z-]+\.md$/.test(file)) token.href = `${SITE}${file.slice(3, -3)}/${anchor ? `#${anchor}` : ''}`;
+      else throw new Error(`anleitung/${current}.md links to ${token.href}, which the built-in guide cannot show`);
     }
   },
   renderer: {
     heading({ tokens, depth, text }) {
-      return `<h${depth} id="${slug(text)}">${this.parser.parseInline(tokens)}</h${depth}>\n`;
+      const id = slug(text);
+      if (headings.get(current).has(id)) throw new Error(`anleitung/${current}.md has the heading anchor ${id} twice`);
+      headings.get(current).add(id);
+      return `<h${depth} id="${id}">${this.parser.parseInline(tokens)}</h${depth}>\n`;
     },
     image({ href, text }) {
       const [width, height] = sizes.get(href);
@@ -116,7 +129,16 @@ const guide = new Marked({
   },
 });
 mkdirSync(guideDir, { recursive: true });
-writeFileSync(join(dist, GUIDE_FILE), guide.parse(readFileSync(join(docs, 'anleitung.md'), 'utf8')));
+for (const [id, title] of PAGES) {
+  current = id;
+  headings.set(id, new Set());
+  const markdown = readFileSync(join(guideDocs, `${id}.md`), 'utf8');
+  if (markdown.split('\n', 1)[0] !== `# ${title}`) throw new Error(`anleitung/${id}.md does not start with "# ${title}" (PAGES in lib/guide.js)`);
+  writeFileSync(join(dist, guideFile(id)), guide.parse(markdown));
+}
+for (const [from, page, anchor] of links) {
+  if (anchor && !headings.get(page).has(anchor)) throw new Error(`anleitung/${from}.md links to ${page}.md#${anchor}, which has no such heading`);
+}
 for (const image of images) {
   mkdirSync(dirname(join(guideDir, image)), { recursive: true });
   cpSync(join(docs, image), join(guideDir, image));

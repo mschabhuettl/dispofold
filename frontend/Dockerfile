@@ -5,7 +5,7 @@ COPY frontend/package.json frontend/package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY frontend/ ./
 # the guide built into the interface (scripts/build.mjs reads ../docs)
-COPY docs/anleitung.md /docs/
+COPY docs/anleitung/ /docs/anleitung/
 COPY docs/screenshots/ /docs/screenshots/
 RUN npm run build
 

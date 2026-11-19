@@ -124,7 +124,8 @@ try {
       }
     }
   }
-  // The guide on the documentation site: menu entry and the link in the intro, for planners and viewers
+  // The guide on the documentation site: menu entry and the link in the intro, for planners and viewers, each page to
+  // its page and section of the guide (written out here, so a change of lib/guide.js cannot slip through unnoticed)
   const site = 'https://mschabhuettl.github.io/dispofold/anleitung/';
   for (const [who, p] of [['planner', page], ['viewer', viewer]]) {
     await open(p, 'plan');
@@ -133,11 +134,19 @@ try {
       && await entry.getAttribute('href') === site && await entry.getAttribute('target') === '_blank'
       && await entry.getAttribute('rel') === 'noopener');
     const link = p.locator('#main h1 + p.page-intro a');
-    check(`${who}: intro links to its section of the guide`, await link.innerText() === 'Mehr dazu in der Anleitung'
-      && await link.getAttribute('href') === `${site}#dienstplan` && await link.getAttribute('target') === '_blank');
+    check(`${who}: intro links to its page of the guide`, await link.innerText() === 'Mehr dazu in der Anleitung'
+      && await link.getAttribute('href') === `${site}plan-bearbeiten/` && await link.getAttribute('target') === '_blank');
   }
-  await open(page, 'fairness');
-  check('planner: Fairness intro links to its section', await page.locator('#main h1 + p.page-intro a').getAttribute('href') === `${site}#fairness`);
+  const sections = { funktionen: 'plan-bearbeiten/#plan-nach-funktion', zeitachse: 'plan-bearbeiten/#bereichs-zeitachse',
+    pruefen: 'planen/#probleme', fairness: 'auswertungen/#fairness', eingaben: 'eingaben/', person: 'personen/',
+    regeln: 'einstellungen/', stammdaten: 'stammdaten/', import: 'daten/' };
+  for (const [path, target] of Object.entries(sections)) {
+    await open(page, path);
+    const href = await page.locator('#main h1 + p.page-intro a').getAttribute('href');
+    check(`planner ${path}: intro links to ${target}`, href === `${site}${target}`, href);
+  }
+  await open(viewer, 'fairness');
+  check('viewer: Fairness intro links to its section', await viewer.locator('#main h1 + p.page-intro a').getAttribute('href') === `${site}auswertungen/#fairness`);
 
   await open(page, 'stammdaten');
   await page.locator('[data-new="areas"]').click();
