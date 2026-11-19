@@ -3,6 +3,15 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.16.1 (unreleased)
+
+- **Build robuster gegen Aussetzer von Maven Central:** Maven wiederholt fehlgeschlagene Downloads bis zu 5-mal,
+  auch bei 500, 502 und 504, und fragt mit `-U` erneut nach, was ein früherer Lauf nicht gefunden hat
+  (`backend/.mvn/maven.config`, gilt für Wrapper, CI und Image-Build). Der Wrapper lädt Maven in CI und Release
+  mit bis zu 5 Versuchen (`scripts/fetch-maven.sh`). Das Backend-Image hält das lokale Maven-Repository in einem
+  BuildKit-Cache und lädt die Abhängigkeiten mit bis zu 3 Versuchen, statt einen Fehler dabei zu übergehen. Ein
+  wirklich fehlendes Artefakt lässt den Build weiterhin scheitern; was gebaut wird, ändert sich nicht.
+
 ## 0.16.0 (2026-11-19)
 
 - **Aus dem Quellsystem nicht mehr übernehmen:** neuer Schalter auf der Seite einer Person (nur für die Planung)
