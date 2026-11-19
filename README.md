@@ -41,7 +41,7 @@ liegen als Markdown in `docs/`.
 
 | Für | Dokument |
 |---|---|
-| Dienstplanung | [docs/anleitung/](docs/anleitung/index.md): so funktioniert es, typischer Ablauf, jede Seite des Menüs |
+| Dienstplanung | [docs/anleitung/](docs/anleitung/index.md): Anleitung in Seiten je Aufgabe, ein Monat Schritt für Schritt mit Bildern, jede Seite und Einstellung, häufige Fragen, Begriffe |
 | IT | [docs/betrieb.md](docs/betrieb.md): Installation, Update, Sicherung, Deinstallation jeder Auslieferung |
 | Betreuung und Releases | [docs/release.md](docs/release.md): CI, Repository-Einstellungen, Release |
 | Technik Desktop | [docs/desktop.md](docs/desktop.md): Programmfenster, Launcher, Datenordner, Updates |
@@ -152,7 +152,7 @@ Tabelle aus, außer den Screenshots:
 | Desktop-Pakete | `scripts/desktop/package.sh <version> linux\|windows\|macos <ordner>` (Windows wird unter Linux gebaut) |
 | Dokumentations-Website | `pip install -r tools/docs/requirements.txt && mkdocs build --strict` (Ausgabe in `site/`) |
 | Repository-Prüfung | `scripts/check-repo.sh` (Text) und `scripts/check-images.sh` (Text in Bildern per OCR, braucht `tesseract-ocr` mit Deutsch und Englisch, `librsvg2-bin`, Pillow); Selbsttest `scripts/test-check-images.sh` |
-| Screenshots | `cd frontend && npx playwright install chromium && BASE_URL=http://localhost:8080 APP_USER=planer APP_PASSWORD=... MONTH=2027-01 node scripts/screenshots.mjs` |
+| Screenshots | auf einem frischen Stack (`docker compose up -d --build --wait`, leere Datenbank, zweiter Benutzer mit Rolle `viewer`): `cd frontend && npx playwright install chromium && npm run build && SEED_DEMO=1 BASE_URL=http://localhost:8080 APP_USER=planer APP_PASSWORD=... VIEWER_USER=leser VIEWER_PASSWORD=... node scripts/screenshots.mjs ../docs/screenshots` (spielt das Beispiel der Anleitung mit Demodaten durch, nimmt alle Bilder der Anleitung und verkleinert sie mit `scripts/optimize-png.py`, braucht `pdftoppm` und Pillow; die Desktop-Bilder kommen vom Dev-Server, `fenster*.png` aus dem echten Programmfenster) |
 | Stack mit Rauchtest | `docker compose up -d --build --wait`, dann `scripts/smoke-test.sh http://localhost:8080 planer <passwort>` (ersetzt die Stammdaten durch Demodaten) |
 
 Synthetische Daten erzeugt der Generator in `tools/demodata` (nur für Entwicklung und Tests):
