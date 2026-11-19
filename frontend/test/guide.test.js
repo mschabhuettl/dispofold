@@ -19,7 +19,7 @@ test('anchors as on GitHub and the site', () => {
 test('the pages: every file of docs/anleitung, with its title, in the order of the site navigation', () => {
   const files = readdirSync(guideDocs).filter((f) => f.endsWith('.md')).map((f) => f.slice(0, -3)).sort();
   assert.deepEqual(PAGES.map(([id]) => id).sort(), files);
-  for (const [id, title] of PAGES) assert.equal(markdown(id).split('\n', 1)[0], `# ${title}`, id);
+  for (const [id, title] of PAGES) assert.equal(markdown(id).split(/\r?\n/, 1)[0], `# ${title}`, id);
   const nav = [...readFileSync(join(repo, 'mkdocs.yml'), 'utf8').matchAll(/^\s+- [^:]+: anleitung\/([a-z-]+)\.md$/gm)].map((m) => m[1]);
   assert.deepEqual(nav, PAGES.map(([id]) => id));
 });

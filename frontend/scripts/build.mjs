@@ -133,7 +133,7 @@ for (const [id, title] of PAGES) {
   current = id;
   headings.set(id, new Set());
   const markdown = readFileSync(join(guideDocs, `${id}.md`), 'utf8');
-  if (markdown.split('\n', 1)[0] !== `# ${title}`) throw new Error(`anleitung/${id}.md does not start with "# ${title}" (PAGES in lib/guide.js)`);
+  if (markdown.split(/\r?\n/, 1)[0] !== `# ${title}`) throw new Error(`anleitung/${id}.md does not start with "# ${title}" (PAGES in lib/guide.js)`);
   writeFileSync(join(dist, guideFile(id)), guide.parse(markdown));
 }
 for (const [from, page, anchor] of links) {
