@@ -31,7 +31,7 @@ Dispofold steht unter `AGPL-3.0-only`. Die Lizenzen unten sind damit vereinbar:
 | Bryntum Scheduler Community (`@bryntum/scheduler-community`, `@bryntum/core-community`, `@bryntum/grid-community`, `@bryntum/engine-community`) | 8.0.0 | MIT | Zeitachse je Bereich; die Lizenz wird als `vendor/bryntum/LICENSE.txt` mit ausgeliefert |
 | Font Awesome Free (Teil von `@bryntum/core-community`) | 6.7.2 | Icons CC BY 4.0, Schrift SIL OFL 1.1, Code MIT | Icons der Zeitachse |
 | esbuild | 0.25.10 | MIT | Frontend-Build |
-| marked | 18.1.2 | MIT | Frontend-Build: die eingebaute Anleitung aus `docs/anleitung.md` (der Code selbst wird nicht ausgeliefert) |
+| marked | 18.1.2 | MIT | Frontend-Build: die eingebaute Anleitung aus `docs/anleitung/` (der Code selbst wird nicht ausgeliefert) |
 | MkDocs, Material for MkDocs und ihre Python-Pakete | siehe `tools/docs/requirements.txt` | BSD, MIT, Apache 2.0, MPL 2.0 | Dokumentations-Website (nur beim Bauen der Website, nicht ausgeliefert) |
 | Playwright | 1.65.0 | Apache 2.0 | nur für Screenshots in der Entwicklung |
 | Quarkus | 3.40.1.1 | Apache 2.0 | Backend |

@@ -1,7 +1,7 @@
 # Betrieb (für die IT)
 
-Dieses Dokument beschreibt Installation, Update, Sicherung, Wiederherstellung und Deinstallation jeder
-Auslieferung. Alle Dateien kommen aus dem Release einer Version auf GitHub
+Dieses Dokument beschreibt Installation, Update, Sicherung, Wiederherstellung, Umzug, Protokolle und
+Deinstallation jeder Auslieferung. Alle Dateien kommen aus dem Release einer Version auf GitHub
 (<https://github.com/mschabhuettl/dispofold/releases>), zusammen mit SHA-256-Prüfsummen
 (`dispofold-<version>-SHA256SUMS.txt` für die Images, `dispofold-<version>-linux-SHA256SUMS.txt`,
 `-windows-SHA256SUMS.txt` und, falls gebaut, `-macos-SHA256SUMS.txt`). Solange das Repository privat ist, braucht
@@ -16,7 +16,7 @@ der Download ein GitHub-Konto mit Lesezugriff, den der Eigentümer einrichtet.
 | macOS | `Dispofold-<version>-macos.dmg` (nur, wenn ein macOS-Runner eingetragen ist) | ein Arbeitsplatz | verschlüsselte Datei im Benutzerordner |
 | Update für alle Desktop-Varianten | `dispofold-<version>-update.zip` (signiert) | Updates ohne neuen Installer | |
 
-Die Bedienung für die Dienstplanung steht in [anleitung.md](anleitung.md), technische Einzelheiten der
+Die Bedienung für die Dienstplanung steht in [der Anleitung](anleitung/index.md), technische Einzelheiten der
 Desktop-Version in [desktop.md](desktop.md).
 
 ## Server mit Docker
@@ -169,13 +169,29 @@ nie von allein.
    übertragen.
 4. `docker compose up -d` (in Portainer: den Stack neu bereitstellen). Das Backend spielt Datenbankänderungen beim
    Start selbst ein.
-5. Alte Images entfernen:
+5. Prüfen: `docker compose ps` zeigt alle Dienste „healthy“, `docker compose logs backend` enthält die Zeile
+   `dispofold-backend <neue Version> on JVM ... started` und keine Zeile mit `ERROR` (siehe
+   [Protokolle](#protokolle)). Dann anmelden und einen Monat öffnen.
+6. Alte Images erst entfernen, wenn die neue Version läuft. Bis dahin braucht ein Rückweg sie:
    `docker image rm dispofold.invalid/dispofold-backend:<alt> dispofold.invalid/dispofold-frontend:<alt>` (mit Registry deren
    Namen).
 
+`docker compose up -d` legt die Container neu an. Damit sind auch ihre bisherigen Protokolle weg. Wer sie noch
+braucht, sichert sie vor Schritt 4 (siehe [Protokolle](#protokolle)).
+
 Zurück auf die vorige Version: `docker compose stop backend`, die Sicherung von vor dem Update einspielen (siehe
 unten), `TAG` zurücksetzen, `docker compose up -d`. Die alte Version darf nicht auf der schon geänderten
-Datenbank starten.
+Datenbank starten. Schritt für Schritt:
+
+1. `docker compose stop frontend backend`
+2. Die alten Images müssen vorhanden sein (`docker image ls | grep dispofold`); sonst das Archiv der alten Version
+   wieder mit `docker load -i ...` laden oder mit Registry nach Schritt 4 `docker compose pull`.
+3. Die Sicherung von vor dem Update einspielen:
+   `docker compose exec -T db pg_restore -U dienstplanung -d dienstplanung --clean --if-exists < <sicherung>.dump`
+4. In `.env` `TAG` auf die alte Version setzen und die `docker-compose.yml` der alten Version zurücklegen.
+5. `docker compose up -d`, dann prüfen wie in Schritt 5 oben, mit der alten Version in der Startzeile.
+
+Eingaben, die nach der Sicherung gemacht wurden, fehlen danach.
 
 ### Sicherung und Wiederherstellung
 
@@ -198,6 +214,131 @@ docker compose start backend
 
 Die Sicherungsdatei enthält Personaldaten: sicher ablegen. Die Datenbank liegt im Docker-Volume
 `dispofold_db-data`.
+
+Zu einer vollständigen Sicherung gehören neben dem Dump die Dateien `.env` (Geheimnisse und Benutzer) und
+`docker-compose.yml`. Ohne `.env` lässt sich der Dump zwar einspielen, aber Benutzer und Schlüssel müssen neu
+angelegt werden. `.env` enthält Geheimnisse: getrennt vom Dump und genauso geschützt ablegen.
+
+Es gibt keine eingebaute regelmäßige Sicherung. Ein Beispiel für eine tägliche Sicherung um 2 Uhr mit cron
+(Ordner und Aufbewahrung anpassen; in der crontab muss `%` als `\%` stehen):
+
+```bash
+0 2 * * * cd /srv/dispofold && docker compose exec -T db pg_dump -U dienstplanung -Fc dienstplanung > sicherungen/dispofold-$(date +\%F).dump && find sicherungen -name 'dispofold-*.dump' -mtime +30 -delete
+```
+
+Den Ordner `sicherungen` vorher anlegen (`mkdir -m 700 /srv/dispofold/sicherungen`) und die Dumps zusätzlich auf
+ein anderes System kopieren: Eine Sicherung auf demselben Server hilft nicht, wenn der Server ausfällt.
+
+### Wiederherstellung testen
+
+Eine Sicherung ist erst brauchbar, wenn sie sich einspielen lässt. Der Test spielt sie in eine zweite, leere
+Datenbank im selben Container ein. Die laufende Datenbank bleibt unberührt, die Oberfläche läuft weiter.
+
+1. Die Datei lesen lassen. Die Liste der Einträge muss erscheinen, ohne Fehlermeldung:
+   `docker compose exec -T db pg_restore --list < dispofold-2027-01-15.dump | head`
+2. Eine Testdatenbank anlegen und die Sicherung hinein spielen:
+
+   ```bash
+   docker compose exec -T db createdb -U dienstplanung restoretest
+   docker compose exec -T db pg_restore -U dienstplanung -d restoretest < dispofold-2027-01-15.dump
+   ```
+
+3. Inhalt vergleichen, einmal mit `-d restoretest`, einmal mit `-d dienstplanung`. Die Zahlen und der Stand
+   der Datenbank sollen zum Zeitpunkt der Sicherung passen:
+
+   ```bash
+   docker compose exec -T db psql -U dienstplanung -d restoretest \
+     -c "select version from flyway_schema_history order by installed_rank desc limit 1" -c "select count(*) from plan" -c "select count(*) from dataset"
+   ```
+
+4. Testdatenbank wieder löschen: `docker compose exec -T db dropdb -U dienstplanung restoretest`
+
+Wer auch die Oberfläche mit der Sicherung prüfen will, spielt sie auf einem Testserver ein, wie unter
+[Umzug auf einen neuen Server](#umzug-auf-einen-neuen-server) beschrieben. `scripts/smoke-test.sh` aus dem
+Quellcode taugt dafür nicht: Es ersetzt die Stammdaten durch Demodaten.
+
+### Umzug auf einen neuen Server
+
+Auf dem neuen Server läuft zuerst dieselbe Version wie auf dem alten. Ein Update folgt erst, wenn der Umzug
+geprüft ist.
+
+1. **Neuen Server vorbereiten:** Docker installieren (siehe [Voraussetzungen](#voraussetzungen)), den Ordner
+   anlegen (`mkdir -p /srv/dispofold`) und die Images derselben Version bereitstellen: Archiv prüfen und
+   `docker load -i dispofold-<version>-images.tar.gz`, oder bei der Registry `docker login ghcr.io`. Die Version
+   steht in `.env` des alten Servers unter `TAG`. Noch nichts starten.
+2. **Alten Server anhalten und sichern:** Ab hier keine Eingaben mehr. Im Ordner mit `docker-compose.yml`:
+
+   ```bash
+   docker compose stop frontend backend
+   docker compose exec -T db pg_dump -U dienstplanung -Fc dienstplanung > dispofold-umzug.dump
+   ```
+
+   Die Datenbank läuft weiter, damit `pg_dump` sie lesen kann; Backend und Oberfläche sind aus, damit sich danach
+   nichts mehr ändert.
+3. **Dateien kopieren:** `.env`, `docker-compose.yml` und den Dump auf den neuen Server, zum Beispiel mit
+   `scp .env docker-compose.yml dispofold-umzug.dump neuer-server.example.org:/srv/dispofold/`. Dort
+   `chmod 600 .env`. `.env` unverändert übernehmen: `DB_PASSWORD` wird beim ersten Start in die neue Datenbank
+   übernommen, `APP_USERS` behält die Benutzer, und mit demselben `SESSION_ENCRYPTION_KEY` bleiben auch
+   Anmeldungen gültig (mit einem neuen müssen sich alle neu anmelden). Nur `HTTP_PORT` und, wenn die Images jetzt
+   aus einer anderen Quelle kommen, `REGISTRY` und `POSTGRES_IMAGE` anpassen.
+4. **Nur die Datenbank starten und die Sicherung einspielen** (auf dem neuen Server, in `/srv/dispofold`):
+
+   ```bash
+   docker compose up -d --wait db
+   docker compose exec -T db pg_restore -U dienstplanung -d dienstplanung --clean --if-exists < dispofold-umzug.dump
+   docker compose up -d
+   docker compose ps   # alle Dienste "healthy"
+   ```
+
+5. **Prüfen:** Der Abgleich aus [Wiederherstellung testen](#wiederherstellung-testen), Schritt 3, gibt auf beiden
+   Servern dieselben Zahlen (mit `-d dienstplanung`). `docker compose logs backend` zeigt
+   `Schema "public" is up to date` und keine Zeile mit `ERROR`. `curl -fsS http://localhost:8080/q/health/ready`
+   (mit dem eigenen `HTTP_PORT`) antwortet mit `"status": "UP"`. Dann mit einem Benutzer anmelden und einen Monat
+   öffnen.
+6. **Umschalten:** Reverse Proxy oder DNS-Namen auf den neuen Server richten.
+7. **Alten Server abbauen:** erst, wenn der neue eine Weile läuft. Bis dahin bleibt er angehalten, sein Volume ist
+   der Rückweg. Dann `docker compose down` und, wenn die Daten nicht mehr gebraucht werden, `docker compose down -v`
+   (siehe [Deinstallation](#deinstallation)). Dump und Kopien von `.env` auf dem Weg dorthin löschen oder sicher
+   ablegen.
+
+Eine Datei aus einer Sicherung lässt sich genauso auf einem neuen Server einspielen, etwa nach einem Ausfall: ab
+Schritt 1, dann Schritt 3 mit `.env` und `docker-compose.yml` aus der Sicherung und Schritt 4 mit dem Dump.
+
+### Protokolle
+
+Jeder Dienst schreibt sein Protokoll auf die Konsole des Containers. Docker hebt es auf, solange es den Container
+gibt; `docker compose down` oder ein neu angelegter Container (etwa beim Update) löscht es. `docker-compose.yml`
+setzt keinen eigenen Logtreiber und keine Größengrenze, es gelten die Einstellungen von Docker auf dem Server
+(`/etc/docker/daemon.json`). Die Befehle laufen im Ordner mit `docker-compose.yml`:
+
+```bash
+docker compose logs backend                  # alles vom Backend
+docker compose logs --since 2h --timestamps backend frontend db
+docker compose logs -f --tail 100 backend    # laufend mitlesen, Ende mit Ctrl+C
+```
+
+| Dienst | Inhalt | Worauf achten |
+|---|---|---|
+| `backend` | Start, Datenbankänderungen (Flyway), Planungen, Suche nach neuer Version. Format `Datum Zeit Stufe [Klasse] Meldung`, Zeit in UTC | `startup.<code>` mit `ERROR`: das Backend startet nicht (`sessionKeyMissing`, `sessionKeyPlaceholder`, `sessionKeyShort`, `dbPasswordMissing`, `dbPasswordPlaceholder`; siehe [Geheimnisse und Benutzer](#geheimnisse-und-benutzer)). `startup.noUsers`: `APP_USERS` ist leer. `APP_USERS: entry <n> ...`: Eintrag Nummer n ist falsch. `Solving <Monat> failed`: eine Planung ist abgebrochen. `Release check failed` oder `Release check: HTTP <status>`: siehe [Neue Version](#neue-version). Die Startzeile `dispofold-backend <version> on JVM ... started` nennt die laufende Version |
+| `frontend` | ein Zugriff je Zeile (nginx): Adresse des Clients, Zeit, Anfrage, Status, Browser | Status `429` bei `j_security_check`: die Anmeldebegrenzung greift (siehe [Reverse Proxy, HTTPS und Anmeldebegrenzung](#reverse-proxy-https-und-anmeldebegrenzung)). `502` oder `504`: das Backend antwortet nicht, dann dessen Protokoll ansehen. Alle paar Sekunden `GET /login.html` von `127.0.0.1` ist der Gesundheitscheck |
+| `db` | PostgreSQL | `password authentication failed`: `DB_PASSWORD` in `.env` passt nicht zur Datenbank. PostgreSQL übernimmt das Passwort nur beim ersten Start mit leerem Volume; ein später geänderter Wert in `.env` gilt dort nicht |
+
+`docker compose ps` zeigt den Zustand der Gesundheitschecks. `http://<server>:<HTTP_PORT>/q/health/ready` ist auch
+von außen erreichbar und meldet, ob das Backend die Datenbank erreicht.
+
+**Protokolle für die Fehlersuche weitergeben:** Das Backend nennt in seinen Meldungen nur interne Ids und Codes,
+keine Namen und keine Inhalte von Anfragen. Das Protokoll von `frontend` enthält dagegen die IP-Adressen der Clients
+(hinter einem Proxy die des Proxys), Adressen der Anfragen und Browserkennungen. Deshalb nur den nötigen Zeitraum
+weitergeben und IP-Adressen ersetzen:
+
+```bash
+docker compose logs --no-color --since 24h backend > backend.log
+docker compose logs --no-color --since 24h frontend | sed -E 's/([0-9]{1,3}\.){3}[0-9]{1,3}/x.x.x.x/g' > frontend.log
+```
+
+Vor dem Versand jede Datei durchsehen. Meldungen von PostgreSQL (`db`) können bei Fehlern Werte aus der Datenbank
+enthalten; sie nur weitergeben, wenn sie gebraucht werden, und dann genauso prüfen. `.env`, Dumps und Volumes
+gehören nie dazu.
 
 ### Deinstallation
 
@@ -320,6 +461,13 @@ Systeme.
 - Vor dem ersten Start einer neuen Version sichert das Programm die Datenbank. Wird die neue Version nicht
   innerhalb von 3 Minuten bereit, kehrt es mit dieser Sicherung zur vorigen Version zurück und meldet das.
 - Java-Laufzeit, Launcher und Programmfenster werden nur mit einem neuen Setup, ZIP, Paket oder dmg erneuert.
+- **Zurück zur vorigen Version von Hand:** Ein Update lässt sich nicht mit einer älteren Update-Datei
+  zurücknehmen, ältere Versionen lehnt das Programm ab. Wer zurück will, weil die neue Version zwar startet, aber
+  nicht wie gewünscht arbeitet, braucht eine Kopie von `daten` und `versionen` von vor dem Update (siehe den
+  nächsten Abschnitt): Programm beenden, beide Ordner durch die
+  Kopie ersetzen, starten. Kam die neue Version mit einem neuen Setup, ZIP, Paket oder dmg, vorher auch die vorige
+  Version davon wieder installieren, denn eine neuere mitgelieferte Version gewinnt. Eingaben seit der Kopie fehlen
+  danach. Vor einem Update deshalb beide Ordner kopieren.
 
 ### Sicherung und Wiederherstellung
 
@@ -336,6 +484,66 @@ Systeme.
   `daten/db` hineinkopieren (er enthält `dispofold.mv.db` und `dispofold.salt`). Dann starten und das Passwort
   eingeben, das zur Zeit der Sicherung galt. Eine Sicherung aus einer älteren Version bringt die neue Version
   beim Start selbst auf den aktuellen Stand.
+- **Wiederherstellung testen:** Das Programm lässt sich mit einem anderen Basisordner starten
+  (`--data <Ordner>`), so bleiben die echten Daten unberührt. Dispofold vorher beenden: Ein zweiter Start, auch mit
+  `--data`, holt nur das offene Fenster nach vorn. Die Kopie von `daten` und `versionen` in
+  einen leeren Testordner legen, dann mit diesem Ordner starten:
+
+  ```
+  Windows (Setup):   "%LOCALAPPDATA%\Dispofold\dispofold.exe" --data C:\Temp\dispofold-test
+  Windows (ZIP):     <Ordner>\dispofold.exe --data C:\Temp\dispofold-test
+  Linux:             dispofold --data ~/dispofold-test
+  macOS:             /Applications/Dispofold.app/Contents/MacOS/dispofold --data ~/dispofold-test
+  ```
+
+  Das Passwort zur Zeit der Sicherung eingeben, einen Monat öffnen und die Daten ansehen. Danach Dispofold beenden
+  und den Testordner löschen; er enthält Personaldaten.
+
+### Umzug auf einen neuen Rechner
+
+Die Daten hängen nicht am Rechner: Die Ordner `daten` und `versionen` lassen sich auf einen anderen Rechner,
+auch mit einem anderen Betriebssystem oder von der portablen in die installierte Variante, übertragen. Das
+Passwort bleibt dasselbe.
+
+1. **Alter Rechner:** Dispofold beenden. Die Version steht in `versionen/state.json` unter `lastStarted`.
+2. **Neuer Rechner:** Dispofold in dieser oder einer neueren Version installieren (siehe die Abschnitte oben).
+   Eine ältere Version startet auf diesen Daten nicht. Möglichst noch nicht starten. Wurde es schon gestartet,
+   wieder beenden; was dabei angelegt wurde, wird im nächsten Schritt ersetzt.
+3. **Kopieren:** `daten` und `versionen` aus dem Basisordner des alten Rechners in den Basisordner des neuen
+   kopieren (Tabelle unter [Gemeinsam für alle Systeme](#gemeinsam-für-alle-systeme)) und dort vorhandene Ordner
+   gleichen Namens ersetzen. Unterwegs, etwa auf einem USB-Stick, ist die Datenbank mit dem Passwort
+   verschlüsselt; `daten/logs` und `daten/einstellungen.json` sind es nicht.
+4. **Prüfen:** Dispofold starten, das bisherige Passwort eingeben, einen Monat öffnen. Die Update-Einstellungen
+   kommen in `daten/einstellungen.json` mit.
+5. **Alter Rechner:** erst, wenn der neue läuft, Dispofold dort deinstallieren und die Ordner löschen (siehe die
+   Abschnitte oben). Die Kopie auf dem Transportmedium ebenfalls löschen.
+
+### Protokolle des Desktop-Programms
+
+Die App schreibt ihr Protokoll in `daten/logs/app-<version>.log`, eine Datei je Version. Neue Zeilen kommen ans
+Ende, das Programm kürzt oder löscht die Dateien nicht.
+
+| Variante | Ordner der Protokolle |
+|---|---|
+| Windows-Setup | `%LOCALAPPDATA%\Dispofold\daten\logs` |
+| Windows portabel | `<Programmordner>\daten\logs` |
+| Linux | `~/.local/share/dispofold/daten/logs` (bzw. `$XDG_DATA_HOME/dispofold/daten/logs`) |
+| macOS | `~/Library/Application Support/Dispofold/daten/logs` |
+
+Das Format ist dasselbe wie beim Server: `Datum Zeit Stufe [Klasse] Meldung`. Worauf achten: Zeilen mit `ERROR`,
+`Solving <Monat> failed` (eine Planung ist abgebrochen), `Update <version> staged` (ein Update wurde abgelegt),
+`versionen/state.json is unreadable` und `daten/einstellungen.json is unreadable, using defaults`. Meldet das
+Programm einen Absturz, einen gescheiterten Start oder ein zurückgenommenes Update, nennt die Meldung die Datei,
+zum Beispiel `daten/logs/app-1.2.0.log`.
+
+Programmfenster und Launcher schreiben keine eigene Datei. Ihre Meldungen gehen auf die Standardfehlerausgabe und
+sind nur zu sehen, wenn man das Programm in einem Terminal startet: unter Linux `dispofold`, unter macOS
+`/Applications/Dispofold.app/Contents/MacOS/dispofold`. Unter Windows gibt es dafür keine Konsole.
+
+**Protokolle für die Fehlersuche weitergeben:** Die App nennt in ihren Meldungen nur interne Ids und Codes,
+keine Namen. Weitergeben nur die Datei der betroffenen Version, nie die Datenbank oder Ordner aus
+`daten/sicherungen`. Vorher durchsehen; kommt doch ein Pfad mit dem Benutzernamen des Rechners vor (etwa
+`C:\Users\<name>\...` oder `/home/<name>/...`), diesen Teil ersetzen.
 
 ### Passwort ändern
 
