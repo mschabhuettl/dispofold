@@ -8,8 +8,10 @@
 //    sick note after planning, the fixes, planning again, closing the month, the corrections file), then the month
 //    is opened again and the screens and dialogs of every page are taken, a few with numbered marks (the guide refers
 //    to the numbers). A release notice is answered in the browser (GET /api/release), the instance checks nothing.
-// 2. Desktop phase: the desktop-only screens (update question, Updates page, update notice with "Jetzt installieren")
-//    from the dev server in desktop mode (MOCK_DESKTOP=1), which this script starts itself on a free port.
+// 2. Desktop phase: the pages of the program window (password on the first start, the small window "Dispofold läuft")
+//    from desktop-shell/pages, and the desktop-only screens of the interface (update question, Updates page, update
+//    notice with "Jetzt installieren") from the dev server in desktop mode (MOCK_DESKTOP=1), which this script starts
+//    itself on a free port. PHASE=server or PHASE=desktop runs one phase only.
 // The window frame pictures fenster*.png come from the real program window and are not made here.
 // Every request to another host is blocked and makes the script fail. At the end scripts/optimize-png.py shrinks the
 // files (256 colours, the strongest compression that scripts/check-repo.sh accepts).
@@ -414,7 +416,11 @@ async function serverPhase() {
   await page.keyboard.press('Escape');
   await page.locator('[aria-controls="output-menu"]').click();
   await clip(page, 'ausgabe', ['[aria-controls="output-menu"]', '#output-menu']);
-  await page.keyboard.press('Escape');
+  // the close dialog with open points (the gaps of the 12th): closing only after "Trotzdem abschließen"
+  await page.locator('#output-menu').getByRole('button', { name: 'Monat abschließen', exact: true }).click();
+  await page.locator('dialog.dialog #close-anyway').waitFor();
+  await clip(page, 'abschluss-offen', ['dialog.dialog']);
+  await page.locator('dialog.dialog').getByRole('button', { name: 'Abbrechen', exact: true }).click();
   await open(page, base, 'plan', 'table.roster');
   await page.locator('.plan-actions details.advanced summary, details.advanced summary').first().click();
   await mark(page, [['#seed', 1, 'bottom'], ['#limit', 2, 'bottom'], ['#move-limit', 3, 'bottom'], ['#cold-start', 4, 'bottom']]);
@@ -637,7 +643,42 @@ async function startDevServer(env) {
   return { origin: `http://localhost:${port}`, server };
 }
 
+/**
+ * A page of the program window itself (desktop-shell/pages, served by the window process under /__shell/): the files
+ * from the repository, /__shell/state answered with the given state, nothing else reachable.
+ */
+async function shellPage(name, state, viewport) {
+  const pages = join(root, '..', 'desktop-shell', 'pages');
+  const assets = { 'icon.svg': join(root, '..', 'branding', 'icon.svg'),
+    'fonts/plex-400.woff2': join(root, 'public', 'fonts', 'ibm-plex-sans-latin-400-normal.woff2'),
+    'fonts/plex-600.woff2': join(root, 'public', 'fonts', 'ibm-plex-sans-latin-600-normal.woff2') };
+  const types = { html: 'text/html; charset=utf-8', js: 'text/javascript', css: 'text/css', svg: 'image/svg+xml', woff2: 'font/woff2' };
+  const context = await browser.newContext({ viewport, locale: 'de-DE', colorScheme: 'light' });
+  await context.route('**/*', (route) => {
+    const url = new URL(route.request().url());
+    const asset = url.pathname.replace(/^\/__shell\//, '');
+    if (url.origin !== 'http://dispofold.localhost' || asset === url.pathname) {
+      external.push(url.href);
+      return route.abort();
+    }
+    if (asset === 'state') return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify(state) });
+    const path = assets[asset] ?? join(pages, /\.\w+$/.test(asset) ? asset : `${asset}.html`);
+    return route.fulfill({ status: 200, contentType: types[path.split('.').pop()], body: readFileSync(path) });
+  });
+  const page = await context.newPage();
+  await page.goto(`http://dispofold.localhost/__shell/${name}`);
+  await page.waitForTimeout(800);
+  return page;
+}
+
 async function desktopPhase() {
+  // the window process: the password on the first start and the small window of the browser front end (Linux)
+  let page = await shellPage('unlock', { phase: 'needPassword', firstStart: true }, { width: 1000, height: 640 });
+  await clip(page, 'desktop-passwort', ['main.card']);
+  await page.context().close();
+  page = await shellPage('running', {}, { width: 420, height: 260 });
+  await shot(page, 'desktop-laeuft');
+  await page.context().close();
   // first start: the question whether to look for new versions
   const ask = await startDevServer({ MOCK_DESKTOP: '1', MOCK_FRONTEND: 'window', MOCK_UPDATE_ASK: '1' });
   try {

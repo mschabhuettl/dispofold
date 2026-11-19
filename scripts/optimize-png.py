@@ -11,8 +11,16 @@ import sys
 
 from PIL import Image
 
-# The same list as the binary search in scripts/check-repo.sh; character classes keep this file from matching itself.
-FORBIDDEN = re.compile(rb'[c]laude|[a]nthropic|[c]hatgpt|[o]penai|[l]lm', re.IGNORECASE)
+# The patterns that scripts/check-repo.sh also looks for in binary files (the words of tools, the old planning
+# system, old names); character classes keep this file from matching itself.
+WORDS = re.compile(rb'[c]laude|[a]nthropic|[c]hatgpt|[o]penai|[l]lm|\b[s]p5|[s]chichtplaner|\b[d]bf\b|[s]hiftfold'
+                   rb'|[a]t\.[r]ls|[s]teiermark|[r]ote[sn]? [k]reuz|[r]ed [c]ross|\xc3\x96[r]k|[r]oteskreuz|[r]ls-'
+                   rb'|[s]ource sans|[s]ource-sans|[d]unant', re.IGNORECASE)
+ABBREVIATION = re.compile(rb'\b[R]LS\b')
+
+
+def forbidden(data):
+    return WORDS.search(data) or ABBREVIATION.search(data)
 
 
 def optimize(path):
@@ -20,14 +28,14 @@ def optimize(path):
     small = image.quantize(colors=256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.NONE)
     # the palette is stored as it is: a grey such as (108, 108, 109) spells a word; change such a byte by one
     palette = small.getpalette()
-    while match := FORBIDDEN.search(bytes(palette)):
+    while match := forbidden(bytes(palette)):
         palette[match.start()] ^= 1
     small.putpalette(palette)
     for level in range(9, -1, -1):
         out = io.BytesIO()
         small.save(out, 'PNG', optimize=level == 9, compress_level=level)
         data = out.getvalue()
-        if not FORBIDDEN.search(data):
+        if not forbidden(data):
             with open(path, 'wb') as f:
                 f.write(data)
             return level, len(data)
