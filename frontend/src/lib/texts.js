@@ -351,7 +351,7 @@ export const TEXTS = {
   'help.field.demand.areaId': 'Bereich, für den der Bedarf gilt. Jeder Dienst des Bereichs in dieser Zeit zählt zur Besetzung.',
   'help.field.demand.mode': '„nach Tagen“: an den gewählten Wochentagen und Feiertagen. „an einem Datum“: nur an diesem Tag, z. B. für eine Veranstaltung.',
   'help.field.demand.days': 'Wochentage, an denen der Bedarf gilt. „Feiertag“: gilt an Feiertagen; hat ein Bereich solchen Bedarf, ersetzt er dort an Feiertagen den Bedarf des Wochentags.',
-  'help.field.demand.date': 'Der eine Tag, an dem dieser Bedarf gilt.',
+  'help.field.demand.date': 'Der eine Tag, an dem dieser Bedarf gilt. An diesem Tag ersetzt Bedarf mit Datum allen anderen Bedarf des Bereichs: alle Zeiträume des Tages eintragen.',
   'help.field.demand.from': 'Beginn des Zeitraums.',
   'help.field.demand.to': 'Ende des Zeitraums; liegt es vor dem Beginn, endet er am nächsten Tag.',
   'help.field.demand.min': 'So viele Personen müssen in dieser Zeit da sein. Jede fehlende ist offener Bedarf.',
