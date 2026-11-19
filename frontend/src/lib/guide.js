@@ -10,6 +10,7 @@ export const GUIDE_URL = `${SITE}anleitung/`;
 export const PAGES = [
   ['index', 'Anleitung für die Dienstplanung'],
   ['erste-schritte', 'Erste Schritte'],
+  ['beispiel', 'Ein Monat Schritt für Schritt'],
   ['personen', 'Personen'],
   ['stammdaten', 'Bereiche, Schichten und Bedarf'],
   ['eingaben', 'Abwesenheiten, Wünsche und Vorgaben'],
@@ -21,6 +22,8 @@ export const PAGES = [
   ['einstellungen', 'Regeln einstellen'],
   ['updates', 'Updates'],
   ['nur-lesen', 'Hinweise für die Rolle „nur lesen“'],
+  ['fragen', 'Häufige Fragen und Fehlerbehebung'],
+  ['begriffe', 'Begriffe'],
 ];
 
 /** Built from docs/anleitung/<page>.md by scripts/build.mjs, with its images next to it. */

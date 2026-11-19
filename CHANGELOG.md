@@ -3,6 +3,35 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.16.1 (unreleased)
+
+- **Anleitung in Seiten je Aufgabe:** [docs/anleitung/](docs/anleitung/index.md) statt einer langen Seite, auf der
+  Website unter „Anleitung“: Überblick, Erste Schritte (Server und Programm am eigenen Rechner), Personen,
+  Bereiche, Schichten und Bedarf, Abwesenheiten, Wünsche und Vorgaben, Planen und Prüfen, Plan bearbeiten,
+  Auswertungen, Monat abschließen, Daten und Korrekturdatei, Regeln einstellen, Updates, Hinweise für die Rolle
+  „nur lesen“. Jede Seite beschreibt jede Einstellung mit Standardwert und wann man sie ändert.
+- **Ein Monat Schritt für Schritt:** ein durchgespieltes Beispiel mit den Demodaten, vom Import über eine
+  Krankmeldung nach dem Planen bis zum Abschluss und zur Korrekturdatei.
+- **Häufige Fragen und Fehlerbehebung:** die Meldungen des Programms (Anmeldung, Import, Konflikte beim Speichern,
+  Planen, Monatsabschluss, Programm am eigenen Rechner, Updates) mit Ursache und was zu tun ist. **Begriffe:** die
+  Wörter des Programms von A bis Z.
+- **Bilder:** Jede Seite der Anleitung zeigt ihre Ansichten und Dialoge, wo es hilft mit nummerierten Markierungen.
+  Alle Bilder kommen aus `frontend/scripts/screenshots.mjs` (synthetische Demodaten), verkleinert mit
+  `scripts/optimize-png.py`; neu sind unter anderem der Schalter „Aus dem Quellsystem nicht mehr übernehmen“, die
+  Korrekturdatei und der Hinweis auf eine neue Version.
+- **Eingebaute Anleitung im Programm am eigenen Rechner:** zeigt dieselben Seiten mit Links zur Übersicht und zur
+  vorigen und nächsten Seite; „Mehr dazu in der Anleitung“ führt am Server und am eigenen Rechner zur passenden
+  Seite und zum Abschnitt. Ältere Adressen der Website mit `#abschnitt` landen auf der Übersicht.
+- **Regeln:** [docs/regeln.md](docs/regeln.md) nennt zu jeder Regel ein Beispiel, was sie verhindert, und was ihre
+  Wichtigkeit in der Praxis ändert (gemessen oder ausdrücklich als nicht gemessen); die Formel der Wünsche ist
+  berichtigt.
+- **Betrieb:** [docs/betrieb.md](docs/betrieb.md) beschreibt Schritt für Schritt, wie man eine Wiederherstellung
+  testet, auf einen neuen Server oder Rechner umzieht, ein Update prüft und zurücknimmt und wo die Protokolle
+  liegen.
+- **Hilfetexte:** Das **i** beim Bedarf „an einem Datum“ sagt, dass er an diesem Tag allen anderen Bedarf des
+  Bereichs ersetzt; das **i** der Familienregeln deutet nicht mehr an, offener Bedarf könne gegen sie abgewogen
+  werden.
+
 ## 0.16.0 (2026-11-19)
 
 - **Aus dem Quellsystem nicht mehr übernehmen:** neuer Schalter auf der Seite einer Person (nur für die Planung)
