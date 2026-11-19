@@ -40,6 +40,8 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
+      - name: Maven of the wrapper (with retries)
+        run: scripts/fetch-maven.sh
       - name: Unit, constraint and API tests
         working-directory: backend
         run: ./mvnw -B test
@@ -55,6 +57,8 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
+      - name: Maven of the wrapper (with retries)
+        run: scripts/fetch-maven.sh
       - name: Tests on H2
         working-directory: backend
         run: >
@@ -72,6 +76,8 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
+      - name: Maven of the wrapper (with retries)
+        run: scripts/fetch-maven.sh
       - name: Solve the synthetic demo month (150 people) within 5 minutes
         working-directory: backend
         run: ./mvnw -B test -Dtest=DemoSolveTest -Dsolver.longTest=true
@@ -197,6 +203,8 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
+      - name: Maven of the wrapper (with retries)
+        run: scripts/fetch-maven.sh
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "22"
@@ -239,6 +247,8 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
+      - name: Maven of the wrapper (with retries)
+        run: scripts/fetch-maven.sh
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: "22"
