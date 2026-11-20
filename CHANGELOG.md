@@ -3,7 +3,7 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
-## 0.16.1 (unreleased)
+## 0.17.0 (2026-11-21)
 
 - **Einzelne freie Tage:** zählen nur noch echte freie Tage. Ein einzelner Abwesenheits- oder Ersatzruhetag
   zwischen zwei Diensten ist Vorgabe, die die Planung nicht verschieben kann, und kostet nichts mehr.
