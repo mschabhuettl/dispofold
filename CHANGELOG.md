@@ -5,6 +5,8 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
 
 ## 0.16.1 (unreleased)
 
+- **Einzelne freie Tage:** zählen nur noch echte freie Tage. Ein einzelner Abwesenheits- oder Ersatzruhetag
+  zwischen zwei Diensten ist Vorgabe, die die Planung nicht verschieben kann, und kostet nichts mehr.
 - **Anleitung in Seiten je Aufgabe:** [docs/anleitung/](docs/anleitung/index.md) statt einer langen Seite, auf der
   Website unter „Anleitung“: Überblick, Erste Schritte (Server und Programm am eigenen Rechner), Personen,
   Bereiche, Schichten und Bedarf, Abwesenheiten, Wünsche und Vorgaben, Planen und Prüfen, Plan bearbeiten,

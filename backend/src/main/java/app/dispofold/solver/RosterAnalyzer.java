@@ -53,12 +53,16 @@ public final class RosterAnalyzer {
     }
 
     /**
-     * Single days off between two duties and days by which blocks are too short or too long, counted from the
+     * Single real days off (no absence, no comp rest) between two duties and days by which blocks are too short or too long, counted from the
      * roster like the rules {@code isolatedDayOff} and {@code blockLength} count them, whatever their weights.
      */
     static int[] blocks(Roster roster) {
         Map<Staff, List<DutyCell>> work = new java.util.HashMap<>();
+        java.util.Set<String> fixed = new java.util.HashSet<>();
         for (DutyCell c : roster.getCells()) {
+            if (c.getAbsenceCode() != null || c.isCompRest()) {
+                fixed.add(c.getStaff().getId() + "/" + c.getDay());
+            }
             if (c.isWork()) {
                 work.computeIfAbsent(c.getStaff(), k -> new ArrayList<>()).add(c);
             }
@@ -77,7 +81,8 @@ public final class RosterAnalyzer {
                 if (last.isInMonth()) {
                     blockDays += RosterConstraints.blockExcess(e.getKey(), i - start, last.isMonthEnd());
                 }
-                if (i < cells.size() && cells.get(i).getDay() - last.getDay() == 2 && cells.get(i).isInMonth()) {
+                if (i < cells.size() && cells.get(i).getDay() - last.getDay() == 2 && cells.get(i).isInMonth()
+                        && !fixed.contains(e.getKey().getId() + "/" + (last.getDay() + 1))) {
                     single++;
                 }
                 start = i;

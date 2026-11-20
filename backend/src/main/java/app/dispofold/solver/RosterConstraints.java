@@ -9,6 +9,7 @@ import static ai.timefold.solver.core.api.score.stream.ConstraintCollectors.toCo
 import static ai.timefold.solver.core.api.score.stream.ConstraintCollectors.toConsecutiveSequences;
 import static ai.timefold.solver.core.api.score.stream.ConstraintCollectors.toList;
 import static ai.timefold.solver.core.api.score.stream.Joiners.equal;
+import static ai.timefold.solver.core.api.score.stream.Joiners.filtering;
 import static ai.timefold.solver.core.api.score.stream.Joiners.lessThan;
 import static ai.timefold.solver.core.api.score.stream.Joiners.overlapping;
 
@@ -370,6 +371,10 @@ public class RosterConstraints implements ConstraintProvider {
                 .groupBy(DutyCell::getStaff, toConsecutiveSequences(c -> (int) c.getDay()))
                 .flattenLast(SequenceChain::getBreaks)
                 .filter((s, gap) -> gap.getLength() == 2 && gap.getNextSequenceStart().isInMonth())
+                // Only a real free day counts: an absence or comp rest on it is input the planning cannot move.
+                .ifNotExistsIncludingUnassigned(DutyCell.class, equal((s, gap) -> s, DutyCell::getStaff),
+                        equal((s, gap) -> gap.getPreviousSequenceEnd().getDay() + 1, DutyCell::getDay),
+                        filtering((s, gap, c) -> c.getAbsenceCode() != null || c.isCompRest()))
                 .penalize(SOFT)
                 .justifyWith((s, gap, score) -> Hit.of(s.getId(), gap.getPreviousSequenceEnd().getDate().plusDays(1)))
                 .asConstraint(ConstraintCatalog.ISOLATED_DAY_OFF);

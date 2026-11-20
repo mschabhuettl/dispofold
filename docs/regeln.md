@@ -415,8 +415,8 @@ Eine Einstellung der Regeln, `nightDistribution`:
 - Blöcke: aufeinanderfolgende Tage mit Dienst. Kürzer als `minBlock` (2) oder länger als `maxBlock` (4)
   kostet je Tag Unterschied. Ein Block, der am Monatsende endet, gilt nicht als zu kurz, weil er im
   Folgemonat weitergehen kann. Ersatzruhe zählt als freier Tag.
-- Einzelner freier Tag: genau ein freier Tag zwischen zwei Diensten. Auch ein einzelner Urlaubs- oder
-  Ersatzruhetag zwischen zwei Diensten zählt so.
+- Einzelner freier Tag: genau ein freier Tag zwischen zwei Diensten. Ein einzelner Abwesenheits- oder
+  Ersatzruhetag zwischen zwei Diensten zählt nicht, weil die Planung ihn nicht verschieben kann.
 - **Beispiel `blockLength`:** Wim hätte Dienst am Montag, Mittwoch und Freitag, mit je einem freien Tag dazwischen:
   drei Einzeldienste, je ein Tag zu kurz (dazu zwei einzelne freie Tage). Ein Block von sechs Tagen wäre zwei
   Tage zu lang. Beides vermeidet die Regel, sie bevorzugt etwa drei Tage Dienst und dann mehrere freie.

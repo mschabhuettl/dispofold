@@ -114,5 +114,12 @@ class ScaledTargetTest {
                 List.of(), cells, ConstraintCatalog.overrides(Map.of(ConstraintCatalog.ISOLATED_DAY_OFF, 0L,
                         ConstraintCatalog.BLOCK_LENGTH, 0L)));
         assertThat(RosterAnalyzer.blocks(roster)).containsExactly(1, 1);
+        // An absence on the 5th makes it fixed input, not a single free day.
+        DutyCell absent = new DutyCell(a, LocalDate.of(2027, 1, 5), true, List.of(day));
+        absent.setAbsence("U", true);
+        cells.add(absent);
+        roster = new Roster(java.time.YearMonth.of(2027, 1), TimeLine.UTC, List.of(a), List.of(day), List.of(),
+                List.of(), cells, ConstraintCatalog.overrides(Map.of()));
+        assertThat(RosterAnalyzer.blocks(roster)).containsExactly(0, 1);
     }
 }

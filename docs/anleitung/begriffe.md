@@ -65,8 +65,9 @@ nach Rückfrage setzen. Siehe [Person bearbeiten](personen.md#person-bearbeiten)
 
 ## Einzelne freie Tage
 
-Ein freier Tag zwischen zwei Diensten. Er erholt wenig und kostet deshalb in der Qualität. Die Zahl steht über dem
-Dienstplan; sie ist kein Fehler, sondern ein Maß für die Güte des Plans.
+Ein freier Tag zwischen zwei Diensten, ohne Abwesenheit und ohne Ersatzruhe an diesem Tag. Er erholt wenig und
+kostet deshalb in der Qualität. Die Zahl steht über dem Dienstplan; sie ist kein Fehler, sondern ein Maß für die
+Güte des Plans.
 
 ## Entwurf
 

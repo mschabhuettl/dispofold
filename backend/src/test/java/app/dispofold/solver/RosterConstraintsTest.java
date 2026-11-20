@@ -366,6 +366,20 @@ class RosterConstraintsTest {
                 .penalizesBy(1);
         VERIFIER.verifyThat(RosterConstraints::isolatedDayOff)
                 .given(cell(A, MON, DAY), cell(A, MON.plusDays(3), DAY)).penalizesBy(0);
+        // A single absence or comp rest day between two duties is fixed input, not a free day.
+        DutyCell absent = cell(A, MON.plusDays(2), null);
+        absent.setAbsence("U", true);
+        VERIFIER.verifyThat(RosterConstraints::isolatedDayOff)
+                .given(cell(A, MON, DAY), cell(A, MON.plusDays(1), DAY), absent, cell(A, MON.plusDays(3), DAY))
+                .penalizesBy(0);
+        VERIFIER.verifyThat(RosterConstraints::isolatedDayOff)
+                .given(cell(A, MON, DAY), cell(A, MON.plusDays(1), DAY), cell(A, MON.plusDays(2), ER),
+                        cell(A, MON.plusDays(3), DAY))
+                .penalizesBy(0);
+        VERIFIER.verifyThat(RosterConstraints::isolatedDayOff)
+                .given(cell(A, MON, DAY), cell(A, MON.plusDays(1), DAY), cell(A, MON.plusDays(2), null),
+                        cell(A, MON.plusDays(3), DAY))
+                .penalizesBy(1);
     }
 
     @Test
