@@ -157,7 +157,10 @@ class Sp5PluginTest {
     void importThenTheResultIsWhatTheCommandLineWrites(@TempDir Path dir) throws Exception {
         json().body(settings("ordner")).put("/api/plugins/sp5/einstellungen").then().statusCode(200);
         json().body("{\"month\":\"2027-01\",\"to\":null}").post("/api/import/plugin/sp5?replace=true").then()
-                .statusCode(200).body("people", equalTo(2)).body("months", equalTo(List.of("2027-01")));
+                .statusCode(200).body("months", equalTo(List.of("2027-01")));
+        // the two people of the folder (an excluded person of an earlier dataset in this database stays as well)
+        given().get("/api/dataset").then().statusCode(200).body("people.id", org.hamcrest.Matchers.hasItems("E1",
+                "E2")).body("people.id", org.hamcrest.Matchers.not(org.hamcrest.Matchers.hasItem("E3")));
         long revision = given().get("/api/dataset").then().extract().jsonPath().getLong("revision");
         json().header("If-Match", revision).body("true").put("/api/dataset/people/E2/excluded").then()
                 .statusCode(200);
