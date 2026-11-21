@@ -1,0 +1,153 @@
+"""Cases the comparison adds to sp5-export's own tests (run by compare.sh, next to them).
+
+- Cycle assignments with START and END, and one without START: every run is compared by sp5_compare_plugin.
+- A cycle assignment without END: the one wanted difference. The Java port follows Schichtplaner 5 (and
+  openschichtplaner5 1.0.1), where such an assignment yields no duties; the vendored sp5lib of sp5-export reads it as
+  open. So Java on the folder with it must equal Python on the same folder without it, and Python on the folder with
+  it must give more duties.
+- sp5-vergleich.py, the owner's script, on a bundle made from a Java run: identical, and after a change to the
+  bundle a difference that names no name, id or value.
+"""
+
+import json
+import re
+import shutil
+import subprocess
+import sys
+import zipfile
+from pathlib import Path
+
+import pytest
+from exportcli import MAPPING, ROOT
+
+import sp5_compare_plugin as cmp
+from tools.generator import generate_with_mixes
+from tools.sp5writer import write_sp5_folder
+
+MONTH = "2027-01"
+HERE = Path(__file__).resolve().parent
+
+
+@pytest.fixture(scope="module")
+def source():
+    return generate_with_mixes(MONTH, 3, 40)
+
+
+def _folder(source, path: Path, assignments: list[dict]) -> Path:
+    from sp5lib.dbf_reader import read_dbf
+    from sp5lib.dbf_writer import append_record, get_table_fields
+
+    dataset, mixes = source
+    write_sp5_folder(dataset, mixes, path)
+    shift_id = next(r["ID"] for r in read_dbf(str(path / "5SHIFT.DBF")) if r["SHORTNAME"] == "A2")
+    people = [r["ID"] for r in read_dbf(str(path / "5EMPL.DBF"))]
+
+    def add(table, **values):
+        p = str(path / f"{table}.DBF")
+        append_record(p, get_table_fields(p), values)
+
+    add("5CYCLE", ID=1, NAME="Tagdienst", POSITION=1, SIZE=2, UNIT=0, HIDE=0)
+    add("5CYENT", ID=1, CYCLEEID=1, INDEX=0, SHIFTID=shift_id, WORKPLACID=0)
+    for i, a in enumerate(assignments):
+        add("5CYASS", ID=i + 1, EMPLOYEEID=people[a["person"]], CYCLEID=1, ENTRANCE=0,
+            **{k: a[k] for k in ("START", "END") if k in a})
+    return path
+
+
+def _cmd(folder: Path, out: Path, *options: str) -> list[str]:
+    return [sys.executable, str(ROOT / "sp5_export.py"), "--data", str(folder), "--month", MONTH, "--mapping",
+            str(MAPPING), "--out", str(out), "--report", str(out.with_suffix(".csv")), *options]
+
+
+def _run(cmd: list[str]):
+    return subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", cwd=ROOT)
+
+
+CLOSED = [{"person": 2, "START": "2026-12-01", "END": "2027-01-31"},  # history and planning month
+          {"person": 3, "END": "2027-01-15"},  # no START: no duties in both
+          {"person": 4, "START": "2026-11-20", "END": "2026-12-24"}]  # history only
+OPEN = [{"person": 5, "START": "2026-12-10"}]  # no END: the wanted difference
+
+
+def test_cycles_with_start_and_end_are_the_same(source, tmp_path):
+    folder = _folder(source, tmp_path / "sp5", CLOSED)
+    for options in ([], ["--demand", "sp5"], ["--to", "2027-02"]):
+        proc = _run(_cmd(folder, tmp_path / "dataset.json", *options))
+        assert proc.returncode == 0, proc.stderr
+
+
+def test_cycle_without_end_yields_no_duties_in_the_port(source, tmp_path):
+    with_open = _folder(source, tmp_path / "offen" / "sp5", CLOSED + OPEN)
+    without = _folder(source, tmp_path / "ohne" / "sp5", CLOSED)
+    out = tmp_path / "dataset.json"
+    cmp.ENABLED[0] = False
+    try:
+        py_open, java_open, py_open_files, java_open_files = cmp.run_both(_cmd(with_open, out),
+                                                                          capture_output=True, text=True,
+                                                                          encoding="utf-8", cwd=ROOT)
+        py_without = _run(_cmd(without, out))
+        py_without_files = cmp._state(cmp._written(_cmd(without, out)[2:], ROOT))
+    finally:
+        cmp.ENABLED[0] = True
+    assert py_open.returncode == java_open.returncode == py_without.returncode == 0
+    # the port on the folder with the open assignment = Python on the folder without it (stderr names the folder)
+    assert java_open.stderr.replace(str(with_open), "F") == py_without.stderr.replace(str(without), "F")
+    assert java_open_files == py_without_files
+    # Python reads the open assignment as running on: more previous duties and history for that person
+    assert py_open_files[str(out)] != java_open_files[str(out)]
+    cmp.RESULTS.append({"test": "cycle without END (wanted difference: no duties, as SP5)", "args": [],
+                        "same": True, "differences": []})
+
+
+def _bundle(path: Path, out: Path, args: list[str]) -> Path:
+    report = out.with_suffix(".csv")
+    with zipfile.ZipFile(path, "w") as z:
+        z.writestr("dataset.json", out.read_bytes())
+        z.writestr("report.csv", report.read_bytes())
+        z.writestr("warnings.txt", "".join(w + "\n" for w in out.with_suffix(".warnings").read_text(
+            encoding="utf-8").splitlines()))
+        z.writestr("anfrage.json", json.dumps({"format": "dispofold/sp5-ergebnis", "version": 1, "args": args,
+                                               "mapping": "mapping.json", "corrections": None}))
+        z.writestr("mapping.json", Path(MAPPING).read_bytes())
+    return path
+
+
+def test_owner_script_finds_identical_and_anonymous_differences(source, tmp_path):
+    dataset = source[0]
+    folder = _folder(source, tmp_path / "sp5", CLOSED)
+    out = tmp_path / "java" / "dataset.json"
+    out.parent.mkdir()
+    args = ["--month", MONTH, "--history-months", "12", "--demand", "history", "--mix-min-duties", "10",
+            "--hidden-shifts-months", "3", "--recent-months", "3"]
+    java = subprocess.run(cmp.JAVA + ["--data", str(folder), *args, "--mapping", str(MAPPING), "--out", str(out),
+                                      "--report", str(out.with_suffix(".csv"))],
+                          capture_output=True, text=True, encoding="utf-8")
+    assert java.returncode == 0, java.stderr
+    out.with_suffix(".warnings").write_text("".join(line[len("Warnung: "):] + "\n" for line in java.stderr.splitlines()
+                                                    if line.startswith("Warnung: ")), encoding="utf-8")
+    bundle = _bundle(tmp_path / "ergebnis.zip", out, args)
+    script = HERE.parent / "sp5-vergleich.py"
+
+    def compare(zip_path: Path) -> subprocess.CompletedProcess:
+        return subprocess.run([sys.executable, "-X", "utf8", str(script), "--ergebnis", str(zip_path), "--daten",
+                               str(folder), "--sp5-export", str(ROOT), "--ausgabe", str(tmp_path / "ergebnis.txt")],
+                              capture_output=True, text=True, encoding="utf-8")
+
+    same = compare(bundle)
+    assert same.returncode == 0 and "ERGEBNIS: alles identisch" in same.stdout, same.stdout + same.stderr
+    # a changed person name and a changed number: found, and nothing of the data in the result
+    changed = json.loads(out.read_text(encoding="utf-8"))
+    person = changed["people"][1]
+    secret = person["lastName"]
+    person["lastName"] = "Anders"
+    changed["people"][2]["weeklyHours"] = 1.5
+    out.write_text(json.dumps(changed, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    diff = compare(_bundle(tmp_path / "geaendert.zip", out, args))
+    text = (tmp_path / "ergebnis.txt").read_text(encoding="utf-8")
+    assert diff.returncode == 1 and "dataset.json: VERSCHIEDEN" in text
+    assert "$.people[1].lastName: Wert verschieden" in text and "$.people[2].weeklyHours" in text
+    names = {p["lastName"] for p in dataset["people"]} | {p["firstName"] for p in dataset["people"]}
+    ids = {p["id"] for p in changed["people"]} | {p.get("externalId") or "" for p in changed["people"]}
+    assert secret not in text and "Anders" not in text
+    assert not [n for n in names | ids if n and re.search(rf"\b{re.escape(n)}\b", text)]
+    shutil.rmtree(tmp_path / "java")
