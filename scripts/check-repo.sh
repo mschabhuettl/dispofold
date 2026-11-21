@@ -4,7 +4,7 @@
 # 2. Synthetic fixtures say so in their file name.
 # 3. No traces of code generators or steering files in history, file list or content.
 # 4. No names of other hosting platforms in commit messages or files.
-# 5. No mention of the old planning system in commit messages or files.
+# 5. No mention of the old planning system in commit messages, nor in files outside its import plugin.
 # 6. No organisation, region, previous project or font names.
 # 7. No private domain, LAN address or account name of the owner's own hosting.
 # The search patterns use character classes so that this file does not match itself.
@@ -42,14 +42,18 @@ if git grep -i -n -E '[c]laude|[a]nthropic|[c]hatgpt|[o]penai|[l]lm' \
   echo "Forbidden words in tracked files"; fail=1
 fi
 
-# The tool knows only its own data format; the old planning system is not part of this repository.
+# The core knows only its own data format; the old planning system appears only in the plugin that imports from it
+# (plugins/[s]p5/: its code, texts and help pages). Elsewhere only these technical tokens may name it: the plugin's
+# folder and package, its help page ids, and the repository of the Python program the plugin is compared with.
 # (This file names data file types above on purpose and is therefore not searched.)
 legacy='\b[s]p5|[s]chichtplaner|\b[d]bf\b'
+tokens='plugins[/.][s]p5\b|plugin-[s]p5-|\b[s]p5-export\b'
 if git log --format='%B' | grep -n -i -E "$legacy"; then
   echo "Old planning system named in commit messages"; fail=1
 fi
-if git grep -n -i -E "$legacy" -- . ':!scripts/check-repo.sh'; then
-  echo "Old planning system named in tracked files"; fail=1
+if git grep -n -i -E "$legacy" -- . ':!scripts/check-repo.sh' ':!plugins/[s]p5/' \
+    | sed -E "s#$tokens##g" | grep -i -E "$legacy"; then
+  echo "Old planning system named in tracked files outside its plugin"; fail=1
 fi
 
 # Neutral product: no organisation, region or previous project name, no previous fonts.

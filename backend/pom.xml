@@ -192,6 +192,28 @@
         <version>${version.build-helper.plugin}</version>
         <executions>
           <execution>
+            <id>plugins</id>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>add-source</goal>
+              <goal>add-resource</goal>
+            </goals>
+            <configuration>
+              <sources>
+                <source>../plugins/sp5/backend/src/main/java</source>
+              </sources>
+              <resources>
+                <resource>
+                  <directory>../plugins/sp5</directory>
+                  <includes>
+                    <include>plugin.json</include>
+                  </includes>
+                  <targetPath>META-INF/dispofold-plugins/sp5</targetPath>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+          <execution>
             <id>test-plugins</id>
             <phase>generate-test-sources</phase>
             <goals>
@@ -202,6 +224,7 @@
               <sources>
                 <source>../plugins/beispiel/backend/src/main/java</source>
                 <source>../plugins/beispiel/backend/src/test/java</source>
+                <source>../plugins/sp5/backend/src/test/java</source>
               </sources>
               <resources>
                 <resource>

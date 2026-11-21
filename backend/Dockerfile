@@ -20,6 +20,9 @@ RUN --mount=type=cache,target=/root/.m2,sharing=locked \
     for attempt in 1 2 3; do mvn -B -q dependency:go-offline && break; [ "$attempt" = 3 ] && exit 1; sleep 20; done
 COPY tests/fixtures/synthetic/demo-dataset-2027-01.synthetic.json /src/tests/fixtures/synthetic/
 COPY backend/src ./src
+# the shipped plugins (pom.xml adds their sources and plugin.json)
+COPY plugins/sp5/plugin.json /src/plugins/sp5/plugin.json
+COPY plugins/sp5/backend/src/main/ /src/plugins/sp5/backend/src/main/
 RUN --mount=type=cache,target=/root/.m2,sharing=locked mvn -B -q package -DskipTests
 
 FROM eclipse-temurin:21-jre-alpine@sha256:ac05c3c42b7c2f1a52c9bd52f01041fa1958231b15ebeae7420429cbc5baf474
