@@ -79,7 +79,7 @@ public class BeispielPlugin implements Plugin {
 | Erweiterungspunkt | So geht es | Bewiesen von |
 |---|---|---|
 | Ein und aus | `PUT /api/extensions/<id>`; aus heißt: jede Route `404` `plugin.unknown` | `BeispielPluginTest.listedWithItsManifestAndOffByDefault`, `HiddenPluginTest` |
-| Routen | JAX-RS-Ressource unter `/api/plugins/<id>` | `BeispielPluginTest.routesFollowTheRolesOnceOn`, `readersSeeOnlyViewerRoutesAndNothingToSwitch`, `anonymousGets401EvenWhenOff` |
+| Routen | JAX-RS-Ressource unter `/api/plugins/<id>` | `BeispielPluginTest.routesFollowTheRolesOnceOn`, `readersSeeOnlyViewerRoutesAndNothingToSwitch`, `anonymousGets404WhileOffAnd401WhileOn`, `oddSpellingsOfThePathAreClosedToo` |
 | Einstellungen | `PluginHost.settings(id)` und `saveSettings(id, json)`; `settingsVersion()` und `migrateSettings(von, json)` | `BeispielPluginTest.settingsAreMigratedValidatedAndKeptWhenSwitchedOff` |
 | Import | `importSource()` liefert eine `ImportSource`, deren `load(anfrage)` einen `Dataset` und die angewendeten Korrekturen | `BeispielPluginTest.importSourceGoesThroughTheImportPath` |
 | Korrekturdatei | `PluginHost.corrections()`: die kumulierte Korrekturdatei, leer ohne gespeicherten Import | ebenda |
