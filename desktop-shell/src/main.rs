@@ -448,12 +448,48 @@ async fn shell_request(core: &Arc<Core>, via: Via, method: &tauri::http::Method,
             let p = rx.borrow().clone();
             respond(StatusCode::OK, "application/json", state_json(&p))
         }
+        // the folder dialog for plugins (docs/plugins.md): the shell itself allows the picked folder in the backend,
+        // with a header the page cannot send (rules::forward_request_header)
+        ("POST", "pick-folder") => pick_folder(core).await,
         ("GET", "selftest/begin") | ("POST", "selftest/report") | ("POST", "selftest/abort") if via == Via::Scheme => match &core.selftest {
             Some(st) => st.handle(core.app(), name, body),
             None => respond(StatusCode::NOT_FOUND, "text/plain", "nicht gefunden"),
         },
         ("GET", n) => shell_asset(core.app(), n),
         _ => respond(StatusCode::METHOD_NOT_ALLOWED, "text/plain", ""),
+    }
+}
+
+/// Opens the folder dialog; a picked folder is allowed in the backend (POST /api/files/roots) and answered as { id },
+/// no folder as { id: null }.
+async fn pick_folder(core: &Arc<Core>) -> Response<Vec<u8>> {
+    let (tx, rx) = tokio::sync::oneshot::channel();
+    core.app().dialog().file().set_title("Ordner wählen").pick_folder(move |folder| {
+        let _ = tx.send(folder.and_then(|f| f.into_path().ok()));
+    });
+    let Ok(Some(folder)) = rx.await else {
+        return respond(StatusCode::OK, "application/json", r#"{"id":null}"#);
+    };
+    let Phase::Ready { port, session } = core.phase.borrow().clone() else {
+        return respond(StatusCode::SERVICE_UNAVAILABLE, "application/json", RESTARTING);
+    };
+    let body = json!({ "path": folder.to_string_lossy() }).to_string();
+    let sent = core
+        .proxy
+        .post(format!("http://127.0.0.1:{port}/api/files/roots"))
+        .header(SESSION_HEADER, &session)
+        .header(rules::PICKED_HEADER, "1")
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(body)
+        .send()
+        .await;
+    match sent {
+        Ok(r) => {
+            let status = r.status();
+            let text = r.text().await.unwrap_or_default();
+            respond(status, "application/json", text)
+        }
+        Err(_) => respond(StatusCode::SERVICE_UNAVAILABLE, "application/json", RESTARTING),
     }
 }
 

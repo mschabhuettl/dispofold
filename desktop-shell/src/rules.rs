@@ -51,12 +51,15 @@ pub fn redirect_allowed(previous: &Url, next: &Url, hops: usize) -> bool {
         && next.port_or_known_default() == previous.port_or_known_default()
 }
 
+/// Set by the shell alone, on the request that allows the folder the user picked in its folder dialog.
+pub const PICKED_HEADER: &str = "x-dispofold-picked";
+
 /// Request headers the page may not set or that the client sets itself.
 pub fn forward_request_header(name: &str) -> bool {
     !matches!(
         name.to_ascii_lowercase().as_str(),
         "host" | "cookie" | "connection" | "content-length" | "transfer-encoding" | "accept-encoding" | "keep-alive"
-            | "proxy-authorization" | "upgrade" | "te" | "x-dispofold-session"
+            | "proxy-authorization" | "upgrade" | "te" | "x-dispofold-session" | PICKED_HEADER
     )
 }
 
@@ -204,7 +207,7 @@ mod tests {
 
     #[test]
     fn page_cannot_set_the_session_or_cookies() {
-        for h in ["X-Dispofold-Session", "cookie", "Host", "content-length", "Transfer-Encoding"] {
+        for h in ["X-Dispofold-Session", "X-Dispofold-Picked", "cookie", "Host", "content-length", "Transfer-Encoding"] {
             assert!(!forward_request_header(h), "{h}");
         }
         for h in ["content-type", "accept", "if-match", "origin", "sec-fetch-site"] {
