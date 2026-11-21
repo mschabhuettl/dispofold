@@ -82,6 +82,11 @@ jobs:
           path: ~/.m2/repository
           key: maven-image-seed-${{ runner.os }}-${{ hashFiles('**/pom.xml') }}
           restore-keys: setup-java-${{ runner.os }}-
+      - name: Cache of the Maven of the wrapper (a download per job failed now and then)
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.m2/wrapper/dists
+          key: maven-wrapper-${{ runner.os }}-${{ hashFiles('backend/.mvn/wrapper/maven-wrapper.properties') }}
       - name: Maven of the wrapper (with retries)
         run: scripts/fetch-maven.sh
       - name: Maven repository for the image build
@@ -122,6 +127,11 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
+      - name: Cache of the Maven of the wrapper (a download per job failed now and then)
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.m2/wrapper/dists
+          key: maven-wrapper-${{ runner.os }}-${{ hashFiles('backend/.mvn/wrapper/maven-wrapper.properties') }}
       - name: Maven of the wrapper (with retries)
         run: scripts/fetch-maven.sh
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -172,6 +182,11 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
+      - name: Cache of the Maven of the wrapper (a download per job failed now and then)
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.m2/wrapper/dists
+          key: maven-wrapper-${{ runner.os }}-${{ hashFiles('backend/.mvn/wrapper/maven-wrapper.properties') }}
       - name: Maven of the wrapper (with retries)
         run: scripts/fetch-maven.sh
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
@@ -258,6 +273,11 @@ jobs:
         with:
           distribution: temurin
           java-version: "21"
+      - name: Cache of the Maven of the wrapper (a download per job failed now and then)
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.m2/wrapper/dists
+          key: maven-wrapper-${{ runner.os }}-${{ hashFiles('backend/.mvn/wrapper/maven-wrapper.properties') }}
       - name: Maven of the wrapper (with retries)
         run: scripts/fetch-maven.sh
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
