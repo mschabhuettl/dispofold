@@ -61,18 +61,25 @@ public final class Dbf {
         try {
             data = Files.readAllBytes(path);
         } catch (IOException e) {
-            throw new DbfError("nicht lesbar (" + pyErrorName(e) + ")");
+            throw new DbfError("nicht lesbar (" + pyErrorName(e, path) + ")");
         }
         return read(data);
     }
 
-    /** The Python exception name of an OSError, as far as it can be told. */
-    static String pyErrorName(IOException e) {
+    /** The Python exception name of an OSError of opening and reading `path`, as far as it can be told. */
+    static String pyErrorName(IOException e, Path path) {
         if (e instanceof java.nio.file.NoSuchFileException) {
             return "FileNotFoundError";
         }
         if (e instanceof java.nio.file.AccessDeniedException) {
             return "PermissionError";
+        }
+        if (e instanceof java.nio.file.NotDirectoryException
+                || (e instanceof java.nio.file.FileSystemException f && "Not a directory".equals(f.getReason()))) {
+            return "NotADirectoryError";
+        }
+        if (Files.isDirectory(path)) {
+            return "IsADirectoryError";
         }
         return "OSError";
     }
@@ -203,7 +210,7 @@ public final class Dbf {
                 if (t.isEmpty() || t.equals(".")) {
                     return 0L;
                 }
-                Object v = t.contains(".") || s.dec() > 0 ? pyFloat(t) : pyInt(t);
+                Object v = t.contains(".") || s.dec() > 0 ? (Object) pyFloat(t) : (Object) pyInt(t);
                 return v == null ? 0L : v;
             }
             case 'L' -> {
@@ -273,7 +280,7 @@ public final class Dbf {
 
     /** _parse_date of sp5lib: an ISO date or null. */
     static String parseDate(String s) {
-        if (s.length() != 8 || !s.chars().allMatch(c -> c >= '0' && c <= '9')) {
+        if (s.length() != 8 || s.chars().anyMatch(c -> c < '0' || c > '9')) {
             return null;
         }
         int year = Integer.parseInt(s.substring(0, 4));
