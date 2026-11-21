@@ -6,8 +6,10 @@ sie einschaltet. Welche Erweiterungen es gibt, steht in den Notizen der Version.
 
 ## Einschalten und ausschalten
 
-Unter **Einstellungen → Erweiterungen** steht jede Erweiterung mit Name, Version und Beschreibung. Die Seite sieht
-nur die Planung.
+Unter **Einstellungen → Erweiterungen** (1) steht jede Erweiterung mit Name, Version und Beschreibung. Die Seite
+sieht nur die Planung.
+
+![Einstellungen → Erweiterungen in einer Version ohne Erweiterungen](../screenshots/erweiterungen.png)
 
 1. Bei der Erweiterung **Eingeschaltet** anhaken.
 2. Die Rückfrage bestätigen. Eine eingeschaltete Erweiterung sieht alle Planungsdaten, wie die Planung selbst.
@@ -17,8 +19,8 @@ nur die Planung.
 Ausschalten geht genauso. Die Seiten der Erweiterung verschwinden dann aus dem Menü; ihre Einstellungen bleiben
 gespeichert und gelten wieder, sobald man sie einschaltet.
 
-Enthält das Programm keine Erweiterung, steht dort **Dieses Programm enthält keine Erweiterungen.** Am Server kann
-die IT eine Erweiterung ganz ausblenden; sie erscheint dann auch hier nicht (siehe
+Enthält das Programm keine Erweiterung, steht dort **Dieses Programm enthält keine Erweiterungen.** (2). Am Server
+kann die IT eine Erweiterung ganz ausblenden; sie erscheint dann auch hier nicht (siehe
 [Betrieb](../betrieb.md#erweiterungen)).
 
 ## Was Erweiterungen zeigen

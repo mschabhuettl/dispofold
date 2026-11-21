@@ -115,11 +115,24 @@ class BeispielPluginTest {
 
     @Test
     @TestSecurity
-    void anonymousGets401EvenWhenOff() {
+    void anonymousGets404WhileOffAnd401WhileOn() {
+        given().get("/api/plugins/beispiel/gruss").then().statusCode(404);
+        given().contentType(ContentType.JSON).body("{}").post("/api/import/plugin/beispiel").then().statusCode(404);
+        store.setPluginEnabled("beispiel", true);
         given().get("/api/plugins/beispiel/gruss").then().statusCode(401);
-        given().get("/api/extensions").then().statusCode(401);
         given().contentType(ContentType.JSON).body("{}").post("/api/import/plugin/beispiel").then().statusCode(401);
+        store.setPluginEnabled("beispiel", false);
+        given().get("/api/extensions").then().statusCode(401);
         given().get("/api/files/roots").then().statusCode(401);
+    }
+
+    @Test
+    void oddSpellingsOfThePathAreClosedToo() {
+        for (String path : List.of("//api/plugins/beispiel/gruss", "/api//plugins/beispiel/gruss",
+                "/api/plugins/beispiel;x=1/gruss", "/api/plugins//beispiel/gruss")) {
+            given().urlEncodingEnabled(false).get(path).then().statusCode(org.hamcrest.Matchers.not(200));
+        }
+        given().urlEncodingEnabled(false).get("/api/plugins/beispiel;x=1/gruss").then().statusCode(404);
     }
 
     @Test

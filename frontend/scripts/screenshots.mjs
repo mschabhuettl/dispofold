@@ -11,7 +11,8 @@
 // 2. Desktop phase: the pages of the program window (password on the first start, the small window "Dispofold läuft")
 //    from desktop-shell/pages, and the desktop-only screens of the interface (update question, Updates page, update
 //    notice with "Jetzt installieren") from the dev server in desktop mode (MOCK_DESKTOP=1), which this script starts
-//    itself on a free port. PHASE=server or PHASE=desktop runs one phase only.
+//    itself on a free port; then Einstellungen → Erweiterungen from the dev server as a server.
+//    PHASE=server or PHASE=desktop runs one phase only.
 // The window frame pictures fenster*.png come from the real program window and are not made here.
 // Every request to another host is blocked and makes the script fail. At the end scripts/optimize-png.py shrinks the
 // files (256 colours, the strongest compression that scripts/check-repo.sh accepts).
@@ -707,6 +708,16 @@ async function desktopPhase() {
     await shot(page, 'updates', true);
     await page.context().close();
   } finally { offer.server.kill(); }
+  // Einstellungen → Erweiterungen as a planner on the server sees it in this version: no plugin built in yet
+  const plain = await startDevServer({});
+  try {
+    const page = await newPage(plain.origin);
+    await login(page, plain.origin, 'planung', 'x');
+    await open(page, plain.origin, 'erweiterungen', '#extensions-none');
+    await mark(page, [['.page-tabs a[aria-current="page"]', 1, 'bottom'], ['#extensions-none', 2, 'left']]);
+    await shot(page, 'erweiterungen');
+    await page.context().close();
+  } finally { plain.server.kill(); }
 }
 
 try {

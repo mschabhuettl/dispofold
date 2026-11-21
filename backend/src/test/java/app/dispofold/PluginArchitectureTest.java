@@ -26,6 +26,7 @@ class PluginArchitectureTest {
     static final Path PLUGINS = Path.of("../plugins");
     static final Pattern IMPORT = Pattern.compile("^import\\s+(?:static\\s+)?([\\w.]+)", Pattern.MULTILINE);
     static final Pattern PATH = Pattern.compile("@Path\\(\"([^\"]*)\"\\)");
+    static final Pattern DISPOFOLD = Pattern.compile("\\bapp\\.dispofold(?:\\.\\w+)+");
     static final List<String> ALLOWED = List.of("java.", "jakarta.", "com.fasterxml.jackson.",
             "org.eclipse.microprofile.config.", "app.dispofold.plugin.api.", "app.dispofold.model.");
 
@@ -74,6 +75,15 @@ class PluginArchitectureTest {
                     String imported = m.group(1);
                     if (ALLOWED.stream().noneMatch(imported::startsWith) && !imported.startsWith(own + ".")) {
                         found.add(f + ": imports " + imported);
+                    }
+                }
+                // also fully qualified uses in the code, not only imports
+                Matcher q = DISPOFOLD.matcher(src);
+                while (q.find()) {
+                    String used = q.group();
+                    if (!used.startsWith("app.dispofold.plugin.api.") && !used.startsWith("app.dispofold.model.")
+                            && !used.startsWith(own + ".") && !used.equals(own)) {
+                        found.add(f + ": uses " + used);
                     }
                 }
                 Matcher p = PATH.matcher(src);
