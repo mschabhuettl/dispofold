@@ -3,7 +3,7 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
-## 0.18.0 (unreleased)
+## 0.18.0 (2026-11-21)
 
 - **Erweiterungen (Plugins):** Dispofold kann Erweiterungen mitbringen, die eigene Seiten, Einstellungen, einen
   Import und Hilfeseiten haben und so aussehen wie der Rest des Programms. Jede ist aus, bis die Planung sie unter
