@@ -11,6 +11,8 @@ result=${2:-$repo/backend/target/sp5-compare.json}
 here="$repo/plugins/sp5/tools/ci"
 (cd "$repo/backend" && ./mvnw -B -q compile dependency:build-classpath -Dmdep.outputFile=target/sp5-classpath.txt \
   -Dmdep.includeScope=runtime)
+# The JVM announces JAVA_TOOL_OPTIONS on stderr, which would differ from Python's stderr; it is only for the build.
+unset JAVA_TOOL_OPTIONS
 export SP5_JAVA="java -XX:TieredStopAtLevel=1 -Xshare:auto -cp $repo/backend/target/classes:$(cat "$repo/backend/target/sp5-classpath.txt") app.dispofold.plugins.sp5.port.Sp5Main"
 export SP5_COMPARE_OUT="$result"
 cd "$checkout"

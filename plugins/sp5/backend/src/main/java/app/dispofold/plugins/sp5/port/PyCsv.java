@@ -5,7 +5,7 @@ import java.util.List;
 /**
  * csv.writer(f, delimiter=";") of Python: quote character ", doubled inside, quoted only when needed (delimiter,
  * quote, \r or \n in the field, or a row that is one empty field), lines end with \r\n. None is the empty field,
- * numbers as str().
+ * anything else as str().
  */
 public final class PyCsv {
 
@@ -22,8 +22,7 @@ public final class PyCsv {
                 out.append(';');
             }
             Object v = fields.get(i);
-            String s = v == null ? "" : v instanceof Boolean b ? (b ? "True" : "False")
-                    : (v instanceof Double || v instanceof Long || v instanceof Integer) ? Py.str(v) : v.toString();
+            String s = v == null ? "" : Py.str(v);
             if (s.indexOf(';') >= 0 || s.indexOf('"') >= 0 || s.indexOf('\r') >= 0 || s.indexOf('\n') >= 0) {
                 out.append('"').append(s.replace("\"", "\"\"")).append('"');
             } else {
