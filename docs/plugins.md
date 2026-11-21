@@ -113,7 +113,7 @@ import { folderPicker, guarded, h, info, t } from '../../../frontend/src/lib/plu
 export default {
   id: 'beispiel',
   texts: { 'plugin.beispiel.group': 'Beispiel', /* … */ },
-  group: { label: 'plugin.beispiel.group' },  // eigener Menüeintrag; oder die Id einer Gruppe des Kerns
+  group: { label: 'plugin.beispiel.group' },  // eigener Menüeintrag oder die Id einer Gruppe des Kerns; nur mit pages
   pages: [{ path: 'start', tab: '…', intro: '…', help: 'beispiel', viewer: true, render(root, ctx, params) {} }],
   settings: { render(root, ctx) {} },        // unter Einstellungen → Erweiterungen, solange eingeschaltet
   importSource: { label: '…', render(root, ctx) { return () => anfrage; } },  // auf der Seite Daten

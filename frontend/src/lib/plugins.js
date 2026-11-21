@@ -51,6 +51,7 @@ export function helpSection(plugin, help) {
 export function routes(plugins, enabled, groups, t) {
   const out = [];
   for (const p of plugins.filter((x) => enabled.has(x.id))) {
+    if (!p.pages?.length) continue; // settings, an import source or help only: no menu entry
     const own = typeof p.group === 'object' && p.group;
     const group = own ? `plugin-${p.id}` : p.group;
     if (!group || !(own || Object.hasOwn(groups, group))) throw new Error(`plugin ${p.id}: unknown menu group ${p.group}`);

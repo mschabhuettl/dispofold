@@ -73,7 +73,10 @@ test('only switched on plugins get routes and help pages, in their group, for re
     ['plugin/eigen/b', 'plugin-eigen', undefined, null],
     ['plugin/kern/a', 'settings', undefined, null]]);
   assert.equal(groups['plugin-eigen'], 'Eigen');
-  assert.throws(() => routes([{ id: 'zz', group: 'nirgends', pages: [] }], new Set(['zz']), groups, tt), /unknown menu group/);
+  assert.throws(() => routes([{ id: 'zz', group: 'nirgends', pages: [{ path: 'a', tab: 'x', render }] }], new Set(['zz']), groups, tt),
+    /unknown menu group/);
+  // settings, an import source or help only: no menu group needed, no route
+  assert.deepEqual(routes([{ id: 'ohne', help: [{ page: 'h', title: 'H' }] }], new Set(['ohne']), groups, tt), []);
   assert.deepEqual(helpPages([own, core], new Set(['eigen'])), [['plugin-eigen-hilfe', 'Hilfe']]);
   assert.deepEqual(helpPages([own, core], new Set()), []);
   assert.ok(t('extensions.none'));
