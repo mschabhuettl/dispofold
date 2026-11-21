@@ -7,13 +7,14 @@ import { t } from './texts.js';
 /**
  * @param ctx the page context (ctx.api, ctx.me.desktop)
  * @param files true: a file is chosen, false: a folder
+ * @param start the folder shown first ({ root, path }, e.g. from the plugin's settings)
  * @returns { element, value() → { root, path } | null }
  */
-export function folderPicker(ctx, { id = 'folder', files = false } = {}) {
+export function folderPicker(ctx, { id = 'folder', files = false, start = null } = {}) {
   const { api } = ctx;
   let roots = [];
-  let root = '';
-  let path = ''; // the folder shown, relative to the root
+  let root = start?.root ?? '';
+  let path = start?.path ?? ''; // the folder shown, relative to the root
   let file = ''; // files: the chosen file in it
   let drawn = 0; // a newer draw replaces one still loading
   const select = h('select', { id, onchange: (e) => { root = e.target.value; path = ''; file = ''; draw(); } });
@@ -31,7 +32,10 @@ export function folderPicker(ctx, { id = 'folder', files = false } = {}) {
 
   async function load() {
     roots = (await guarded(() => api.fileRoots())) ?? [];
-    if (!roots.some((r) => r.id === root)) root = roots[0]?.id ?? '';
+    if (!roots.some((r) => r.id === root)) {
+      root = roots[0]?.id ?? '';
+      path = '';
+    }
     select.replaceChildren(...roots.map((r) => h('option', { value: r.id, selected: r.id === root }, r.id)));
     await draw();
   }

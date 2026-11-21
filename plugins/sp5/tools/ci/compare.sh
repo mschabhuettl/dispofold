@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Compares the Java port of the plugin sp5 with sp5_export.py byte for byte: runs sp5-export's own tests (a checkout
-# at the commit in plugins/sp5/tools/ci/SP5_EXPORT_COMMIT) plus test_cases.py of this folder, with
+# at the commit in plugins/sp5/tools/ci/pinned-commit) plus test_cases.py of this folder, with
 # sp5_compare_plugin.py, which runs the Java port next to every run of sp5_export.py and compares exit code, output,
 # dataset, report and warnings. Synthetic data only: the SP5 folders are written by the tests at run time.
 # Usage: plugins/sp5/tools/ci/compare.sh <sp5-export checkout> [result.json]   (Python with pytest, JDK 21)

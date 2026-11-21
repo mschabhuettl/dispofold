@@ -51,7 +51,7 @@ tokens='plugins[/.][s]p5\b|plugin-[s]p5-|\b[s]p5-export\b'
 if git log --format='%B' | grep -n -i -E "$legacy"; then
   echo "Old planning system named in commit messages"; fail=1
 fi
-if git grep -n -i -E "$legacy" -- . ':!scripts/check-repo.sh' ':!plugins/[s]p5/' \
+if git grep -n -i -E "$legacy" -- . ':!scripts/check-repo.sh' ':(exclude,glob)plugins/[s]p5/**' \
     | sed -E "s#$tokens##g" | grep -i -E "$legacy"; then
   echo "Old planning system named in tracked files outside its plugin"; fail=1
 fi

@@ -273,7 +273,7 @@ public final class Dbf {
 
     /** _parse_date of sp5lib: an ISO date or null. */
     static String parseDate(String s) {
-        if (s.length() != 8 || !s.chars().allMatch(c -> c >= '0' && c <= '9')) {
+        if (s.length() != 8 || s.chars().anyMatch(c -> c < '0' || c > '9')) {
             return null;
         }
         int year = Integer.parseInt(s.substring(0, 4));

@@ -127,8 +127,8 @@ export function createApi({ fetchImpl = (...a) => globalThis.fetch(...a), onUnau
   const k = (key) => encodeURIComponent(key);
   const replace = (yes) => (yes ? '?replace=true' : '');
   /** A file download as { blob, filename }; saved by the caller (no navigation to the export URL). */
-  async function download(path, fallback) {
-    const res = await send('GET', path, undefined, '*/*');
+  async function download(path, fallback, method = 'GET', body = undefined) {
+    const res = await send(method, path, body, '*/*');
     if (!res.ok) throw await failure(res);
     const disposition = res.headers?.get?.('Content-Disposition') ?? '';
     const named = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(disposition);
@@ -195,6 +195,8 @@ export function createApi({ fetchImpl = (...a) => globalThis.fetch(...a), onUnau
       get: (path) => request('GET', `/api/plugins/${k(id)}/${path}`),
       put: (path, body) => request('PUT', `/api/plugins/${k(id)}/${path}`, body),
       post: (path, body) => request('POST', `/api/plugins/${k(id)}/${path}`, body),
+      /** A file the route answers to a POST of body, as { blob, filename }. */
+      download: (path, body, fallback) => download(`/api/plugins/${k(id)}/${path}`, fallback, 'POST', body),
     }),
     /** Import from a plugin's import source with its own request; as importDataset and importPreview. */
     pluginImport: (id, req, replaceChanged, keep = false) => request('POST', `/api/import/plugin/${k(id)}${keep ? '?keep=true' : replace(replaceChanged)}`, req),
