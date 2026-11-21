@@ -209,6 +209,23 @@ class Sp5PluginTest {
                 .isTrue();
     }
 
+    @Test
+    @TestSecurity(user = "leser", roles = "viewer")
+    void readersGetNeitherSettingsNorTheResult() {
+        given().get("/api/plugins/sp5/einstellungen").then().statusCode(403);
+        json().body("{}").put("/api/plugins/sp5/einstellungen").then().statusCode(403);
+        json().body("{\"month\":\"2027-01\"}").post("/api/plugins/sp5/ergebnis").then().statusCode(403);
+        json().body("{\"month\":\"2027-01\"}").post("/api/import/plugin/sp5/preview").then().statusCode(403);
+    }
+
+    @Test
+    void theOptionsOfTheCommandLine() {
+        assertThat(Sp5Resource.args(new app.dispofold.plugins.sp5.port.Sp5Export.Request(null, "2027-01", null, 0, 2,
+                5, "sp5", null, 0, 1, null, null))).containsExactly("--month", "2027-01", "--history-months", "0",
+                        "--areas-from-history", "2", "--shifts-from-history", "5", "--demand", "sp5",
+                        "--no-shift-mix", "--hidden-shifts-months", "0", "--recent-months", "1");
+    }
+
     static Map<String, byte[]> unzip(byte[] data) throws IOException {
         Map<String, byte[]> files = new HashMap<>();
         try (ZipInputStream in = new ZipInputStream(new ByteArrayInputStream(data))) {

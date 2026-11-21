@@ -48,10 +48,17 @@ def run_python(checkout: Path, data: Path, work: Path, request: dict) -> tuple[i
            "--report", str(out / "report.csv")]
     if request.get("corrections"):
         cmd += ["--corrections", str(work / request["corrections"])]
-    proc = subprocess.run(cmd, cwd=checkout, capture_output=True, text=True, encoding="utf-8")
-    warnings = "".join(line[len(WARNING):] + "\n" for line in proc.stderr.splitlines() if line.startswith(WARNING))
+    proc = subprocess.run(cmd, cwd=checkout, capture_output=True)
+    # lines as Dispofold writes them: split at \n only (a warning may hold other line separators), the \r\n of a
+    # Windows pipe taken as \n
+    stderr = proc.stderr.decode("utf-8", "replace").replace("\r\n", "\n")
+    warnings = "".join(line[len(WARNING):] + "\n" for line in lines(stderr) if line.startswith(WARNING))
     (out / "warnings.txt").write_text(warnings, encoding="utf-8", newline="")
-    return proc.returncode, proc.stderr
+    return proc.returncode, stderr
+
+
+def lines(text: str) -> list[str]:
+    return text.split("\n")[:-1] if text.endswith("\n") else text.split("\n") if text else []
 
 
 def key_name(key: str, keys: list) -> str:
@@ -138,7 +145,7 @@ def compare_warnings(java: bytes, python: bytes, lines: list) -> bool:
         lines.append("warnings.txt: identisch")
         return True
     lines.append("warnings.txt: VERSCHIEDEN")
-    a, b = java.decode("utf-8", "replace").splitlines(), python.decode("utf-8", "replace").splitlines()
+    a, b = lines(java.decode("utf-8", "replace")), lines(python.decode("utf-8", "replace"))
     lines.append(f"  Warnungen: {len(b)} bei sp5_export.py, {len(a)} bei Dispofold")
     only_b = [i for i, w in enumerate(b) if w not in a]
     only_a = [i for i, w in enumerate(a) if w not in b]

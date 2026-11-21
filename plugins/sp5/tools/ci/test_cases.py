@@ -96,7 +96,7 @@ def test_cycle_without_end_yields_no_duties_in_the_port(source, tmp_path):
     # Python reads the open assignment as running on: more previous duties and history for that person
     assert py_open_files[str(out)] != java_open_files[str(out)]
     cmp.RESULTS.append({"test": "cycle without END (wanted difference: no duties, as SP5)", "args": [],
-                        "same": True, "differences": []})
+                        "same": True, "differences": [], "features": ["cycle without END"]})
 
 
 def _bundle(path: Path, out: Path, args: list[str]) -> Path:
@@ -151,3 +151,39 @@ def test_owner_script_finds_identical_and_anonymous_differences(source, tmp_path
     assert secret not in text and "Anders" not in text
     assert not [n for n in names | ids if n and re.search(rf"\b{re.escape(n)}\b", text)]
     shutil.rmtree(tmp_path / "java")
+
+
+def _with_decimals(path: Path, table: str, field: str) -> None:
+    """Declares the numeric column `field` of `table` with one decimal and writes its values so (5 becomes 5.0)."""
+    p = path / f"{table}.DBF"
+    data = bytearray(p.read_bytes())
+    count, header, size = int.from_bytes(data[4:8], "little"), int.from_bytes(data[8:10], "little"), \
+        int.from_bytes(data[10:12], "little")
+    offset, at = 1, 32
+    while data[at] != 0x0D:
+        name = data[at:at + 11].split(b"\0")[0].decode("ascii")
+        length = data[at + 16]
+        if name == field:
+            assert chr(data[at + 11]) == "N" and data[at + 17] == 0
+            data[at + 17] = 1
+            for i in range(count):
+                start = header + i * size + offset
+                raw = data[start:start + length].strip()
+                if raw:
+                    data[start:start + length] = f"{int(raw)}.0".rjust(length).encode("ascii")
+            p.write_bytes(bytes(data))
+            return
+        offset += length
+        at += 32
+    raise AssertionError(f"{table}.{field} missing")
+
+
+@pytest.mark.parametrize("columns", [[("5EMPL", "ID"), ("5MASHI", "EMPLOYEEID")], [("5SHIFT", "ID"), ("5MASHI", "SHIFTID")],
+                                     [("5EMPL", "ID")]])
+def test_ids_stored_with_decimals(source, tmp_path, columns):
+    """Ids in columns declared with decimals: whatever Python makes of them (a dataset or an error), the port too."""
+    folder = _folder(source, tmp_path / "sp5", CLOSED)
+    for table, field in columns:
+        _with_decimals(folder, table, field)
+    _run(_cmd(folder, tmp_path / "dataset.json", "--to", "2027-02"))
+    assert cmp.RESULTS[-1]["same"], cmp.RESULTS[-1]["differences"]

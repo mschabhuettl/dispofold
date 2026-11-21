@@ -54,3 +54,15 @@ Erweiterung **Ergebnis speichern** (siehe [Vergleich mit sp5-export](plugin-sp5-
 Eine Zyklus-Zuordnung (`5CYASS`) ohne Ende oder ohne Beginn ergibt keine Dienste, wie in Schichtplaner 5 (so
 auch openschichtplaner5 ab 1.0.1). `sp5_export.py` liest eine Zuordnung ohne Ende dagegen als offen und setzt
 Dienste ein. Nur in diesem Fall weichen die Ergebnisse ab.
+
+## Grenzfälle
+
+Verglichen wird Byte für Byte, ohne die Dateien vorher zu vereinheitlichen. Außer bei den Zyklen kennt die
+Erweiterung nur Unterschiede in Fällen, die in echten Daten kaum vorkommen:
+
+- Ein Muster in der Zuordnung mit `[[` oder `--` in einer Zeichenklasse: Python schreibt dazu eine Warnung des
+  Interpreters, die Erweiterung nicht. Ein Rückverweis innerhalb eines Lookbehind wird von der Erweiterung als
+  ungültiges Muster abgelehnt.
+- Zeichen, die erst Unicode 16 vergeben hat, in einer Meldung: Python und Java schreiben sie verschieden.
+- Fälle, in denen `sp5_export.py` mit einem Python-Traceback abbricht, statt eine Meldung zu geben.
+- Ganzzahl-Optionen über 2 147 483 647: Die Einstellungen lehnen sie ab.

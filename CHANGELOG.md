@@ -14,6 +14,8 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
   [plugins/sp5/docs/vergleich.md](plugins/sp5/docs/vergleich.md).
 - **Betrieb:** Der Datenordner wird am Server wie andere Ordner schreibgeschützt eingebunden und freigegeben
   ([docs/betrieb.md](docs/betrieb.md#erweiterungen)).
+- **Erweiterungen:** Eine Erweiterung ohne eigene Seite (nur Einstellungen, Import oder Hilfe) ließ sich nicht
+  einschalten; jetzt geht das.
 - **CI:** Der Maven des Wrappers liegt im Cache, und sein Download wartet zwischen den Versuchen länger.
 
 ## 0.18.0 (2026-11-21)

@@ -7,6 +7,8 @@ Use (see compare.sh): SP5_JAVA="java -cp ... app.dispofold.plugins.sp5.port.Sp5M
 python -m pytest -p sp5_compare_plugin tests/ (with this folder on PYTHONPATH).
 """
 
+import csv
+import io
 import json
 import os
 import shlex
@@ -67,6 +69,36 @@ def run_both(cmd: list, **kw):
     return py, java, py_files, java_files
 
 
+def _features(args: list[str], py, py_files: dict) -> list[str]:
+    """What a run covers, from its options and Python's output: for the coverage list of the comparison."""
+    f = set()
+    opt = lambda flag: args[args.index(flag) + 1] if flag in args and args.index(flag) + 1 < len(args) else None
+    if opt("--to"):
+        f.add("range of months")
+    f.add(f"demand {opt('--demand') or 'history'}")
+    if opt("--corrections"):
+        f.add("corrections file")
+    if "--no-shift-mix" in args:
+        f.add("no shift mix")
+    for flag in ("--areas-from-history", "--shifts-from-history", "--hidden-shifts-months", "--recent-months",
+                 "--mix-min-duties", "--history-months"):
+        if opt(flag):
+            f.add(f"option {flag}")
+    if py.returncode != 0:
+        f.add(f"exit {py.returncode}")
+    if any(line.startswith("Warnung: ") for line in (py.stderr or "").splitlines()):
+        f.add("warnings")
+    report = next((v for k, v in py_files.items() if opt("--report") and Path(k).name == Path(opt("--report")).name),
+                  None)
+    if report:
+        for row in list(csv.reader(io.StringIO(report.decode("utf-8")), delimiter=";"))[1:]:
+            if row:
+                f.add(f"report {row[0]}")
+            if row and row[0] == "korrektur" and len(row) > 24:
+                f.add(f"correction {row[24]}" + (" exclude" if row[23] == "exclude" else ""))
+    return sorted(f)
+
+
 def compare(name: str, args: list[str], py, java, py_files: dict, java_files: dict) -> list[str]:
     diffs = []
     if py.returncode != java.returncode:
@@ -78,7 +110,8 @@ def compare(name: str, args: list[str], py, java, py_files: dict, java_files: di
     for path in py_files:
         if py_files[path] != java_files.get(path):
             diffs.append(f"{Path(path).name}: {_first_difference(py_files[path], java_files.get(path))}")
-    RESULTS.append({"test": name, "args": args, "same": not diffs, "differences": diffs})
+    RESULTS.append({"test": name, "args": args, "same": not diffs, "differences": diffs,
+                    "features": _features(args, py, py_files) + (["cycle"] if "cycle" in name else [])})
     return diffs
 
 
@@ -101,6 +134,13 @@ def pytest_sessionfinish(session, exitstatus):
     out = os.environ.get("SP5_COMPARE_OUT")
     if out:
         Path(out).write_text(json.dumps(RESULTS, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    covered = {}
+    for r in RESULTS:
+        for x in r["features"]:
+            covered[x] = covered.get(x, 0) + 1
+    print("\nsp5 comparison covers (runs):")
+    for x in sorted(covered):
+        print(f"  {x}: {covered[x]}")
     different = [r for r in RESULTS if not r["same"]]
     print(f"\nsp5 comparison: {len(RESULTS)} runs, {len(RESULTS) - len(different)} the same, {len(different)} "
           "different")
