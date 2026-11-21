@@ -197,8 +197,10 @@ public final class Sp5Main {
             return 0;
         }
         for (String m : new String[] { o.get("--month"), o.get("--to") }) {
-            if (m != null && !TimeUtil.validMonth(m)) {
-                return fail(err, "ungültiger Monat " + Py.strRepr(m) + ", erwartet YYYY-MM");
+            try {
+                Sp5Export.checkMonth(m);
+            } catch (Sp5Export.Sp5Error e) {
+                return fail(err, e.getMessage());
             }
         }
         Path data = resolve(o.get("--data"));

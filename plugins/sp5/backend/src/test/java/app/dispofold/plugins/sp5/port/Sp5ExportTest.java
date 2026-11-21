@@ -21,9 +21,9 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 /** The import on a tiny synthetic folder: one area, two shifts, three people, a month of history. */
-class Sp5ExportTest {
+public class Sp5ExportTest {
 
-    static final String MAPPING = """
+    public static final String MAPPING = """
             {"areas": [{"id": "AN", "name": "Annahme", "color": "#B45309"}],
              "shifts": [{"match": "A*", "areaId": "AN"}, {"match": "re:^N\\\\d$", "areaId": "AN"}],
              "ignoreShifts": ["X2"], "groups": [{"match": "Team Annahme", "areaIds": ["AN"]}],
@@ -34,7 +34,7 @@ class Sp5ExportTest {
     }
 
     /** The folder: A1 07:00-19:00 and N1 19:00-07:00 (mapped), X2 ignored, Q9 without area. */
-    static void folder(Path dir) throws Exception {
+    public static void folder(Path dir) throws Exception {
         List<TestTables.Field> shift = new ArrayList<>(List.of(n("ID", 11), c("NAME", 40), c("SHORTNAME", 24),
                 n("HIDE", 1), n("COLORBK", 11)));
         for (int i = 0; i < 8; i++) {
@@ -195,6 +195,11 @@ class Sp5ExportTest {
         huge[5] = "4294967297"; // would be 1 when narrowed to int
         ByteArrayOutputStream err4 = new ByteArrayOutputStream();
         assertThat(Sp5Main.run(huge, new PrintStream(err4, true, StandardCharsets.UTF_8))).isEqualTo(2);
+    }
+
+    /** The port's command line, for tests outside this package. */
+    public static int commandLine(String[] args, PrintStream err) {
+        return Sp5Main.run(args, err);
     }
 
     @SuppressWarnings("unchecked")

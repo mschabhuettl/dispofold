@@ -210,6 +210,13 @@ public final class Sp5Export {
         return true;
     }
 
+    /** The command line's check of --month and --to (before anything is read), with its message. */
+    public static void checkMonth(String month) throws Sp5Error {
+        if (month != null && !TimeUtil.validMonth(month)) {
+            throw new Sp5Error("ungültiger Monat " + Py.strRepr(month) + ", erwartet YYYY-MM");
+        }
+    }
+
     /** import_sp5: the dataset of the months, the report rows and the warnings. The folder is only read. */
     public static Result run(Request q) throws Sp5Error {
         validateMapping(q.mapping());
