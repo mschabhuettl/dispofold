@@ -174,7 +174,7 @@ public final class Corrections {
             List<List<Object>> pairs = new ArrayList<>();
             for (Map.Entry<?, ?> e : m.entrySet()) {
                 if (e.getValue() != null) {
-                    pairs.add(List.of(e.getKey(), wrap(norm(e.getValue()))));
+                    pairs.add(java.util.Arrays.asList(e.getKey(), norm(e.getValue())));
                 }
             }
             pairs.sort((a, b) -> Py.compareStr((String) a.get(0), (String) b.get(0)));
@@ -198,23 +198,8 @@ public final class Corrections {
         return value;
     }
 
-    /** A normalized null inside a List (List.of takes no null). */
-    private static Object wrap(Object v) {
-        return v == null ? NULL : v;
-    }
-
-    private static final Object NULL = new Object() {
-        @Override
-        public String toString() {
-            return "None";
-        }
-    };
-
     /** repr of a normalized value: Lists are tuples. */
     private static String tupleRepr(Object v) {
-        if (v == NULL) {
-            return "None";
-        }
         if (v instanceof List<?> l) {
             StringBuilder b = new StringBuilder("(");
             for (int i = 0; i < l.size(); i++) {
@@ -226,9 +211,6 @@ public final class Corrections {
     }
 
     private static boolean normEq(Object a, Object b) {
-        if (a == NULL || b == NULL) {
-            return a == b || (a == NULL && b == null) || (b == NULL && a == null);
-        }
         if (a instanceof List<?> x && b instanceof List<?> y) {
             if (x.size() != y.size()) {
                 return false;

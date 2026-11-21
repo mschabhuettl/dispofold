@@ -294,10 +294,6 @@ final class Sp5Import {
         return b;
     }
 
-    static List<Object> row(List<Object> parts) {
-        return parts;
-    }
-
     /** A report row from values and arrays of values (flattened). */
     static List<Object> flat(Object... parts) {
         List<Object> r = new ArrayList<>();
