@@ -1,0 +1,7 @@
+{
+  "id": "beispiel",
+  "name": "Beispiel",
+  "version": "1.0.0",
+  "description": "Zeigt jeden Erweiterungspunkt: eine Seite, eine Einstellung, eine Route, einen Import und eine Hilfeseite. Nur für Tests.",
+  "testOnly": true
+}

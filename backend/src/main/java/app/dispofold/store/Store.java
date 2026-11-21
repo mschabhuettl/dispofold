@@ -335,6 +335,41 @@ public class Store {
         upsert("update rules set doc = ? where id = 1", "insert into rules (id, doc) values (1, ?)", json(rules));
     }
 
+    /** A plugin's state: switched on, and its own settings (JSON) with the version of their form. */
+    public record PluginRow(boolean enabled, int settingsVersion, String settings) {
+    }
+
+    public Optional<PluginRow> plugin(String id) {
+        List<PluginRow> rows = new ArrayList<>();
+        query("select enabled, settings_version, settings from plugin_state where id = ?",
+                rs -> rows.add(new PluginRow(rs.getBoolean(1), rs.getInt(2), rs.getString(3))), id);
+        return rows.stream().findFirst();
+    }
+
+    public void setPluginEnabled(String id, boolean enabled) {
+        upsert2("update plugin_state set enabled = ? where id = ?", new Object[] { enabled, id },
+                "insert into plugin_state (id, enabled, settings_version, settings) values (?, ?, 0, '{}')",
+                new Object[] { id, enabled });
+    }
+
+    public void savePluginSettings(String id, int version, String settings) {
+        upsert2("update plugin_state set settings_version = ?, settings = ? where id = ?",
+                new Object[] { version, settings, id },
+                "insert into plugin_state (id, enabled, settings_version, settings) values (?, false, ?, ?)",
+                new Object[] { id, version, settings });
+    }
+
+    public List<String> pickedRoots() {
+        List<String> paths = new ArrayList<>();
+        query("select path from picked_root order by path", rs -> paths.add(rs.getString(1)));
+        return paths;
+    }
+
+    public void addPickedRoot(String path) {
+        upsert2("update picked_root set path = ? where path = ?", new Object[] { path, path },
+                "insert into picked_root (path) values (?)", new Object[] { path });
+    }
+
     private interface RowHandler {
         void row(ResultSet rs) throws SQLException;
     }

@@ -134,10 +134,24 @@ public class ImportResource {
     @Path("preview")
     @Consumes(MediaType.APPLICATION_JSON)
     public ImportPreview preview(String body) {
-        Dataset dataset = parse(body);
+        return preview(parse(body), appliedCorrections(body));
+    }
+
+    /**
+     * The import of a dataset a plugin made (an import source, see docs/plugins.md), the same as an uploaded one.
+     *
+     * @param applied the corrections the source applied, in the form of a corrections file; ignored otherwise
+     */
+    public ImportSummary importDataset(Dataset dataset, JsonNode applied, boolean replace, boolean keep) {
+        return save(dataset, checkedApplied(applied), replace, keep, true);
+    }
+
+    /** The dry run of {@link #importDataset} with {@code keep}. */
+    public ImportPreview preview(Dataset dataset, JsonNode applied) {
+        JsonNode corrections = checkedApplied(applied);
         synchronized (Store.DATASET_LOCK) {
             Dataset checked = validated(dataset).dataset();
-            Dataset raw = withExcluded(checked, appliedCorrections(body));
+            Dataset raw = withExcluded(checked, corrections);
             if (raw != checked) {
                 validated(raw);
             }
@@ -179,6 +193,10 @@ public class ImportResource {
         } catch (JsonProcessingException e) {
             return null;
         }
+        return checkedApplied(section);
+    }
+
+    private static JsonNode checkedApplied(JsonNode section) {
         return section != null && Corrections.FORMAT.equals(section.path("format").asText())
                 && section.path("people").isObject() ? section : null;
     }
