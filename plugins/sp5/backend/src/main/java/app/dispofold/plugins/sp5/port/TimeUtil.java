@@ -6,7 +6,6 @@ import java.time.temporal.IsoFields;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /** Port of sp5export/timeutil.py (clock times and months) and the date rules of Python's datetime.date. */
@@ -15,8 +14,6 @@ public final class TimeUtil {
     static final int DAY = 24 * 60;
     static final List<String> WEEKDAY_CODES = List.of("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN");
     private static final Pattern MONTH;
-    private static final Pattern ISO_DATE = Pattern.compile(
-            "([0-9]{4})(?:-([0-9]{2})-([0-9]{2})|([0-9]{2})([0-9]{2})|(-?)W([0-9]{2})(?:\\6([0-9]))?)");
 
     static {
         try {
@@ -117,30 +114,67 @@ public final class TimeUtil {
         return r;
     }
 
-    /** date.fromisoformat(s) of Python 3.14 (YYYY-MM-DD, YYYYMMDD and the ISO week forms), else ValueError. */
+    /**
+     * date.fromisoformat(s) of Python 3.14, a port of its C parser: the UTF-8 length must be 7, 8 or 10; YYYY-MM-DD,
+     * YYYYMMDD and the ISO week forms YYYY-Www[-D] and YYYYWww[D]; characters after the parsed part are not checked.
+     */
     static LocalDate fromIso(String s) {
-        Matcher m = ISO_DATE.matcher(s);
-        if (!m.matches()) {
+        byte[] b = s.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        int len = b.length;
+        if (len != 7 && len != 8 && len != 10) {
             throw new Py.Raised("ValueError");
         }
-        int year = Integer.parseInt(m.group(1));
-        if (m.group(2) != null) {
-            return date(year, Integer.parseInt(m.group(2)), Integer.parseInt(m.group(3)));
+        int[] p = { 0 };
+        int year = digits(b, p, 4);
+        boolean separator = at(b, p[0]) == '-';
+        if (separator) {
+            p[0]++;
         }
-        if (m.group(4) != null) {
-            return date(year, Integer.parseInt(m.group(4)), Integer.parseInt(m.group(5)));
+        if (at(b, p[0]) == 'W') {
+            p[0]++;
+            int week = digits(b, p, 2);
+            int day = 1;
+            if (p[0] < len) {
+                if (separator && at(b, p[0]++) != '-') {
+                    throw new Py.Raised("ValueError");
+                }
+                day = digits(b, p, 1);
+            }
+            return isoWeekDate(year, week, day);
         }
-        int week = Integer.parseInt(m.group(7));
-        int day = m.group(8) == null ? 1 : Integer.parseInt(m.group(8));
-        if (year < 1 || week < 1 || day < 1 || day > 7) {
+        int month = digits(b, p, 2);
+        if (separator && at(b, p[0]++) != '-') {
             throw new Py.Raised("ValueError");
         }
-        LocalDate jan4 = LocalDate.of(year, 1, 4);
-        long weeks = jan4.range(IsoFields.WEEK_OF_WEEK_BASED_YEAR).getMaximum();
-        if (week > weeks) {
+        int day = digits(b, p, 2);
+        return date(year, month, day);
+    }
+
+    private static int at(byte[] b, int i) {
+        return i < b.length ? b[i] : 0;
+    }
+
+    private static int digits(byte[] b, int[] p, int n) {
+        int v = 0;
+        for (int i = 0; i < n; i++) {
+            int c = at(b, p[0]);
+            if (c < '0' || c > '9') {
+                throw new Py.Raised("ValueError");
+            }
+            v = v * 10 + c - '0';
+            p[0]++;
+        }
+        return v;
+    }
+
+    /** iso_to_ymd of CPython: week 1 to 52 (53 in long years), day 1 to 7. */
+    private static LocalDate isoWeekDate(int year, int week, int day) {
+        if (year < 1 || year > 9999 || week <= 0 || week >= 53 && !(week == 53 && LocalDate.of(year, 1, 4)
+                .range(IsoFields.WEEK_OF_WEEK_BASED_YEAR).getMaximum() == 53) || day <= 0 || day >= 8) {
             throw new Py.Raised("ValueError");
         }
-        LocalDate r = jan4.with(IsoFields.WEEK_OF_WEEK_BASED_YEAR, week).with(java.time.DayOfWeek.of(day));
+        LocalDate r = LocalDate.of(year, 1, 4).with(IsoFields.WEEK_OF_WEEK_BASED_YEAR, week)
+                .with(java.time.DayOfWeek.of(day));
         if (r.getYear() < 1 || r.getYear() > 9999) {
             throw new Py.Raised("ValueError");
         }
