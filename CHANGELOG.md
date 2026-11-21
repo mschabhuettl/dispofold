@@ -3,6 +3,19 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.19.0 (unreleased)
+
+- **Import aus dem bisherigen Planungssystem als Erweiterung:** Die erste ausgelieferte Erweiterung liest dessen
+  Datenordner (nur lesend) und importiert Stammdaten, Abwesenheiten, Historie, Feiertage und Bedarf über die Seite
+  **Daten**, mit Vorschau und „Änderungen behalten“. Sie ist ein Port des bisherigen Exportprogramms nach Java
+  und liefert dieselben Dateien Byte für Byte; die CI vergleicht das bei jeder Änderung. Die Korrekturdatei kommt
+  aus Dispofold selbst. Einstellungen (Ordner, Zuordnung, Optionen) unter **Einstellungen → Erweiterungen**.
+  Hilfe: [plugins/sp5/docs/sp5.md](plugins/sp5/docs/sp5.md); Vergleich mit echten Daten:
+  [plugins/sp5/docs/vergleich.md](plugins/sp5/docs/vergleich.md).
+- **Betrieb:** Der Datenordner wird am Server wie andere Ordner schreibgeschützt eingebunden und freigegeben
+  ([docs/betrieb.md](docs/betrieb.md#erweiterungen)).
+- **CI:** Der Maven des Wrappers liegt im Cache, und sein Download wartet zwischen den Versuchen länger.
+
 ## 0.18.0 (2026-11-21)
 
 - **Erweiterungen (Plugins):** Dispofold kann Erweiterungen mitbringen, die eigene Seiten, Einstellungen, einen

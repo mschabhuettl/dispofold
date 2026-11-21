@@ -7,7 +7,8 @@ Code. Eine eingeschaltete Erweiterung sieht alle Planungsdaten, deshalb ist jede
 (`DISPOFOLD_PLUGINS_HIDDEN`, siehe [Betrieb](betrieb.md#erweiterungen)).
 
 Das Beispiel `plugins/beispiel/` nutzt jeden Erweiterungspunkt einmal. Es gibt es nur in den Tests: Es ist in
-keinem Image und keinem Programmpaket.
+keinem Image und keinem Programmpaket. Ausgeliefert wird `plugins/sp5/`, der Import aus dem bisherigen
+Planungssystem (siehe [unten](#eine-ausgelieferte-erweiterung)).
 
 ## Aufbau
 
@@ -134,6 +135,27 @@ export default {
 eigenen Routen, `ctx.canEdit`, `ctx.me`, `ctx.month` und die übrigen. Hilfeseiten sind so geschrieben, als
 lägen sie in `docs/anleitung/`: Links auf `daten.md` oder `erweiterungen.md#einschalten-und-ausschalten` gehen
 auf die Seiten des Kerns. Bilder in Hilfeseiten von Erweiterungen kann der Build noch nicht.
+
+## Eine ausgelieferte Erweiterung
+
+`plugins/sp5/` zeigt, was eine Erweiterung braucht, die mit Dispofold ausgeliefert wird:
+
+- **Build:** in `backend/pom.xml` je ein Eintrag unter `add-source` (ihre Java-Quellen), `add-resource` (ihre
+  `plugin.json`) und `add-test-source` (ihre Tests); in `backend/Dockerfile` die Zeilen `COPY plugins/sp5/…` für
+  `plugin.json` und `backend/src/main`, in `frontend/Dockerfile` für `plugin.json`, `frontend` und `docs`. Das
+  Front-End-Image baut mit dem Aufbau des Repositorys (`/src/frontend`, `/src/plugins`, `/src/docs`), damit die
+  relativen Importe stimmen.
+- **Nachweis der Auslieferung:** `scripts/smoke-test.sh` (Server) und `backend/src/test/desktop/e2e.sh` (Programm)
+  prüfen, dass jede Erweiterung ohne `testOnly` in `/api/extensions` steht.
+- **Aufbau im Code:** Die Logik liegt in einem Unterpaket ohne CDI (`…plugins.sp5.port`), die Anbindung an
+  Dispofold (Plugin, Routen, Einstellungen) daneben. So lässt sich die Logik ohne Quarkus testen und von einem
+  Kommandozeilenprogramm aufrufen.
+- **Vergleich mit einem bestehenden Programm:** Die Erweiterung portiert ein Python-Programm. Der CI-Job
+  `plugin-compare` (`plugins/sp5/tools/ci/compare.sh`) lässt dessen eigene Tests an einem festen Commit laufen und
+  vergleicht jeden Lauf Byte für Byte mit dem Java-Port. `plugins/sp5/tools/sp5-vergleich.py` vergleicht
+  dasselbe einmal mit echten Daten und gibt nur ein anonymes Ergebnis aus.
+- **Namen:** Begriffe des Systems, aus dem sie importiert, stehen nur in `plugins/sp5/` (Code, Texte,
+  Hilfeseiten); im Kern nur die technischen Tokens, die `scripts/check-repo.sh` zulässt.
 
 ## Prüfen
 

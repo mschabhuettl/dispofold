@@ -43,11 +43,11 @@ if git grep -i -n -E '[c]laude|[a]nthropic|[c]hatgpt|[o]penai|[l]lm' \
 fi
 
 # The core knows only its own data format; the old planning system appears only in the plugin that imports from it
-# (plugins/[s]p5/: its code, texts and help pages). Elsewhere only these technical tokens may name it: the plugin's
-# folder and package, its help page ids, and the repository of the Python program the plugin is compared with.
+# (plugins/[s]p5/: its code, texts and help pages). Elsewhere only these technical tokens may name it: paths into the
+# plugin's folder and its package, its help page ids, and the repository of the Python program it is compared with.
 # (This file names data file types above on purpose and is therefore not searched.)
 legacy='\b[s]p5|[s]chichtplaner|\b[d]bf\b'
-tokens='plugins[/.][s]p5\b|plugin-[s]p5-|\b[s]p5-export\b'
+tokens='plugins[/.][s]p5\b[^[:space:])`"'"'"'#]*|plugin-[s]p5-[a-z0-9-]*|\b[s]p5-export\b'
 if git log --format='%B' | grep -n -i -E "$legacy"; then
   echo "Old planning system named in commit messages"; fail=1
 fi

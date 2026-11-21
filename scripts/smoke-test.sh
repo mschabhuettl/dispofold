@@ -23,6 +23,13 @@ echo "login redirects to: $location"
 api() { curl -fsS -b "$JAR" -H 'Content-Type: application/json' "$@"; }
 
 echo "me: $(api "$BASE/api/me")"
+# every shipped plugin (plugins/*/plugin.json without testOnly) is in the image and listed
+extensions=$(api "$BASE/api/extensions")
+for manifest in "$(dirname "$0")"/../plugins/*/plugin.json; do
+  grep -q '"testOnly": *true' "$manifest" && continue
+  id=$(basename "$(dirname "$manifest")")
+  echo "$extensions" | grep -q "\"id\":\"$id\"" || { echo "shipped plugin $id missing: $extensions"; exit 1; }
+done
 echo "import: $(api -X POST "$BASE/api/import/demo" | head -c 300)"
 api -X POST -d "{\"seed\":1,\"timeLimitSeconds\":$LIMIT}" "$BASE/api/plans/$MONTH/solve" >/dev/null
 

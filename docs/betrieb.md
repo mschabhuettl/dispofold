@@ -169,6 +169,11 @@ Dazu in `.env` `DISPOFOLD_PLUGIN_ROOTS=/quellen`, dann `docker compose up -d`. D
 unprivilegierter Benutzer: Die Dateien müssen für alle lesbar sein (`chmod -R o+rX /srv/dispofold-quellen`).
 Der Ordner gehört nicht in die Sicherung von Dispofold; seine Daten bleiben, wo sie sind.
 
+Die Erweiterung für den Import aus dem bisherigen Planungssystem liest dessen Datenordner, nur lesend. Der Ordner
+(oder eine Kopie, die regelmäßig erneuert wird) wird genau so eingebunden und freigegeben; in der Erweiterung
+wählt die Planung ihn dann aus. Was sie liest und wie man sie einstellt, steht auf ihrer
+[Hilfeseite](anleitung/plugin-sp5-sp5.md).
+
 ### Neue Version
 
 Das Backend fragt beim Start und danach einmal am Tag die öffentliche Releases-API von GitHub nach dem neuesten

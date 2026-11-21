@@ -179,6 +179,12 @@ check "foreign Origin 403" test "$(curl -s -o /dev/null -w '%{http_code}' -H "X-
 check "demo import" test "$(api POST /api/import/demo | status)" = 200
 check "150 people stored" test "$(people)" = 150
 check "/api/me says desktop" test "$(api GET /api/me | body | jq .desktop)" = true
+listed=$(api GET /api/extensions | body | jq -r '.[].id')
+for manifest in "$ROOT"/plugins/*/plugin.json; do
+  grep -q '"testOnly": *true' "$manifest" && continue
+  id=$(basename "$(dirname "$manifest")")
+  check "shipped plugin $id is in the package" grep -qx "$id" <<<"$listed"
+done
 java "$DRIVER" "$WORK/second.json" "$PASSWORD" java -jar "$WORK/launcher.jar" --shell --program-dir "$WORK/program" \
   --data "$BASE" --app "$WORK/program" >>"$WORK/launcher.log" 2>&1 && code=0 || code=$?
 check "second launcher on the same data reports locked" test "$(jq -r '.lines[0].type + " " + .lines[0].error' "$WORK/second.json")" = "locked desktop.lock.held"
