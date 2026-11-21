@@ -76,7 +76,8 @@ public class Sp5Resource {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces("application/zip")
     public Response result(JsonNode body) throws IOException {
-        Sp5Export.Request request = plugin.request(body);
+        Sp5Plugin.Inputs inputs = plugin.inputs(body);
+        Sp5Export.Request request = inputs.request();
         Sp5Export.Result result = plugin.export(request);
         ObjectNode question = mapper.createObjectNode();
         question.put("format", "dispofold/sp5-ergebnis");
@@ -96,9 +97,9 @@ public class Sp5Resource {
             result.warnings().forEach(w -> warnings.append(w).append('\n'));
             entry(zip, "warnings.txt", warnings.toString().getBytes(StandardCharsets.UTF_8));
             entry(zip, "anfrage.json", mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(question));
-            entry(zip, "mapping.json", mapper.writeValueAsBytes(plugin.settings().get("mapping")));
-            if (request.corrections() != null) {
-                entry(zip, Sp5Plugin.CORRECTIONS_FILE, mapper.writeValueAsBytes(host.corrections().orElseThrow()));
+            entry(zip, "mapping.json", inputs.mappingFile());
+            if (inputs.correctionsFile() != null) {
+                entry(zip, Sp5Plugin.CORRECTIONS_FILE, inputs.correctionsFile());
             }
         }
         String month = body == null ? "" : body.path("month").asText("").replaceAll("[^0-9-]", "");

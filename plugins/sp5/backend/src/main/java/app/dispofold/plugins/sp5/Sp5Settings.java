@@ -45,9 +45,11 @@ final class Sp5Settings {
         ObjectNode s = defaults(mapper);
         if (stored != null && stored.isObject()) {
             stored.fields().forEachRemaining(e -> {
-                if (e.getKey().equals("options") && e.getValue().isObject()) {
-                    e.getValue().fields().forEachRemaining(o -> ((ObjectNode) s.get("options")).set(o.getKey(),
-                            o.getValue()));
+                if (e.getKey().equals("options")) {
+                    if (e.getValue().isObject()) {
+                        e.getValue().fields().forEachRemaining(o -> ((ObjectNode) s.get("options"))
+                                .set(o.getKey(), o.getValue()));
+                    }
                 } else if (s.has(e.getKey())) {
                     s.set(e.getKey(), e.getValue());
                 }
@@ -59,6 +61,9 @@ final class Sp5Settings {
     /** Checks settings a planner saves; the mapping is checked by the port as sp5_export.py checks it. */
     static ObjectNode checked(ObjectMapper mapper, JsonNode body) {
         if (body == null || !body.isObject()) {
+            throw invalid("options");
+        }
+        if (body.has("options") && !body.get("options").isObject()) {
             throw invalid("options");
         }
         ObjectNode s = withDefaults(mapper, body);

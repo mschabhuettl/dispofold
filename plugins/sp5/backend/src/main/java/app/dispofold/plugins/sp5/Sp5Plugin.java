@@ -91,8 +91,17 @@ public class Sp5Plugin implements Plugin, ImportSource {
         }
     }
 
+    /** An export's request and the files it was made from, as sp5_export.py reads them (corrections: null if none). */
+    record Inputs(Sp5Export.Request request, byte[] mappingFile, byte[] correctionsFile) {
+    }
+
     /** What an export uses: the settings, the folder, the months and the corrections file (or none). */
     Sp5Export.Request request(JsonNode request) {
+        return inputs(request).request();
+    }
+
+    /** The request with the mapping and corrections files it was made from, read once. */
+    Inputs inputs(JsonNode request) {
         JsonNode s = settings();
         JsonNode options = s.path("options");
         String month = request == null ? "" : request.path("month").asText("");
@@ -101,14 +110,17 @@ public class Sp5Plugin implements Plugin, ImportSource {
             throw PluginErrors.error(Status.BAD_REQUEST, "plugin.sp5.noMapping", Map.of(),
                     "Die Zuordnung fehlt (Einstellungen der Erweiterung)");
         }
-        Map<String, Object> mapping = mapping(s.path("mapping"));
-        Map<String, Object> corrections = corrections();
-        return new Sp5Export.Request(folder(s), month, to == null || to.isEmpty() ? null : to,
+        byte[] mappingFile = bytes(s.path("mapping"));
+        Map<String, Object> mapping = mapping(mappingFile);
+        Optional<ObjectNode> file = host.corrections();
+        byte[] correctionsFile = file.isPresent() ? bytes(file.get()) : null;
+        Map<String, Object> corrections = correctionsFile == null ? null : corrections(correctionsFile);
+        return new Inputs(new Sp5Export.Request(folder(s), month, to == null || to.isEmpty() ? null : to,
                 options.path("historyMonths").asInt(), optionalInt(options.path("areasFromHistory")),
                 optionalInt(options.path("shiftsFromHistory")), options.path("demand").asText(),
                 options.path("shiftMix").asBoolean() ? options.path("mixMinDuties").asInt() : null,
                 options.path("hiddenShiftsMonths").asInt(), options.path("recentMonths").asInt(), mapping,
-                corrections);
+                corrections), mappingFile, correctionsFile);
     }
 
     /** The stored settings, every missing key at its default. */
@@ -116,24 +128,32 @@ public class Sp5Plugin implements Plugin, ImportSource {
         return Sp5Settings.withDefaults(mapper, host.settings(ID));
     }
 
+    private byte[] bytes(JsonNode node) {
+        try {
+            return mapper.writeValueAsBytes(node);
+        } catch (JsonProcessingException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
     /** The mapping as sp5_export.py reads it from its file, checked as it checks it. */
     Map<String, Object> mapping(JsonNode mapping) {
+        return mapping(bytes(mapping));
+    }
+
+    private static Map<String, Object> mapping(byte[] file) {
         try {
-            return Sp5Export.loadMapping(mapper.writeValueAsBytes(mapping));
-        } catch (Sp5Export.Sp5Error | PyJson.DecodeError | JsonProcessingException e) {
+            return Sp5Export.loadMapping(file);
+        } catch (Sp5Export.Sp5Error | PyJson.DecodeError e) {
             throw PluginErrors.error(Status.BAD_REQUEST, "plugin.sp5.mapping", Map.of(), e.getMessage());
         }
     }
 
-    /** Dispofold's corrections file as sp5_export.py reads it with --corrections, or null without one. */
-    Map<String, Object> corrections() {
-        Optional<ObjectNode> file = host.corrections();
-        if (file.isEmpty()) {
-            return null;
-        }
+    /** Dispofold's corrections file as sp5_export.py reads it with --corrections. */
+    private static Map<String, Object> corrections(byte[] file) {
         try {
-            return Corrections.load(mapper.writeValueAsBytes(file.get()), CORRECTIONS_FILE);
-        } catch (Corrections.CorrectionsError | JsonProcessingException e) {
+            return Corrections.load(file, CORRECTIONS_FILE);
+        } catch (Corrections.CorrectionsError e) {
             throw PluginErrors.error(Status.BAD_REQUEST, "plugin.sp5.failed", Map.of(), e.getMessage());
         }
     }

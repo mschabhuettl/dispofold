@@ -113,6 +113,12 @@ class Sp5PluginTest {
             json().body(s).put("/api/plugins/sp5/einstellungen").then().statusCode(400)
                     .body("code", equalTo("plugin.sp5.setting")).body("params.field", equalTo(bad[0]));
         }
+        for (String options : List.of("null", "[]", "3")) {
+            ObjectNode o = settings("ordner");
+            o.set("options", mapper.readTree(options));
+            json().body(o).put("/api/plugins/sp5/einstellungen").then().statusCode(400)
+                    .body("code", equalTo("plugin.sp5.setting")).body("params.field", equalTo("options"));
+        }
         ObjectNode s = settings("ordner");
         ((ObjectNode) s.get("mapping")).putArray("ignoreGroups").add("re:*x");
         json().body(s).put("/api/plugins/sp5/einstellungen").then().statusCode(400)
