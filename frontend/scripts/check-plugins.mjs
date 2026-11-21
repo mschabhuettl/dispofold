@@ -94,7 +94,12 @@ try {
   await open(planner, s.base, 'import');
   check('the Daten page has its import source', (await text(planner, '#h-plugin-beispiel')) === 'Aus der Beispiel-Erweiterung');
   await planner.waitForFunction(() => document.querySelector('#beispiel-file option')?.value === '/srv/dispofold/quellen');
-  await planner.click('.folder-picker button:text("2027/")');
+  // a double click opens the folder once (the second click acts on the folder its button was shown in)
+  await planner.dblclick('.folder-picker button:text("2027/")');
+  await planner.waitForSelector('.folder-picker button:text("daten.json")');
+  await planner.waitForTimeout(300);
+  check('a double click opens the folder once', !(await text(planner, '.folder-picker p'))?.includes('2027/2027')
+    && !(await text(planner, '#toast'))?.includes('nicht gefunden'), await text(planner, '.folder-picker p'));
   await planner.click('.folder-picker button:text("daten.json")');
   await planner.waitForFunction(() => document.querySelector('.folder-picker p')?.textContent.includes('2027/daten.json'));
   await planner.click('section:has(#h-plugin-beispiel) .toolbar button.btn-primary');

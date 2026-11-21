@@ -202,7 +202,7 @@ function tabs(route) {
   const pages = ROUTES.filter((r) => r.group === route.group);
   if (pages.length < 2) return [];
   return [h('nav.page-tabs', { 'aria-label': GROUPS[route.group] }, pages.map((r) =>
-    h('a', { href: `#/${r.path}`, 'aria-current': r === route ? 'page' : null }, r.tab)))];
+    h('a', { href: `#/${r.path}`, 'aria-current': r === route ? 'page' : null }, r.tab ?? r.label)))];
 }
 
 /** Month choices: a year back and forward around the selected month. */

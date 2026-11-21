@@ -15,6 +15,7 @@ export function folderPicker(ctx, { id = 'folder', files = false } = {}) {
   let root = '';
   let path = ''; // the folder shown, relative to the root
   let file = ''; // files: the chosen file in it
+  let drawn = 0; // a newer draw replaces one still loading
   const select = h('select', { id, onchange: (e) => { root = e.target.value; path = ''; file = ''; draw(); } });
   const where = h('p.muted', { 'aria-live': 'polite' });
   const list = h('ul.folder-list', {});
@@ -41,15 +42,18 @@ export function folderPicker(ctx, { id = 'folder', files = false } = {}) {
       list.replaceChildren();
       return;
     }
-    const entries = (await guarded(() => api.fileList(root, path))) ?? [];
-    const shown = { path: [root, path, file].filter(Boolean).join('/') };
+    const token = ++drawn;
+    const at = path; // the folder these entries belong to: a click acts on it even while the next one loads
+    const entries = (await guarded(() => api.fileList(root, at))) ?? [];
+    if (token !== drawn) return;
+    const shown = { path: [root, at, file].filter(Boolean).join('/') };
     where.textContent = files ? t('files.chosenFile', shown) : t('files.chosenFolder', shown);
-    const join = (name) => (path ? `${path}/${name}` : name);
+    const join = (name) => (at ? `${at}/${name}` : name);
     list.replaceChildren(
-      path && h('li', {}, button(t('files.up'), () => { path = path.split('/').slice(0, -1).join('/'); file = ''; draw(); })),
+      at && h('li', {}, button(t('files.up'), () => { path = at.split('/').slice(0, -1).join('/'); file = ''; draw(); })),
       ...entries.filter((e) => e.dir || files).map((e) => h('li', {}, e.dir
         ? button(`${e.name}/`, () => { path = join(e.name); file = ''; draw(); })
-        : button(e.name, () => { file = e.name; draw(); }))));
+        : button(e.name, () => { path = at; file = e.name; draw(); }))));
   }
 
   const element = h('div.field.folder-picker', {}, h('label', { for: id }, files ? t('files.file') : t('files.folder')),

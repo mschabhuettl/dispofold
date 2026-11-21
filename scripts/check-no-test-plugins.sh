@@ -15,12 +15,15 @@ for manifest in "$repo"/plugins/*/plugin.json; do
     status=1
   fi
   while IFS= read -r -d '' jar; do
-    if unzip -l "$jar" | grep -qE "app/dispofold/plugins/$id/|dispofold-plugins/$id/"; then
+    # grep -c reads all of its input: with -q it would stop early, and pipefail would take unzip's broken pipe for
+    # "nothing found"
+    found=$(unzip -l "$jar" | grep -cE "app/dispofold/plugins/$id/|dispofold-plugins/$id/" || true)
+    if [ "${found:-0}" -gt 0 ]; then
       echo "test-only plugin $id found in $jar" >&2
       status=1
     fi
-    if unzip -Z1 "$jar" | grep -q '^META-INF/resources/.*\.\(js\|html\)$' \
-        && unzip -p "$jar" 'META-INF/resources/*' 2>/dev/null | grep -qaE "plugin[.-]$id[.-]"; then
+    found=$(unzip -p "$jar" 'META-INF/resources/*' 2>/dev/null | grep -caE "plugin[.-]$id[.-]" || true)
+    if [ "${found:-0}" -gt 0 ]; then
       echo "test-only plugin $id found in the front end of $jar" >&2
       status=1
     fi
