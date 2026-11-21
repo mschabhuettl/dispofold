@@ -113,6 +113,8 @@ jobs:
         run: pip install -r tools/docs/requirements.txt
       - name: Build the site
         run: mkdocs build --strict
+      - name: Plugin help pages on the site (with the test-only example plugin, into a throwaway folder)
+        run: DISPOFOLD_DOCS_TEST_PLUGINS=1 mkdocs build --strict -d "$RUNNER_TEMP/site-plugins" && test -f "$RUNNER_TEMP/site-plugins/anleitung/plugin-beispiel-beispiel/index.html"
 
   frontend:
     runs-on: ubuntu-latest
@@ -163,6 +165,12 @@ jobs:
       - name: Help buttons by click, keyboard and touch (browser)
         working-directory: frontend
         run: node scripts/check-help.mjs
+      - name: Plugin system with the test-only example plugin, server and desktop (browser)
+        working-directory: frontend
+        run: |
+          ../scripts/check-no-test-plugins.sh dist
+          node scripts/build.mjs --test-plugins --out dist-plugins
+          node scripts/check-plugins.mjs
 
   desktop-shell:
     # Unit tests of the program window (protocol, proof, proxy rules).
@@ -229,6 +237,8 @@ jobs:
           DISPOFOLD_E2E_DEB="$PWD/desktop-out/Dispofold-0.0.0-linux-amd64.deb" backend/src/test/desktop/e2e.sh
       - name: Extract the deb
         run: mkdir -p st && dpkg-deb -x desktop-out/Dispofold-0.0.0-linux-amd64.deb st/root
+      - name: No test-only plugin in the package
+        run: scripts/check-no-test-plugins.sh st/root
       - name: Browser front end (Linux default) through the launch file and the proxy
         run: |
           (cd frontend && npm ci --no-audit --no-fund && npx playwright install --with-deps chromium)

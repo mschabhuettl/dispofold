@@ -4,7 +4,8 @@ import { datasetCache as createDatasetCache } from './lib/dataset-cache.js';
 import { addMonths, monthLabel } from './lib/dates.js';
 import { restartAndReload, frontEndMode, showPage } from './lib/desktop.js';
 import { guarded, h, toast } from './lib/dom.js';
-import { guideHref, SECTIONS } from './lib/guide.js';
+import { EXTRA_PAGES, guideHref, SECTIONS } from './lib/guide.js';
+import { helpPages, register, routes as pluginRoutes } from './lib/plugins.js';
 import { askForChecks, showReleaseNotice } from './lib/release.js';
 import { applyTexts, t } from './lib/texts.js';
 import { initThemeToggle } from './lib/theme.js';
@@ -20,6 +21,11 @@ import * as masterdata from './views/masterdata.js';
 import * as importExport from './views/import.js';
 import * as settings from './views/settings.js';
 import * as guide from './views/guide.js';
+import { view as extensionsView } from './views/extensions.js';
+import BUILT_IN from 'dispofold:plugins';
+
+/** The plugins built into this program (scripts/build.mjs), with their texts added; see lib/plugins.js. */
+const PLUGINS = BUILT_IN.map((p) => register(p));
 
 // Pages in menu groups: the menu shows one entry per group, the pages of a group are tabs above the page. month: the
 // page belongs to the selected month (the month picker shows only there). viewer: the page is offered to viewers too,
@@ -37,13 +43,16 @@ const ROUTES = [
   { path: 'import', group: 'settings', label: t('nav.import'), tab: t('nav.tab.data'), view: importExport, month: true },
 ];
 const SETTINGS_ROUTE = { path: 'einstellungen', group: 'settings', label: t('nav.settings'), tab: t('nav.tab.updates'), view: settings };
+// planners: the plugins, switched on and off; a change shows the program anew with the plugin's pages or without
+const EXTENSIONS_ROUTE = { path: 'erweiterungen', group: 'settings', label: t('nav.extensions'), tab: t('nav.tab.extensions'),
+  view: extensionsView(PLUGINS, () => location.reload()) };
 // desktop only: the guide built into the program; in a browser the menu links to the documentation site instead
 const GUIDE_ROUTE = { path: 'anleitung', group: 'guide', label: t('nav.guide'), view: guide };
 /** The intro under the title of each page, by path. */
 const INTROS = { plan: t('help.page.plan'), funktionen: t('help.page.funktionen'), zeitachse: t('help.page.zeitachse'),
   pruefen: t('help.page.pruefen'), fairness: t('help.page.fairness'), eingaben: t('help.page.eingaben'), person: t('help.page.person'),
   regeln: t('help.page.regeln'), stammdaten: t('help.page.stammdaten'), import: t('help.page.import'), einstellungen: t('help.page.einstellungen'),
-  anleitung: t('help.page.anleitung') };
+  erweiterungen: t('help.page.erweiterungen'), anleitung: t('help.page.anleitung') };
 const GROUPS = { plan: t('nav.group.plan'), check: t('nav.group.check'), inputs: t('nav.group.inputs'), people: t('nav.group.people'),
   fairness: t('nav.group.fairness'), settings: t('nav.group.settings'), guide: t('nav.guide') };
 
@@ -99,6 +108,8 @@ const ctx = {
   stop: () => stopView(),
   /** Desktop only: 'window' or 'browser', see frontEnd. */
   frontEnd: 'window',
+  /** The front ends of the switched on plugins (lib/plugins.js). */
+  plugins: [],
 };
 
 function stopView() {
@@ -122,7 +133,9 @@ function defaultMonth(months) {
 }
 
 function parseHash() {
-  const [path, ...rest] = location.hash.replace(/^#\/?/, '').split('/');
+  const parts = location.hash.replace(/^#\/?/, '').split('/');
+  // a plugin page: #/plugin/<id>/<page>/<params>
+  const [path, ...rest] = parts[0] === 'plugin' ? [parts.slice(0, 3).join('/'), ...parts.slice(3)] : parts;
   const route = ROUTES.find((r) => r.path === path) ?? ROUTES[0];
   // an unknown or hidden page (e.g. Import/Export for viewers) shows the first page under its own address
   if (route.path !== path && path) history.replaceState(null, '', `#/${route.path}`);
@@ -168,8 +181,8 @@ async function render() {
       return;
     }
     // the short intro of the page under its title, again after a view draws itself anew
-    const section = SECTIONS[route.path];
-    const intro = h('p.page-intro.muted', {}, INTROS[route.path], section && [' ', h('a', guideLink(section), t('help.guideLink'))]);
+    const section = route.section ?? SECTIONS[route.path];
+    const intro = h('p.page-intro.muted', {}, route.intro ?? INTROS[route.path], section && [' ', h('a', guideLink(section), t('help.guideLink'))]);
     const placeIntro = () => {
       const title = container.querySelector('h1');
       if (title && title.nextElementSibling !== intro) title.after(intro);
@@ -216,10 +229,22 @@ async function start() {
   ctx.me = me;
   ctx.canEdit = me.role === 'planner';
   // viewers get the plan, the people and the fairness overview only
+  // the pages of the switched on plugins, each after the pages of its menu group (own groups at the end)
+  const listed = (await api.extensions().catch(() => null)) ?? [];
+  const enabled = new Set(listed.filter((x) => x.enabled).map((x) => x.id));
+  if (ctx.canEdit) ROUTES.push(EXTENSIONS_ROUTE);
+  for (const r of pluginRoutes(PLUGINS, enabled, GROUPS, t)) {
+    const last = ROUTES.findLastIndex((x) => x.group === r.group);
+    if (last < 0) ROUTES.push(r);
+    else ROUTES.splice(last + 1, 0, r);
+  }
+  EXTRA_PAGES.push(...helpPages(PLUGINS, enabled));
+  ctx.plugins = PLUGINS.filter((p) => enabled.has(p.id));
   if (!ctx.canEdit) {
     const order = ['plan', 'people', 'fairness'];
+    const rank = (g) => (order.includes(g) ? order.indexOf(g) : order.length);
     ROUTES.splice(0, ROUTES.length, ...ROUTES.filter((r) => r.viewer).map((r) => ({ ...r, group: r.viewer }))
-      .sort((a, b) => order.indexOf(a.group) - order.indexOf(b.group)));
+      .sort((a, b) => rank(a.group) - rank(b.group)));
   }
   document.getElementById('user-name').textContent = me.username;
   document.getElementById('user-role').textContent = ctx.canEdit ? t('app.role.planner') : t('app.role.readonly');
@@ -227,7 +252,10 @@ async function start() {
   if (desktop) {
     frontEnd = await frontEndMode();
     ctx.frontEnd = frontEnd;
-    ROUTES.push(SETTINGS_ROUTE, GUIDE_ROUTE);
+    // Updates with the other settings, before Erweiterungen
+    const settingsEnd = ROUTES.findLastIndex((r) => r.group === 'settings' && r !== EXTENSIONS_ROUTE);
+    ROUTES.splice(settingsEnd + 1, 0, SETTINGS_ROUTE);
+    ROUTES.push(GUIDE_ROUTE);
     const quitButton = document.getElementById('quit');
     quitButton.hidden = false;
     quitButton.addEventListener('click', quit);

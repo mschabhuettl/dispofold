@@ -1,10 +1,11 @@
 // Desktop program: the guide of this version (docs/anleitung/*.md, built by scripts/build.mjs), readable without
 // internet. #/anleitung/<page>/<anchor> shows one page at a section; the links of the guide are such routes.
-import { GUIDE_URL, PAGES, guideFile, guideHref } from '../lib/guide.js';
+import { GUIDE_URL, allPages, guideFile, guideHref } from '../lib/guide.js';
 import { h } from '../lib/dom.js';
 import { t } from '../lib/texts.js';
 
 export async function render(container, ctx, [page = 'index', anchor] = []) {
+  const PAGES = allPages();
   const index = Math.max(0, PAGES.findIndex(([id]) => id === page));
   const [id] = PAGES[index];
   const res = await fetch(guideFile(id), { credentials: 'same-origin' }).catch(() => null);

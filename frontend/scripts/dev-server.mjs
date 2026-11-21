@@ -7,15 +7,17 @@
 // MOCK_UPDATE_ASK=1 (desktop, no source): no update settings saved yet, so the page asks once whether to check.
 // MOCK_RELEASE=1.3.0 (server build): the server's release check found that version (GET /api/release, planners only).
 // MOCK_FRONTEND=window|browser answers GET /__shell/mode like the desktop shell (unset: 404 like an older shell).
+// MOCK_TEST_PLUGINS=1 adds the plugins of ../plugins (also the test-only ones) with their dev/mock.mjs, all off.
 // Uses tests/fixtures/synthetic/*dataset*.synthetic.json when present, otherwise a generated mini dataset.
 import http from 'node:http';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
-import { extname, join, normalize, dirname, sep } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { extname, join, normalize, dirname, resolve, sep } from 'node:path';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createMockApi } from '../dev/mock-api.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const dist = join(root, 'dist');
+// DIST=<folder>: serve another build, e.g. one with the test plugins (scripts/build.mjs --test-plugins --out <folder>)
+const dist = process.env.DIST ? resolve(process.env.DIST) : join(root, 'dist');
 const fixtures = join(root, '..', 'tests', 'fixtures', 'synthetic');
 const port = Number(process.argv[2] ?? process.env.PORT ?? 8080);
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png',
@@ -35,10 +37,23 @@ function fixtureDataset() {
 }
 
 const fixture = fixtureDataset();
+
+async function mockPlugins() {
+  if (process.env.MOCK_TEST_PLUGINS !== '1') return [];
+  const base = join(root, '..', 'plugins');
+  const list = [];
+  for (const id of existsSync(base) ? readdirSync(base).sort() : []) {
+    const manifest = JSON.parse(readFileSync(join(base, id, 'plugin.json'), 'utf8'));
+    const file = join(base, id, 'dev', 'mock.mjs');
+    const route = existsSync(file) ? (await import(pathToFileURL(file).href)).mock() : () => null;
+    list.push({ manifest, route, importSource: existsSync(join(base, id, 'dev', 'mock.mjs')) });
+  }
+  return list;
+}
 const desktop = process.env.MOCK_DESKTOP === '1';
 const handle = createMockApi({ dataset: fixture, month: process.env.MOCK_MONTH ?? fixture?.periods?.[0]?.month ?? '2027-01', desktop,
   updateSource: process.env.MOCK_UPDATE_SOURCE ?? '', askUpdates: process.env.MOCK_UPDATE_ASK === '1',
-  release: process.env.MOCK_RELEASE ?? '' });
+  release: process.env.MOCK_RELEASE ?? '', plugins: await mockPlugins() });
 
 function role(req) {
   if (desktop) return 'planner';
@@ -65,6 +80,11 @@ http.createServer(async (req, res) => {
     if (!process.env.MOCK_FRONTEND) { res.writeHead(404); return res.end('not found'); }
     res.writeHead(200, { 'Content-Type': 'application/json' });
     return res.end(JSON.stringify({ frontEnd: process.env.MOCK_FRONTEND }));
+  }
+  if (desktop && url.pathname === '/__shell/pick-folder' && req.method === 'POST') {
+    // the window's folder dialog: always the same folder
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify(handle.pickFolder()));
   }
   if (desktop && url.pathname === '/api/dev/restart' && req.method === 'POST') {
     // dev only: imitate a backend restart in the desktop window for some seconds

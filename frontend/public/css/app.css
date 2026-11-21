@@ -452,6 +452,10 @@ details.rules-advanced section { margin-top: 1.2rem; }
 .settings .check { display: flex; gap: .5rem; align-items: center; font-weight: 400; margin-bottom: .8rem; }
 .settings .row { display: flex; flex-wrap: wrap; gap: .6rem; align-items: center; margin-bottom: .8rem; }
 .settings pre { white-space: pre-wrap; font: inherit; margin: .4rem 0 0; }
+/* Einstellungen → Erweiterungen and the folder picker of plugins */
+.extension { border: 1px solid var(--border); border-radius: 6px; padding: .8rem 1rem; margin-bottom: 1rem; }
+.extension h3 { margin: 0 0 .3rem; }
+.folder-list { list-style: none; padding: 0; margin: .3rem 0 0; display: flex; flex-wrap: wrap; gap: .3rem; }
 
 /* Full-page message (quit, restart) and login */
 .center-page { display: flex; align-items: center; justify-content: center; min-height: 100vh; background: var(--bg); padding: 1rem; }

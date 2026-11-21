@@ -25,17 +25,17 @@ export async function render(root, ctx) {
   /**
    * Runs an import (load(replace) calls the API). A rejected import lists all its errors ({ code, params }), not
    * only the first. Master data changed in Dispofold since the last import are only replaced after asking; an
-   * uploaded dataset (data) can keep them instead.
+   * uploaded dataset or a plugin's import can keep them instead (keepRun).
    */
-  const runImport = async (load, replace = false, data = null) => {
+  const runImport = async (load, replace = false, keepRun = null) => {
     try {
       return await load(replace);
     } catch (e) {
       if (e.code === 'import.masterChanged') {
         result.replaceChildren(h('div.alert', { role: 'alert' }, h('strong', {}, t('import.masterChanged.title')), ' ', t('import.masterChanged.text'),
           h('div.toolbar', {}, button(t('import.datasetExport'), exportDataset),
-            data && button(t('data.import.keepRun'), () => previewKeep(data), true),
-            button(t('import.masterChanged.replace'), async () => showSummary(await runImport(load, true)), !data),
+            keepRun && button(t('data.import.keepRun'), keepRun, true),
+            button(t('import.masterChanged.replace'), async () => showSummary(await runImport(load, true)), !keepRun),
             button(t('common.cancel'), async () => result.replaceChildren()))));
         return undefined;
       }
@@ -48,11 +48,14 @@ export async function render(root, ctx) {
     if (file) saveBlob(file.blob, file.filename);
   };
 
-  /** Dry run of an import keeping the changes: what is carried over, conflicts and what is lost, then import. */
-  const previewKeep = async (data) => {
+  /**
+   * Dry run of an import keeping the changes: what is carried over, conflicts and what is lost, then import. A plugin's
+   * import source (via) has its own calls and no dataset here.
+   */
+  const previewKeep = async (data, via = { preview: () => api.importPreview(data), run: () => api.importDataset(data, false, true) }) => {
     let preview;
     try {
-      preview = await api.importPreview(data);
+      preview = await via.preview();
     } catch (e) {
       result.replaceChildren(errorAlert(e));
       return;
@@ -63,7 +66,7 @@ export async function render(root, ctx) {
       preview.conflicts.length ? [h('p', {}, t('data.preview.conflicts')), list(preview.conflicts.map((c) => conflictText(c, names)))] : null,
       preview.notes.length ? [h('p', {}, t('data.preview.notes')), list(preview.notes.map((n) => noteText(n, names)))] : null,
       h('div.toolbar', {},
-        button(t('data.preview.import'), async () => showSummary(await runImport(() => api.importDataset(data, false, true))), true),
+        button(t('data.preview.import'), async () => showSummary(await runImport(via.run)), true),
         button(t('common.cancel'), async () => result.replaceChildren()))));
   };
 
@@ -113,7 +116,7 @@ export async function render(root, ctx) {
             if (!data) return;
             if (keep.checked) return previewKeep(data);
             if (!confirm(t('import.dataset.confirm'))) return;
-            showSummary(await runImport((replace) => api.importDataset(data, replace), false, data));
+            showSummary(await runImport((replace) => api.importDataset(data, replace), false, () => previewKeep(data)));
           }, true)),
         // demo data are for trying the program out: collapsed
         h('details.advanced', {}, h('summary', {}, t('roster.advanced')),
@@ -122,6 +125,26 @@ export async function render(root, ctx) {
               if (!confirm(t('import.demo.confirm'))) return;
               showSummary(await runImport((replace) => api.importDemo(replace)));
             }), info(t('help.import.demo'), t('import.demo'))))),
+      // the import sources of the switched on plugins: their own form, then the same steps as a dataset file
+      ...ctx.plugins.filter((p) => p.importSource).map((p) => {
+        const form = h('div', {});
+        const request = p.importSource.render(form, ctx);
+        const keepPlugin = h('input', { id: `plugin-keep-${p.id}`, type: 'checkbox', checked: Boolean(current?.changedSinceImport) });
+        const via = (req) => ({ preview: () => api.pluginImportPreview(p.id, req), run: () => api.pluginImport(p.id, req, false, true) });
+        return h('section.section', { 'aria-labelledby': `h-plugin-${p.id}` },
+          h('h2', { id: `h-plugin-${p.id}` }, t(p.importSource.label)),
+          h('p.muted', {}, t('data.plugin.help')),
+          form,
+          h('div.toolbar', {},
+            h('label.check-inline', {}, keepPlugin, t('data.import.keep')), info(t('help.import.keep'), t('data.import.keep')),
+            button(t('data.plugin.run'), async () => {
+              const req = request();
+              if (!req) return guarded(() => Promise.reject(new Error(t('data.plugin.incomplete'))));
+              if (keepPlugin.checked) return previewKeep(null, via(req));
+              if (!confirm(t('import.dataset.confirm'))) return undefined;
+              return showSummary(await runImport((replace) => api.pluginImport(p.id, req, replace), false, () => previewKeep(null, via(req))));
+            }, true)));
+      }),
     );
   }
 

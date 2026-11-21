@@ -5,7 +5,12 @@ import { addDays, dayCode, epochMinutes, formatLocalDateTime, isWeekend, monthDa
 import { CONSTRAINTS, DEFAULT_RULES, TEMPLATE, makeDataset } from './mock-data.mjs';
 
 export function createMockApi({ dataset: initial = null, month = '2026-12', desktop = false, updateSource = '', askUpdates = false,
-  release = '' } = {}) {
+  release = '', plugins = [] } = {}) {
+  // plugins: [{ manifest, route(method, path, body, role) → { status, body } | null }], all off at the start
+  const extensions = new Map(plugins.map((p) => [p.manifest.id, { ...p, enabled: false }]));
+  // folders plugins may read: one on the "server" while plugins are there, the desktop user's picks
+  const roots = plugins.length && !desktop ? ['/srv/dispofold/quellen'] : [];
+  const folders = { '': [{ name: '2027', dir: true }], 2027: [{ name: 'daten.json', dir: false }] };
   let dataset = initial ? structuredClone(initial) : makeDataset(month);
   let rules = structuredClone(DEFAULT_RULES);
   const periods = new Map(dataset.periods.map((p) => [p.month, p]));
@@ -479,6 +484,12 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
   /** True while the mock program "restarts" after an update. */
   handle.restarting = () => Date.now() < downUntil;
   handle.restartFor = (ms) => { downUntil = Date.now() + ms; };
+  /** Desktop: the folder dialog of the window picked a folder. */
+  handle.pickFolder = () => {
+    const id = '/home/lokal/Quellen';
+    if (!roots.includes(id)) roots.push(id);
+    return { id };
+  };
 
   return handle;
 
@@ -528,6 +539,39 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
       return role === 'planner' ? json(serverRelease) : err(403, 'Nur für Planung');
     }
     if (a === 'logout') return json(null, 204);
+    if (a === 'extensions') {
+      const info = (x) => ({ id: x.manifest.id, name: x.manifest.name, version: x.manifest.version, description: x.manifest.description,
+        enabled: x.enabled, importSource: Boolean(x.importSource) });
+      if (!b && method === 'GET') return json([...extensions.values()].filter((x) => role === 'planner' || x.enabled).map(info));
+      const x = extensions.get(b);
+      if (!x || method !== 'PUT') return err(404, 'Diese Erweiterung gibt es nicht', 'plugin.unknown');
+      x.enabled = Boolean(body?.enabled);
+      return json(info(x));
+    }
+    if (a === 'plugins' || (a === 'import' && b === 'plugin')) {
+      const id = a === 'plugins' ? b : c;
+      const x = extensions.get(id);
+      if (!x?.enabled) return err(404, 'Diese Erweiterung ist nicht eingeschaltet', 'plugin.unknown');
+      if (a === 'plugins') return x.route(method, parts.slice(2).join('/'), body, role) ?? err(404, `Unbekannter Pfad ${path}`);
+      if (role !== 'planner') return err(403, 'Nur für Planung');
+      if (!roots.includes(body?.root) || !String(body?.file ?? '').endsWith('.json')) return err(404, 'Ordner oder Datei nicht gefunden', 'files.notFound');
+      // the plugin "loads" the dataset as it is: the same answers as an upload of it
+      if (d === 'preview') return json({ changed: changedSinceImport, kept: changedSinceImport ? 1 : 0, conflicts: [], notes: [] });
+      const keep = query.get('keep') === 'true' && changedSinceImport;
+      if (changedSinceImport && !keep && query.get('replace') !== 'true') {
+        return err(409, 'Die Stammdaten wurden seit dem letzten Import in Dispofold geändert', 'import.masterChanged');
+      }
+      changedSinceImport = false;
+      return json({ source: dataset.source, people: dataset.people.length, areas: dataset.areas.length, shifts: dataset.shifts.length,
+        months: dataset.periods.map((p) => p.month), warnings: [], kept: keep ? 1 : 0, notes: [] });
+    }
+    if (a === 'files') {
+      if (role !== 'planner') return err(403, 'Nur für Planung');
+      if (b === 'roots' && method === 'GET') return json(roots.map((id) => ({ id })));
+      const sub = query.get('path') ?? '';
+      if (b === 'list' && roots.includes(query.get('root')) && folders[sub]) return json(folders[sub]);
+      return err(404, 'Ordner oder Datei nicht gefunden oder nicht freigegeben', 'files.notFound');
+    }
     if (a === 'dataset' && !b && method === 'GET') {
       if (role !== 'planner') {
         return json({ ...dataset, revision: masterRevision, periods: [], restrictions: [], changedSinceImport, people: dataset.people.map((p) => ({ ...p, familyRules: [], hoursAccount: null,

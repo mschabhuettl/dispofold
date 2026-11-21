@@ -21,10 +21,17 @@ export const PAGES = [
   ['daten', 'Daten und Korrekturdatei'],
   ['einstellungen', 'Regeln einstellen'],
   ['updates', 'Updates'],
+  ['erweiterungen', 'Erweiterungen'],
   ['nur-lesen', 'Hinweise für die Rolle „nur lesen“'],
   ['fragen', 'Häufige Fragen und Fehlerbehebung'],
   ['begriffe', 'Begriffe'],
 ];
+
+/** The help pages of the switched on plugins after PAGES (main.js, lib/plugins.js), as [id, title]. */
+export const EXTRA_PAGES = [];
+
+/** All pages of the built-in guide in their order. */
+export const allPages = () => [...PAGES, ...EXTRA_PAGES];
 
 /** Built from docs/anleitung/<page>.md by scripts/build.mjs, with its images next to it. */
 export const guideFile = (page) => `anleitung/${page}.html`;
@@ -33,7 +40,7 @@ export const guideFile = (page) => `anleitung/${page}.html`;
 export const SECTIONS = { plan: 'plan-bearbeiten', funktionen: 'plan-bearbeiten#plan-nach-funktion',
   zeitachse: 'plan-bearbeiten#bereichs-zeitachse', pruefen: 'planen#probleme', fairness: 'auswertungen#fairness',
   eingaben: 'eingaben', person: 'personen', regeln: 'einstellungen', stammdaten: 'stammdaten', import: 'daten',
-  einstellungen: 'updates#updates-im-programm-am-eigenen-rechner' };
+  einstellungen: 'updates#updates-im-programm-am-eigenen-rechner', erweiterungen: 'erweiterungen' };
 
 /** Anchor of a heading as on GitHub and on the site: lower case, punctuation removed, spaces to hyphens. */
 export function slug(text) {

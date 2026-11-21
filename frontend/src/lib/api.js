@@ -186,6 +186,24 @@ export function createApi({ fetchImpl = (...a) => globalThis.fetch(...a), onUnau
     desktopSettings: (settings) => request('PUT', '/api/desktop/update/settings', settings),
     desktopInstall: () => request('POST', '/api/desktop/update/install'),
     desktopUploadUpdate: async (file) => request('POST', '/api/desktop/update/file', new Uint8Array(await file.arrayBuffer())),
+    // plugins (docs/plugins.md)
+    /** Planners: every plugin [{ id, name, version, description, enabled, importSource }]; readers: the switched on ones. */
+    extensions: () => request('GET', '/api/extensions'),
+    setExtension: (id, enabled) => request('PUT', `/api/extensions/${k(id)}`, { enabled }),
+    /** A plugin's own routes below /api/plugins/<id>/ (404 plugin.unknown while it is off). */
+    plugin: (id) => ({
+      get: (path) => request('GET', `/api/plugins/${k(id)}/${path}`),
+      put: (path, body) => request('PUT', `/api/plugins/${k(id)}/${path}`, body),
+      post: (path, body) => request('POST', `/api/plugins/${k(id)}/${path}`, body),
+    }),
+    /** Import from a plugin's import source with its own request; as importDataset and importPreview. */
+    pluginImport: (id, req, replaceChanged, keep = false) => request('POST', `/api/import/plugin/${k(id)}${keep ? '?keep=true' : replace(replaceChanged)}`, req),
+    pluginImportPreview: (id, req) => request('POST', `/api/import/plugin/${k(id)}/preview`, req),
+    /** Folders plugins may read [{ id }] and the entries of one [{ name, dir }]. */
+    fileRoots: () => request('GET', '/api/files/roots'),
+    fileList: (root, path = '') => request('GET', `/api/files/list?root=${k(root)}&path=${k(path)}`),
+    /** Desktop program: the window's folder dialog; the window allows the folder and answers { id }, or { id: null }. */
+    pickFolder: () => request('POST', '/__shell/pick-folder'),
     /** Export of the month as { blob, filename }. */
     exportPlan: (month, format) => download(`/api/plans/${m(month)}/export?format=${encodeURIComponent(format)}`, `dienstplan-${month}.${format}`),
   };
