@@ -191,6 +191,10 @@ class Sp5ExportTest {
         assertThat(Sp5Main.run(badMonth, new PrintStream(err3, true, StandardCharsets.UTF_8))).isEqualTo(1);
         assertThat(err3.toString(StandardCharsets.UTF_8)).isEqualTo("Fehler: ungültiger Monat '2027-13', erwartet "
                 + "YYYY-MM\n");
+        String[] huge = args.clone();
+        huge[5] = "4294967297"; // would be 1 when narrowed to int
+        ByteArrayOutputStream err4 = new ByteArrayOutputStream();
+        assertThat(Sp5Main.run(huge, new PrintStream(err4, true, StandardCharsets.UTF_8))).isEqualTo(2);
     }
 
     @SuppressWarnings("unchecked")

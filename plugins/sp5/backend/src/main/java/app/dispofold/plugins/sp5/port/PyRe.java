@@ -78,7 +78,7 @@ public final class PyRe {
         emit(out, sub, global);
         int javaFlags = Pattern.UNIX_LINES;
         if ((global & FLAG_IGNORECASE) != 0) {
-            javaFlags |= Pattern.CASE_INSENSITIVE | ((global & FLAG_ASCII) == 0 ? Pattern.UNICODE_CASE : 0);
+            javaFlags |= (global & FLAG_ASCII) != 0 ? Pattern.CASE_INSENSITIVE : 0; // Unicode: classes spelled out
         }
         if ((global & FLAG_MULTILINE) != 0) {
             javaFlags |= Pattern.MULTILINE;
@@ -108,28 +108,30 @@ public final class PyRe {
     /** fnmatch.fnmatchcase(name, pat). */
     public static boolean fnmatchcase(String name, String pat) {
         try {
-            return compile("(?s:" + translate(pat) + ")\\Z").matcher(name).lookingAt();
+            return compile(translate(pat)).matcher(name).lookingAt();
         } catch (Error e) {
             throw new IllegalStateException("fnmatch pattern not translated: " + e.msg(), e);
         }
     }
 
-    /** fnmatch.translate without the wrapping: the regular expression of the glob pattern. */
+    /** fnmatch.translate: the regular expression of the glob pattern (inner stars as atomic lazy groups). */
     static String translate(String text) {
         int[] pat = text.codePoints().toArray();
-        StringBuilder res = new StringBuilder();
+        List<String> res = new ArrayList<>();
+        List<Integer> stars = new ArrayList<>();
         int i = 0;
         int n = pat.length;
         while (i < n) {
             int c = pat[i];
             i++;
             if (c == '*') {
-                res.append(".*");
+                stars.add(res.size());
+                res.add(".*");
                 while (i < n && pat[i] == '*') {
                     i++;
                 }
             } else if (c == '?') {
-                res.append('.');
+                res.add(".");
             } else if (c == '[') {
                 int j = i;
                 if (j < n && pat[j] == '!') {
@@ -142,7 +144,7 @@ public final class PyRe {
                     j++;
                 }
                 if (j >= n) {
-                    res.append("\\[");
+                    res.add("\\[");
                 } else {
                     String stuff = sub(pat, i, j);
                     if (stuff.indexOf('-') < 0) {
@@ -182,9 +184,9 @@ public final class PyRe {
                     }
                     i = j + 1;
                     if (stuff.isEmpty()) {
-                        res.append("(?!)");
+                        res.add("(?!)");
                     } else if (stuff.equals("!")) {
-                        res.append('.');
+                        res.add(".");
                     } else {
                         stuff = stuff.replaceAll("([&~|])", "\\\\$1");
                         if (stuff.charAt(0) == '!') {
@@ -192,14 +194,26 @@ public final class PyRe {
                         } else if (stuff.charAt(0) == '^' || stuff.charAt(0) == '[') {
                             stuff = "\\" + stuff;
                         }
-                        res.append('[').append(stuff).append(']');
+                        res.add("[" + stuff + "]");
                     }
                 }
             } else {
-                res.append(escape(c));
+                res.add(escape(c));
             }
         }
-        return res.toString();
+        if (stars.isEmpty()) {
+            return "(?s:" + String.join("", res) + ")\\z";
+        }
+        // _join_translated_parts: STAR fixed STAR fixed ... with no backtracking into the inner pairs
+        StringBuilder out = new StringBuilder(String.join("", res.subList(0, stars.get(0))));
+        i = stars.get(0) + 1;
+        for (int k = 1; k < stars.size(); k++) {
+            int j = stars.get(k);
+            out.append("(?>.*?").append(String.join("", res.subList(i, j))).append(')');
+            i = j + 1;
+        }
+        out.append(".*").append(String.join("", res.subList(i, res.size())));
+        return "(?s:" + out + ")\\z";
     }
 
     private static String sub(int[] cps, int from, int to) {
@@ -1139,21 +1153,145 @@ public final class PyRe {
         out.append(']');
     }
 
+    /** The Java inline flags of a scope: ASCII case folding by Java, Unicode case folding spelled out by emit. */
     private static String javaFlags(int flags) {
         StringBuilder on = new StringBuilder();
-        StringBuilder off = new StringBuilder();
+        StringBuilder off = new StringBuilder("u");
         boolean ascii = (flags & FLAG_ASCII) != 0;
-        ((flags & FLAG_IGNORECASE) != 0 ? on : off).append('i');
-        ((flags & FLAG_IGNORECASE) != 0 && !ascii ? on : off).append('u');
+        ((flags & FLAG_IGNORECASE) != 0 && ascii ? on : off).append('i');
         ((flags & FLAG_MULTILINE) != 0 ? on : off).append('m');
         ((flags & FLAG_DOTALL) != 0 ? on : off).append('s');
         return on + "-" + off;
     }
 
+    // ── Unicode case folding as sre does it (IGNORECASE without ASCII) ──
+
+    /** re._casefix._EXTRA_CASES: lower-case characters that match each other besides lower(). */
+    private static final int[][] EXTRA_CASES = {
+            {0x0069, 0x0131}, {0x0073, 0x017F}, {0x00B5, 0x03BC}, {0x0131, 0x0069}, {0x017F, 0x0073},
+            {0x0345, 0x03B9, 0x1FBE}, {0x0390, 0x1FD3}, {0x03B0, 0x1FE3}, {0x03B2, 0x03D0}, {0x03B5, 0x03F5},
+            {0x03B8, 0x03D1}, {0x03B9, 0x0345, 0x1FBE}, {0x03BA, 0x03F0}, {0x03BC, 0x00B5}, {0x03C0, 0x03D6},
+            {0x03C1, 0x03F1}, {0x03C2, 0x03C3}, {0x03C3, 0x03C2}, {0x03C6, 0x03D5}, {0x03D0, 0x03B2},
+            {0x03D1, 0x03B8}, {0x03D5, 0x03C6}, {0x03D6, 0x03C0}, {0x03F0, 0x03BA}, {0x03F1, 0x03C1},
+            {0x03F5, 0x03B5}, {0x0432, 0x1C80}, {0x0434, 0x1C81}, {0x043E, 0x1C82}, {0x0441, 0x1C83},
+            {0x0442, 0x1C84, 0x1C85}, {0x044A, 0x1C86}, {0x0463, 0x1C87}, {0x1C80, 0x0432}, {0x1C81, 0x0434},
+            {0x1C82, 0x043E}, {0x1C83, 0x0441}, {0x1C84, 0x0442, 0x1C85}, {0x1C85, 0x0442, 0x1C84}, {0x1C86, 0x044A},
+            {0x1C87, 0x0463}, {0x1C88, 0xA64B}, {0x1E61, 0x1E9B}, {0x1E9B, 0x1E61}, {0x1FBE, 0x0345, 0x03B9},
+            {0x1FD3, 0x0390}, {0x1FE3, 0x03B0}, {0xA64B, 0x1C88}, {0xFB05, 0xFB06}, {0xFB06, 0xFB05} };
+    private static Map<Integer, int[]> fixes;
+    private static Map<Integer, Integer> lowered; // every character whose lower() is another one
+
+    private static synchronized void caseTables() {
+        if (lowered != null) {
+            return;
+        }
+        Map<Integer, int[]> f = new HashMap<>();
+        for (int[] e : EXTRA_CASES) {
+            f.put(e[0], java.util.Arrays.copyOfRange(e, 1, e.length));
+        }
+        Map<Integer, Integer> l = new HashMap<>();
+        for (int c = 0; c <= Character.MAX_CODE_POINT; c++) {
+            int lo = Character.toLowerCase(c);
+            if (lo != c) {
+                l.put(c, lo);
+            }
+        }
+        fixes = f;
+        lowered = l;
+    }
+
+    private static int lower(int c) {
+        return lowered.getOrDefault(c, c);
+    }
+
+    /** _sre.unicode_iscased: lower() or upper() (the first character of the full mapping) differs. */
+    private static boolean isCased(int c) {
+        return lower(c) != c || new String(Character.toChars(c)).toUpperCase(java.util.Locale.ROOT).codePointAt(0) != c;
+    }
+
+    /**
+     * The class body of the characters ch with lower(ch) among the lowered members of `set` and their EXTRA_CASES
+     * (sre's IN_UNI_IGNORE and LITERAL_UNI_IGNORE); categories are kept as they are.
+     */
+    private static String foldedClass(List<SetItem> set, boolean ascii) {
+        java.util.TreeSet<Integer> lows = new java.util.TreeSet<>(); // lowered members besides the ranges themselves
+        List<SetItem> ranges = new ArrayList<>();
+        StringBuilder body = new StringBuilder();
+        for (SetItem i : set) {
+            if (i.cat() != null) {
+                body.append('[').append(categoryClass(i.cat(), ascii)).append(']');
+            } else if (i.lo() == i.hi()) {
+                lows.add(lower(i.lo()));
+            } else {
+                ranges.add(i);
+                body.append(hex(i.lo())).append('-').append(hex(i.hi()));
+            }
+        }
+        java.util.function.IntPredicate inRanges = v -> ranges.stream().anyMatch(r -> v >= r.lo() && v <= r.hi());
+        for (Map.Entry<Integer, Integer> e : lowered.entrySet()) {
+            if (inRanges.test(e.getKey())) {
+                lows.add(e.getValue());
+            }
+        }
+        java.util.function.IntPredicate base = v -> lows.contains(v) || (inRanges.test(v) && lower(v) == v);
+        java.util.TreeSet<Integer> all = new java.util.TreeSet<>(lows);
+        for (Map.Entry<Integer, int[]> e : fixes.entrySet()) {
+            if (base.test(e.getKey())) {
+                for (int k : e.getValue()) {
+                    all.add(k);
+                }
+            }
+        }
+        java.util.function.IntPredicate inL = v -> all.contains(v) || (inRanges.test(v) && lower(v) == v);
+        java.util.TreeSet<Integer> chars = new java.util.TreeSet<>();
+        for (int v : all) {
+            if (lower(v) == v) {
+                chars.add(v);
+            }
+        }
+        for (Map.Entry<Integer, Integer> e : lowered.entrySet()) {
+            if (inL.test(e.getValue())) {
+                chars.add(e.getKey());
+            }
+        }
+        for (int c : chars) {
+            body.append(hex(c));
+        }
+        return body.toString();
+    }
+
+    /** Whether a set takes part in case folding (sre's hascased); ranges count by their original characters. */
+    private static boolean hasCased(List<SetItem> set) {
+        for (SetItem i : set) {
+            if (i.cat() == null && (i.lo() == i.hi() ? isCased(lower(i.lo()))
+                    : java.util.stream.IntStream.rangeClosed(i.lo(), i.hi()).anyMatch(PyRe::isCased))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** A literal or a set under Unicode IGNORECASE as an explicit class body, or null where sre matches exactly. */
+    private static String folded(Node n, boolean ascii) {
+        caseTables();
+        if (n.op == Op.LITERAL || n.op == Op.NOT_LITERAL) {
+            return isCased(n.c) ? foldedClass(List.of(new SetItem(n.c, n.c, null)), ascii) : null;
+        }
+        return hasCased(n.set) ? foldedClass(n.set, ascii) : null;
+    }
+
     private static void emit(StringBuilder out, List<Node> sub, int flags) {
         boolean ascii = (flags & FLAG_ASCII) != 0;
+        boolean fold = (flags & FLAG_IGNORECASE) != 0 && !ascii;
         String word = "[" + categoryClass("WORD", ascii) + "]";
         for (Node n : sub) {
+            String folded = fold && (n.op == Op.LITERAL || n.op == Op.NOT_LITERAL || n.op == Op.IN) ? folded(n, ascii)
+                    : null;
+            if (folded != null) {
+                boolean negate = n.op == Op.NOT_LITERAL || (n.op == Op.IN && n.negate);
+                out.append(negate ? "(?:(?![" + folded + "])" + ANY_CHAR + ")" : "[" + folded + "]");
+                continue;
+            }
             switch (n.op) {
                 case LITERAL -> out.append(hex(n.c));
                 case NOT_LITERAL -> out.append("(?:(?!").append(hex(n.c)).append(')').append(ANY_CHAR).append(')');
@@ -1216,7 +1354,7 @@ public final class PyRe {
                     }
                     out.append(')');
                 }
-                case GROUPREF -> out.append("\\k<g").append(n.group).append('>');
+                case GROUPREF -> out.append(fold ? "(?iu:" : "(?:").append("\\k<g").append(n.group).append(">)");
                 case GROUPREF_EXISTS -> {
                     // Java has no conditional groups; the empty group after each group tells whether it matched
                     out.append("(?:\\k<e").append(n.group).append('>');

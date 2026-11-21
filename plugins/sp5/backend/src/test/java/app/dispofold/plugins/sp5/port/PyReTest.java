@@ -2,6 +2,9 @@ package app.dispofold.plugins.sp5.port;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
+
+import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
 
@@ -42,6 +45,23 @@ class PyReTest {
         assertThat(PyRe.match(PyRe.compile("(a)?(?(1)b|c)"), "ac")).isFalse();
         assertThat(PyRe.match(PyRe.compile("x{,2}y"), "xxy")).isTrue();
         assertThat(PyRe.match(PyRe.compile("a{"), "a{")).isTrue(); // not a repeat: literal
+    }
+
+    @Test
+    void ignoreCaseFoldsAsSre() throws Exception {
+        assertThat(PyRe.match(PyRe.compile("(?i)^gro[ß]team$"), "Groẞteam")).isTrue();
+        assertThat(PyRe.match(PyRe.compile("(?i)[s-t]"), "ſ")).isTrue(); // the extra case of s
+        assertThat(PyRe.match(PyRe.compile("(?i)[^s]"), "ſ")).isFalse();
+        assertThat(PyRe.match(PyRe.compile("(?i)k"), "K")).isTrue(); // Kelvin sign
+        assertThat(PyRe.match(PyRe.compile("(?ia)k"), "K")).isFalse(); // ASCII only
+        assertThat(PyRe.match(PyRe.compile("(?i)(a)\\1"), "aA")).isTrue();
+    }
+
+    @Test
+    void globStarsDoNotBacktrackIntoEachOther() {
+        assertTimeoutPreemptively(Duration.ofSeconds(2),
+                () -> assertThat(PyRe.fnmatchcase("a".repeat(49), "*a".repeat(12) + "b")).isFalse());
+        assertThat(PyRe.translate("*a*b?c*")).isEqualTo("(?s:(?>.*?a)(?>.*?b.c).*)\\z");
     }
 
     @Test

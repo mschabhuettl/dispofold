@@ -119,10 +119,15 @@ public final class Sp5Main {
                 value = args[++i];
             }
             if (INT_OPTIONS.contains(opt)) {
+                long number;
                 try {
-                    Py.pyInt(value);
+                    number = Py.pyInt(value);
                 } catch (Py.Raised e) {
                     throw new UsageError("argument " + opt + ": invalid int value: " + Py.strRepr(value));
+                }
+                if (number != (int) number) {
+                    // Python takes any int here; the port refuses instead of narrowing the value
+                    throw new UsageError("argument " + opt + ": " + value + " is beyond the integers of the port");
                 }
             }
             if (opt.equals("--demand") && !Sp5Export.DEMAND_SOURCES.contains(value)) {
