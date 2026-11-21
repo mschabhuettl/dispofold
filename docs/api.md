@@ -210,6 +210,22 @@ Exporte: Hat der Plan harte Verstöße, endet der Dateiname auf `-mit-verstoesse
 nennt sie. CSV: Semikolon, UTF-8 mit BOM, eine Zeile je Person und Tag mit
 `personId;Name;date;shiftCode;shiftId;start;end;hours;compRest;pinned;absenceCode` (Stunden mit Dezimalkomma).
 
+## Erweiterungen
+
+Erweiterungen (Plugins) sind in das Programm eingebaut, siehe `docs/plugins.md`. Jede ist aus, bis die Planung
+sie einschaltet; der Betrieb kann sie ganz ausblenden (`DISPOFOLD_PLUGINS_HIDDEN`).
+
+| Methode | Pfad | Antwort |
+|---|---|---|
+| `GET` | `/api/extensions` | `[{ "id", "name", "version", "description", "enabled", "importSource" }]`; für `viewer` nur die eingeschalteten |
+| `PUT` | `/api/extensions/{id}` | `planner`; `{ "enabled": true \| false }`, Antwort wie ein Eintrag oben; Ausschalten behält die Einstellungen |
+| beliebig | `/api/plugins/{id}/...` | die Routen der Erweiterung; `404` `plugin.unknown`, solange sie aus oder ausgeblendet ist |
+| `POST` | `/api/import/plugin/{id}?replace=&keep=` | `planner`; Body: die Anfrage des Import-Formulars der Erweiterung; Import wie `/api/import/dataset` |
+| `POST` | `/api/import/plugin/{id}/preview` | `planner`; Vorschau wie `/api/import/preview` |
+| `GET` | `/api/files/roots` | `planner`; die Ordner, die Erweiterungen lesen dürfen: `[{ "id" }]` (absoluter Pfad) |
+| `GET` | `/api/files/list?root=&path=` | `planner`; Ordner und Dateien darin: `[{ "name", "dir" }]`, Ordner zuerst; Einträge, die aus dem Ordner führen, fehlen |
+| `POST` | `/api/files/roots` | nur Desktop, nur vom Programmfenster nach seinem Ordnerdialog (Kopfzeile `X-Dispofold-Picked`, die die Seite nicht senden kann); sonst `403` `files.pickInWindow` |
+
 ## Leser-Rolle
 
 Für `viewer` enthalten `/api/dataset`, `/api/periods/{month}`, Pläne, Analyse, Personenansicht, Regel-Treffer,
@@ -280,6 +296,16 @@ Import:
 | `import.demoMissing` | 500 | |
 | `corrections.noBaseline` | 409 | |
 | `anonymize.leak` | 409 | `count`, `places` (JSON-Pfade, durch Komma getrennt, nie Namen) |
+
+Erweiterungen:
+
+| Code | Status | Parameter |
+|---|---|---|
+| `plugin.unknown` | 404 | |
+| `files.notFound` | 404 | |
+| `files.pickInWindow` | 403 | |
+
+Codes einer Erweiterung beginnen mit `plugin.<id>.`; ihre Texte bringt sie in ihrem Front End mit.
 
 Hinweise (`notes`) der Korrekturdatei und des Imports mit `keep=true`, alle mit Status 200:
 

@@ -3,6 +3,21 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.18.0 (unreleased)
+
+- **Erweiterungen (Plugins):** Dispofold kann Erweiterungen mitbringen, die eigene Seiten, Einstellungen, einen
+  Import und Hilfeseiten haben und so aussehen wie der Rest des Programms. Jede ist aus, bis die Planung sie unter
+  **Einstellungen → Erweiterungen** einschaltet; Ausschalten behält ihre Einstellungen. Die Seite gibt es jetzt
+  auch am Server. Diese Version enthält noch keine Erweiterung; die Seite sagt das. Anleitung:
+  [Erweiterungen](docs/anleitung/erweiterungen.md), Entwicklung: [docs/plugins.md](docs/plugins.md).
+- **Betrieb:** `DISPOFOLD_PLUGINS_HIDDEN` blendet eine Erweiterung am Server ganz aus, `DISPOFOLD_PLUGIN_ROOTS` gibt
+  Ordner frei, die Erweiterungen lesen dürfen (schreibgeschützt eingebunden, siehe
+  [docs/betrieb.md](docs/betrieb.md#erweiterungen)); ohne Eintrag keiner. Im Programm am eigenen Rechner wählt man
+  den Ordner im Ordnerdialog.
+- **Für Entwickler:** Plugin-API im Backend (`app.dispofold.plugin.api`) und im Front End
+  (`frontend/src/lib/plugin-api.js`), eine Beispiel-Erweiterung nur für Tests, die jeden Erweiterungspunkt
+  beweist, und Architekturtests, die den Kern frei von Erweiterungen halten.
+
 ## 0.17.0 (2026-11-21)
 
 - **Einzelne freie Tage:** zählen nur noch echte freie Tage. Ein einzelner Abwesenheits- oder Ersatzruhetag

@@ -25,6 +25,7 @@ Datensätze in [datenformat.md](../datenformat.md). Installation und Sicherung s
 | [Daten und Korrekturdatei](daten.md) | Import, Änderungen behalten, Export, Korrekturdatei, Pseudonymisieren |
 | [Regeln einstellen](einstellungen.md) | Planungsziele, Gesetz und Betriebsvereinbarung, Gewichte, mit allen Standardwerten |
 | [Updates](updates.md) | Hinweis auf neue Versionen, Update am Server und am eigenen Rechner |
+| [Erweiterungen](erweiterungen.md) | Erweiterungen ein- und ausschalten, was sie zeigen |
 | [Rolle „nur lesen“](nur-lesen.md) | was die Ansicht sieht und was nicht |
 | [Häufige Fragen und Fehlerbehebung](fragen.md) | Meldungen des Programms, ihre Ursache und was zu tun ist |
 | [Begriffe](begriffe.md) | die Wörter des Programms von A bis Z |

@@ -280,6 +280,12 @@ Desktop-Build nicht.
 
 Versionen aus der `bad`-Liste des Launchers werden nicht angeboten und nicht angenommen.
 
+**Ordnerdialog für Erweiterungen:** `POST /__shell/pick-folder` beantwortet das Programmfenster selbst. Es öffnet
+den Ordnerdialog des Systems und gibt einen gewählten Ordner im Backend frei (`POST /api/files/roots` mit der
+Kopfzeile `X-Dispofold-Picked`, die es aus Anfragen der Seite entfernt), dann antwortet es mit `{ "id" }`, ohne
+Wahl mit `{ "id": null }`. Gewählte Ordner stehen in der Datenbank und bleiben freigegeben (siehe
+`docs/plugins.md`).
+
 ## Updates
 
 ### Format

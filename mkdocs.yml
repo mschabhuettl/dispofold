@@ -27,6 +27,7 @@ nav:
       - Daten und Korrekturdatei: anleitung/daten.md
       - Regeln einstellen: anleitung/einstellungen.md
       - Updates: anleitung/updates.md
+      - Erweiterungen: anleitung/erweiterungen.md
       - Rolle „nur lesen“: anleitung/nur-lesen.md
       - Häufige Fragen und Fehlerbehebung: anleitung/fragen.md
       - Begriffe: anleitung/begriffe.md
@@ -36,6 +37,7 @@ nav:
   - Datenformat: datenformat.md
   - Entwicklung:
       - API: api.md
+      - Erweiterungen entwickeln: plugins.md
       - Release: release.md
       - Code signing policy: code-signing-policy.md
 

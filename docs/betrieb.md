@@ -141,6 +141,34 @@ eine Begrenzung je Benutzeradresse braucht, richtet sie im Proxy ein.
 - nginx setzt eine Content-Security-Policy, `X-Frame-Options: DENY` und `X-Content-Type-Options: nosniff`.
 - Die Images sind an die Version (`TAG`) gebunden, die Basis-Images mit Digest.
 
+### Erweiterungen
+
+Erweiterungen (Plugins) sind Teil von Dispofold und kommen mit den Images; nachgeladen wird nichts. Jede ist aus, bis
+die Planung sie unter **Einstellungen → Erweiterungen** einschaltet (siehe [Anleitung](anleitung/erweiterungen.md)).
+Eine eingeschaltete Erweiterung sieht alle Planungsdaten. Zwei Einstellungen in `.env` gehören dem Betrieb:
+
+- `DISPOFOLD_PLUGINS_HIDDEN`: die Kennungen der Erweiterungen, die es auf diesem Server nicht geben soll, durch
+  Kommas getrennt. Eine ausgeblendete Erweiterung steht nicht in der Liste, lässt sich nicht einschalten, und jede
+  ihrer Adressen antwortet mit 404, auch wenn sie vorher eingeschaltet war. Ihre gespeicherten Einstellungen
+  bleiben in der Datenbank.
+- `DISPOFOLD_PLUGIN_ROOTS`: die Ordner, die Erweiterungen lesen dürfen, als Pfade im Container, durch Kommas
+  getrennt. Leer (Standard) heißt: keiner. In der Oberfläche sind nur diese Ordner und ihre Unterordner wählbar;
+  absolute Pfade, `..` und symbolische Links, die hinausführen, weist der Server ab.
+
+Ein Ordner kommt schreibgeschützt in den Container, am einfachsten mit einer `docker-compose.override.yml` neben
+`docker-compose.yml` (Compose liest sie von selbst):
+
+```yaml
+services:
+  backend:
+    volumes:
+      - /srv/dispofold-quellen:/quellen:ro
+```
+
+Dazu in `.env` `DISPOFOLD_PLUGIN_ROOTS=/quellen`, dann `docker compose up -d`. Der Container läuft als
+unprivilegierter Benutzer: Die Dateien müssen für alle lesbar sein (`chmod -R o+rX /srv/dispofold-quellen`).
+Der Ordner gehört nicht in die Sicherung von Dispofold; seine Daten bleiben, wo sie sind.
+
 ### Neue Version
 
 Das Backend fragt beim Start und danach einmal am Tag die öffentliche Releases-API von GitHub nach dem neuesten

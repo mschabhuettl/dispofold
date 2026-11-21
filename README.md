@@ -46,6 +46,7 @@ liegen als Markdown in `docs/`.
 | Betreuung und Releases | [docs/release.md](docs/release.md): CI, Repository-Einstellungen, Release |
 | Technik Desktop | [docs/desktop.md](docs/desktop.md): Programmfenster, Launcher, Datenordner, Updates |
 | Schnittstelle | [docs/api.md](docs/api.md) |
+| Erweiterungen | [docs/plugins.md](docs/plugins.md): Erweiterungen (Plugins) entwickeln, ihre Erweiterungspunkte und Regeln |
 | Planungsregeln | [docs/regeln.md](docs/regeln.md) |
 | Datenformat | [docs/datenformat.md](docs/datenformat.md) |
 | Codesignatur | [Code signing policy](docs/code-signing-policy.md) |

@@ -35,6 +35,9 @@ services:
       SOLVER_MOVE_LIMIT: ${SOLVER_MOVE_LIMIT:-250000}
       JAVA_OPTS: ${JAVA_OPTS:--XX:MaxRAMPercentage=75}
       DISPOFOLD_UPDATE_CHECK: ${DISPOFOLD_UPDATE_CHECK:-true}
+      # plugins (docs/betrieb.md, "Erweiterungen"): hidden ones, and the folders they may read (mounted read-only)
+      DISPOFOLD_PLUGINS_HIDDEN: ${DISPOFOLD_PLUGINS_HIDDEN:-}
+      DISPOFOLD_PLUGIN_ROOTS: ${DISPOFOLD_PLUGIN_ROOTS:-}
     read_only: true
     tmpfs:
       - /tmp
