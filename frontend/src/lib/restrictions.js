@@ -60,7 +60,7 @@ export function onRequestTest(restrictions, shifts, rules = null) {
 const undatedFor = (r, personId, ids) => r.personId === personId && r.shiftId != null && ids.has(r.shiftId) && r.validFrom == null && r.validTo == null;
 
 /**
- * State of a whole area for the person (as in dispofold-lupe): 'NEVER' or 'ON_REQUEST' when every shift of the area
+ * State of a whole area for the person: 'NEVER' or 'ON_REQUEST' when every shift of the area
  * has exactly that restriction on every day and no other undated one, 'NONE' when no shift has an undated one,
  * 'MIXED' otherwise. Dated restrictions and those by category do not count.
  */
