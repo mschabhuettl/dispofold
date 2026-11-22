@@ -6,30 +6,40 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DefaultValue;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.Response.Status;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import app.dispofold.model.Dataset;
 import app.dispofold.plugin.api.PluginErrors;
 import app.dispofold.plugin.api.PluginHost;
+import app.dispofold.plugins.sp5.port.PyJson;
 import app.dispofold.plugins.sp5.port.Sp5Export;
 
-/** The plugin's routes: its settings, and the result of an export as files (for the comparison with Python). */
+/**
+ * The plugin's routes: its settings, a run of the export without an import (its summary, report and the comparison
+ * with the last import or a file), the check of a mapping against the folder, and the result of an export as files
+ * (for the comparison with Python).
+ */
 @Path("/api/plugins/sp5")
 @Produces(MediaType.APPLICATION_JSON)
 @RolesAllowed("planner")
@@ -40,6 +50,9 @@ public class Sp5Resource {
 
     @Inject
     Sp5Plugin plugin;
+
+    @Inject
+    Sp5Runs runs;
 
     @Inject
     ObjectMapper mapper;
@@ -106,6 +119,99 @@ public class Sp5Resource {
         return Response.ok(bytes.toByteArray(), "application/zip")
                 .header("Content-Disposition", "attachment; filename=\"dispofold-sp5-ergebnis-" + month + ".zip\"")
                 .build();
+    }
+
+    /** Runs the export of {@code {"month", "to", "options"}} as the import would load it, without importing. */
+    @POST
+    @Path("lauf")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Map<String, Object> run(JsonNode body) {
+        return runs.run(body).summary();
+    }
+
+    @GET
+    @Path("lauf")
+    public Map<String, Object> lastRun() {
+        return runs.last().summary();
+    }
+
+    @GET
+    @Path("lauf/bericht")
+    public Map<String, Object> report() {
+        return runs.last().report();
+    }
+
+    @GET
+    @Path("lauf/bericht.csv")
+    @Produces("text/csv; charset=utf-8")
+    public Response reportFile() {
+        Sp5Runs.Run run = runs.last();
+        return Response.ok(Sp5Export.reportBytes(run.result), "text/csv; charset=utf-8")
+                .header("Content-Disposition", "attachment; filename=\"dispofold-sp5-bericht-"
+                        + run.inputs.request().month().replaceAll("[^0-9-]", "") + ".csv\"")
+                .build();
+    }
+
+    /** The problems of a mapping, as the import names them; empty if it is valid. */
+    @POST
+    @Path("zuordnung/pruefen")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Map<String, Object> check(JsonNode mapping) {
+        return Map.of("errors", Sp5Export.mappingErrors(python(mapping)));
+    }
+
+    /** Which rule of the mapping each shift, group and absence type of the folder in the settings meets. */
+    @POST
+    @Path("zuordnung/codes")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Map<String, Object> codes(JsonNode mapping) {
+        Object m = python(mapping);
+        List<String> errors = Sp5Export.mappingErrors(m);
+        return Sp5Codes.codes(plugin.folder(plugin.settings()), m, errors);
+    }
+
+    /** The last run against the last import (409 {@code plugin.sp5.noBaseline} before the first). */
+    @GET
+    @Path("vergleich")
+    public Map<String, Object> compareWithImport(@QueryParam("korrekturen") @DefaultValue("true") boolean corrections) {
+        Sp5Runs.Run run = runs.last();
+        Optional<Dataset> old = host.lastImport(run.months());
+        if (old.isEmpty()) {
+            throw PluginErrors.error(Status.CONFLICT, "plugin.sp5.noBaseline", Map.of(),
+                    "Noch nichts importiert");
+        }
+        return Sp5Comparison.compare(mapper, "import", corrections, old.get(),
+                corrections ? run.dataset : run.withoutCorrections(), run.months());
+    }
+
+    /** The last run against an earlier dataset in the body (400 {@code plugin.sp5.dataset} if it is none). */
+    @POST
+    @Path("vergleich")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Map<String, Object> compareWithFile(@QueryParam("korrekturen") @DefaultValue("true") boolean corrections,
+            String body) {
+        Sp5Runs.Run run = runs.last();
+        Dataset old;
+        try {
+            old = body == null ? null : mapper.readValue(body, Dataset.class);
+        } catch (JsonProcessingException e) {
+            old = null;
+        }
+        if (old == null || !Dataset.FORMAT.equals(old.format()) || !Sp5Comparison.whole(old)) {
+            throw PluginErrors.error(Status.BAD_REQUEST, "plugin.sp5.dataset", Map.of(),
+                    "Die Datei ist kein Datensatz von Dispofold");
+        }
+        return Sp5Comparison.compare(mapper, "datei", corrections, old,
+                corrections ? run.dataset : run.withoutCorrections(), run.months());
+    }
+
+    /** A mapping in the body as sp5_export.py reads it from its file. */
+    private Object python(JsonNode mapping) {
+        try {
+            return PyJson.load(mapper.writeValueAsBytes(mapping));
+        } catch (JsonProcessingException | PyJson.DecodeError e) {
+            throw PluginErrors.error(Status.BAD_REQUEST, "plugin.sp5.mapping", Map.of(), "die Zuordnung ist kein JSON");
+        }
     }
 
     private static void entry(ZipOutputStream zip, String name, byte[] data) throws IOException {

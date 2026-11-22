@@ -85,6 +85,7 @@ public class BeispielPlugin implements Plugin {
 | Einstellungen | `PluginHost.settings(id)` und `saveSettings(id, json)`; `settingsVersion()` und `migrateSettings(von, json)` | `BeispielPluginTest.settingsAreMigratedValidatedAndKeptWhenSwitchedOff` |
 | Import | `importSource()` liefert eine `ImportSource`, deren `load(anfrage)` einen `Dataset` und die angewendeten Korrekturen | `BeispielPluginTest.importSourceGoesThroughTheImportPath` |
 | Korrekturdatei | `PluginHost.corrections()`: die kumulierte Korrekturdatei, leer ohne gespeicherten Import | ebenda |
+| Letzter Import | `PluginHost.lastImport(monate)`: die Stammdaten des letzten Imports (mit den Korrekturen, die seine Quelle angewendet hat) und die genannten Monate, wie Dispofold sie jetzt hat; leer vor dem ersten Import | `PluginHostTest.lastImportIsTheBaselineWithThePeriodsAsTheyAreNow` |
 | Dateien | `PluginHost.files().resolve(ordner, pfad)` | `BeispielPluginTest.filesStayInsideTheAllowedFolders`, `PickedRootTest` |
 
 **Einstellungen** sind JSON, je Erweiterung eine Zeile in der Tabelle `plugin_state`, mit der Version ihrer Form.

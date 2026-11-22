@@ -28,7 +28,7 @@ public final class Sp5Export {
     public static final int RECENT_MONTHS = 3;
     static final List<String> PATTERN_LISTS = List.of("ignoreShifts", "ignoreGroups", "excludeGroups",
             "compensatoryRestAbsences", "ignoreAbsences");
-    static final List<String> REPORT_HEADER = List.of("pruefung", "person", "bereich", "schicht", "dienste_historie",
+    public static final List<String> REPORT_HEADER = List.of("pruefung", "person", "bereich", "schicht", "dienste_historie",
             "bereich_aus_gruppen", "einschraenkung", "tagestyp", "spitze_historie", "spitze_sp5",
             "dienste_nicht_uebernommen", "stunden_historie", "spitze_historie_max", "wochenstunden", "bereiche",
             "mix_kategorien", "mix_bereiche", "auf_anfrage", "grund", "sp5_schicht", "calcbase", "hrsweek",
@@ -71,6 +71,16 @@ public final class Sp5Export {
         validateMapping((Object) mapping);
     }
 
+    /** A pattern the mapping may hold: text, and with "re:" a regular expression that compiles. */
+    public static boolean validPattern(Object pattern) {
+        return patternError(pattern) == null;
+    }
+
+    /** The import's match of a valid pattern against a value (fnmatch, or "re:" from the start of the value). */
+    public static boolean matches(String pattern, String value) {
+        return Sp5Import.matches(pattern, value);
+    }
+
     private static String patternError(Object pattern) {
         if (!(pattern instanceof String s) || s.isEmpty()) {
             return "ist kein Text";
@@ -86,10 +96,18 @@ public final class Sp5Export {
     }
 
     /** validate_mapping: the whole mapping checked before anything is read; all problems in one error. */
-    @SuppressWarnings("unchecked")
     public static void validateMapping(Object value) throws Sp5Error {
+        List<String> errors = mappingErrors(value);
+        if (!errors.isEmpty()) {
+            throw new Sp5Error(String.join("; ", errors));
+        }
+    }
+
+    /** The problems {@link #validateMapping} joins into its message, in order; empty for a valid mapping. */
+    @SuppressWarnings("unchecked")
+    public static List<String> mappingErrors(Object value) {
         if (!(value instanceof Map)) {
-            throw new Sp5Error("die Zuordnung muss ein JSON-Objekt sein");
+            return List.of("die Zuordnung muss ein JSON-Objekt sein");
         }
         Map<String, Object> mapping = (Map<String, Object>) value;
         List<String> errors = new ArrayList<>();
@@ -189,9 +207,7 @@ public final class Sp5Export {
                 }
             }
         }
-        if (!errors.isEmpty()) {
-            throw new Sp5Error(String.join("; ", errors));
-        }
+        return errors;
     }
 
     private static boolean rule(List<String> errors, String where, Object r) {
