@@ -1,5 +1,7 @@
 package app.dispofold.plugin;
 
+import java.time.YearMonth;
+import java.util.List;
 import java.util.Optional;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -12,6 +14,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import app.dispofold.api.PlanService;
 import app.dispofold.export.Corrections;
 import app.dispofold.model.Dataset;
+import app.dispofold.model.Period;
 import app.dispofold.plugin.api.PluginFiles;
 import app.dispofold.plugin.api.PluginHost;
 import app.dispofold.store.Store;
@@ -60,6 +63,18 @@ public class PluginHostImpl implements PluginHost {
             applied = store.appliedCorrections().orElse(null);
         }
         return Optional.of(Corrections.export(base, current, applied, mapper).file());
+    }
+
+    @Override
+    public Optional<Dataset> lastImport(List<YearMonth> months) {
+        synchronized (Store.DATASET_LOCK) {
+            return store.baseline().map(b -> {
+                List<Period> periods = months.stream().distinct().map(store::period).flatMap(Optional::stream)
+                        .toList();
+                return new Dataset(b.format(), b.version(), b.source(), b.areas(), b.shifts(), b.demand(),
+                        b.holidays(), b.absenceTypes(), b.people(), b.restrictions(), b.history(), periods);
+            });
+        }
     }
 
     @Override
