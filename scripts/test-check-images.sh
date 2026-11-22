@@ -20,6 +20,7 @@ planted = {
     "dark": "Shift" + "fold",
     "private-host": "git." + "schab" + "huettl.example",
     "clean": "Dispofold Dienstplan",
+    "legacy": "Schicht" + "planer 5",
 }
 for name, text in planted.items():
     dark = name == "dark"
@@ -33,7 +34,7 @@ svg = ('<svg xmlns="http://www.w3.org/2000/svg" width="900" height="140"><rect w
 EOF
 
 fail=0
-for name in old-name area-code dark private-host planted; do
+for name in old-name area-code dark private-host planted legacy; do
   file="$WORK/$name.png"
   [ "$name" = planted ] && file="$WORK/planted.svg"
   if scripts/check-images.sh "$file" >/dev/null 2>&1; then
@@ -46,5 +47,13 @@ if scripts/check-images.sh "$WORK/clean.png" >/dev/null 2>&1; then
   echo "clean image passes"
 else
   echo "clean image fails"; fail=1
+fi
+# the old planning system's name is allowed in its plugin's images only (as in scripts/check-repo.sh)
+plugin="$WORK/plugins/s""p5/docs/img"
+mkdir -p "$plugin" && cp "$WORK/legacy.png" "$plugin/legacy.png"
+if scripts/check-images.sh "$plugin/legacy.png" >/dev/null 2>&1; then
+  echo "the old system's name passes in its plugin"
+else
+  echo "the old system's name fails in its plugin"; fail=1
 fi
 [ "$fail" -eq 0 ] && echo "test-check-images: OK" || { echo "test-check-images: FAILED"; exit 1; }

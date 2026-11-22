@@ -19,9 +19,11 @@ trap 'rm -rf "${WORK:?}"' EXIT
 
 # Same names as the text check; the character classes keep this file from matching itself.
 names='[s]hiftfold|\b[r]ls\b|[s]teiermark|[r]ote[sn]? ?[k]reuz|[r]ed ?[c]ross|[ö]rk\b|[r]oteskreuz|[s]ource ?[s]ans'
-names=$names'|[d]unant|\b[s]p5|[s]chichtplaner|\b[d]bf\b|[c]laude|[a]nthropic|[o]penai|[c]hatgpt|[l]lm'
+names=$names'|[d]unant|[c]laude|[a]nthropic|[o]penai|[c]hatgpt|[l]lm'
 names=$names'|(^|[^m])[s]chabhuettl|192\.168\.[0-9]'
 names=$names'|[n]otruf calltaking|[k]rankentransport calltaking|[o]ffizier vom dienst|[ä]rztenotdienst|[n]otarzt-einsatzmittel'
+# The old planning system, as in scripts/check-repo.sh: named only in its plugin (plugins/[s]p5/, its help's images).
+legacy='\b[s]p5|[s]chichtplaner|\b[d]bf\b'
 # Codes of a real dispatch centre: whole words, case sensitive.
 codes='\b([N]CT|[K]CTS?|[A]END|[N]EM|[O]vD|[O]VD|[D]P|[N]-CT|[K]-CT)\b|(^|[^[:alnum:]])[Ä]ND\b'
 
@@ -58,7 +60,9 @@ im.save(out)
 ImageOps.invert(im).save(inv)
 EOF
   text=$( (tesseract "$png" - -l deu+eng 2>/dev/null; tesseract "$WORK/$n-inv.png" - -l deu+eng 2>/dev/null) || true)
-  hits=$( (printf '%s' "$text" | grep -o -i -E "$names"; printf '%s' "$text" | grep -o -E "$codes") || true)
+  forbidden=$names
+  case "$f" in plugins/[s]p5/* | */plugins/[s]p5/*) ;; *) forbidden="$names|$legacy" ;; esac
+  hits=$( (printf '%s' "$text" | grep -o -i -E "$forbidden"; printf '%s' "$text" | grep -o -E "$codes") || true)
   if [ -n "$hits" ]; then
     echo "$f: $(echo "$hits" | sort -u | tr '\n' ' ')"
     fail=1
