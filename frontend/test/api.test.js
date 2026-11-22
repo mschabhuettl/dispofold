@@ -92,6 +92,19 @@ test('export is fetched as a blob with the file name from the server', async () 
   assert.equal(await blob.text(), 'a;b');
 });
 
+test('a plugin route offers files to a GET and to a POST', async () => {
+  const calls = [];
+  const fetchImpl = async (path, init) => {
+    calls.push({ path, method: init.method, body: init.body });
+    return { status: 200, ok: true, headers: new Map([['Content-Disposition', 'attachment; filename="bericht.csv"']]), blob: async () => new Blob(['a']) };
+  };
+  const plugin = createApi({ fetchImpl }).plugin('demo');
+  assert.equal((await plugin.file('lauf/bericht.csv', 'x.csv')).filename, 'bericht.csv');
+  await plugin.download('ergebnis', { month: '2027-01' }, 'x.zip');
+  assert.deepEqual(calls, [{ path: '/api/plugins/demo/lauf/bericht.csv', method: 'GET', body: undefined },
+    { path: '/api/plugins/demo/ergebnis', method: 'POST', body: '{"month":"2027-01"}' }]);
+});
+
 test('a blocked export shows the coded error, without a name it falls back to month and format', async () => {
   const blocked = createApi({ fetchImpl: fakeFetch(409, { code: 'plan.solving', params: {}, error: 'x' }) });
   await assert.rejects(blocked.exportPlan('2027-01', 'xlsx'), (e) => e.code === 'plan.solving' && e.status === 409);

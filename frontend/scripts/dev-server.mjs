@@ -7,7 +7,8 @@
 // MOCK_UPDATE_ASK=1 (desktop, no source): no update settings saved yet, so the page asks once whether to check.
 // MOCK_RELEASE=1.3.0 (server build): the server's release check found that version (GET /api/release, planners only).
 // MOCK_FRONTEND=window|browser answers GET /__shell/mode like the desktop shell (unset: 404 like an older shell).
-// MOCK_TEST_PLUGINS=1 adds the plugins of ../plugins (also the test-only ones) with their dev/mock.mjs, all off.
+// MOCK_PLUGINS=1 adds the shipped plugins of ../plugins (not testOnly) with their dev/mock.mjs, all off; MOCK_TEST_PLUGINS=1
+// adds the test-only ones too.
 // Uses tests/fixtures/synthetic/*dataset*.synthetic.json when present, otherwise a generated mini dataset.
 import http from 'node:http';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
@@ -39,11 +40,13 @@ function fixtureDataset() {
 const fixture = fixtureDataset();
 
 async function mockPlugins() {
-  if (process.env.MOCK_TEST_PLUGINS !== '1') return [];
+  const all = process.env.MOCK_TEST_PLUGINS === '1';
+  if (!all && process.env.MOCK_PLUGINS !== '1') return [];
   const base = join(root, '..', 'plugins');
   const list = [];
   for (const id of existsSync(base) ? readdirSync(base).sort() : []) {
     const manifest = JSON.parse(readFileSync(join(base, id, 'plugin.json'), 'utf8'));
+    if (manifest.testOnly && !all) continue;
     const file = join(base, id, 'dev', 'mock.mjs');
     const route = existsSync(file) ? (await import(pathToFileURL(file).href)).mock() : () => null;
     list.push({ manifest, route, importSource: existsSync(join(base, id, 'dev', 'mock.mjs')) });

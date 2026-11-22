@@ -217,6 +217,9 @@ jobs:
           ../scripts/check-no-test-plugins.sh dist
           node scripts/build.mjs --test-plugins --out dist-plugins
           node scripts/check-plugins.mjs
+      - name: Pages of the shipped plugins on their dev mocks (browser)
+        working-directory: frontend
+        run: node scripts/check-plugin-pages.mjs
 
   desktop-shell:
     # Unit tests of the program window (protocol, proof, proxy rules).

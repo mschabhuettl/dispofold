@@ -197,6 +197,8 @@ export function createApi({ fetchImpl = (...a) => globalThis.fetch(...a), onUnau
       post: (path, body) => request('POST', `/api/plugins/${k(id)}/${path}`, body),
       /** A file the route answers to a POST of body, as { blob, filename }. */
       download: (path, body, fallback) => download(`/api/plugins/${k(id)}/${path}`, fallback, 'POST', body),
+      /** A file the route answers to a GET, as { blob, filename }. */
+      file: (path, fallback) => download(`/api/plugins/${k(id)}/${path}`, fallback),
     }),
     /** Import from a plugin's import source with its own request; as importDataset and importPreview. */
     pluginImport: (id, req, replaceChanged, keep = false) => request('POST', `/api/import/plugin/${k(id)}${keep ? '?keep=true' : replace(replaceChanged)}`, req),

@@ -130,6 +130,8 @@ export default {
 | Einstellungen | unter dem Eintrag der Erweiterung in **Einstellungen → Erweiterungen** | ebenda |
 | Import | eigener Abschnitt auf der Seite **Daten**; das Formular liefert die Anfrage, der Rest ist der Import des Kerns | ebenda |
 | Ordner | `folderPicker(ctx, { id, files })`: freigegebene Ordner und darunter, am eigenen Rechner mit Ordnerdialog | ebenda, auch im Desktop-Modus |
+| Import auf eigener Seite | `importFlow(ctx, '<id>', () => anfrage, { result, current })`: derselbe Import wie auf **Daten** (Vorschau, „Änderungen behalten“, Konflikte, Zusammenfassung, Fehler); gibt das Element für die Seite zurück | `frontend/test/import-flow.test.js`, `frontend/scripts/check-data.mjs` und `check-plugins.mjs` für die Seite **Daten** |
+| Tabellen | `sortableTable(spalten, { label, sort })`: `table.data`, die sich per Klick oder Tastatur auf die Spaltenköpfe sortiert, Zahlen als Zahlen, Text in deutscher Reihenfolge; `searchTerms` und `matchesTerms` für eine Suche aus mehreren Wörtern | `frontend/test/table.test.js` |
 | Hilfeseiten | `docs/<seite>.md`, in der Anleitung als `plugin-<id>-<seite>`, nach den Seiten des Kerns; Bilder aus `docs/img/` | ebenda; die Website im CI-Job `docs` |
 | Texte und Styles | Texte unter `plugin.<id>.`, keine eigenen Styles | `frontend/test/plugins.test.js`, `scripts/build.mjs` |
 
@@ -138,6 +140,12 @@ eigenen Routen, `ctx.canEdit`, `ctx.me`, `ctx.month` und die übrigen. Hilfeseit
 lägen sie in `docs/anleitung/`: Links auf `daten.md` oder `erweiterungen.md#einschalten-und-ausschalten` gehen
 auf die Seiten des Kerns. Bilder liegen in `docs/img/<name>.png` und stehen in der Seite als
 `![Text](img/<name>.png)`; Programm und Website zeigen sie unter `plugin-<id>-img/`.
+
+Für den Entwicklungsserver liefert `dev/mock.mjs` die Routen der Erweiterung (`mock()` gibt eine Funktion
+`(methode, pfad, body, rolle, query)` zurück; `route.load(anfrage, vorschau)` prüft die Anfrage ihres Imports).
+`MOCK_PLUGINS=1` nimmt die ausgelieferten Erweiterungen dazu, `MOCK_TEST_PLUGINS=1` auch die mit `testOnly`. Eine
+ausgelieferte Erweiterung mit eigenen Seiten prüft sie in `dev/check.mjs` im Browser; `npm run check:plugin-pages`
+führt diese Prüfungen aus.
 
 ## Eine ausgelieferte Erweiterung
 
