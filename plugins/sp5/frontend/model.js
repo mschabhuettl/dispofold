@@ -166,7 +166,8 @@ export function demandLabel(d) {
  */
 export function demandValues(list) {
   if (!list?.length) return '–';
-  return list.map((x) => (x.max == null || x.max === x.min ? String(x.min) : `${x.min}–${x.max}`)).join(', ');
+  // an empty max: the minimum is also the maximum ("2"); a max equal to the minimum is written out ("2–2")
+  return list.map((x) => (x.max == null ? String(x.min) : `${x.min}–${x.max}`)).join(', ');
 }
 
 // ---- mapping editor ----
@@ -263,6 +264,7 @@ export function hitsBySection(codes) {
 
 /** Shifts and groups of the folder without a rule and not ignored: { shifts: [codes], groups: [names] }. */
 export function unmatched(codes) {
-  return { shifts: (codes?.shifts ?? []).filter((x) => x.result?.kind === 'none').map((x) => x.code),
+  // a hidden shift without a rule is left out: the import drops it unless it has duties, and then it warns
+  return { shifts: (codes?.shifts ?? []).filter((x) => x.result?.kind === 'none' && !x.hidden).map((x) => x.code),
     groups: (codes?.groups ?? []).filter((x) => x.result?.kind === 'none').map((x) => x.name) };
 }

@@ -95,7 +95,7 @@ export async function render(root, ctx) {
     const at = r.request.to && r.request.to !== r.request.month
       ? t('plugin.sp5.import.range', { from: monthLabel(r.request.month), to: monthLabel(r.request.to) }) : monthLabel(r.request.month);
     importBox.replaceChildren(h('p.muted', { id: 'sp5-import-request' }, t('plugin.sp5.import.request', { months: at, time })),
-      importFlow(ctx, ID, () => last?.request ?? null));
+      importFlow(ctx, ID, () => (last ? { ...last.request, run: last.id } : null)));
   }
   showRun();
 }

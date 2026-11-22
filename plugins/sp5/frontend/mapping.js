@@ -28,8 +28,10 @@ export async function render(root, ctx) {
   const marker = h('span.badge.badge-warn', { id: 'sp5-map-dirty', hidden: true }, t('plugin.sp5.map.unsaved'));
   const raw = h('textarea', { id: 'sp5-map-json', rows: 16, spellcheck: 'false', 'aria-label': t('plugin.sp5.map.json') });
   let rawEdited = false;
+  let rawNewer = false; // the last edit was in the JSON view (not yet applied), not in the editor
   raw.addEventListener('input', () => {
     rawEdited = true;
+    rawNewer = true;
     dirty = true;
     marker.hidden = false;
   });
@@ -39,6 +41,7 @@ export async function render(root, ctx) {
 
   /** After every change: the marker, the JSON view, and a check soon. */
   function changed() {
+    rawNewer = false;
     dirty = true;
     marker.hidden = false;
     if (!rawEdited) { // edits of the JSON not yet applied stay
@@ -280,10 +283,14 @@ export async function render(root, ctx) {
   };
   const save = h('button.btn.btn-primary', { id: 'sp5-map-save', type: 'button' }, t('plugin.sp5.map.save'));
   save.addEventListener('click', async () => {
-    if (rawEdited) {
+    // the newer of the two is saved: the JSON typed last, or the editor changed after it
+    if (rawEdited && rawNewer) {
       const value = parse(raw.value);
       if (value === undefined) return toast(t('plugin.sp5.mapping.invalidJson'), true);
       apply(value);
+    } else if (rawEdited) {
+      rawEdited = false;
+      raw.value = mappingJson(mapping);
     }
     const saved = await guarded(() => api.put('einstellungen', { ...settings, mapping }), t('plugin.sp5.map.saved'));
     if (!saved) return undefined;

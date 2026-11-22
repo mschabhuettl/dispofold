@@ -1,11 +1,20 @@
 package app.dispofold.plugins.sp5;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.Instant;
 import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.LinkedHashMap;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Stream;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
@@ -36,18 +45,29 @@ public class Sp5Runs {
 
     private Run last;
 
+    /**
+     * What a run was made from: its request, the mapping, the options and the folder's files (name, size, time of
+     * change) in {@code base}, the corrections file in {@code corrections}.
+     */
+    record Fingerprint(byte[] base, byte[] corrections) {
+    }
+
     /** One run: what it was asked, made with and gave. */
     final class Run {
+        final String id = UUID.randomUUID().toString();
         final ObjectNode request;
         final Sp5Plugin.Inputs inputs;
+        final Fingerprint fingerprint;
         final Sp5Export.Result result;
         final Dataset dataset;
         final Instant ranAt;
         private Dataset withoutCorrections;
 
-        Run(ObjectNode request, Sp5Plugin.Inputs inputs, Sp5Export.Result result, Dataset dataset, Instant ranAt) {
+        Run(ObjectNode request, Sp5Plugin.Inputs inputs, Fingerprint fingerprint, Sp5Export.Result result,
+                Dataset dataset, Instant ranAt) {
             this.request = request;
             this.inputs = inputs;
+            this.fingerprint = fingerprint;
             this.result = result;
             this.dataset = dataset;
             this.ranAt = ranAt;
@@ -60,6 +80,10 @@ public class Sp5Runs {
         /** The same request run without the corrections file, made once when first asked for. */
         synchronized Dataset withoutCorrections() {
             if (withoutCorrections == null) {
+                // made later from the folder and the mapping as they are then: only if those are still the run's
+                if (!Arrays.equals(fingerprint(plugin.inputs(request)).base(), fingerprint.base())) {
+                    throw stale();
+                }
                 Sp5Export.Request r = inputs.request();
                 withoutCorrections = r.corrections() == null ? dataset
                         : plugin.data(plugin.export(new Sp5Export.Request(r.folder(), r.month(), r.to(),
@@ -84,6 +108,7 @@ public class Sp5Runs {
             counts.put("corrections", result.reportRows().stream().filter(r -> "korrektur".equals(r.get(0)))
                     .count());
             Map<String, Object> s = new LinkedHashMap<>();
+            s.put("id", id);
             s.put("request", request);
             s.put("months", months().stream().map(YearMonth::toString).toList());
             s.put("ranAt", ranAt.toString());
@@ -126,12 +151,66 @@ public class Sp5Runs {
         ObjectNode options = request.putObject("options");
         Sp5Settings.defaults(mapper).get("options").fieldNames()
                 .forEachRemaining(k -> options.set(k, inputs.options().get(k)));
-        Run run = new Run(request, inputs, result, plugin.data(result).dataset(),
+        Run run = new Run(request, inputs, fingerprint(inputs), result, plugin.data(result).dataset(),
                 Instant.now().truncatedTo(ChronoUnit.SECONDS));
         synchronized (this) {
             last = run;
         }
         return run;
+    }
+
+    /**
+     * An import of the run {@code id} (the Übersicht's): only while it is the last run and the import reads what it
+     * was made from, so that it loads the very dataset the run showed; else 409 {@code plugin.sp5.staleRun}.
+     */
+    void check(String id, Sp5Plugin.Inputs inputs) {
+        Run run;
+        synchronized (this) {
+            run = last;
+        }
+        Fingerprint now = fingerprint(inputs);
+        if (run == null || !run.id.equals(id) || !Arrays.equals(run.fingerprint.base(), now.base())
+                || !Arrays.equals(run.fingerprint.corrections(), now.corrections())) {
+            throw stale();
+        }
+    }
+
+    private static jakarta.ws.rs.WebApplicationException stale() {
+        return PluginErrors.error(Status.CONFLICT, "plugin.sp5.staleRun", Map.of(),
+                "Seit dem Lauf hat sich etwas geändert (ein neuer Lauf, die Zuordnung, die Korrekturen, die Optionen"
+                        + " oder der Ordner): bitte noch einmal ausführen");
+    }
+
+    /** The fingerprint of an export's inputs (SHA-256). */
+    Fingerprint fingerprint(Sp5Plugin.Inputs inputs) {
+        Sp5Export.Request r = inputs.request();
+        MessageDigest base = sha256();
+        update(base, r.month() + "\n" + r.to() + "\n" + inputs.options() + "\n");
+        base.update(inputs.mappingFile());
+        try (Stream<Path> files = Files.list(r.folder())) {
+            for (Path f : files.sorted().toList()) {
+                update(base, "\n" + f.getFileName() + "\t" + Files.size(f) + "\t" + Files.getLastModifiedTime(f));
+            }
+        } catch (IOException e) {
+            throw PluginErrors.error(Status.BAD_REQUEST, "plugin.sp5.noFolder", Map.of(), "Der Ordner ist nicht lesbar");
+        }
+        MessageDigest corrections = sha256();
+        if (inputs.correctionsFile() != null) {
+            corrections.update(inputs.correctionsFile());
+        }
+        return new Fingerprint(base.digest(), corrections.digest());
+    }
+
+    private static MessageDigest sha256() {
+        try {
+            return MessageDigest.getInstance("SHA-256");
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    private static void update(MessageDigest digest, String text) {
+        digest.update(text.getBytes(StandardCharsets.UTF_8));
     }
 
     /** The last run, or 404 {@code plugin.sp5.noRun}. */

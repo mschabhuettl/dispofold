@@ -172,7 +172,8 @@ final class Sp5Codes {
         for (int i = 0; i < rows.size(); i++) {
             Object id = Py.key(rows.get(i).get("ID"));
             index.put(id, i);
-            parent.put(id, Py.truthy(rows.get(i).get("SUPERID")) ? Py.key(rows.get(i).get("SUPERID")) : null);
+            // as the import: no SUPERID is the group 0, which a group of that id with a rule would be
+            parent.put(id, Py.key(Py.truthy(rows.get(i).get("SUPERID")) ? rows.get(i).get("SUPERID") : 0L));
         }
         List<Map<String, Object>> own = groups.stream()
                 .map(g -> (Map<String, Object>) ((Map<String, Object>) g).get("result")).toList();

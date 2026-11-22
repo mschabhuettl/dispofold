@@ -90,7 +90,7 @@ test('demand labels and staffing, an empty max being the minimum', () => {
   assert.equal(m.demandLabel({ areaId: 'DR', days: null, date: '2027-01-06', from: '00:00:00', to: '06:00' }), 'DR 06.01.2027 00:00–06:00');
   assert.equal(m.demandValues([{ min: 1, max: 2 }]), '1–2');
   assert.equal(m.demandValues([{ min: 2, max: null }]), '2');
-  assert.equal(m.demandValues([{ min: 2, max: 2 }, { min: 0, max: 1 }]), '2, 0–1');
+  assert.equal(m.demandValues([{ min: 2, max: 2 }, { min: 0, max: 1 }]), '2–2, 0–1');
   assert.equal(m.demandValues([]), '–');
 });
 
@@ -150,4 +150,6 @@ test('codes of the folder: result texts, the hits of each rule and pattern, code
   assert.equal(hits.ignoreAbsences.size, 0);
   assert.deepEqual(m.unmatched(codes), { shifts: ['T1'], groups: ['G4'] });
   assert.deepEqual(m.unmatched(null), { shifts: [], groups: [] });
+  // a hidden shift without a rule: dropped by the import when it has no duties, so not counted
+  assert.deepEqual(m.unmatched({ shifts: [{ code: 'H1', hidden: true, result: { kind: 'none' } }], groups: [] }), { shifts: [], groups: [] });
 });

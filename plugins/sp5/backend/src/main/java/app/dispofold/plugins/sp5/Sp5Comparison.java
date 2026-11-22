@@ -98,6 +98,9 @@ final class Sp5Comparison {
         for (Period p : list(d.periods())) {
             if (p != null) {
                 lists.add(p.fixed());
+                lists.add(p.absences());
+                lists.add(p.wishes());
+                lists.add(p.previousDuties());
                 lists.add(Arrays.asList(p.month()));
             }
         }

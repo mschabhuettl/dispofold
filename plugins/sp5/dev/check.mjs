@@ -241,6 +241,19 @@ export default async function run({ base, browser, check, shots }) {
   await page.setInputFiles('#sp5-map-file', { name: 'mapping.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify({ ...MAPPING, ignoreShifts: ['T*'] })) });
   await page.waitForFunction(() => document.querySelector('[data-key="ignoreShifts.0.pattern"]')?.value === 'T*');
   check('an uploaded file replaces the editor after the confirmation', (await page.locator('[data-section="ignoreShifts"] tbody tr').count()) === 1);
+  // the newer edit is saved: the editor changed after unapplied JSON, then JSON typed after the editor
+  await page.fill('#sp5-map-json', JSON.stringify({ ...MAPPING, ignoreShifts: ['J*'] }));
+  await page.fill('[data-key="ignoreShifts.0.pattern"]', 'U*');
+  await page.click('#sp5-map-save');
+  await page.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('Zuordnung gespeichert'));
+  check('an editor change after unapplied JSON is what is saved', JSON.stringify((await api(page, 'GET', '/api/plugins/sp5/einstellungen')).body.mapping.ignoreShifts) === '["U*"]');
+  check('the JSON view shows what was saved', (await page.inputValue('#sp5-map-json')).includes('"U*"'));
+  await page.fill('[data-key="ignoreShifts.0.pattern"]', 'W*');
+  await page.fill('#sp5-map-json', JSON.stringify({ ...MAPPING, ignoreShifts: ['J*'] }));
+  await page.click('#sp5-map-save');
+  await page.waitForFunction(() => document.querySelector('[data-key="ignoreShifts.0.pattern"]')?.value === 'J*');
+  check('JSON typed after an editor change is what is saved', JSON.stringify((await api(page, 'GET', '/api/plugins/sp5/einstellungen')).body.mapping.ignoreShifts) === '["J*"]');
+  await page.fill('[data-key="ignoreShifts.0.pattern"]', 'T*');
   await shot(page, 'sp5-zuordnung');
   // leaving with unsaved changes asks: declined, the page stays
   page.removeAllListeners('dialog');

@@ -46,6 +46,9 @@ public class Sp5Plugin implements Plugin, ImportSource {
     @Inject
     ObjectMapper mapper;
 
+    @Inject
+    Sp5Runs runs;
+
     @Override
     public String id() {
         return ID;
@@ -61,10 +64,17 @@ public class Sp5Plugin implements Plugin, ImportSource {
         return Optional.of(this);
     }
 
-    /** Request {@code {"month": "YYYY-MM", "to": "YYYY-MM" | null, "options": {…} (optional)}}. */
+    /**
+     * Request {@code {"month": "YYYY-MM", "to": "YYYY-MM" | null, "options": {…} (optional), "run": id (optional)}}.
+     * With {@code run} (the Übersicht imports its run) only that run, unchanged (see {@link Sp5Runs#check}).
+     */
     @Override
     public Data load(JsonNode request) {
-        return data(export(request));
+        Inputs inputs = inputs(request);
+        if (request != null && request.hasNonNull("run")) {
+            runs.check(request.path("run").asText(), inputs);
+        }
+        return data(export(inputs.request()));
     }
 
     /** An export's dataset as the import loads it. */

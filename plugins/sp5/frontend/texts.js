@@ -333,6 +333,7 @@ export const TEXTS = {
   'error.plugin.sp5.noFolder': 'Der Ordner von Schichtplaner 5 fehlt oder ist nicht lesbar: unter Einstellungen → Erweiterungen wählen.',
   'error.plugin.sp5.setting': 'Eine Einstellung ist ungültig ({field}).',
   'error.plugin.sp5.noRun': 'Noch kein Lauf seit dem Start des Servers. Unter Übersicht den Export ausführen.',
+  'error.plugin.sp5.staleRun': 'Seit dem Lauf hat sich etwas geändert (ein neuer Lauf, die Zuordnung, die Korrekturen, die Optionen oder der Ordner): bitte noch einmal ausführen.',
   'error.plugin.sp5.noBaseline': 'Noch nichts importiert: es gibt keinen Import zum Vergleichen.',
   'error.plugin.sp5.dataset': 'Die Datei ist kein Datensatz von Dispofold.',
 };

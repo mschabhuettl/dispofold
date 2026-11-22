@@ -24,7 +24,10 @@ Der letzte Lauf bleibt, bis jemand den nächsten ausführt oder der Server neu s
 
 ## Diesen Lauf importieren
 
-Importiert wird immer der letzte Lauf, mit seinen Monaten und Optionen. Die Schritte sind dieselben wie auf der
+Importiert wird immer der letzte Lauf, mit seinen Monaten und Optionen. Hat sich seit dem Lauf etwas geändert
+(jemand hat einen neuen Lauf ausgeführt, die Zuordnung, eine Korrektur in Dispofold, die Optionen oder der Ordner),
+lehnt Dispofold den Import ab: dann noch einmal **Ausführen**, damit Bericht und Vergleich zeigen, was importiert
+wird. Die Schritte sind dieselben wie auf der
 Seite **Daten**: **Änderungen aus Dispofold behalten** anhaken, wenn seit dem letzten Import in Dispofold etwas
 geändert wurde, dann **Importieren**; die Vorschau zeigt, was übernommen wird, Konflikte und was sich nicht
 übertragen lässt (siehe [Daten und Korrekturdatei](daten.md)).

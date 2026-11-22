@@ -169,6 +169,34 @@ class Sp5RunTest {
     }
 
     @Test
+    void theImportOfARunLoadsOnlyThatRunUnchanged() throws Exception {
+        sql("delete from dataset");
+        JsonNode first = post("lauf", RUN);
+        ObjectNode request = ((ObjectNode) first.path("request").deepCopy()).put("run", first.path("id").asText());
+        json().body(request).post("/api/import/plugin/sp5/preview").then().statusCode(200);
+        json().body(request).post("/api/import/plugin/sp5?replace=true").then().statusCode(200);
+
+        // another run since: the first one is no longer offered
+        JsonNode second = post("lauf", RUN);
+        json().body(request).post("/api/import/plugin/sp5/preview").then().statusCode(409)
+                .body("code", equalTo("plugin.sp5.staleRun"));
+        ObjectNode latest = ((ObjectNode) second.path("request").deepCopy()).put("run", second.path("id").asText());
+        json().body(latest).post("/api/import/plugin/sp5/preview").then().statusCode(200);
+
+        // the mapping changed since the run: neither its import nor its comparison without the corrections
+        ObjectNode s = (ObjectNode) mapper.readTree(store.plugin(Sp5Plugin.ID).orElseThrow().settings());
+        ((com.fasterxml.jackson.databind.node.ArrayNode) s.get("mapping").get("ignoreShifts")).add("Z9");
+        store.savePluginSettings(Sp5Plugin.ID, 1, mapper.writeValueAsString(s));
+        json().body(latest).post("/api/import/plugin/sp5/preview").then().statusCode(409)
+                .body("code", equalTo("plugin.sp5.staleRun"));
+        given().get("/api/plugins/sp5/vergleich?korrekturen=false").then().statusCode(409)
+                .body("code", equalTo("plugin.sp5.staleRun"));
+        // without a run id (the Daten page): read as it is now
+        json().body(RUN).post("/api/import/plugin/sp5/preview").then().statusCode(200);
+        sql("delete from dataset");
+    }
+
+    @Test
     void optionsOfTheRequestOverrideTheSettingsAndTheImportLoadsTheSame() throws Exception {
         for (String[] bad : List.of(new String[] { "historyMonths", "25" }, new String[] { "demand", "\"plan\"" },
                 new String[] { "shiftMix", "1" })) {
@@ -384,8 +412,10 @@ class Sp5RunTest {
         assertThat(diff.path("demand").size()).isEqualTo(2);
 
         for (String bad : List.of("{}", "[1]", "kein JSON", "{\"format\": \"dispofold/korrekturen\"}",
-                "{\"format\": \"dispofold/dataset\", \"people\": [null]}",
-                "{\"format\": \"dispofold/dataset\", \"periods\": [{\"month\": \"2027-01\", \"fixed\": [null]}]}")) {
+                "{\"format\": \"dispofold/dataset\", \"version\": 1}",
+                "{\"format\": \"dispofold/dataset\", \"version\": 2, \"people\": [null]}",
+                "{\"format\": \"dispofold/dataset\", \"version\": 2, \"periods\": [{\"month\": \"2027-01\", \"fixed\": [null]}]}",
+                "{\"format\": \"dispofold/dataset\", \"version\": 2, \"periods\": [{\"month\": \"2027-01\", \"absences\": [null]}]}")) {
             json().body(bad).post("/api/plugins/sp5/vergleich").then().statusCode(400)
                     .body("code", equalTo("plugin.sp5.dataset"));
         }
