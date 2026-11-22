@@ -61,10 +61,14 @@ public class Sp5Plugin implements Plugin, ImportSource {
         return Optional.of(this);
     }
 
-    /** Request {@code {"month": "YYYY-MM", "to": "YYYY-MM" | null}}. */
+    /** Request {@code {"month": "YYYY-MM", "to": "YYYY-MM" | null, "options": {…} (optional)}}. */
     @Override
     public Data load(JsonNode request) {
-        Sp5Export.Result result = export(request);
+        return data(export(request));
+    }
+
+    /** An export's dataset as the import loads it. */
+    Data data(Sp5Export.Result result) {
         Map<String, Object> dataset = new LinkedHashMap<>(result.dataset());
         Object applied = dataset.remove("appliedCorrections");
         return new Data(mapper.convertValue(dataset, Dataset.class),
@@ -91,8 +95,11 @@ public class Sp5Plugin implements Plugin, ImportSource {
         }
     }
 
-    /** An export's request and the files it was made from, as sp5_export.py reads them (corrections: null if none). */
-    record Inputs(Sp5Export.Request request, byte[] mappingFile, byte[] correctionsFile) {
+    /**
+     * An export's request and the files it was made from, as sp5_export.py reads them (corrections: null if none),
+     * with the options in effect (those of the settings, the request's over them).
+     */
+    record Inputs(Sp5Export.Request request, byte[] mappingFile, byte[] correctionsFile, ObjectNode options) {
     }
 
     /** What an export uses: the settings, the folder, the months and the corrections file (or none). */
@@ -103,7 +110,7 @@ public class Sp5Plugin implements Plugin, ImportSource {
     /** The request with the mapping and corrections files it was made from, read once. */
     Inputs inputs(JsonNode request) {
         JsonNode s = settings();
-        JsonNode options = s.path("options");
+        ObjectNode options = options(s, request);
         String month = request == null ? "" : request.path("month").asText("");
         String to = request == null || request.path("to").isNull() ? null : request.path("to").asText(null);
         if (!s.path("mapping").isObject()) {
@@ -120,7 +127,24 @@ public class Sp5Plugin implements Plugin, ImportSource {
                 optionalInt(options.path("shiftsFromHistory")), options.path("demand").asText(),
                 options.path("shiftMix").asBoolean() ? options.path("mixMinDuties").asInt() : null,
                 options.path("hiddenShiftsMonths").asInt(), options.path("recentMonths").asInt(), mapping,
-                corrections), mappingFile, correctionsFile);
+                corrections), mappingFile, correctionsFile, options);
+    }
+
+    /**
+     * The settings' options with the request's {@code "options"} over them, checked as saved settings are; without
+     * them (missing or null) the settings' own, unchecked as before.
+     */
+    private ObjectNode options(JsonNode settings, JsonNode request) {
+        JsonNode given = request == null ? null : request.get("options");
+        if (given == null || given.isNull()) {
+            return (ObjectNode) settings.get("options");
+        }
+        if (!given.isObject()) {
+            throw Sp5Settings.invalid("options");
+        }
+        ObjectNode merged = settings.deepCopy();
+        ((ObjectNode) merged.get("options")).setAll((ObjectNode) given);
+        return (ObjectNode) Sp5Settings.checked(mapper, merged).get("options");
     }
 
     /** The stored settings, every missing key at its default. */

@@ -366,7 +366,7 @@ public final class Py {
     }
 
     /** A value as dict key: numbers that are equal in Python (1, 1.0, True) give the same key. */
-    static Object key(Object v) {
+    public static Object key(Object v) {
         if (v instanceof Boolean b) {
             return b ? 1L : 0L;
         }

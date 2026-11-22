@@ -21,6 +21,7 @@ plugins/<id>/
   backend/src/test/java/app/dispofold/plugins/<id>/   seine Backend-Tests
   frontend/index.js                sein Front End (Seiten, Einstellungen, Import-Formular, Texte)
   docs/<seite>.md                  seine Hilfeseiten
+  docs/img/<name>.png              Bilder seiner Hilfeseiten (optional)
   dev/mock.mjs                     seine Routen für den Entwicklungsserver (optional)
 ```
 
@@ -84,6 +85,7 @@ public class BeispielPlugin implements Plugin {
 | Einstellungen | `PluginHost.settings(id)` und `saveSettings(id, json)`; `settingsVersion()` und `migrateSettings(von, json)` | `BeispielPluginTest.settingsAreMigratedValidatedAndKeptWhenSwitchedOff` |
 | Import | `importSource()` liefert eine `ImportSource`, deren `load(anfrage)` einen `Dataset` und die angewendeten Korrekturen | `BeispielPluginTest.importSourceGoesThroughTheImportPath` |
 | Korrekturdatei | `PluginHost.corrections()`: die kumulierte Korrekturdatei, leer ohne gespeicherten Import | ebenda |
+| Letzter Import | `PluginHost.lastImport(monate)`: die Stammdaten des letzten Imports (mit den Korrekturen, die seine Quelle angewendet hat) und die genannten Monate, wie Dispofold sie jetzt hat; leer vor dem ersten Import | `PluginHostTest.lastImportIsTheBaselineWithThePeriodsAsTheyAreNow` |
 | Dateien | `PluginHost.files().resolve(ordner, pfad)` | `BeispielPluginTest.filesStayInsideTheAllowedFolders`, `PickedRootTest` |
 
 **Einstellungen** sind JSON, je Erweiterung eine Zeile in der Tabelle `plugin_state`, mit der Version ihrer Form.
@@ -130,13 +132,14 @@ export default {
 | Ordner | `folderPicker(ctx, { id, files })`: freigegebene Ordner und darunter, am eigenen Rechner mit Ordnerdialog | ebenda, auch im Desktop-Modus |
 | Import auf eigener Seite | `importFlow(ctx, '<id>', () => anfrage, { result, current })`: derselbe Import wie auf **Daten** (Vorschau, „Änderungen behalten“, Konflikte, Zusammenfassung, Fehler); gibt das Element für die Seite zurück | `frontend/test/import-flow.test.js`, `frontend/scripts/check-data.mjs` und `check-plugins.mjs` für die Seite **Daten** |
 | Tabellen | `sortableTable(spalten, { label, sort })`: `table.data`, die sich per Klick oder Tastatur auf die Spaltenköpfe sortiert, Zahlen als Zahlen, Text in deutscher Reihenfolge; `searchTerms` und `matchesTerms` für eine Suche aus mehreren Wörtern | `frontend/test/table.test.js` |
-| Hilfeseiten | `docs/<seite>.md`, in der Anleitung als `plugin-<id>-<seite>`, nach den Seiten des Kerns | ebenda; die Website im CI-Job `docs` |
+| Hilfeseiten | `docs/<seite>.md`, in der Anleitung als `plugin-<id>-<seite>`, nach den Seiten des Kerns; Bilder aus `docs/img/` | ebenda; die Website im CI-Job `docs` |
 | Texte und Styles | Texte unter `plugin.<id>.`, keine eigenen Styles | `frontend/test/plugins.test.js`, `scripts/build.mjs` |
 
 `ctx` ist derselbe wie für die Seiten des Kerns: `ctx.api` mit `ctx.api.plugin('<id>').get/put/post(pfad)` für die
 eigenen Routen, `ctx.canEdit`, `ctx.me`, `ctx.month` und die übrigen. Hilfeseiten sind so geschrieben, als
 lägen sie in `docs/anleitung/`: Links auf `daten.md` oder `erweiterungen.md#einschalten-und-ausschalten` gehen
-auf die Seiten des Kerns. Bilder in Hilfeseiten von Erweiterungen kann der Build noch nicht.
+auf die Seiten des Kerns. Bilder liegen in `docs/img/<name>.png` und stehen in der Seite als
+`![Text](img/<name>.png)`; Programm und Website zeigen sie unter `plugin-<id>-img/`.
 
 Für den Entwicklungsserver liefert `dev/mock.mjs` die Routen der Erweiterung (`mock()` gibt eine Funktion
 `(methode, pfad, body, rolle, query)` zurück; `route.load(anfrage, vorschau)` prüft die Anfrage ihres Imports).
