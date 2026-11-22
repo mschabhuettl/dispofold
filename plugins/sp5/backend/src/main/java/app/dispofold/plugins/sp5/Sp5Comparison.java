@@ -38,6 +38,7 @@ final class Sp5Comparison {
 
     static Map<String, Object> compare(ObjectMapper mapper, String against, boolean corrections, Dataset old,
             Dataset neu, List<YearMonth> months) {
+        old = withoutExcluded(old, neu);
         Set<YearMonth> wanted = new HashSet<>(months);
         List<Period> oldPeriods = list(old.periods()).stream().filter(p -> wanted.contains(p.month())).toList();
         List<Period> newPeriods = list(neu.periods()).stream().filter(p -> wanted.contains(p.month())).toList();
@@ -62,6 +63,32 @@ final class Sp5Comparison {
         result.put("duties", duties(old, neu, oldPeriods, newPeriods));
         result.put("demand", demand(mapper, old, neu));
         return result;
+    }
+
+    /**
+     * The old side without the people excluded in Dispofold (excludedFrom) that the new side leaves out: the import
+     * keeps them as they are, so they are no difference. Their restrictions, history and entries of the months go
+     * with them.
+     */
+    static Dataset withoutExcluded(Dataset old, Dataset neu) {
+        Set<String> kept = new HashSet<>();
+        list(neu.people()).forEach(p -> kept.add(p.id()));
+        Set<String> gone = new HashSet<>();
+        list(old.people()).stream().filter(p -> p.excludedFrom() != null && !kept.contains(p.id()))
+                .forEach(p -> gone.add(p.id()));
+        if (gone.isEmpty()) {
+            return old;
+        }
+        List<Period> periods = list(old.periods()).stream().map(p -> new Period(p.month(),
+                list(p.absences()).stream().filter(a -> !gone.contains(a.personId())).toList(),
+                list(p.wishes()).stream().filter(w -> !gone.contains(w.personId())).toList(),
+                list(p.fixed()).stream().filter(f -> !gone.contains(f.personId())).toList(),
+                list(p.previousDuties()).stream().filter(d -> !gone.contains(d.personId())).toList())).toList();
+        return new Dataset(old.format(), old.version(), old.source(), old.areas(), old.shifts(), old.demand(),
+                old.holidays(), old.absenceTypes(),
+                list(old.people()).stream().filter(p -> !gone.contains(p.id())).toList(),
+                list(old.restrictions()).stream().filter(r -> !gone.contains(r.personId())).toList(),
+                list(old.history()).stream().filter(h -> !gone.contains(h.personId())).toList(), periods);
     }
 
     /** No list of the dataset holds null where the comparison reads an item (a period's month, its duties). */

@@ -313,6 +313,18 @@ class Sp5RunTest {
         JsonNode off = get("vergleich?korrekturen=false");
         assertThat(off.path("corrections").asBoolean()).isFalse();
         assertThat(person(off.path("people").path("changed"), "E1")).isNull();
+
+        // a person excluded in Dispofold: the run leaves her out, the import keeps her; no difference
+        long revision = given().get("/api/dataset").then().extract().jsonPath().getLong("revision");
+        json().header("If-Match", revision).body("true").put("/api/dataset/people/E2/excluded").then()
+                .statusCode(200);
+        post("lauf", RUN);
+        json().body(RUN).post("/api/import/plugin/sp5?replace=true").then().statusCode(200);
+        JsonNode excluded = get("vergleich");
+        assertThat(person(excluded.path("people").path("removed"), "E2")).isNull();
+        assertThat(excluded.path("people").path("changed").isEmpty()).isTrue();
+        excluded.path("counts").forEach(c -> assertThat(c.path("old")).as(c.path("section").asText())
+                .isEqualTo(c.path("new")));
         // the correction is not left for the other tests of this database
         sql("delete from dataset");
     }
