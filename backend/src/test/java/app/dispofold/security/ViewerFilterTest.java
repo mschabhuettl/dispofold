@@ -152,6 +152,12 @@ class ViewerFilterTest {
                 .body("code", equalTo("security.forbidden"));
         given().cookie(viewer).get("/api/data/anonymized?month=" + MONTH).then().statusCode(403)
                 .body("code", equalTo("security.forbidden"));
+        given().cookie(viewer).get("/api/data/corrections/state").then().statusCode(403);
+        given().cookie(viewer).contentType("application/json").body("{}").post("/api/data/corrections/check")
+                .then().statusCode(403);
+        given().cookie(viewer).contentType("application/json").body("{}").put("/api/data/corrections/loaded")
+                .then().statusCode(403);
+        given().cookie(viewer).delete("/api/data/corrections/loaded").then().statusCode(403);
         given().cookie(viewer).contentType("application/json").body("{}").post("/api/import/preview").then()
                 .statusCode(403);
         given().cookie(viewer).contentType("application/json").body("{}").post("/api/import/dataset?keep=true")

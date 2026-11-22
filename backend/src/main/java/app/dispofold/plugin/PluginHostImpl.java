@@ -8,11 +8,9 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import app.dispofold.api.PlanService;
-import app.dispofold.export.Corrections;
+import app.dispofold.api.CorrectionsService;
 import app.dispofold.model.Dataset;
 import app.dispofold.model.Period;
 import app.dispofold.plugin.api.PluginFiles;
@@ -32,10 +30,7 @@ public class PluginHostImpl implements PluginHost {
     Store store;
 
     @Inject
-    PlanService plans;
-
-    @Inject
-    ObjectMapper mapper;
+    CorrectionsService corrections;
 
     @Override
     public JsonNode settings(String pluginId) {
@@ -50,19 +45,7 @@ public class PluginHostImpl implements PluginHost {
     /** The same as GET /api/data/corrections ({@code DataResource}). */
     @Override
     public Optional<ObjectNode> corrections() {
-        Dataset base;
-        Dataset current;
-        JsonNode applied;
-        synchronized (Store.DATASET_LOCK) {
-            Optional<Dataset> baseline = store.baseline();
-            if (baseline.isEmpty()) {
-                return Optional.empty();
-            }
-            base = baseline.get();
-            current = plans.dataset();
-            applied = store.appliedCorrections().orElse(null);
-        }
-        return Optional.of(Corrections.export(base, current, applied, mapper).file());
+        return corrections.effective().map(CorrectionsService.Effective::file);
     }
 
     @Override

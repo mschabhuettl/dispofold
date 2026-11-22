@@ -143,7 +143,15 @@ public class ImportResource {
      * @param applied the corrections the source applied, in the form of a corrections file; ignored otherwise
      */
     public ImportSummary importDataset(Dataset dataset, JsonNode applied, boolean replace, boolean keep) {
-        return save(dataset, checkedApplied(applied), replace, keep, true);
+        JsonNode checked = checkedApplied(applied);
+        synchronized (Store.DATASET_LOCK) {
+            ImportSummary summary = save(dataset, checked, replace, keep, true);
+            // the source applied the corrections in effect, the loaded file among them: it is now part of the import
+            if (checked != null) {
+                store.clearLoadedCorrections();
+            }
+            return summary;
+        }
     }
 
     /** The dry run of {@link #importDataset} with {@code keep}. */

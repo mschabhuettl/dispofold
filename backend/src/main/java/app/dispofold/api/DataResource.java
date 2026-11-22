@@ -5,19 +5,22 @@ import java.util.List;
 
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
+import jakarta.ws.rs.Consumes;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response.Status;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import app.dispofold.export.Anonymizer;
-import app.dispofold.export.Corrections;
+import app.dispofold.export.LoadedCorrections;
 import app.dispofold.importclient.Issue;
 import app.dispofold.model.Dataset;
 import app.dispofold.model.Plan;
@@ -53,10 +56,10 @@ public class DataResource {
     }
 
     @Inject
-    Store store;
+    MasterDataService master;
 
     @Inject
-    MasterDataService master;
+    CorrectionsService corrections;
 
     @Inject
     PlanService plans;
@@ -66,22 +69,46 @@ public class DataResource {
 
     /**
      * The corrections applied to the last import and the changes of the master data since, as a corrections file
-     * (version 2).
+     * (version 2); while a loaded corrections file waits for an import, that file with the changes over it.
      */
     @GET
     @Path("corrections")
     public CorrectionsExport corrections() {
-        Dataset base;
-        Dataset current;
-        JsonNode applied;
-        synchronized (Store.DATASET_LOCK) {
-            current = plans.dataset();
-            base = store.baseline().orElseThrow(ImportResource::noBaseline);
-            applied = store.appliedCorrections().orElse(null);
-        }
-        Corrections.Export export = Corrections.export(base, current, applied, mapper);
-        return new CorrectionsExport(export.file(), export.notes(), export.count(), export.earlier(),
-                export.withdrawn(), export.complete());
+        CorrectionsService.Effective e = corrections.effective().orElseThrow(ImportResource::noBaseline);
+        return new CorrectionsExport(e.file(), e.notes(), e.count(), e.earlier(), e.withdrawn(), e.complete());
+    }
+
+    /** The loaded corrections file waiting for an import (with its summary), and whether there are any corrections. */
+    @GET
+    @Path("corrections/state")
+    public CorrectionsService.State correctionsState() {
+        return corrections.state();
+    }
+
+    /** What a corrections file would bring; nothing is saved. Refused as {@code corrections.load.*}. */
+    @POST
+    @Path("corrections/check")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public LoadedCorrections.Summary checkCorrections(String body) {
+        return corrections.check(body);
+    }
+
+    /**
+     * Loads a corrections file as the base of the corrections until the next import through an import source,
+     * replacing the one loaded before.
+     */
+    @PUT
+    @Path("corrections/loaded")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public LoadedCorrections.Summary loadCorrections(String body) {
+        return corrections.load(body);
+    }
+
+    /** Removes the loaded corrections file. */
+    @DELETE
+    @Path("corrections/loaded")
+    public void removeCorrections() {
+        corrections.remove();
     }
 
     /**

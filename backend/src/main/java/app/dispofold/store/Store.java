@@ -156,6 +156,35 @@ public class Store {
                 .map(base -> base.get(APPLIED_CORRECTIONS));
     }
 
+    /** A corrections file loaded in Dispofold: the file as uploaded and when. */
+    public record LoadedCorrections(String doc, java.time.Instant loaded) {
+    }
+
+    /** The corrections file loaded in Dispofold and not yet applied by an import; empty if none. */
+    public Optional<LoadedCorrections> loadedCorrections() {
+        List<LoadedCorrections> rows = new ArrayList<>();
+        query("select doc, loaded from loaded_corrections where id = 1",
+                rs -> rows.add(new LoadedCorrections(rs.getString(1), rs.getTimestamp(2).toInstant())));
+        return rows.stream().findFirst();
+    }
+
+    /** Stores a loaded corrections file, replacing the one loaded before. The caller holds {@link #DATASET_LOCK}. */
+    public void saveLoadedCorrections(String doc) {
+        java.sql.Timestamp now = java.sql.Timestamp.from(java.time.Instant.now());
+        upsert2("update loaded_corrections set doc = ?, loaded = ? where id = 1", new Object[] { doc, now },
+                "insert into loaded_corrections (id, doc, loaded) values (1, ?, ?)", new Object[] { doc, now });
+    }
+
+    /** Removes the loaded corrections file. The caller holds {@link #DATASET_LOCK}. */
+    public void clearLoadedCorrections() {
+        try (Connection c = dataSource.getConnection();
+                PreparedStatement ps = c.prepareStatement("delete from loaded_corrections where id = 1")) {
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new IllegalStateException("removing the loaded corrections failed", e);
+        }
+    }
+
     public Optional<Period> period(YearMonth month) {
         return storedPeriod(month).map(StoredPeriod::period);
     }

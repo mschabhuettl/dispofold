@@ -20,7 +20,10 @@ public interface PluginHost {
 
     /**
      * The corrections applied to the last import and the changes made in Dispofold since, as a corrections file
-     * (docs/datenformat.md), the same as "Korrekturdatei" offers; empty if the state of the last import is not stored.
+     * (docs/datenformat.md), the same as "Korrekturdatei" offers; while a corrections file loaded on the Daten page
+     * waits, that file with the changes made in Dispofold over it, also before the first import. An import of the
+     * source that lists the corrections it applied takes the loaded file over. Empty if neither the state of the
+     * last import is stored nor a file is loaded.
      */
     Optional<ObjectNode> corrections();
 

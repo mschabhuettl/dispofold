@@ -84,7 +84,7 @@ public class BeispielPlugin implements Plugin {
 | Routen | JAX-RS-Ressource unter `/api/plugins/<id>` | `BeispielPluginTest.routesFollowTheRolesOnceOn`, `readersSeeOnlyViewerRoutesAndNothingToSwitch`, `anonymousGets404WhileOffAnd401WhileOn`, `oddSpellingsOfThePathAreClosedToo` |
 | Einstellungen | `PluginHost.settings(id)` und `saveSettings(id, json)`; `settingsVersion()` und `migrateSettings(von, json)` | `BeispielPluginTest.settingsAreMigratedValidatedAndKeptWhenSwitchedOff` |
 | Import | `importSource()` liefert eine `ImportSource`, deren `load(anfrage)` einen `Dataset` und die angewendeten Korrekturen | `BeispielPluginTest.importSourceGoesThroughTheImportPath` |
-| Korrekturdatei | `PluginHost.corrections()`: die kumulierte Korrekturdatei, leer ohne gespeicherten Import | ebenda |
+| Korrekturdatei | `PluginHost.corrections()`: die kumulierte Korrekturdatei, solange eine geladene Korrekturdatei wartet diese mit den Änderungen aus Dispofold darüber (auch vor dem ersten Import); leer ohne gespeicherten Import und ohne geladene Datei. Ein Import der Quelle, der die angewendeten Korrekturen nennt, übernimmt die geladene Datei | ebenda |
 | Letzter Import | `PluginHost.lastImport(monate)`: die Stammdaten des letzten Imports (mit den Korrekturen, die seine Quelle angewendet hat) und die genannten Monate, wie Dispofold sie jetzt hat; leer vor dem ersten Import | `PluginHostTest.lastImportIsTheBaselineWithThePeriodsAsTheyAreNow` |
 | Dateien | `PluginHost.files().resolve(ordner, pfad)` | `BeispielPluginTest.filesStayInsideTheAllowedFolders`, `PickedRootTest` |
 
