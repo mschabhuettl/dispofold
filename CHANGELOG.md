@@ -3,7 +3,7 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
-## 0.20.0 (unreleased)
+## 0.20.0 (2026-11-23)
 
 - **Seiten der Import-Erweiterung:** Die Erweiterung für das bisherige Planungssystem hat eine eigene Menügruppe
   mit vier Seiten, so dass der ganze Weg in Dispofold geht:
