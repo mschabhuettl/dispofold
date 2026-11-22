@@ -1,5 +1,6 @@
 package app.dispofold.api;
 
+import java.nio.charset.StandardCharsets;
 import java.time.YearMonth;
 import java.util.List;
 
@@ -85,12 +86,12 @@ public class DataResource {
         return corrections.state();
     }
 
-    /** What a corrections file would bring; nothing is saved. Refused as {@code corrections.load.*}. */
+    /** What a corrections file (UTF-8, as JSON or the bytes of the file) would bring; nothing is saved. Refused as {@code corrections.load.*}. */
     @POST
     @Path("corrections/check")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public LoadedCorrections.Summary checkCorrections(String body) {
-        return corrections.check(body);
+    @Consumes({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM })
+    public LoadedCorrections.Summary checkCorrections(byte[] body) {
+        return corrections.check(new String(body, StandardCharsets.UTF_8));
     }
 
     /**
@@ -99,9 +100,9 @@ public class DataResource {
      */
     @PUT
     @Path("corrections/loaded")
-    @Consumes(MediaType.APPLICATION_JSON)
-    public LoadedCorrections.Summary loadCorrections(String body) {
-        return corrections.load(body);
+    @Consumes({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM })
+    public LoadedCorrections.Summary loadCorrections(byte[] body) {
+        return corrections.load(new String(body, StandardCharsets.UTF_8));
     }
 
     /** Removes the loaded corrections file. */

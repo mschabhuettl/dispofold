@@ -20,6 +20,7 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
   const masterOf = (d) => structuredClone({ ...d, periods: [] });
   let baseline = masterOf(dataset);
   let applied = null; // the section appliedCorrections of the last import, null without one
+  let loadedCorrections = null; // a loaded corrections file waiting for an import through a source: { text, at }
   let changedSinceImport = false;
   const plans = new Map();
   const solving = new Map(); // month -> { started, limitMs }
@@ -674,6 +675,42 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
     if (a === 'data') {
       // like the backend: planners only, also for reading
       if (role !== 'planner') return err(403, 'Nur für Planung', 'security.forbidden');
+      if (b === 'corrections' && c) {
+        // loading a corrections file, checked like the backend loads it; the summary roughly
+        const summary = (text) => {
+          let f = null;
+          try { f = JSON.parse(text); } catch { /* checked below */ }
+          if (!f || typeof f !== 'object' || Array.isArray(f)) return err(400, 'Kein JSON-Objekt', 'corrections.load.unreadable');
+          if (f.format !== 'dispofold/corrections') return err(400, 'Unbekanntes Format', 'corrections.load.format');
+          if (![1, 2].includes(f.version)) return err(400, 'Version nicht unterstützt', 'corrections.load.version');
+          if (!f.people || typeof f.people !== 'object' || Array.isArray(f.people)) return err(400, 'people', 'corrections.load.people');
+          const ids = new Set(dataset.people.map((p) => p.id));
+          const fields = Object.fromEntries([...PERSON_FIELDS, 'restrictions', 'exclude', 'demand'].map((x) => [x, 0]));
+          const skipped = [];
+          for (const [id, entry] of Object.entries(f.people)) {
+            if (ids.size && !ids.has(id)) skipped.push({ code: 'corrections.load.personMissing', params: { personId: id } });
+            if (!entry || typeof entry !== 'object') { skipped.push({ code: 'corrections.load.notObject', params: { personId: id } }); continue; }
+            for (const k of Object.keys(entry).filter((x) => x !== 'note')) {
+              if (k in fields && k !== 'demand') { if (k !== 'exclude' || entry[k] === true) fields[k]++; } else skipped.push({ code: 'corrections.load.unknownField', params: { personId: id } });
+            }
+          }
+          fields.demand = Object.keys(f.version >= 2 ? f.demand ?? {} : {}).length;
+          return json({ version: f.version, people: Object.keys(f.people).length, existing: ids.size ? Object.keys(f.people).filter((x) => ids.has(x)).length : null,
+            fields, skipped, overridden: 0, replaced: Object.keys(applied?.people ?? {}).length });
+        };
+        const text = Buffer.isBuffer(body) ? body.toString('utf8') : JSON.stringify(body);
+        if (c === 'check' && method === 'POST') return summary(text);
+        if (c === 'loaded' && method === 'PUT') {
+          const r = summary(text);
+          if (r.status === 200 || r.status === undefined) loadedCorrections = { text, at: new Date().toISOString() };
+          return r;
+        }
+        if (c === 'loaded' && method === 'DELETE') { loadedCorrections = null; return { status: 204, body: null }; }
+        if (c === 'state') {
+          if (loadedCorrections) return json({ loaded: loadedCorrections.at, summary: summary(loadedCorrections.text).body, none: false });
+          return json({ loaded: null, summary: null, none: !changedSinceImport && !Object.keys(applied?.people ?? {}).length });
+        }
+      }
       if (b === 'corrections') {
         const { changed, notes } = changes();
         const people = {};

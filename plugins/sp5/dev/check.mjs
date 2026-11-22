@@ -113,19 +113,24 @@ export default async function run({ base, browser, check, shots }) {
   // ---- the import from Übersicht, as on Daten ----
   await open(page, `${P}/uebersicht`, '#sp5-import-request');
   check('keep changes is off without changes', !(await page.isChecked('#plugin-keep-sp5')));
+  await page.waitForSelector('#h-sp5-import ~ div .corrections-hint .alert');
+  check('without any corrections the import box says so, with the way to load a file',
+    (await text(page, '#h-sp5-import ~ div .corrections-hint'))?.includes('keine Korrekturen')
+    && (await page.getAttribute('#h-sp5-import ~ div .corrections-hint a', 'href')) === '#/import');
   await page.click('#h-sp5-import ~ div button.btn-primary');
-  await page.waitForSelector('#h-sp5-import ~ div .alert strong');
-  check('the import of the run shows the summary', (await text(page, '#h-sp5-import ~ div .alert'))?.includes('Import aus'), await text(page, '#h-sp5-import ~ div'));
+  await page.waitForSelector('#h-sp5-import ~ div .alert:not(.corrections-hint > .alert) strong');
+  check('the import of the run shows the summary', (await text(page, '#h-sp5-import ~ div .alert:not(.corrections-hint > .alert)'))?.includes('Import aus'), await text(page, '#h-sp5-import ~ div'));
   const p1 = (await api(page, 'GET', '/api/dataset')).body.people[0];
   await api(page, 'PUT', `/api/dataset/people/${p1.id}`, { ...p1, weeklyHours: 30 });
   await open(page, `${P}/uebersicht`, '#sp5-import-request');
   await page.waitForFunction(() => document.querySelector('#plugin-keep-sp5')?.checked);
   check('keep changes is on after a change in Dispofold', true);
+  check('with a change in Dispofold there is no hint', await page.locator('.corrections-hint .alert').count() === 0);
   await page.click('#h-sp5-import ~ div button.btn-primary');
   await page.waitForSelector('#import-preview');
   check('the preview comes first', (await text(page, '#import-preview'))?.includes('Vorschau'));
   await page.click('#import-preview button.btn-primary');
-  await page.waitForFunction(() => document.querySelector('#h-sp5-import ~ div .alert')?.textContent.includes('aus Dispofold übernommen'));
+  await page.waitForFunction(() => document.querySelector('#h-sp5-import ~ div .alert:not(.corrections-hint > .alert)')?.textContent.includes('aus Dispofold übernommen'));
   check('the import keeps the changes', true);
 
   // ---- Bericht ----

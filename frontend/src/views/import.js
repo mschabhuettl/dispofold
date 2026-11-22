@@ -2,7 +2,7 @@
 // export, demo data, plan import, finalize month.
 import { monthLabel } from '../lib/dates.js';
 import { guarded, h, saveBlob, toast } from '../lib/dom.js';
-import { CORRECTIONS_FILE, anonymizedFiles, correctionsBlob, noteText, shortNames } from '../lib/data-files.js';
+import { CORRECTIONS_FILE, anonymizedFiles, correctionsBlob, fieldLabel, noteText, shortNames } from '../lib/data-files.js';
 import { importFlow, importSteps } from '../lib/import-flow.js';
 import { info } from '../lib/info.js';
 import { t } from '../lib/texts.js';
@@ -101,7 +101,8 @@ export async function render(root, ctx) {
           r.complete ? null : h('p', {}, t('data.corrections.sinceImport')),
           r.notes.length ? [h('p', {}, t('data.corrections.notes')), list(r.notes.map((n) => noteText(n, names)))] : null));
       })),
-      correctionsResult));
+      correctionsResult,
+      loadCorrections(ctx, current, { button, errorAlert, list })));
 
     root.append(h('section.section', { 'aria-labelledby': 'h-anonymize' }, h('h2', { id: 'h-anonymize' }, t('data.anonymize.heading'), info(t('help.import.anonymize'), t('data.anonymize.heading'))),
       h('p.muted', {}, t('data.anonymize.intro', { month: monthLabel(month) })),
@@ -156,4 +157,77 @@ export async function render(root, ctx) {
           button(t('import.finalize'), () => closeMonth(ctx), false, solving)),
     );
   }
+}
+
+/** The summary of a corrections file to load ({ version, people, existing, fields, skipped, overridden, replaced }). */
+export function correctionsSummary(s, names) {
+  const fields = Object.entries(s.fields).filter(([, n]) => n > 0);
+  const note = (n) => noteText(n.params?.personId === '' ? { ...n, params: { ...n.params, personId: t('data.corrections.unknownId') } } : n, names);
+  return h('div.corrections-summary', {},
+    h('h3', {}, t('data.corrections.summary.title')),
+    h('p', {}, t('data.corrections.summary.people', { version: s.version, people: s.people }), ' ',
+      s.existing == null ? t('data.corrections.summary.noData') : t('data.corrections.summary.existing', { existing: s.existing })),
+    fields.length ? [h('p', {}, t('data.corrections.summary.fields')), h('ul', {}, fields.map(([f, n]) => h('li', { 'data-field': f }, `${fieldLabel(f)}: ${n}`)))]
+      : h('p', {}, t('data.corrections.summary.noFields')),
+    s.skipped.length ? [h('p', {}, t('data.corrections.summary.skipped')), h('ul.corrections-skipped', {}, s.skipped.map((n) => h('li', {}, note(n))))] : null,
+    s.overridden ? h('p', {}, t('data.corrections.summary.overridden', { count: s.overridden })) : null,
+    s.replaced ? h('p', {}, t('data.corrections.summary.replaced', { count: s.replaced })) : null,
+    h('p.muted', {}, t('data.corrections.summary.later')));
+}
+
+/** Loading a corrections file: pick, see its summary, confirm; the loaded one with remove. */
+function loadCorrections(ctx, current, { button, errorAlert }) {
+  const { api } = ctx;
+  const input = h('input', { id: 'corrections-file', type: 'file', accept: '.json,application/json' });
+  const out = h('div', { 'aria-live': 'polite' });
+  const names = shortNames(current);
+  const loadedBox = h('div', {});
+  const showLoaded = async () => {
+    const s = await api.correctionsState().catch(() => null);
+    loadedBox.replaceChildren(s?.loaded ? h('div.alert', { id: 'corrections-loaded' },
+      h('p', {}, t('data.corrections.loaded', { date: new Date(s.loaded).toLocaleString('de-DE') })),
+      correctionsSummary(s.summary, names),
+      h('div.toolbar', {}, button(t('data.corrections.remove'), async () => {
+        if (!confirm(t('data.corrections.removeConfirm'))) return;
+        if (await guarded(() => api.removeCorrections()) === undefined) return;
+        toast(t('data.corrections.removed'));
+        out.replaceChildren();
+        await showLoaded();
+      }))) : '');
+    return s;
+  };
+  showLoaded();
+  return h('div', {},
+    h('h3', {}, t('data.corrections.load')),
+    h('p.muted', {}, t('data.corrections.loadIntro')),
+    h('div.toolbar', {}, h('div.field', {}, h('label', { for: 'corrections-file' }, t('data.corrections.loadLabel')), input),
+      button(t('data.corrections.load'), async () => {
+        const file = input.files[0];
+        if (!file) return guarded(() => Promise.reject(new Error(t('import.pickFile'))));
+        const text = await file.text();
+        let summary;
+        try {
+          summary = await api.checkCorrections(text);
+        } catch (e) {
+          out.replaceChildren(errorAlert(e));
+          return undefined;
+        }
+        const waiting = Boolean(loadedBox.querySelector('#corrections-loaded'));
+        out.replaceChildren(h('div.alert', { id: 'corrections-confirm' }, correctionsSummary(summary, names),
+          h('div.toolbar', {},
+            button(waiting ? t('data.corrections.confirmReplace') : t('data.corrections.confirm'), async () => {
+              try {
+                await api.loadCorrections(text);
+              } catch (e) {
+                out.replaceChildren(errorAlert(e));
+                return;
+              }
+              out.replaceChildren(h('div.alert', {}, h('p', {}, t('data.corrections.loadedDone'))));
+              input.value = '';
+              await showLoaded();
+            }, true),
+            h('button.btn.btn-secondary', { type: 'button', onclick: () => out.replaceChildren() }, t('data.corrections.cancel')))));
+        return undefined;
+      })),
+    out, loadedBox);
 }

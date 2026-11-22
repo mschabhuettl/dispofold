@@ -1,5 +1,5 @@
 // Playwright check of the Daten page (mock API): sections with intros, corrections file of the corrections in effect
-// (earlier ones and the changes made in Dispofold), import keeping those changes (preview with conflicts, also from
+// (earlier ones and the changes made in Dispofold), loading a corrections file with its summary, import keeping those changes (preview with conflicts, also from
 // the "master data changed" warning), pseudonymised export with a separate key, and viewers refused.
 //   npm run build && node scripts/check-data.mjs     (Chromium via `npx playwright install chromium`)
 import { spawn } from 'node:child_process';
@@ -68,6 +68,34 @@ try {
   }
   check('demo data under Erweitert', await page.locator('section[aria-labelledby=h-import] details.advanced button', { hasText: 'Demodaten laden' }).count() === 1);
   check('keep option off without changes', !(await page.locator('#dataset-keep').isChecked()));
+
+  // loading a corrections file: refused with its reason, else a summary to confirm, the file sent as it is
+  const pick = (text) => page.setInputFiles('#corrections-file', { name: 'korrekturen.json', mimeType: 'application/json', buffer: Buffer.from(text) });
+  await pick('{"format": "other", "version": 2, "people": {}}');
+  await main.getByRole('button', { name: 'Korrekturdatei laden', exact: true }).click();
+  await main.getByText('keine Korrekturdatei (erwartet wird').waitFor();
+  check('a file of another format is refused with the reason', true);
+  const loadText = `{"format": "dispofold/corrections", "version": 2, "people": {"${fixture.people[0].id}": {"weeklyHours": 30.0, "note": "x"}, "E999999": {"exclude": true}}}`;
+  await pick(loadText);
+  await main.getByRole('button', { name: 'Korrekturdatei laden', exact: true }).click();
+  await page.locator('#corrections-confirm').waitFor();
+  const confirmText = await page.locator('#corrections-confirm').innerText();
+  check('summary before loading', confirmText.includes('2 Personen in der Datei') && confirmText.includes('Davon in den aktuellen Daten: 1')
+    && confirmText.includes('Wochenstunden: 1') && confirmText.includes('nicht in den aktuellen Daten'), confirmText.replace(/\s+/g, ' '));
+  check('nothing loaded before confirming', (await api(page, 'GET', '/api/data/corrections/state')).body.loaded === null);
+  const sent = page.waitForRequest((r) => r.url().endsWith('/api/data/corrections/loaded') && r.method() === 'PUT');
+  await page.locator('#corrections-confirm').getByRole('button', { name: 'Laden', exact: true }).click();
+  check('the file is sent byte for byte', (await sent).postDataBuffer()?.toString('utf8') === loadText);
+  await page.locator('#corrections-loaded').waitFor();
+  check('the loaded file waits for the import', (await page.locator('#corrections-loaded').innerText()).includes('wartet auf den nächsten Import'));
+  await pick(loadText);
+  await main.getByRole('button', { name: 'Korrekturdatei laden', exact: true }).click();
+  await page.locator('#corrections-confirm').waitFor();
+  check('loading again asks to replace', await page.locator('#corrections-confirm').getByRole('button', { name: 'Laden und die geladene Datei ersetzen' }).count() === 1);
+  await page.locator('#corrections-confirm').getByRole('button', { name: 'Abbrechen' }).click();
+  await main.getByRole('button', { name: 'Geladene Datei entfernen' }).click();
+  await page.locator('#corrections-loaded').waitFor({ state: 'detached' });
+  check('removed', (await api(page, 'GET', '/api/data/corrections/state')).body.loaded === null);
 
   // no changes: no file
   await main.getByRole('button', { name: 'Änderungen als Korrekturdatei exportieren' }).click();

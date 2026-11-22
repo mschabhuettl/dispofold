@@ -118,9 +118,28 @@ export function importFlow(ctx, id, request, { result = null, current } = {}) {
     steps.button(t('data.plugin.run'), async () => {
       const req = request();
       if (!req) return guarded(() => Promise.reject(new Error(t('data.plugin.incomplete'))));
+      // the short names of the preview from the data as they are now, also after an import from this box
+      if (current === undefined) dataset = await ctx.dataset().catch(() => dataset);
       if (keep.checked) return steps.previewKeep(null, via(req));
       if (!confirm(t('import.dataset.confirm'))) return undefined;
       return steps.showSummary(await steps.runImport((replace) => api.pluginImport(id, req, replace), false, () => steps.previewKeep(null, via(req))));
     }, true));
-  return own ? h('div', {}, toolbar, own) : toolbar;
+  const hint = correctionsHint(ctx);
+  return h('div', {}, hint, toolbar, own);
+}
+
+/**
+ * A note before an import through a source when there are no corrections at all (nothing loaded, nothing changed or
+ * applied), with the way to the loading of a corrections file on the Daten page. Filled once the state is known.
+ */
+export function correctionsHint(ctx) {
+  const box = h('div.corrections-hint', {});
+  ctx.api.correctionsState?.().then((s) => {
+    if (!s?.none) return;
+    const here = typeof location !== 'undefined' && location.hash.startsWith('#/import');
+    const link = here ? h('button.btn-link', { type: 'button', onclick: () => document.getElementById('corrections-file')?.focus() }, t('data.corrections.hintLink'))
+      : h('a', { href: '#/import' }, t('data.corrections.hintLink'));
+    box.replaceChildren(h('div.alert', { role: 'note' }, h('p', {}, t('data.corrections.hint')), h('p', {}, link)));
+  }, () => {});
+  return box;
 }
