@@ -64,6 +64,19 @@ final class Sp5Comparison {
         return result;
     }
 
+    /** No list of the dataset holds null where the comparison reads an item (a period's month, its duties). */
+    static boolean whole(Dataset d) {
+        List<List<?>> lists = new ArrayList<>(Arrays.asList(d.areas(), d.shifts(), d.demand(), d.holidays(),
+                d.absenceTypes(), d.people(), d.restrictions(), d.history(), d.periods()));
+        for (Period p : list(d.periods())) {
+            if (p != null) {
+                lists.add(p.fixed());
+                lists.add(Arrays.asList(p.month()));
+            }
+        }
+        return lists.stream().noneMatch(l -> l != null && l.contains(null));
+    }
+
     private static <T> List<T> list(List<T> items) {
         return items == null ? List.of() : items;
     }

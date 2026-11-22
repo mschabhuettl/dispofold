@@ -197,7 +197,7 @@ public class Sp5Resource {
         } catch (JsonProcessingException e) {
             old = null;
         }
-        if (old == null || !Dataset.FORMAT.equals(old.format())) {
+        if (old == null || !Dataset.FORMAT.equals(old.format()) || !Sp5Comparison.whole(old)) {
             throw PluginErrors.error(Status.BAD_REQUEST, "plugin.sp5.dataset", Map.of(),
                     "Die Datei ist kein Datensatz von Dispofold");
         }

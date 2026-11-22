@@ -371,7 +371,9 @@ class Sp5RunTest {
                 + first.path("to"));
         assertThat(diff.path("demand").size()).isEqualTo(2);
 
-        for (String bad : List.of("{}", "[1]", "kein JSON", "{\"format\": \"dispofold/korrekturen\"}")) {
+        for (String bad : List.of("{}", "[1]", "kein JSON", "{\"format\": \"dispofold/korrekturen\"}",
+                "{\"format\": \"dispofold/dataset\", \"people\": [null]}",
+                "{\"format\": \"dispofold/dataset\", \"periods\": [{\"month\": \"2027-01\", \"fixed\": [null]}]}")) {
             json().body(bad).post("/api/plugins/sp5/vergleich").then().statusCode(400)
                     .body("code", equalTo("plugin.sp5.dataset"));
         }
