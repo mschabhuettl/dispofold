@@ -8,8 +8,9 @@ gegenüber dem letzten Import ändern würde, bevor man importiert.
 ## Womit verglichen wird
 
 - **Vergleichen mit dem letzten Import** (Standard): mit den Stammdaten, wie sie zuletzt importiert wurden, und den
-  Monaten des Laufs, wie Dispofold sie jetzt hat. Personen, die in Dispofold mit **Aus dem Quellsystem nicht mehr
-  übernehmen** ausgeschlossen sind und im Lauf fehlen, zählen nicht als Unterschied: Der Import behält sie.
+  Monaten des Laufs, wie Dispofold sie jetzt hat. Personen, die schon beim letzten Import mit **Aus dem
+  Quellsystem nicht mehr übernehmen** ausgeschlossen waren und im Lauf fehlen, zählen nicht als Unterschied: Der
+  Import behält sie.
 - **Vergleichen mit einer Datensatz-Datei:** mit einem früheren Datensatz, etwa aus **Daten → Export** oder aus
   einem gespeicherten Ergebnis. Vor dem ersten Import ist das der einzige Vergleich.
 - **Korrekturen anwenden** (Standard an): Der Lauf ist dann genau das, was der Import laden würde. Ohne zeigt der

@@ -10,6 +10,7 @@ Schichtplaner 5, wie in Dispofold), Bereichs- und Schichtkürzel und Zahlen.
 
 - **Suchen** sucht in allen Spalten und in den Warnungen; mehrere Wörter müssen alle vorkommen.
 - **Zeilenart** zeigt nur eine Art von Zeilen.
+- **Person** und **Bereich** zeigen nur die Zeilen und Warnungen, die diese Person oder diesen Bereich nennen.
 - Ein Klick auf eine Spaltenüberschrift sortiert nach ihr, ein zweiter umgekehrt; mit der Tastatur geht das mit
   Tab und Eingabe. Zahlen werden als Zahlen sortiert, Tagestypen in der Reihenfolge der Woche.
 - Eine Person, die schon in Dispofold ist, ist ein Link auf ihre Seite.
@@ -39,6 +40,7 @@ Seite nicht kennt, erscheint mit allen Spalten, die Werte haben.
 
 ## Warnungen
 
-Darunter stehen die Warnungen des Laufs, mit derselben Suche und einem Filter nach ihrer Art (dem ersten Wort).
+Darunter stehen die Warnungen des Laufs, mit derselben Suche, den Filtern für Person und Bereich und einem
+Filter nach ihrer Art (dem ersten Wort).
 Warnungen nennen nur Ids, Kürzel und Anzahlen, nie Namen. Welche man zuerst liest, steht unter
 [Ablauf, Exportieren und lesen](plugin-sp5-ablauf.md#2-exportieren-und-lesen).

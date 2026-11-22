@@ -150,6 +150,12 @@ test('codes of the folder: result texts, the hits of each rule and pattern, code
   assert.equal(hits.ignoreAbsences.size, 0);
   assert.deepEqual(m.unmatched(codes), { shifts: ['T1'], groups: ['G4'] });
   assert.deepEqual(m.unmatched(null), { shifts: [], groups: [] });
+  // a warning names a person or an area as a whole word
+  assert.equal(m.names('Bereich AN: 3 ohne den Bereich', 'AN'), true);
+  assert.equal(m.names('Bereich ANX: 3', 'AN'), false);
+  assert.equal(m.names('Korrektur E1002 weeklyHours übersprungen', 'E1002'), true);
+  assert.equal(m.names('Korrektur E10020 weeklyHours', 'E1002'), false);
+  assert.equal(m.names('irgendwas', ''), true);
   // a hidden shift without a rule: dropped by the import when it has no duties, so not counted
   assert.deepEqual(m.unmatched({ shifts: [{ code: 'H1', hidden: true, result: { kind: 'none' } }], groups: [] }), { shifts: [], groups: [] });
 });

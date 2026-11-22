@@ -1,9 +1,9 @@
 // Bericht: the report of the last run (GET lauf/bericht), one section per row type with its own columns, a search
 // over all columns, filters by row type, person and area, sorting by a click on a header; then the warnings with the
-// same search. "Bericht als CSV" saves the file as the export writes it.
+// same search and the person and area filters. "Bericht als CSV" saves the file as the export writes it.
 import { guarded, h, info, matchesTerms, saveBlob, searchTerms, sortableTable, t } from '../../../frontend/src/lib/plugin-api.js';
 import { NOTICE_STATUSES, cellText, columnLabel, isNumberColumn, reportGroups, rowAreas, rowMatches, rowPeople, sortValue, typeHelp, typeLabel,
-  warningKind } from './model.js';
+  names, warningKind } from './model.js';
 import { ID, noRun, orNoRun } from './shared.js';
 
 export async function render(root, ctx) {
@@ -74,7 +74,8 @@ export async function render(root, ctx) {
     count.textContent = shown === total ? t('plugin.sp5.report.count', { total })
       : [t('plugin.sp5.report.countSome', { shown, total }), shown ? '' : t('plugin.sp5.report.noMatch')].join(' ').trim();
     const kind = kindFilter.querySelector('select').value;
-    const list = warnings.filter((w) => (!kind || warningKind(w) === kind) && matchesTerms(w, filter.terms));
+    const list = warnings.filter((w) => (!kind || warningKind(w) === kind) && matchesTerms(w, filter.terms)
+      && names(w, filter.person) && names(w, filter.area));
     warningHeading.replaceChildren(t('plugin.sp5.report.warnings'), ' ', h('span.muted', {}, list.length === warnings.length
       ? `(${warnings.length})` : t('plugin.sp5.report.some', { shown: list.length, total: warnings.length })));
     warningList.replaceChildren(...list.map((w) => h('li', {}, w)));

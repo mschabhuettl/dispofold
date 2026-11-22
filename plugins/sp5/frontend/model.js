@@ -95,6 +95,12 @@ export function rowMatches(row, { terms = [], type = '', person = '', area = '' 
   return matchesTerms(`${text} ${typeLabel(row[TYPE_COLUMN] ?? '')}`, terms);
 }
 
+/** A warning names the id or code as a whole word (or nothing is asked for): the person and area filters. */
+export function names(warning, value) {
+  if (!value) return true;
+  return new RegExp(`(^|[^\\p{L}\\p{N}_])${value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}($|[^\\p{L}\\p{N}_])`, 'u').test(warning);
+}
+
 /** The kind of a warning for its filter: its first word ("Schicht", "Bedarf", ...). */
 export const warningKind = (warning) => String(warning).trim().split(/[\s:,]+/, 1)[0] ?? '';
 

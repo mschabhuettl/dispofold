@@ -172,6 +172,9 @@ export default async function run({ base, browser, check, shots }) {
   await page.selectOption('#sp5-report-person', '');
   await page.selectOption('#sp5-report-area', 'DR');
   check('the filter by area', (await text(page, '#sp5-report-count')) === '6 von 26 Zeilen.', await text(page, '#sp5-report-count'));
+  check('the area filter keeps the warnings naming the area', (await text(page, '#sp5-warnings')) === 'Keine Treffer.', await text(page, '#sp5-warnings'));
+  await page.selectOption('#sp5-report-area', 'AN');
+  check('two warnings name the area AN', (await page.locator('#sp5-warnings li').count()) === 2, await text(page, '#sp5-warnings'));
   await page.selectOption('#sp5-report-area', '');
   await page.selectOption('#sp5-warning-kind', 'Bedarf');
   check('the warnings by kind', (await page.locator('#sp5-warnings li').count()) === 1);
