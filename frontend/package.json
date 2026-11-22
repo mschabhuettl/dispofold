@@ -22,7 +22,8 @@
     "check:inputs": "node scripts/build.mjs && node scripts/check-inputs.mjs",
     "check:data": "node scripts/build.mjs && node scripts/check-data.mjs",
     "check:help": "node scripts/build.mjs && node scripts/check-help.mjs",
-    "check:plugins": "node scripts/build.mjs && node scripts/build.mjs --test-plugins --out dist-plugins && node scripts/check-plugins.mjs"
+    "check:plugins": "node scripts/build.mjs && node scripts/build.mjs --test-plugins --out dist-plugins && node scripts/check-plugins.mjs",
+    "check:plugin-pages": "node scripts/build.mjs && node scripts/check-plugin-pages.mjs"
   },
   "dependencies": {
     "@bryntum/core-community": "8.0.0",

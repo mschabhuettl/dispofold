@@ -138,6 +138,12 @@ eigenen Routen, `ctx.canEdit`, `ctx.me`, `ctx.month` und die übrigen. Hilfeseit
 lägen sie in `docs/anleitung/`: Links auf `daten.md` oder `erweiterungen.md#einschalten-und-ausschalten` gehen
 auf die Seiten des Kerns. Bilder in Hilfeseiten von Erweiterungen kann der Build noch nicht.
 
+Für den Entwicklungsserver liefert `dev/mock.mjs` die Routen der Erweiterung (`mock()` gibt eine Funktion
+`(methode, pfad, body, rolle, query)` zurück; `route.load(anfrage, vorschau)` prüft die Anfrage ihres Imports).
+`MOCK_PLUGINS=1` nimmt die ausgelieferten Erweiterungen dazu, `MOCK_TEST_PLUGINS=1` auch die mit `testOnly`. Eine
+ausgelieferte Erweiterung mit eigenen Seiten prüft sie in `dev/check.mjs` im Browser; `npm run check:plugin-pages`
+führt diese Prüfungen aus.
+
 ## Eine ausgelieferte Erweiterung
 
 `plugins/sp5/` zeigt, was eine Erweiterung braucht, die mit Dispofold ausgeliefert wird:
