@@ -7,6 +7,8 @@ Die Beispiel-Erweiterung gibt es nur in den Tests. Sie zeigt jeden Erweiterungsp
 Die Seite **Beispiel** zeigt den Gruß aus den Einstellungen der Erweiterung, auch der Rolle **nur lesen**. Den Gruß
 ändert die Planung unter [Einstellungen → Erweiterungen](erweiterungen.md#einschalten-und-ausschalten).
 
+![Ein Bild der Beispiel-Erweiterung](img/gruss.png)
+
 ## Import
 
 Auf der Seite **Daten** importiert der Abschnitt **Aus der Beispiel-Erweiterung** einen Datensatz aus einer Datei

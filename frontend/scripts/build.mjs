@@ -131,30 +131,34 @@ const guideDocs = join(docs, 'anleitung');
 const guideDir = dirname(join(dist, guideFile('index')));
 // the plugins' help pages (plugins/<id>/docs/<page>.md, written as if they were in docs/anleitung/) after the core
 // pages, as plugin-<id>-<page>; their title is their first line
+const pluginImages = new Map(); // guide page -> where its plugin's images come from and go to
 const pluginPages = plugins.flatMap((p) => {
   const dir = join(p.dir, 'docs');
   return existsSync(dir) ? readdirSync(dir).filter((f) => /^[a-z0-9-]+\.md$/.test(f)).sort().map((f) => {
     const file = join(dir, f);
     const title = readFileSync(file, 'utf8').split(/\r?\n/, 1)[0].replace(/^# /, '');
+    pluginImages.set(`plugin-${p.id}-${f.slice(0, -3)}`, { dir, target: `plugin-${p.id}-img` });
     return [`plugin-${p.id}-${f.slice(0, -3)}`, title, file];
   }) : [];
 });
 const allPages = [...PAGES.map(([id, title]) => [id, title, join(guideDocs, `${id}.md`)]), ...pluginPages];
 const pageIds = allPages.map(([id]) => id);
-const images = new Set();
+const images = new Map(); // file next to the guide -> its source
 const sizes = new Map(); // width and height of each image (PNG header), so the page keeps its layout while they load
 const headings = new Map(); // page -> anchors of its headings
 const links = []; // [page, target page, anchor] of every link between the pages, checked once all are parsed
 let current = '';
 const guide = new Marked({
   walkTokens(token) {
-    if (token.type === 'image' && current.startsWith('plugin-')) {
-      throw new Error(`${current}: images in plugin help pages are not supported yet`);
-    } else if (token.type === 'image') {
-      const file = relative(docs, join(guideDocs, token.href)).split('\\').join('/');
-      const png = readFileSync(join(docs, file));
+    if (token.type === 'image') {
+      // a plugin's images: plugins/<id>/docs/img/<name>.png, next to the guide as plugin-<id>-img/<name>.png
+      const plugin = pluginImages.get(current);
+      if (plugin && !/^img\/[a-z0-9-]+\.png$/.test(token.href)) throw new Error(`${current}: plugin help pages show only img/<name>.png, not ${token.href}`);
+      const file = plugin ? `${plugin.target}/${token.href.slice(4)}` : relative(docs, join(guideDocs, token.href)).split('\\').join('/');
+      const source = plugin ? join(plugin.dir, token.href) : join(docs, file);
+      const png = readFileSync(source);
       if (png.toString('latin1', 1, 4) !== 'PNG') throw new Error(`anleitung/${current}.md shows ${token.href}, which is not a PNG`);
-      images.add(file);
+      images.set(file, source);
       token.href = `${relative(dist, guideDir).split('\\').join('/')}/${file}`;
       sizes.set(token.href, [png.readUInt32BE(16), png.readUInt32BE(20)]);
     } else if (token.type === 'link' && !/^https?:/.test(token.href)) {
@@ -194,8 +198,8 @@ for (const [id, title, file] of allPages) {
 for (const [from, page, anchor] of links) {
   if (anchor && !headings.get(page).has(anchor)) throw new Error(`anleitung/${from}.md links to ${page}.md#${anchor}, which has no such heading`);
 }
-for (const image of images) {
+for (const [image, source] of images) {
   mkdirSync(dirname(join(guideDir, image)), { recursive: true });
-  cpSync(join(docs, image), join(guideDir, image));
+  cpSync(source, join(guideDir, image));
 }
 console.log('built', dist, names, 'plugins', plugins.map((p) => p.id));

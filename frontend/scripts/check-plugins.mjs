@@ -140,6 +140,8 @@ try {
   check('desktop: its help link opens the built-in guide', deskHelp === '#/anleitung/plugin-beispiel-beispiel', deskHelp);
   await open(desk, d.base, 'anleitung/plugin-beispiel-beispiel');
   check('desktop: the built-in guide shows its help page', (await text(desk, '#main h1')) === 'Beispiel-Erweiterung');
+  const image = await desk.waitForFunction(() => { const i = document.querySelector('#main img'); return i?.complete && i.naturalWidth > 0 && i.getAttribute('src'); }, null, { timeout: 5000 }).then((x) => x.jsonValue()).catch(() => '');
+  check('desktop: the built-in guide shows its image', String(image).endsWith('plugin-beispiel-img/gruss.png'), image);
 } finally {
   await browser.close();
   for (const x of servers) x.stop();

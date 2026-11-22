@@ -21,6 +21,7 @@ plugins/<id>/
   backend/src/test/java/app/dispofold/plugins/<id>/   seine Backend-Tests
   frontend/index.js                sein Front End (Seiten, Einstellungen, Import-Formular, Texte)
   docs/<seite>.md                  seine Hilfeseiten
+  docs/img/<name>.png              Bilder seiner Hilfeseiten (optional)
   dev/mock.mjs                     seine Routen für den Entwicklungsserver (optional)
 ```
 
@@ -128,13 +129,14 @@ export default {
 | Einstellungen | unter dem Eintrag der Erweiterung in **Einstellungen → Erweiterungen** | ebenda |
 | Import | eigener Abschnitt auf der Seite **Daten**; das Formular liefert die Anfrage, der Rest ist der Import des Kerns | ebenda |
 | Ordner | `folderPicker(ctx, { id, files })`: freigegebene Ordner und darunter, am eigenen Rechner mit Ordnerdialog | ebenda, auch im Desktop-Modus |
-| Hilfeseiten | `docs/<seite>.md`, in der Anleitung als `plugin-<id>-<seite>`, nach den Seiten des Kerns | ebenda; die Website im CI-Job `docs` |
+| Hilfeseiten | `docs/<seite>.md`, in der Anleitung als `plugin-<id>-<seite>`, nach den Seiten des Kerns; Bilder aus `docs/img/` | ebenda; die Website im CI-Job `docs` |
 | Texte und Styles | Texte unter `plugin.<id>.`, keine eigenen Styles | `frontend/test/plugins.test.js`, `scripts/build.mjs` |
 
 `ctx` ist derselbe wie für die Seiten des Kerns: `ctx.api` mit `ctx.api.plugin('<id>').get/put/post(pfad)` für die
 eigenen Routen, `ctx.canEdit`, `ctx.me`, `ctx.month` und die übrigen. Hilfeseiten sind so geschrieben, als
 lägen sie in `docs/anleitung/`: Links auf `daten.md` oder `erweiterungen.md#einschalten-und-ausschalten` gehen
-auf die Seiten des Kerns. Bilder in Hilfeseiten von Erweiterungen kann der Build noch nicht.
+auf die Seiten des Kerns. Bilder liegen in `docs/img/<name>.png` und stehen in der Seite als
+`![Text](img/<name>.png)`; Programm und Website zeigen sie unter `plugin-<id>-img/`.
 
 ## Eine ausgelieferte Erweiterung
 
