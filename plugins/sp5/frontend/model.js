@@ -233,6 +233,8 @@ export function resultText(kind, result) {
       return t('plugin.sp5.codes.excluded', { n });
     case 'compensatoryRest':
       return t('plugin.sp5.codes.compensatoryRest', { n });
+    case 'inherited':
+      return t('plugin.sp5.codes.inherited', { name: result.fromName ?? result.from ?? '', result: resultText(kind, result.result ?? {}) });
     default:
       return kind === 'absenceTypes' ? t('plugin.sp5.codes.absence') : t('plugin.sp5.codes.none');
   }

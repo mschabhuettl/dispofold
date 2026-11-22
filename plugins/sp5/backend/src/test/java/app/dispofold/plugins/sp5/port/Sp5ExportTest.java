@@ -9,6 +9,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -22,6 +23,12 @@ import org.junit.jupiter.api.io.TempDir;
 
 /** The import on a tiny synthetic folder: one area, two shifts, three people, a month of history. */
 public class Sp5ExportTest {
+
+    /** Replaces the groups of a folder made by {@link #folder}: rows of ID, NAME, SHORTNAME, SUPERID. */
+    public static void groups(Path dir, Object[]... rows) throws IOException {
+        TestTables.write(dir, "5GROUP", List.of(n("ID", 11), c("NAME", 40), c("SHORTNAME", 24), n("SUPERID", 11)),
+                rows);
+    }
 
     public static final String MAPPING = """
             {"areas": [{"id": "AN", "name": "Annahme", "color": "#B45309"}],

@@ -260,6 +260,7 @@ export const TEXTS = {
   'plugin.sp5.codes.compensatoryRest': 'Ersatzruhe (Muster {n})',
   'plugin.sp5.codes.absence': 'übernommen',
   'plugin.sp5.codes.none': 'keine Regel',
+  'plugin.sp5.codes.inherited': 'wie die übergeordnete Gruppe {name}: {result}',
   'plugin.sp5.codes.unmatched': 'Ohne Regel und nicht ignoriert:',
   'plugin.sp5.codes.unmatchedShifts': 'Schichten {list}',
   'plugin.sp5.codes.unmatchedGroups': 'Gruppen {list}',

@@ -2,6 +2,7 @@ package app.dispofold.plugins.sp5;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -80,6 +81,7 @@ final class Sp5Codes {
             group.put("result", result);
             groups.add(group);
         }
+        inherit(folder, groups);
         List<Object> types = new ArrayList<>();
         for (Map<String, Object> t : table(folder, "5LEAVT")) {
             String code = text(t.get("SHORTNAME"));
@@ -156,5 +158,43 @@ final class Sp5Codes {
             }
         }
         return List.of();
+    }
+
+    /**
+     * A group without a rule of its own takes that of the nearest group above it (SUPERID), as the import does:
+     * {"kind": "inherited", "from": its id, "fromName", "result": what that group decides}.
+     */
+    @SuppressWarnings("unchecked")
+    private static void inherit(Path folder, List<Object> groups) {
+        List<Map<String, Object>> rows = table(folder, "5GROUP");
+        Map<Object, Integer> index = new HashMap<>();
+        Map<Object, Object> parent = new HashMap<>();
+        for (int i = 0; i < rows.size(); i++) {
+            Object id = Py.key(rows.get(i).get("ID"));
+            index.put(id, i);
+            parent.put(id, Py.truthy(rows.get(i).get("SUPERID")) ? Py.key(rows.get(i).get("SUPERID")) : null);
+        }
+        List<Map<String, Object>> own = groups.stream()
+                .map(g -> (Map<String, Object>) ((Map<String, Object>) g).get("result")).toList();
+        for (int i = 0; i < rows.size(); i++) {
+            if (!"none".equals(own.get(i).get("kind"))) {
+                continue;
+            }
+            Set<Object> seen = new HashSet<>();
+            Object cur = parent.get(Py.key(rows.get(i).get("ID")));
+            while (cur != null && seen.add(cur) && index.containsKey(cur)
+                    && "none".equals(own.get(index.get(cur)).get("kind"))) {
+                cur = parent.get(cur);
+            }
+            if (cur != null && index.containsKey(cur) && !"none".equals(own.get(index.get(cur)).get("kind"))) {
+                Map<String, Object> from = (Map<String, Object>) groups.get(index.get(cur));
+                Map<String, Object> result = new LinkedHashMap<>();
+                result.put("kind", "inherited");
+                result.put("from", from.get("sp5Id"));
+                result.put("fromName", from.get("name"));
+                result.put("result", own.get(index.get(cur)));
+                ((Map<String, Object>) groups.get(i)).put("result", result);
+            }
+        }
     }
 }

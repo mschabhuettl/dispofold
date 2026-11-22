@@ -133,6 +133,8 @@ test('codes of the folder: result texts, the hits of each rule and pattern, code
   assert.equal(m.resultText('shifts', codes.shifts[2].result), 'ignoriert (Ignorierte Schichten, Muster 2)');
   assert.equal(m.resultText('shifts', codes.shifts[3].result), 'keine Regel');
   assert.equal(m.resultText('groups', codes.groups[0].result), 'Regel 2 → AN, DR');
+  assert.equal(m.resultText('groups', { kind: 'inherited', from: '1', fromName: 'Team Annahme', result: { kind: 'rule', index: 0, areaIds: ['AN'] } }),
+    'wie die übergeordnete Gruppe Team Annahme: Regel 1 → AN');
   assert.equal(m.resultText('groups', codes.groups[1].result), 'ausgeschlossen (Ausgeschlossene Gruppen, Muster 1)');
   assert.equal(m.resultText('groups', codes.groups[2].result), 'ignoriert (Ignorierte Gruppen, Muster 1)');
   assert.equal(m.resultText('absenceTypes', codes.absenceTypes[0].result), 'Ersatzruhe (Muster 1)');
