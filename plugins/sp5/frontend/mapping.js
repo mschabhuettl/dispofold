@@ -28,7 +28,11 @@ export async function render(root, ctx) {
   const marker = h('span.badge.badge-warn', { id: 'sp5-map-dirty', hidden: true }, t('plugin.sp5.map.unsaved'));
   const raw = h('textarea', { id: 'sp5-map-json', rows: 16, spellcheck: 'false', 'aria-label': t('plugin.sp5.map.json') });
   let rawEdited = false;
-  raw.addEventListener('input', () => { rawEdited = true; });
+  raw.addEventListener('input', () => {
+    rawEdited = true;
+    dirty = true;
+    marker.hidden = false;
+  });
   const codesBox = h('div', { id: 'sp5-codes', 'aria-live': 'polite' });
 
   const button = (label, onclick, attrs = {}) => h('button.btn.btn-secondary.btn-small', { type: 'button', onclick, ...attrs }, label);
@@ -37,7 +41,7 @@ export async function render(root, ctx) {
   function changed() {
     dirty = true;
     marker.hidden = false;
-    if (document.activeElement !== raw) {
+    if (!rawEdited) { // edits of the JSON not yet applied stay
       raw.value = mappingJson(mapping);
       rawEdited = false;
     }
@@ -82,12 +86,14 @@ export async function render(root, ctx) {
     const move = (delta, name) => button(delta < 0 ? '↑' : '↓', () => {
       const j = moveEntry(list, i, delta);
       if (j === i) return;
+      codes = null; // the hits are by position: wait for the next check
       changed();
       draw(`${section}.${j}.${name}`);
     }, { 'aria-label': t(delta < 0 ? 'plugin.sp5.map.up' : 'plugin.sp5.map.down', { entry: label(section, i) }), 'data-key': `${section}.${i}.${name}` });
     return h('td', {}, h('div.btn-row', {}, move(-1, 'up'), move(1, 'down'),
       button('×', () => {
         list.splice(i, 1);
+        codes = null;
         changed();
         draw(list.length ? `${section}.${Math.min(i, list.length - 1)}.remove` : `${section}.add`);
       }, { 'aria-label': t('plugin.sp5.map.remove', { entry: label(section, i) }), 'data-key': `${section}.${i}.remove` })));
@@ -165,6 +171,7 @@ export async function render(root, ctx) {
     const add = keyed(h('button.btn.btn-secondary.btn-small', { type: 'button' }, t(`plugin.sp5.map.add.${section}`)), `${section}.add`);
     add.addEventListener('click', () => {
       sectionList(mapping, section).push(newEntry(section));
+      codes = null;
       changed();
       const i = mapping[section].length - 1;
       draw(`${section}.${i}.${patterns ? 'pattern' : section === 'areas' ? 'id' : 'match'}`);
@@ -262,6 +269,8 @@ export async function render(root, ctx) {
   // ---- saving and JSON ----
 
   const apply = (value) => {
+    codes = null;
+    rawEdited = false; // the JSON view shows what the editor holds again
     mapping = value;
     changed();
     draw();

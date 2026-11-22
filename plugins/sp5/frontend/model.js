@@ -71,6 +71,13 @@ export function cellText(column, value) {
   return String(value);
 }
 
+/** What a report value sorts by: day types in week order (the holiday last), German values by their text, else as it is. */
+export function sortValue(column, value) {
+  if (value == null || value === '') return '';
+  if (column === 'tagestyp') return value === 'HOL' ? 7 : DAY_TYPES[value] ?? value;
+  return column === 'einschraenkung' || column === 'status' || column === 'feld' ? cellText(column, value) : value;
+}
+
 /** The people and areas a row is about (for the filters). */
 export const rowPeople = (row) => (row.person ? [row.person] : []);
 export function rowAreas(row) {

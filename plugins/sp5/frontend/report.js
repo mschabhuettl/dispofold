@@ -2,7 +2,7 @@
 // over all columns, filters by row type, person and area, sorting by a click on a header; then the warnings with the
 // same search. "Bericht als CSV" saves the file as the export writes it.
 import { guarded, h, info, matchesTerms, saveBlob, searchTerms, sortableTable, t } from '../../../frontend/src/lib/plugin-api.js';
-import { NOTICE_STATUSES, cellText, columnLabel, isNumberColumn, reportGroups, rowAreas, rowMatches, rowPeople, typeHelp, typeLabel,
+import { NOTICE_STATUSES, cellText, columnLabel, isNumberColumn, reportGroups, rowAreas, rowMatches, rowPeople, sortValue, typeHelp, typeLabel,
   warningKind } from './model.js';
 import { ID, noRun, orNoRun } from './shared.js';
 
@@ -44,7 +44,7 @@ export async function render(root, ctx) {
   const sections = groups.map((g) => {
     const id = `sp5-type-${g.type.replace(/[^a-z0-9_-]/gi, '')}`;
     const table = sortableTable(g.columns.map((c) => ({ label: columnLabel(c), title: c, num: isNumberColumn(c),
-      value: (row) => row[c] ?? '', cell: (row) => cell(c, row) })), { label: typeLabel(g.type) });
+      value: (row) => sortValue(c, row[c]), cell: (row) => cell(c, row) })), { label: typeLabel(g.type) });
     const heading = h('h2', { id: `h-${id}` });
     const element = h('section.section', { id, 'aria-labelledby': `h-${id}`, 'data-type': g.type }, heading,
       h('p.muted', {}, typeHelp(g.type)), table.element);

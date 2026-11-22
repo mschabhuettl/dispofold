@@ -19,6 +19,7 @@ export async function render(root, ctx) {
   const file = h('input', { id: 'sp5-cmp-file', type: 'file', accept: '.json,application/json' });
   const out = h('div', { id: 'sp5-compare', 'aria-live': 'polite' });
   let upload = null;
+  let loading = 0; // the newest request; older answers are dropped
 
   const person = (id, name) => (people.has(id) ? h('a', { href: `#/person/${encodeURIComponent(id)}` }, name ? `${name} (${id})` : id)
     : name ? `${name} (${id})` : id);
@@ -31,6 +32,8 @@ export async function render(root, ctx) {
     x.show(rows);
     return x.element;
   };
+  // numbers, dates (ISO) and texts sort as they are, lists and objects by their text
+  const sortable = (v) => (v == null || typeof v !== 'object' ? v : JSON.stringify(v));
   const diffCell = (row) => (row.old !== row.new ? h('span.badge.badge-warn', {}, difference(row.old, row.new)) : '0');
 
   function show(r) {
@@ -60,8 +63,8 @@ export async function render(root, ctx) {
       section('fields', table('fields', [
         { label: t('plugin.sp5.compare.person'), value: (x) => x.id, cell: (x) => person(x.id, x.name) },
         { label: t('plugin.sp5.compare.field'), value: (x) => fieldName(x.field) },
-        { label: t('plugin.sp5.compare.old'), value: (x) => fieldValue(x.field, x.old, areaName) },
-        { label: t('plugin.sp5.compare.new'), value: (x) => fieldValue(x.field, x.new, areaName) },
+        { label: t('plugin.sp5.compare.old'), value: (x) => sortable(x.old), cell: (x) => fieldValue(x.field, x.old, areaName) },
+        { label: t('plugin.sp5.compare.new'), value: (x) => sortable(x.new), cell: (x) => fieldValue(x.field, x.new, areaName) },
       ], byId(fields))),
       section('restrictions', table('restrictions', [
         { label: t('plugin.sp5.compare.person'), value: (x) => x.id, cell: (x) => person(x.id, x.name) },
@@ -82,6 +85,7 @@ export async function render(root, ctx) {
   }
 
   async function load() {
+    const token = ++loading;
     if (againstFile.checked && !upload) {
       out.replaceChildren(h('p.alert', {}, t('plugin.sp5.compare.pickFile')));
       return;
@@ -91,6 +95,7 @@ export async function render(root, ctx) {
     try {
       r = againstFile.checked ? await api.post(path, upload) : await api.get(path);
     } catch (e) {
+      if (token !== loading) return;
       if (e.code === 'plugin.sp5.noRun') out.replaceChildren(noRun());
       else if (e.code === 'plugin.sp5.noBaseline') {
         out.replaceChildren(h('p.alert', { id: 'sp5-no-baseline' }, e.message, ' ',
@@ -98,7 +103,7 @@ export async function render(root, ctx) {
       } else out.replaceChildren(problem(e));
       return;
     }
-    show(r);
+    if (token === loading) show(r);
   }
 
   corrections.addEventListener('change', load);
@@ -110,6 +115,7 @@ export async function render(root, ctx) {
     againstFile.checked = true;
     try {
       upload = JSON.parse(await chosen.text());
+      file.value = ''; // the same file can be chosen again
     } catch {
       upload = null;
       out.replaceChildren(h('div.alert.alert-error', { role: 'alert' }, t('plugin.sp5.compare.invalidJson')));

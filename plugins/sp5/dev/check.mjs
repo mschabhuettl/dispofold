@@ -150,6 +150,10 @@ export default async function run({ base, browser, check, shots }) {
   await page.keyboard.press('Enter');
   check('the header keeps the focus and sorts the other way with the keyboard', (await duties()) === '120,40,9'
     && (await page.evaluate(() => document.activeElement?.closest('th')?.getAttribute('aria-sort'))) === 'descending', await duties());
+  const dayTypes = () => page.$$eval('#sp5-type-bedarf tbody tr td:nth-child(2)', (tds) => tds.map((x) => x.textContent).join(','));
+  await page.click('#sp5-type-bedarf th button:text("Tagestyp")');
+  await page.click('#sp5-type-bedarf th button:text("Tagestyp")');
+  check('day types sort in week order, not by their codes', (await dayTypes()) === 'Feiertag,Sa,Mo', await dayTypes());
   // search over all columns, several words, also German values
   await page.fill('#sp5-report-search', 'ungültig');
   check('the search finds German values', (await page.locator('#main section[data-type]:not([hidden])').count()) === 1

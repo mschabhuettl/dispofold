@@ -87,6 +87,19 @@ test('with changes in Dispofold the choice to keep them is on and the preview co
   assert.match(el.textContent, /1 Änderung/);
 });
 
+test('a choice made before the dataset arrives is kept', async () => {
+  const { ctx } = setup({ changed: true });
+  let resolve;
+  ctx.dataset = () => new Promise((r) => { resolve = r; });
+  const el = importFlow(ctx, 'demo', () => ({ month: '2027-01' }));
+  const keep = el.all().find((e) => e.attributes.id === 'plugin-keep-demo');
+  keep.checked = false;
+  await Promise.all(keep.listeners.change.map((f) => f({})));
+  resolve({ changedSinceImport: true, people: [] });
+  await tick();
+  assert.equal(keep.checked, false);
+});
+
 test('master data changed since the import: keep them or replace them, as on the Daten page', async () => {
   const fail = new ApiError(409, 'geändert', 'import.masterChanged', {});
   const { ctx, calls } = setup({ fail });

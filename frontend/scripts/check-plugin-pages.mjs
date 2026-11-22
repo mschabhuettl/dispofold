@@ -32,7 +32,11 @@ try {
     });
     const server = spawn(process.execPath, [join(root, 'scripts', 'dev-server.mjs'), String(port)],
       { stdio: ['ignore', 'pipe', 'inherit'], env: { ...process.env, MOCK_PLUGINS: '1' } });
-    await new Promise((resolve) => server.stdout.on('data', (d) => { if (String(d).includes('dev server on')) resolve(); }));
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => reject(new Error('the dev server did not start within 30 s')), 30000);
+      server.on('exit', (code) => reject(new Error(`the dev server ended with ${code}`)));
+      server.stdout.on('data', (d) => { if (String(d).includes('dev server on')) { clearTimeout(timer); resolve(); } });
+    });
     console.log(`plugin ${id}`);
     try {
       const run = (await import(pathToFileURL(join(base, id, 'dev', 'check.mjs')).href)).default;

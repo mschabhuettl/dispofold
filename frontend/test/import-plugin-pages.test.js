@@ -47,6 +47,10 @@ test('report values in German, filters by type, person and area, a search over r
   assert.ok(m.rowMatches(row, { terms: ['ungueltig'] }), 'raw status');
   assert.ok(m.rowMatches(row, { terms: ['korrekturen'] }), 'the type name');
   assert.ok(!m.rowMatches(row, { terms: ['ungültig', 'e2'] }));
+  assert.deepEqual(['SUN', 'HOL', 'MON', 'FRI'].map((d) => m.sortValue('tagestyp', d)), [6, 7, 0, 4]);
+  assert.equal(m.sortValue('status', 'ungueltig'), 'ungültig');
+  assert.equal(m.sortValue('dienste_historie', '12'), '12');
+  assert.equal(m.sortValue('person', ''), '');
   assert.equal(m.warningKind('Schicht ohne Bereich ignoriert: X'), 'Schicht');
   assert.equal(m.warningKind('  Bedarf: x'), 'Bedarf');
   assert.ok(m.NOTICE_STATUSES.has('person_fehlt') && m.NOTICE_STATUSES.has('ungueltig') && !m.NOTICE_STATUSES.has('angewendet'));

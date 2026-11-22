@@ -105,9 +105,11 @@ export function importFlow(ctx, id, request, { result = null, current } = {}) {
   const { api } = ctx;
   const keep = h('input', { id: `plugin-keep-${id}`, type: 'checkbox', checked: Boolean(dataset?.changedSinceImport) });
   if (current === undefined) {
+    let touched = false;
+    keep.addEventListener('change', () => { touched = true; });
     ctx.dataset().then((d) => {
       dataset = d;
-      keep.checked = Boolean(d?.changedSinceImport);
+      if (!touched) keep.checked = Boolean(d?.changedSinceImport);
     }, () => {});
   }
   const via = (req) => ({ preview: () => api.pluginImportPreview(id, req), run: () => api.pluginImport(id, req, false, true) });
