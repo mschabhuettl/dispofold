@@ -4,8 +4,9 @@
 // pinned commit of sp5-export), and that generator's example mapping:
 //   cd frontend && BASE_URL=http://localhost:8080 APP_USER=planer APP_PASSWORD=... \
 //     node ../plugins/sp5/tools/screenshots.mjs <mapping.json> ../plugins/sp5/docs/img
-// It switches the plugin on, imports January 2027 once, changes a person and a person's exclusion in Dispofold, then
-// runs the export again and takes the pages as a planner sees them. It replaces the master data: never against
+// It switches the plugin on, takes the note above the import of a first run without any corrections, imports January
+// 2027 once, changes a person and a person's exclusion in Dispofold, then runs the export again and takes the pages as
+// a planner sees them. It replaces the master data: never against
 // production. Every request to another host is blocked. At the end scripts/optimize-png.py shrinks the files.
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
@@ -96,6 +97,13 @@ try {
   const roots = await api('GET', '/api/files/roots');
   const settings = await api('GET', '/api/plugins/sp5/einstellungen');
   await api('PUT', '/api/plugins/sp5/einstellungen', { ...settings, root: roots[0].id, path: 'ordner', mapping });
+  // before the first import, with no corrections at all: the note above the import
+  await page.reload();
+  await open('plugin/sp5/uebersicht');
+  await page.fill('#sp5-run-month', month);
+  await page.click('#sp5-run');
+  await page.locator('#h-sp5-import ~ div .corrections-hint .alert').waitFor();
+  await clip('hinweis', ['#h-sp5-import', '#h-sp5-import ~ div .corrections-hint']);
   await api('POST', '/api/import/plugin/sp5?replace=true', { month, to: null });
 
   // in Dispofold: weekly hours of one person changed, another excluded (both become corrections)

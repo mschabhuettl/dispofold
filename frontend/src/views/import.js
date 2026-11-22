@@ -167,7 +167,8 @@ export function correctionsSummary(s, names) {
     h('h3', {}, t('data.corrections.summary.title')),
     h('p', {}, t('data.corrections.summary.people', { version: s.version, people: s.people }), ' ',
       s.existing == null ? t('data.corrections.summary.noData') : t('data.corrections.summary.existing', { existing: s.existing })),
-    fields.length ? [h('p', {}, t('data.corrections.summary.fields')), h('ul', {}, fields.map(([f, n]) => h('li', { 'data-field': f }, `${fieldLabel(f)}: ${n}`)))]
+    fields.length ? [h('p', {}, t('data.corrections.summary.fields')), h('ul', {}, fields.map(([f, n]) => h('li', { 'data-field': f },
+      `${f === 'exclude' ? t('data.corrections.summary.exclude') : f === 'demand' ? t('data.corrections.summary.demand') : fieldLabel(f)}: ${n}`)))]
       : h('p', {}, t('data.corrections.summary.noFields')),
     s.skipped.length ? [h('p', {}, t('data.corrections.summary.skipped')), h('ul.corrections-skipped', {}, s.skipped.map((n) => h('li', {}, note(n))))] : null,
     s.overridden ? h('p', {}, t('data.corrections.summary.overridden', { count: s.overridden })) : null,

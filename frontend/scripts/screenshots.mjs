@@ -5,7 +5,8 @@
 // 1. Server phase against BASE_URL, a fresh instance of the Docker build (no plan for MONTH yet; SEED_DEMO=1 confirms
 //    that its master data may be replaced, so never use it against production): the worked example of the guide
 //    (beispiel-*.png) done through the interface as a planner would (demo data, a person, demand, inputs, planning, a
-//    sick note after planning, the fixes, planning again, closing the month, the corrections file), then the month
+//    sick note after planning, the fixes, planning again, closing the month, the corrections file and the summary of
+//    one to load), then the month
 //    is opened again and the screens and dialogs of every page are taken, a few with numbered marks (the guide refers
 //    to the numbers). A release notice is answered in the browser (GET /api/release), the instance checks nothing.
 // 2. Desktop phase: the pages of the program window (password on the first start, the small window "Dispofold läuft")
@@ -367,7 +368,17 @@ async function serverPhase() {
   await page.getByRole('button', { name: 'Änderungen als Korrekturdatei exportieren', exact: true }).click();
   await page.locator('section[aria-labelledby="h-corrections"] .alert').waitFor();
   await page.locator('#h-corrections').evaluate((e) => e.scrollIntoView());
-  await clip(page, 'beispiel-korrekturdatei', ['section[aria-labelledby="h-corrections"]']);
+  await clip(page, 'beispiel-korrekturdatei', ['#h-corrections', 'section[aria-labelledby="h-corrections"] > p.muted',
+    'section[aria-labelledby="h-corrections"] > .toolbar', 'section[aria-labelledby="h-corrections"] > div[aria-live] .alert']);
+  // loading a corrections file: the summary before it is saved (cancelled, nothing loaded)
+  const named = (await api(page, 'GET', '/api/dataset')).people.slice(0, 2).map((p) => p.id);
+  await page.setInputFiles('#corrections-file', { name: 'korrekturen.json', mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify({ format: 'dispofold/corrections', version: 2, people: {
+      [named[0]]: { weeklyHours: 30, hoursAccount: 12.5 }, [named[1]]: { weeklyHours: 'viel' }, E999999: { exclude: true } }, demand: {} })) });
+  await page.getByRole('button', { name: 'Korrekturdatei laden', exact: true }).click();
+  await page.locator('#corrections-confirm').waitFor();
+  await clip(page, 'korrekturdatei-laden', ['#corrections-confirm']);
+  await page.locator('#corrections-confirm').getByRole('button', { name: 'Abbrechen' }).click();
 
   // open the month again for the screens below
   await open(page, base, 'import', '#h-final');

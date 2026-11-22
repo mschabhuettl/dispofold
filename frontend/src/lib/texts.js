@@ -175,6 +175,8 @@ export const TEXTS = {
   'data.corrections.summary.existing': 'Davon in den aktuellen Daten: {existing}.',
   'data.corrections.summary.noData': 'Noch keine Daten in Dispofold: welche Personen passen, zeigt erst der Import.',
   'data.corrections.summary.fields': 'Einträge je Feld',
+  'data.corrections.summary.exclude': 'Ausschluss (Person nicht übernehmen)',
+  'data.corrections.summary.demand': 'Bedarf (Bereiche)',
   'data.corrections.summary.noFields': 'Die Datei enthält keinen Eintrag, der sich anwenden lässt.',
   'data.corrections.summary.skipped': 'Wird nicht angewendet',
   'data.corrections.summary.overridden': '{count|Eintrag wird|Einträge werden} von Änderungen in Dispofold seit dem letzten Import überdeckt.',

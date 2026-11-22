@@ -3,7 +3,8 @@
 Diese Seite beschreibt den ganzen Weg in der Reihenfolge, in der man ihn geht: die Erweiterung einrichten, den
 Export ausführen, Bericht und Warnungen lesen, die Zuordnung anpassen, mit dem letzten Import vergleichen,
 importieren und in Dispofold bereinigen. Alles geschieht in Dispofold, im Menü **Schichtplaner 5**; eine
-Kommandozeile, eine `mapping.json` von Hand oder eine `korrekturen.json` braucht es nicht.
+Kommandozeile, eine `mapping.json` von Hand oder eine `korrekturen.json` braucht es nicht. Wer von `sp5_export.py`
+kommt und dort eine `korrekturen.json` hatte, lädt sie einmal (Einrichten, Schritt 5), danach nur noch Dispofold.
 
 Alle Beispiele sind erfunden: die Bereiche und Kürzel (`AN`, `DR`, `A1`, `R1` usw.) und die Personen-Ids
 (`E1001` usw.) eines synthetischen Ordners.
@@ -24,6 +25,12 @@ Alle Beispiele sind erfunden: die Bereiche und Kürzel (`AN`, `DR`, `A1`, `R1` u
 4. Die **Optionen** passen meist mit ihren Standardwerten. Für den ersten Lauf mit einem neuen Bestand hilft
    **Bereiche aus der Historie ab … Diensten** mit 3; danach, wenn die Zeilen **Schichten der Personen** im
    Bericht das nahelegen, **Schichten seltener als … Dienste nur auf Anfrage**.
+
+5. **Umstieg von `sp5_export.py`:** Wer bisher `sp5_export.py --corrections korrekturen.json` aufgerufen hat, lädt
+   diese `korrekturen.json` einmal unter [Daten → Korrekturdatei laden](daten.md#korrekturdatei-laden), vor dem
+   ersten Import. Der Import wendet sie genau so an wie `sp5_export.py` mit `--corrections`; danach enthält
+   Dispofold die Korrekturen selbst, und die Datei wird nicht mehr gebraucht. Ohne die Datei zeigt die Übersicht über
+   dem Import einen Hinweis, solange es gar keine Korrekturen gibt.
 
 ## 2. Exportieren und lesen
 

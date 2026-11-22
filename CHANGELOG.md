@@ -20,7 +20,20 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
 
   Hilfe: [Ablauf](plugins/sp5/docs/ablauf.md) vom ersten Start bis zum Import und eine Seite je Seite, mit
   Bildern.
-- **Für Entwickler:** `PluginHost.lastImport` (die Stammdaten des letzten Imports und die Monate, wie Dispofold sie
+- **Korrekturdatei laden:** Unter **Daten → Korrekturdatei** lässt sich eine vorhandene Korrekturdatei laden, etwa
+  beim Umstieg von einem Exportprogramm, das mit Korrekturdatei lief. Dispofold prüft sie wie das Exportprogramm und
+  zeigt vor dem Speichern, was sie bringt und was nicht wirkt. Der nächste Import über eine Importquelle wendet sie
+  an, als hätte ein früherer Import sie angewendet; Änderungen in Dispofold seit dem letzten Import gewinnen je
+  Person und Feld. Das geht auch auf einer leeren Datenbank. Gibt es gar keine Korrekturen, sagt ein Hinweis über
+  dem Import das. Die CI vergleicht den Import nach dem Laden Byte für Byte mit dem Exportprogramm und derselben
+  Datei. Hilfe: [Korrekturdatei laden](docs/anleitung/daten.md#korrekturdatei-laden).
+- **Prüfen → Stammdaten:** Neue Meldung, wenn für Bedarf eines Bereichs an Tagen des Monats niemand eingeplant
+  werden kann (niemand hat den Bereich, alle sind ausgeschlossen, abwesend oder dürfen keine passende Schicht), mit
+  Link auf die Zeile unter **Stammdaten → Bedarf**.
+- **Import auf der Übersicht der Erweiterung:** Die Vorschau eines weiteren Imports nennt die Personen mit ihren
+  aktuellen Kurznamen.
+- **Für Entwickler:** `PluginHost.corrections()` liefert auch die geladene Korrekturdatei;
+  `PluginHost.lastImport` (die Stammdaten des letzten Imports und die Monate, wie Dispofold sie
   hat), `importFlow` (der Import des Kerns auf der Seite einer Erweiterung), `sortableTable` und Texte und
   Formatierungen des Kerns über `plugin-api.js`; Hilfeseiten von Erweiterungen können Bilder zeigen
   ([docs/plugins.md](docs/plugins.md)).

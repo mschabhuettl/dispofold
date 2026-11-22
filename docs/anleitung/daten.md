@@ -11,7 +11,8 @@ Daten pseudonymisiert weitergeben und einen Monat abschließen. Die Seite gehör
 2. **Änderungen aus Dispofold behalten**, siehe
    [Neuer Datensatz, Änderungen aus Dispofold behalten](#neuer-datensatz-änderungen-aus-dispofold-behalten).
 3. **Export**: Datensatz und Plan als Datei, siehe [Exportieren](#exportieren).
-4. **Korrekturdatei**, siehe [Korrekturdatei](#korrekturdatei).
+4. **Korrekturdatei**, siehe [Korrekturdatei](#korrekturdatei) und
+   [Korrekturdatei laden](#korrekturdatei-laden).
 
 Weiter unten folgen [Anonymisieren](#anonymisieren), [Plan importieren](#plan-importieren) und **Monat
 abschließen** oder **Monat wieder öffnen** (siehe [Monat abschließen](monatsabschluss.md)).
@@ -133,6 +134,48 @@ viele Personen wieder übernommen werden.
 
 **Wann:** nach jeder Änderung an Personen, Einschränkungen oder Bedarf, spätestens vor dem nächsten Export aus dem
 Quellsystem. Die Datei bekommt die IT oder wer das Exportprogramm betreut.
+
+### Korrekturdatei laden
+
+Wer bisher mit einem Exportprogramm und einer Korrekturdatei gearbeitet hat und nun über eine Erweiterung direkt
+importiert (siehe [Erweiterungen](erweiterungen.md)), bringt diese Datei einmal nach Dispofold, am besten vor dem
+ersten Import. Ohne sie fehlen dem Import die Korrekturen daraus (Einschränkungen, Ausschlüsse, Wochenstunden und so
+weiter), und der Plan gibt Personen Dienste, die sie nie machen.
+
+![Die Zusammenfassung vor dem Laden einer Korrekturdatei](../screenshots/korrekturdatei-laden.png)
+
+1. Unter **Vorhandene Korrekturdatei (JSON)** die Datei wählen (meist `korrekturen.json`) und **Korrekturdatei
+   laden**. Gespeichert wird noch nichts.
+2. Dispofold prüft die Datei wie das Exportprogramm. Ist sie keine Korrekturdatei, hat sie eine unbekannte
+   Version (verstanden werden die Versionen 1 und 2) oder sind ihre Abschnitte kein Objekt, sagt die Meldung das und
+   lädt nichts.
+3. Sonst zeigt **Das bringt die Datei**: wie viele Personen sie nennt und wie viele davon schon in den Daten sind
+   (auf einer leeren Datenbank zeigt das erst der Import), die Einträge je Feld und unter **Wird nicht angewendet**
+   die Einträge, die nicht wirken, mit dem Grund (ein unbekanntes Feld, ein ungültiger Wert, ein unbekannter
+   Bereich, eine Person, die es nicht gibt, und so weiter). Die Importquelle prüft jeden Eintrag beim Import noch
+   einmal und meldet, was sie überspringt.
+4. **Laden** speichert die Datei. Darunter steht dann „Geladene Korrekturdatei vom …: sie wartet auf den nächsten
+   Import über eine Importquelle.“ mit derselben Zusammenfassung.
+
+So wirkt die geladene Datei:
+
+- Der nächste Import über eine Importquelle (etwa eine Erweiterung) wendet sie an, als hätte ein früherer Import
+  sie angewendet. Danach gehört sie zu den Korrekturen dieses Imports: Die Meldung „Geladene Korrekturdatei“
+  verschwindet, und **Änderungen als Korrekturdatei exportieren** enthält ihre Einträge weiter.
+- Änderungen in Dispofold seit dem letzten Import gewinnen je Person und Feld. Hat man etwa die Wochenstunden
+  einer Person in Dispofold geändert, gelten diese, ihre übrigen Einträge aus der Datei gelten weiter. Die
+  Zusammenfassung sagt, wie viele Einträge so überdeckt werden.
+- Die geladene Datei ersetzt die Korrekturen, die der letzte Import angewendet hat; auch das nennt die
+  Zusammenfassung.
+- Erneutes Laden ersetzt die geladene Datei (die Schaltfläche heißt dann **Laden und die geladene Datei
+  ersetzen**). **Geladene Datei entfernen** nimmt sie zurück, solange kein Import sie angewendet hat.
+- Ein Import einer Datensatz-Datei unter **Import** ändert an der geladenen Datei nichts und wendet sie nicht an.
+- Bis zum Import bekommt auch **Änderungen als Korrekturdatei exportieren** die geladene Datei mit den Änderungen
+  aus Dispofold darüber, auch auf einer leeren Datenbank.
+
+Gibt es gar keine Korrekturen (keine geladene Datei, keine Änderung in Dispofold und keine Korrektur aus dem letzten
+Import), steht über jedem Import einer Importquelle ein Hinweis mit dem Weg hierher, auf dieser Seite und auf den
+Seiten einer Erweiterung, die importiert.
 
 ## Anonymisieren
 

@@ -34,6 +34,12 @@ geändert wurde, dann **Importieren**; die Vorschau zeigt, was übernommen wird,
 
 ![Die Vorschau des Imports auf der Übersicht](img/import.png)
 
+Gibt es noch gar keine Korrekturen (keine geladene Korrekturdatei, keine Änderung in Dispofold), steht über dem
+Import ein Hinweis mit dem Weg zu [Korrekturdatei laden](daten.md#korrekturdatei-laden). Wer bisher mit
+`sp5_export.py --corrections` exportiert hat, lädt seine `korrekturen.json` dort einmal vor dem ersten Import.
+
+![Der Hinweis über dem Import, solange es keine Korrekturen gibt](img/hinweis.png)
+
 ## Ergebnis speichern
 
 **Ergebnis speichern** neben **Ausführen** (und in den Einstellungen der Erweiterung) speichert Datensatz, Bericht und Warnungen eines
