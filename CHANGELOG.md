@@ -3,7 +3,7 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
-## 0.19.0 (unreleased)
+## 0.19.0 (2026-11-22)
 
 - **Import aus dem bisherigen Planungssystem als Erweiterung:** Die erste ausgelieferte Erweiterung liest dessen
   Datenordner (nur lesend) und importiert Stammdaten, Abwesenheiten, Historie, Feiertage und Bedarf über die Seite
