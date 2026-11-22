@@ -224,3 +224,15 @@ test('demand nobody can be planned for: holidays and dated rules as the solver p
   d.demand[1].min = 2;
   assert.equal(demandFindings(d)[0].text, 'Bereich Nord, 11.3. 07:00-13:00: an 1 Tag kann niemand eingeplant werden (ab 11.3.).');
 });
+
+test('demand nobody can be planned for: a night shift into the morning counts on the day it starts', () => {
+  const d = demandBase();
+  d.shifts = [{ id: 'N', areaId: 'A', code: 'N', name: 'Nacht', start: '20:00', end: '04:00', category: 'NIGHT' }];
+  d.demand = [{ areaId: 'A', days: ['MON'], date: null, from: '00:00', to: '04:00', min: 1, max: null }];
+  d.people = [person('P1', ['A'])];
+  // Monday 11.3. 00:00-04:00 is covered only by the night shift starting on Sunday 10.3.
+  assert.match(demandFindings(d, [{ personId: 'P1', date: '2030-03-10', typeCode: 'U' }])[0].text, /an 1 Tag .* \(ab 11\.3\.\)/);
+  assert.deepEqual(demandFindings(d, [{ personId: 'P1', date: '2030-03-11', typeCode: 'U' }]), []);
+  d.restrictions = [{ personId: 'P1', shiftId: 'N', weekday: 7, kind: 'NEVER' }];
+  assert.equal(demandFindings(d).length, 1);
+});

@@ -18,6 +18,7 @@ import app.dispofold.api.ImportResource;
 import app.dispofold.api.ImportResource.ImportPreview;
 import app.dispofold.api.ImportResource.ImportSummary;
 import app.dispofold.plugin.api.ImportSource;
+import app.dispofold.store.Store;
 
 /**
  * The import from a plugin's import source: the same as an uploaded dataset ({@link ImportResource}), with the
@@ -35,11 +36,16 @@ public class PluginImportResource {
     @Inject
     ImportResource imports;
 
+    @Inject
+    Store store;
+
     @POST
     public ImportSummary run(@PathParam("id") String id, @QueryParam("replace") boolean replace,
             @QueryParam("keep") boolean keep, JsonNode request) {
+        // the loaded corrections file as the source can see it: only that one counts as applied by this import
+        String loaded = store.loadedCorrections().map(Store.LoadedCorrections::doc).orElse(null);
         ImportSource.Data data = load(id, request);
-        return imports.importDataset(data.dataset(), data.appliedCorrections(), replace, keep);
+        return imports.importDataset(data.dataset(), data.appliedCorrections(), replace, keep, loaded);
     }
 
     @POST

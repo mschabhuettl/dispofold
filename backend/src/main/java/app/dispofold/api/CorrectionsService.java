@@ -1,5 +1,9 @@
 package app.dispofold.api;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -123,6 +127,24 @@ public class CorrectionsService {
         JsonNode applied = store.appliedCorrections().orElse(null);
         return LoadedCorrections.summary(file, current.orElse(null), current.isPresent() ? base.orElse(null) : null,
                 applied, mapper);
+    }
+
+    /**
+     * The uploaded bytes as text, read as the export program reads the file: UTF-8 without a byte order mark; other
+     * bytes make the file unreadable.
+     */
+    public static String text(byte[] body) {
+        boolean bom = body.length >= 3 && (body[0] & 0xFF) == 0xEF && (body[1] & 0xFF) == 0xBB
+                && (body[2] & 0xFF) == 0xBF;
+        try {
+            if (!bom) {
+                return StandardCharsets.UTF_8.newDecoder().onMalformedInput(CodingErrorAction.REPORT)
+                        .onUnmappableCharacter(CodingErrorAction.REPORT).decode(ByteBuffer.wrap(body)).toString();
+            }
+        } catch (CharacterCodingException e) {
+            // refused below
+        }
+        throw ApiErrors.error(Status.BAD_REQUEST, "corrections.load.unreadable", "Die Datei ist kein JSON-Objekt");
     }
 
     private ObjectNode parsed(String body) {

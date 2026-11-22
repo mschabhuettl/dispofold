@@ -1,6 +1,5 @@
 package app.dispofold.api;
 
-import java.nio.charset.StandardCharsets;
 import java.time.YearMonth;
 import java.util.List;
 
@@ -91,7 +90,7 @@ public class DataResource {
     @Path("corrections/check")
     @Consumes({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM })
     public LoadedCorrections.Summary checkCorrections(byte[] body) {
-        return corrections.check(new String(body, StandardCharsets.UTF_8));
+        return corrections.check(CorrectionsService.text(body));
     }
 
     /**
@@ -102,7 +101,7 @@ public class DataResource {
     @Path("corrections/loaded")
     @Consumes({ MediaType.APPLICATION_JSON, MediaType.APPLICATION_OCTET_STREAM })
     public LoadedCorrections.Summary loadCorrections(byte[] body) {
-        return corrections.load(new String(body, StandardCharsets.UTF_8));
+        return corrections.load(CorrectionsService.text(body));
     }
 
     /** Removes the loaded corrections file. */

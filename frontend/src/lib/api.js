@@ -155,10 +155,10 @@ export function createApi({ fetchImpl = (...a) => globalThis.fetch(...a), onUnau
     correctionsFile: () => request('GET', '/api/data/corrections'),
     /** The loaded corrections file waiting for an import: { loaded, summary, none } (none: no corrections at all) */
     correctionsState: () => request('GET', '/api/data/corrections/state'),
-    /** What a corrections file (its text, sent as it is) would bring; 400 corrections.load.* when it cannot be used */
-    checkCorrections: (text) => request('POST', '/api/data/corrections/check', new TextEncoder().encode(text)),
-    /** Loads a corrections file (its text, sent as it is), replacing the one loaded before; its summary */
-    loadCorrections: (text) => request('PUT', '/api/data/corrections/loaded', new TextEncoder().encode(text)),
+    /** What a corrections file (its bytes, sent as they are) would bring; 400 corrections.load.* when it cannot be used */
+    checkCorrections: (bytes) => request('POST', '/api/data/corrections/check', bytes),
+    /** Loads a corrections file (its bytes, sent as they are), replacing the one loaded before; its summary */
+    loadCorrections: (bytes) => request('PUT', '/api/data/corrections/loaded', bytes),
     removeCorrections: () => request('DELETE', '/api/data/corrections/loaded'),
     /** Pseudonymised { dataset, plan, key, people }; 409 anonymize.leak when a name would remain */
     anonymized: (month) => request('GET', `/api/data/anonymized?month=${m(month)}`),

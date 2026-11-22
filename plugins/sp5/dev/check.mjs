@@ -122,10 +122,13 @@ export default async function run({ base, browser, check, shots }) {
   check('the import of the run shows the summary', (await text(page, '#h-sp5-import ~ div .alert:not(.corrections-hint > .alert)'))?.includes('Import aus'), await text(page, '#h-sp5-import ~ div'));
   const p1 = (await api(page, 'GET', '/api/dataset')).body.people[0];
   await api(page, 'PUT', `/api/dataset/people/${p1.id}`, { ...p1, weeklyHours: 30 });
+  const state = page.waitForResponse((r) => r.url().endsWith('/api/data/corrections/state'));
   await open(page, `${P}/uebersicht`, '#sp5-import-request');
   await page.waitForFunction(() => document.querySelector('#plugin-keep-sp5')?.checked);
   check('keep changes is on after a change in Dispofold', true);
-  check('with a change in Dispofold there is no hint', await page.locator('.corrections-hint .alert').count() === 0);
+  const answered = await (await state).json();
+  await page.waitForTimeout(200);
+  check('with a change in Dispofold there is no hint', answered.none === false && await page.locator('.corrections-hint .alert').count() === 0);
   await page.click('#h-sp5-import ~ div button.btn-primary');
   await page.waitForSelector('#import-preview');
   check('the preview comes first', (await text(page, '#import-preview'))?.includes('Vorschau'));

@@ -143,11 +143,21 @@ public class ImportResource {
      * @param applied the corrections the source applied, in the form of a corrections file; ignored otherwise
      */
     public ImportSummary importDataset(Dataset dataset, JsonNode applied, boolean replace, boolean keep) {
+        return importDataset(dataset, applied, replace, keep, null);
+    }
+
+    /**
+     * The same, with the loaded corrections file as it was before the source made the dataset ({@code loaded}, null
+     * if none): when the source lists the corrections it applied, that file is now part of the import and no longer
+     * waits; one loaded or removed in the meantime stays as it is.
+     */
+    public ImportSummary importDataset(Dataset dataset, JsonNode applied, boolean replace, boolean keep,
+            String loaded) {
         JsonNode checked = checkedApplied(applied);
         synchronized (Store.DATASET_LOCK) {
             ImportSummary summary = save(dataset, checked, replace, keep, true);
-            // the source applied the corrections in effect, the loaded file among them: it is now part of the import
-            if (checked != null) {
+            if (checked != null && loaded != null
+                    && store.loadedCorrections().map(Store.LoadedCorrections::doc).filter(loaded::equals).isPresent()) {
                 store.clearLoadedCorrections();
             }
             return summary;

@@ -684,7 +684,7 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
           if (f.format !== 'dispofold/corrections') return err(400, 'Unbekanntes Format', 'corrections.load.format');
           if (![1, 2].includes(f.version)) return err(400, 'Version nicht unterstützt', 'corrections.load.version');
           if (!f.people || typeof f.people !== 'object' || Array.isArray(f.people)) return err(400, 'people', 'corrections.load.people');
-          const ids = new Set(dataset.people.map((p) => p.id));
+          const ids = new Set((dataset?.people ?? []).map((p) => p.id));
           const fields = Object.fromEntries([...PERSON_FIELDS, 'restrictions', 'exclude', 'demand'].map((x) => [x, 0]));
           const skipped = [];
           for (const [id, entry] of Object.entries(f.people)) {

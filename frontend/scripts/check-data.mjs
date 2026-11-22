@@ -75,7 +75,7 @@ try {
   await main.getByRole('button', { name: 'Korrekturdatei laden', exact: true }).click();
   await main.getByText('keine Korrekturdatei (erwartet wird').waitFor();
   check('a file of another format is refused with the reason', true);
-  const loadText = `{"format": "dispofold/corrections", "version": 2, "people": {"${fixture.people[0].id}": {"weeklyHours": 30.0, "note": "x"}, "E999999": {"exclude": true}}}`;
+  const loadText = `{"format": "dispofold/corrections", "version": 2, "people": {"${fixture.people[0].id}": {"weeklyHours": 30.0, "note": "Jänner"}, "E999999": {"exclude": true}}}`;
   await pick(loadText);
   await main.getByRole('button', { name: 'Korrekturdatei laden', exact: true }).click();
   await page.locator('#corrections-confirm').waitFor();

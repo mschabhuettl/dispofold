@@ -130,16 +130,21 @@ export function importFlow(ctx, id, request, { result = null, current } = {}) {
 
 /**
  * A note before an import through a source when there are no corrections at all (nothing loaded, nothing changed or
- * applied), with the way to the loading of a corrections file on the Daten page. Filled once the state is known.
+ * applied), with the way to the loading of a corrections file on the Daten page. Filled once the state is known and
+ * again when a file is loaded or removed.
  */
 export function correctionsHint(ctx) {
   const box = h('div.corrections-hint', {});
-  ctx.api.correctionsState?.().then((s) => {
-    if (!s?.none) return;
+  const fill = () => ctx.api.correctionsState?.().then((s) => {
+    if (!s?.none) return box.replaceChildren();
     const here = typeof location !== 'undefined' && location.hash.startsWith('#/import');
     const link = here ? h('button.btn-link', { type: 'button', onclick: () => document.getElementById('corrections-file')?.focus() }, t('data.corrections.hintLink'))
       : h('a', { href: '#/import' }, t('data.corrections.hintLink'));
-    box.replaceChildren(h('div.alert', { role: 'note' }, h('p', {}, t('data.corrections.hint')), h('p', {}, link)));
+    return box.replaceChildren(h('div.alert', { role: 'note' }, h('p', {}, t('data.corrections.hint')), h('p', {}, link)));
   }, () => {});
+  fill();
+  // loaded or removed on the same page: drawn again while the box is on the page
+  const again = () => (box.isConnected ? fill() : document.removeEventListener('corrections-changed', again));
+  if (typeof document !== 'undefined') document.addEventListener('corrections-changed', again);
   return box;
 }

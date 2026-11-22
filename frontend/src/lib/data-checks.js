@@ -1,7 +1,6 @@
 // Checks of the master data for the Prüfen page, independent of the plan: people who cannot be planned, areas
 // without demand, demand nobody can be planned for, a usual distribution that does not fit. Pure, no DOM.
-import { WEEKDAY_SHORT, dayCode, monthDates } from './dates.js';
-import { windowOverlapsShift } from './functions-model.js';
+import { WEEKDAY_SHORT, addDays, dayCode, epochMinutes, monthDates, parseTime, shiftInterval } from './dates.js';
 import { personName } from './grid-model.js';
 import { restrictionAppliesOn, shiftCategory } from './restrictions.js';
 import { t } from './texts.js';
@@ -56,16 +55,26 @@ function ruleDates(rule, areaRules, dates, holidays) {
   });
 }
 
+/** Days relative to the rule's date (-1, 0, 1) on which a start of the shift overlaps the rule's time on that date. */
+function startDays(rule, shift) {
+  const s = shiftInterval('2000-01-02', shift);
+  const from = epochMinutes('2000-01-02', parseTime(rule.from));
+  let to = epochMinutes('2000-01-02', parseTime(rule.to));
+  if (to <= from) to += 1440;
+  return [-1, 0, 1].filter((k) => s.start + k * 1440 < to && s.end + k * 1440 > from);
+}
+
 /**
- * Someone could be planned for the rule on the date: employed and not excluded, the area, not absent, and a shift of
- * the area overlapping the rule's time that no NEVER restriction excludes that day (on request does not exclude;
- * family rules are soft and do not count).
+ * Someone could be planned for the rule on the date: a shift of the area overlapping the rule's time, and a person
+ * with the area who on the day that shift starts (the day before for a night shift into the morning) is employed, not
+ * excluded, not absent and not barred from the shift by a NEVER restriction (on request does not bar; family rules
+ * are soft and do not count).
  */
 function someoneFor(dataset, rule, date, absent, rules) {
-  const shifts = dataset.shifts.filter((s) => s.areaId === rule.areaId && windowOverlapsShift(rule, s));
-  return shifts.length > 0 && dataset.people.some((p) => (!p.entryDate || p.entryDate <= date) && (!p.exitDate || p.exitDate >= date)
-    && (!p.excludedFrom || p.excludedFrom > date) && (p.areaIds ?? []).includes(rule.areaId) && !absent.has(`${p.id}|${date}`)
-    && shifts.some((s) => !(dataset.restrictions ?? []).some((r) => r.personId === p.id && r.kind === 'NEVER' && restrictionAppliesOn(r, date)
+  const starts = dataset.shifts.filter((s) => s.areaId === rule.areaId).flatMap((s) => startDays(rule, s).map((k) => [s, addDays(date, k)]));
+  return dataset.people.some((p) => (p.areaIds ?? []).includes(rule.areaId) && starts.some(([s, day]) => (!p.entryDate || p.entryDate <= day)
+    && (!p.exitDate || p.exitDate >= day) && (!p.excludedFrom || p.excludedFrom > day) && !absent.has(`${p.id}|${day}`)
+    && !(dataset.restrictions ?? []).some((r) => r.personId === p.id && r.kind === 'NEVER' && restrictionAppliesOn(r, day)
       && (r.shiftId ? r.shiftId === s.id : r.category === shiftCategory(s, rules)))));
 }
 

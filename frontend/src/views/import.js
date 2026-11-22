@@ -192,6 +192,7 @@ function loadCorrections(ctx, current, { button, errorAlert }) {
         if (!confirm(t('data.corrections.removeConfirm'))) return;
         if (await guarded(() => api.removeCorrections()) === undefined) return;
         toast(t('data.corrections.removed'));
+        document.dispatchEvent(new Event('corrections-changed'));
         out.replaceChildren();
         await showLoaded();
       }))) : '');
@@ -205,20 +206,21 @@ function loadCorrections(ctx, current, { button, errorAlert }) {
       button(t('data.corrections.load'), async () => {
         const file = input.files[0];
         if (!file) return guarded(() => Promise.reject(new Error(t('import.pickFile'))));
-        const text = await file.text();
+        // the bytes as they are: checked and read on the server as the export program reads the file
+        const bytes = new Uint8Array(await file.arrayBuffer());
         let summary;
         try {
-          summary = await api.checkCorrections(text);
+          summary = await api.checkCorrections(bytes);
         } catch (e) {
           out.replaceChildren(errorAlert(e));
           return undefined;
         }
-        const waiting = Boolean(loadedBox.querySelector('#corrections-loaded'));
+        const waiting = Boolean((await api.correctionsState().catch(() => null))?.loaded);
         out.replaceChildren(h('div.alert', { id: 'corrections-confirm' }, correctionsSummary(summary, names),
           h('div.toolbar', {},
             button(waiting ? t('data.corrections.confirmReplace') : t('data.corrections.confirm'), async () => {
               try {
-                await api.loadCorrections(text);
+                await api.loadCorrections(bytes);
               } catch (e) {
                 out.replaceChildren(errorAlert(e));
                 return;
@@ -226,6 +228,7 @@ function loadCorrections(ctx, current, { button, errorAlert }) {
               out.replaceChildren(h('div.alert', {}, h('p', {}, t('data.corrections.loadedDone'))));
               input.value = '';
               await showLoaded();
+              document.dispatchEvent(new Event('corrections-changed'));
             }, true),
             h('button.btn.btn-secondary', { type: 'button', onclick: () => out.replaceChildren() }, t('data.corrections.cancel')))));
         return undefined;

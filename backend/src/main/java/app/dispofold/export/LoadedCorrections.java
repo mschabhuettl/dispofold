@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -93,7 +94,8 @@ public final class LoadedCorrections {
     public static ObjectNode parse(String body, ObjectMapper mapper) {
         JsonNode file;
         try {
-            file = mapper.readTree(body == null ? "" : body);
+            // nothing may follow the object, as for the export program
+            file = mapper.reader().with(DeserializationFeature.FAIL_ON_TRAILING_TOKENS).readTree(body == null ? "" : body);
         } catch (JsonProcessingException e) {
             file = null;
         }
@@ -240,7 +242,11 @@ public final class LoadedCorrections {
                                 ? reason(field, entry, areas, shifts)
                         : "unknownField";
                 if (reason == null) {
-                    if (!field.equals(Corrections.EXCLUDE) || entry.get(field).booleanValue()) {
+                    // counted where it can apply: a person id of the client's form or a person here, and for a
+                    // person excluded only the exclusion
+                    boolean excluded = version >= 2 && entry.path(Corrections.EXCLUDE).booleanValue();
+                    if ((own || ids.contains(key)) && (!excluded || field.equals(Corrections.EXCLUDE))
+                            && (!field.equals(Corrections.EXCLUDE) || entry.get(field).booleanValue())) {
                         fields.merge(field, 1, Integer::sum);
                     }
                 } else {
