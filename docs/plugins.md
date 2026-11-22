@@ -128,6 +128,8 @@ export default {
 | Einstellungen | unter dem Eintrag der Erweiterung in **Einstellungen → Erweiterungen** | ebenda |
 | Import | eigener Abschnitt auf der Seite **Daten**; das Formular liefert die Anfrage, der Rest ist der Import des Kerns | ebenda |
 | Ordner | `folderPicker(ctx, { id, files })`: freigegebene Ordner und darunter, am eigenen Rechner mit Ordnerdialog | ebenda, auch im Desktop-Modus |
+| Import auf eigener Seite | `importFlow(ctx, '<id>', () => anfrage, { result, current })`: derselbe Import wie auf **Daten** (Vorschau, „Änderungen behalten“, Konflikte, Zusammenfassung, Fehler); gibt das Element für die Seite zurück | `frontend/test/import-flow.test.js`, `frontend/scripts/check-data.mjs` und `check-plugins.mjs` für die Seite **Daten** |
+| Tabellen | `sortableTable(spalten, { label, sort })`: `table.data`, die sich per Klick oder Tastatur auf die Spaltenköpfe sortiert, Zahlen als Zahlen, Text in deutscher Reihenfolge; `searchTerms` und `matchesTerms` für eine Suche aus mehreren Wörtern | `frontend/test/table.test.js` |
 | Hilfeseiten | `docs/<seite>.md`, in der Anleitung als `plugin-<id>-<seite>`, nach den Seiten des Kerns | ebenda; die Website im CI-Job `docs` |
 | Texte und Styles | Texte unter `plugin.<id>.`, keine eigenen Styles | `frontend/test/plugins.test.js`, `scripts/build.mjs` |
 

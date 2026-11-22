@@ -2,8 +2,8 @@
 // export, demo data, plan import, finalize month.
 import { monthLabel } from '../lib/dates.js';
 import { guarded, h, saveBlob, toast } from '../lib/dom.js';
-import { messageText } from '../lib/codes.js';
-import { CORRECTIONS_FILE, anonymizedFiles, conflictText, correctionsBlob, noteText, shortNames } from '../lib/data-files.js';
+import { CORRECTIONS_FILE, anonymizedFiles, correctionsBlob, noteText, shortNames } from '../lib/data-files.js';
+import { importFlow, importSteps } from '../lib/import-flow.js';
 import { info } from '../lib/info.js';
 import { t } from '../lib/texts.js';
 import { EXPORT_FORMATS, closeMonth, exportPlanFile } from './plan-output.js';
@@ -16,70 +16,7 @@ export async function render(root, ctx) {
   const closed = state?.plan?.status === 'CLOSED';
   const current = canEdit ? await ctx.dataset().catch(() => null) : null;
 
-  const list = (items) => h('ul', {}, items.map((x) => h('li', {}, x)));
-  const errorAlert = (e) => h('div.alert.alert-error', { role: 'alert' }, h('strong', {}, e.message),
-    e.body?.errors?.length ? list(e.body.errors.map(messageText)) : null,
-    e.body?.warnings?.length ? [h('p', {}, h('strong', {}, t('import.warnings', { count: e.body.warnings.length }))),
-      list(e.body.warnings.map(messageText))] : null);
-
-  /**
-   * Runs an import (load(replace) calls the API). A rejected import lists all its errors ({ code, params }), not
-   * only the first. Master data changed in Dispofold since the last import are only replaced after asking; an
-   * uploaded dataset or a plugin's import can keep them instead (keepRun).
-   */
-  const runImport = async (load, replace = false, keepRun = null) => {
-    try {
-      return await load(replace);
-    } catch (e) {
-      if (e.code === 'import.masterChanged') {
-        result.replaceChildren(h('div.alert', { role: 'alert' }, h('strong', {}, t('import.masterChanged.title')), ' ', t('import.masterChanged.text'),
-          h('div.toolbar', {}, button(t('import.datasetExport'), exportDataset),
-            keepRun && button(t('data.import.keepRun'), keepRun, true),
-            button(t('import.masterChanged.replace'), async () => showSummary(await runImport(load, true)), !keepRun),
-            button(t('common.cancel'), async () => result.replaceChildren()))));
-        return undefined;
-      }
-      result.replaceChildren(errorAlert(e));
-      return undefined;
-    }
-  };
-  const exportDataset = async () => {
-    const file = await guarded(() => api.exportDataset());
-    if (file) saveBlob(file.blob, file.filename);
-  };
-
-  /**
-   * Dry run of an import keeping the changes: what is carried over, conflicts and what is lost, then import. A plugin's
-   * import source (via) has its own calls and no dataset here.
-   */
-  const previewKeep = async (data, via = { preview: () => api.importPreview(data), run: () => api.importDataset(data, false, true) }) => {
-    let preview;
-    try {
-      preview = await via.preview();
-    } catch (e) {
-      result.replaceChildren(errorAlert(e));
-      return;
-    }
-    const names = shortNames(current, data);
-    result.replaceChildren(h('div.alert', { id: 'import-preview' }, h('strong', {}, t('data.preview.title')),
-      h('p', {}, preview.changed ? t('data.preview.kept', { count: preview.kept }) : t('data.preview.none')),
-      preview.conflicts.length ? [h('p', {}, t('data.preview.conflicts')), list(preview.conflicts.map((c) => conflictText(c, names)))] : null,
-      preview.notes.length ? [h('p', {}, t('data.preview.notes')), list(preview.notes.map((n) => noteText(n, names)))] : null,
-      h('div.toolbar', {},
-        button(t('data.preview.import'), async () => showSummary(await runImport(via.run)), true),
-        button(t('common.cancel'), async () => result.replaceChildren()))));
-  };
-
-  const showSummary = (s) => {
-    if (!s) return;
-    ctx.invalidateDataset();
-
-    result.replaceChildren(h('div.alert', {},
-      h('strong', {}, t('import.summaryTitle', { source: s.source })), t('import.summary', { people: s.people, areas: s.areas, shifts: s.shifts, months: s.months.join(', ') || '–' }),
-      s.kept ? h('p', {}, t('data.import.kept', { count: s.kept })) : null,
-      s.warnings?.length ? [h('p', {}, h('strong', {}, t('import.warnings', { count: s.warnings.length }))), h('ul', {}, s.warnings.map((w) => h('li', {}, messageText(w))))] : null,
-      s.months?.length && !s.months.includes(month) ? h('p', {}, button(t('import.switchMonth', { month: monthLabel(s.months[0]) }), () => ctx.setMonth(s.months[0]))) : null));
-  };
+  const { button, errorAlert, list, exportDataset, runImport, previewKeep, showSummary } = importSteps(ctx, result, () => current);
 
   const readJson = (input) => new Promise((resolve, reject) => {
     const file = input.files[0];
@@ -92,16 +29,6 @@ export async function render(root, ctx) {
   const datasetFile = h('input', { id: 'dataset-file', type: 'file', accept: '.json,application/json' });
   const keep = h('input', { id: 'dataset-keep', type: 'checkbox', checked: Boolean(current?.changedSinceImport) });
   const planFile = h('input', { id: 'plan-file', type: 'file', accept: '.json,application/json' });
-  const busy = (btn, fn) => async () => {
-    btn.disabled = true;
-    try { await fn(); } finally { btn.disabled = false; }
-  };
-  const button = (label, fn, primary = false, disabled = false) => {
-    const b = h(`button.btn.${primary ? 'btn-primary' : 'btn-secondary'}`, { type: 'button', disabled }, label);
-    b.addEventListener('click', busy(b, fn));
-    return b;
-  };
-
   root.append(h('h1', {}, t('nav.import')), result);
 
   if (canEdit) {
@@ -129,21 +56,11 @@ export async function render(root, ctx) {
       ...ctx.plugins.filter((p) => p.importSource).map((p) => {
         const form = h('div', {});
         const request = p.importSource.render(form, ctx);
-        const keepPlugin = h('input', { id: `plugin-keep-${p.id}`, type: 'checkbox', checked: Boolean(current?.changedSinceImport) });
-        const via = (req) => ({ preview: () => api.pluginImportPreview(p.id, req), run: () => api.pluginImport(p.id, req, false, true) });
         return h('section.section', { 'aria-labelledby': `h-plugin-${p.id}` },
           h('h2', { id: `h-plugin-${p.id}` }, t(p.importSource.label)),
           h('p.muted', {}, t('data.plugin.help')),
           form,
-          h('div.toolbar', {},
-            h('label.check-inline', {}, keepPlugin, t('data.import.keep')), info(t('help.import.keep'), t('data.import.keep')),
-            button(t('data.plugin.run'), async () => {
-              const req = request();
-              if (!req) return guarded(() => Promise.reject(new Error(t('data.plugin.incomplete'))));
-              if (keepPlugin.checked) return previewKeep(null, via(req));
-              if (!confirm(t('import.dataset.confirm'))) return undefined;
-              return showSummary(await runImport((replace) => api.pluginImport(p.id, req, replace), false, () => previewKeep(null, via(req))));
-            }, true)));
+          importFlow(ctx, p.id, request, { result, current }));
       }),
     );
   }
