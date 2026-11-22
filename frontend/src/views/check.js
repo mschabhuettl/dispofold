@@ -23,7 +23,7 @@ const fold = (open, heading, list) => h('details.check-group', { open }, h('summ
 
 export async function render(root, ctx) {
   const { api, month } = ctx;
-  const [dataset, state, rules] = await Promise.all([ctx.dataset(), api.planState(month), api.rules()]);
+  const [dataset, state, rules, period] = await Promise.all([ctx.dataset(), api.planState(month), api.rules(), api.period(month).catch(() => null)]);
   const planned = state.plan.assignments.length > 0;
   const [analysis, problems] = planned
     ? await Promise.all([api.analysis(month).catch(() => null), api.problems(month).catch(() => null)])
@@ -36,7 +36,7 @@ export async function render(root, ctx) {
     const ask = cellsEditable({ canEdit: ctx.canEdit, solving: state.solving, closed: state.plan.status === 'CLOSED' });
     root.append(gapSection(ctx, dataset, analysis, ask));
   }
-  root.append(dataSection(dataset, month, rules));
+  root.append(dataSection(dataset, month, rules, period?.absences ?? []));
 }
 
 /** Rule violations, overstaffing and quality, with a grouping and three filters. */
@@ -136,9 +136,9 @@ function gapItem(ctx, dataset, areaName, g, ask) {
 }
 
 /** Findings on the master data with what to do and where. */
-function dataSection(dataset, month, rules) {
+function dataSection(dataset, month, rules, absences) {
   const section = h('section.check-section', { id: 'check-data' }, h('h2', {}, t('check.data.title'), info(t('help.check.data'), t('check.data.title'))), h('p.muted', {}, t('check.data.help')));
-  const findings = dataChecks(dataset, { month, rules });
+  const findings = dataChecks(dataset, { month, rules, absences });
   if (!findings.length) return append(section, [h('p', {}, t('check.data.none'))]);
   const people = new Map(dataset.people.map((p) => [p.id, p]));
   return append(section, [h('ul.check-list', {}, findings.map((f) => h('li', { 'data-kind': f.kind, 'data-severity': f.severity },
@@ -146,6 +146,8 @@ function dataSection(dataset, month, rules) {
     h('span', {}, f.text),
     h('span.muted', {}, f.todo),
     f.personId && people.has(f.personId) && h('a', { href: `#/person/${encodeURIComponent(f.personId)}` }, personName(people.get(f.personId))),
-    f.link === 'rules' ? h('a', { href: '#/regeln' }, t('check.data.toRules')) : h('a', { href: '#/stammdaten' }, t('check.data.toMasterdata')))))]);
+    f.link === 'rules' ? h('a', { href: '#/regeln' }, t('check.data.toRules'))
+      : f.demandIndex != null ? h('a', { href: `#/stammdaten/bedarf/${f.demandIndex}` }, t('check.data.toDemand'))
+        : h('a', { href: '#/stammdaten' }, t('check.data.toMasterdata')))))]);
 }
 

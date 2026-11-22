@@ -1,9 +1,10 @@
 // Playwright check of the Prüfen page and the fairness measure. On the demo data with some duties freed, one duty
 // too many and some master data changed, planners see the problem list (grouped and filtered), the open demand by
 // day with who could be asked, links to the Zeitachse on the area and day of an entry, and the master data checks
-// with what to do and a link; viewers have no Prüfen (its address shows the Dienstplan) and no problem list from the
-// API. The fairness page shows planners the loads the fairness rules compare, with the measure in one sentence and
-// without the old 40 h toggle; viewers get no loads.
+// with what to do and a link (demand nobody can be planned for to its marked row in Stammdaten); viewers have no
+// Prüfen (its address shows the Dienstplan) and no problem list from the API. The fairness page shows planners the
+// loads the fairness rules compare, with the measure in one sentence and without the old 40 h toggle; viewers get no
+// loads.
 // Demo data of the dev server (mock API).
 //   npm run build && node scripts/check-problems.mjs     (Chromium via `npx playwright install chromium`)
 import { spawn } from 'node:child_process';
@@ -50,10 +51,13 @@ try {
     badMix.shiftMix = { categories: { DAY: 0.5, LATE: 0.3 }, areas: {} };
     const area = dataset.areas.at(-1).id;
     dataset.demand = dataset.demand.filter((d) => d.areaId !== area);
+    // an area nobody has, with demand on the last day: nobody can be planned for it
+    dataset.areas.push({ id: 'NIEMAND', name: 'Niemand' });
+    dataset.demand.push({ areaId: 'NIEMAND', days: [], date: `${m}-31`, from: '07:00', to: '13:00', min: 1, max: null });
     dataset.periods = [await (await fetch(`/api/periods/${m}`)).json()];
     await fetch('/api/import/dataset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...dataset, version: 2 }) });
     await fetch(`/api/plans/${m}/solve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"seed":1,"timeLimitSeconds":1}' });
-    return { noArea: noArea.id, badMix: badMix.id, area };
+    return { noArea: noArea.id, badMix: badMix.id, area, demandIndex: dataset.demand.length - 1 };
   }, month);
   await page.waitForTimeout(1500);
   // Plan: two duties of an area with a maximum freed (gaps), one more duty there than allowed (overstaffing).
@@ -138,7 +142,7 @@ try {
   await page.locator('#check-data').waitFor();
   const data = page.locator('#check-data');
   const kinds = await data.locator('.check-list > li').evaluateAll((li) => li.map((x) => x.dataset.kind));
-  for (const kind of ['noArea', 'mixSum', 'areaNoDemand']) check(`master data check ${kind}`, kinds.includes(kind), kinds.join());
+  for (const kind of ['noArea', 'mixSum', 'areaNoDemand', 'demandNoPeople']) check(`master data check ${kind}`, kinds.includes(kind), kinds.join());
   const noArea = data.locator('li[data-kind=noArea]').first();
   check('a finding says what to do', ((await noArea.textContent()) ?? '').includes('Bereich zuordnen'));
   check('a finding links to the person and to Stammdaten', (await noArea.locator(`a[href="#/person/${changed.noArea}"]`).count()) === 1
@@ -146,6 +150,24 @@ try {
   await noArea.locator(`a[href="#/person/${changed.noArea}"]`).click();
   await page.waitForURL((u) => u.hash === `#/person/${changed.noArea}`);
   check('the link opens the person page', true);
+  // demand nobody can be planned for links to its row in Stammdaten, which is marked
+  await page.goto(`${base}/#/pruefen`);
+  const demand = page.locator('#check-data li[data-kind=demandNoPeople]');
+  await demand.waitFor();
+  const demandText = (await demand.textContent()) ?? '';
+  check('demand nobody can be planned for names area, day and time', demandText.includes('Bereich Niemand, 31.1. 07:00-13:00: an 1 Tag kann niemand eingeplant werden'), demandText);
+  const demandLink = demand.locator(`a[href="#/stammdaten/bedarf/${changed.demandIndex}"]`);
+  check('the finding links to its demand row', (await demandLink.count()) === 1);
+  await demandLink.click();
+  await page.waitForURL((u) => u.hash === `#/stammdaten/bedarf/${changed.demandIndex}`);
+  const row = page.locator('[data-table="demand"] tr.row-target');
+  await row.waitFor();
+  const rowText = (await row.textContent()) ?? '';
+  check('the demand row is marked and in view', (await row.getAttribute('data-row')) === String(changed.demandIndex)
+    && rowText.includes('Niemand') && rowText.includes('07:00') && await row.evaluate((tr) => {
+      const r = tr.getBoundingClientRect();
+      return r.top >= 0 && r.bottom <= innerHeight;
+    }), rowText);
 
   // Fairness in the rules' own measure
   await page.goto(`${base}/#/fairness`);

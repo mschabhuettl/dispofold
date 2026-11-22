@@ -1,6 +1,7 @@
 // Stammdaten: areas, absence types, shifts, demand and holidays (people have their own pages, views/person.js), each
 // table with a filter field. Planners edit them here (one inline form at a time, every change with the revision it
-// was made on, see docs/api.md); viewers see read-only tables.
+// was made on, see docs/api.md); viewers see read-only tables. #/stammdaten/bedarf/<index> scrolls to a demand row
+// and marks it (the link of the Prüfen page).
 import { h, toast } from '../lib/dom.js';
 import { tintStyle } from '../lib/colors.js';
 import { WEEKDAY_SHORT } from '../lib/dates.js';
@@ -17,7 +18,7 @@ const TITLES = { areas: t('masterdata.section.areas'), absenceTypes: t('masterda
 const inline = { fontWeight: 400, marginRight: '.6rem' };
 const bare = { border: 0, padding: 0, margin: 0 };
 
-export async function render(root, ctx) {
+export async function render(root, ctx, params = []) {
   const { api, canEdit } = ctx;
   let dataset = await ctx.dataset();
   const filters = {}; // filter text per kind, kept when the page is drawn again
@@ -93,7 +94,7 @@ export async function render(root, ctx) {
     };
     const table = h('table.data', { 'data-table': kind },
       h('thead', {}, h('tr', {}, cols.map(([label]) => h('th', {}, label)), canEdit && h('th', {}, ''))),
-      h('tbody', {}, rows.map(({ item, key }) => h('tr', {}, cols.map(([, cell, cls]) => h(cls ? `td.${cls}` : 'td', {}, cell(item))), canEdit && actions(item, key)))));
+      h('tbody', {}, rows.map(({ item, key }) => h('tr', { 'data-row': String(key) }, cols.map(([, cell, cls]) => h(cls ? `td.${cls}` : 'td', {}, cell(item))), canEdit && actions(item, key)))));
     const none = h('p.muted', { hidden: true }, t('masterdata.noMatch'));
     const filterId = `filter-${kind}`;
     const filter = h('input', { id: filterId, type: 'search', 'data-filter': kind, value: filters[kind] ?? '', autocomplete: 'off',
@@ -244,6 +245,12 @@ export async function render(root, ctx) {
   }
 
   draw();
+  if (params[0] === 'bedarf') {
+    const row = root.querySelector(`[data-table="demand"] tr[data-row="${CSS.escape(params[1] ?? '')}"]`);
+    row?.classList.add('row-target');
+    // the view is placed on the page after it rendered
+    if (row) setTimeout(() => row.scrollIntoView({ block: 'center' }));
+  }
 }
 
 /** The alert for a rejected change: the message (and hint) with the lists of errors and warnings the server sent. */

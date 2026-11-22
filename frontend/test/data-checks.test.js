@@ -134,3 +134,93 @@ test('never nights as the solver: a family rule on every day or NEVER for every 
   const never = Object.fromEntries(d.people.map((p) => [p.id, neverNightShifts(d, p, month)]));
   assert.deepEqual(never, { OK: false, FAM: true, FAMPART: false, CAT: true, SHIFT: true, WEEK: false, DAYONLY: true });
 });
+
+// Demand nobody can be planned for. March 2030: the 1st is a Friday, Mondays are the 4th, 11th, 18th and 25th.
+const demandBase = () => ({
+  areas: [{ id: 'A', name: 'Nord' }],
+  shifts: [{ id: 'A-E', areaId: 'A', code: 'A1', category: 'EARLY', start: '06:00', end: '14:00' },
+    { id: 'A-N', areaId: 'A', code: 'A2', category: 'NIGHT', start: '20:00', end: '04:00' }],
+  demand: [{ areaId: 'A', days: ['MON'], from: '07:00', to: '13:00', min: 1 }],
+  holidays: [],
+  people: [person('P1', ['A']), person('P2', ['A'])],
+  restrictions: [],
+});
+const demandFindings = (d, absences = []) => dataChecks(d, { month, absences }).filter((f) => f.kind === 'demandNoPeople');
+
+test('demand nobody can be planned for: nobody in the area', () => {
+  const d = demandBase();
+  d.people = [person('P1', ['B'])];
+  const [f, ...rest] = demandFindings(d);
+  assert.equal(rest.length, 0);
+  assert.equal(f.severity, 'warning');
+  assert.equal(f.demandIndex, 0);
+  assert.equal(f.areaId, 'A');
+  assert.equal(f.text, 'Bereich Nord, Mo 07:00-13:00: an 4 Tagen kann niemand eingeplant werden (ab 4.3.).');
+  assert.ok(f.todo.length > 0);
+});
+
+test('demand nobody can be planned for: everybody excluded, not employed or absent on the dates', () => {
+  const d = demandBase();
+  d.people = [person('P1', ['A'], { excludedFrom: '2030-03-18' }), person('P2', ['A'], { exitDate: '2030-03-10' })];
+  assert.match(demandFindings(d)[0].text, /an 2 Tagen .* \(ab 18\.3\.\)/);
+  d.people = [person('P1', ['A']), person('P2', ['A'])];
+  const absences = ['P1', 'P2'].map((personId) => ({ personId, date: '2030-03-11', typeCode: 'U' }));
+  assert.match(demandFindings(d, absences)[0].text, /an 1 Tag .* \(ab 11\.3\.\)/);
+  // only one of them absent: the other can be planned
+  assert.deepEqual(demandFindings(d, absences.slice(0, 1)), []);
+});
+
+test('demand nobody can be planned for: NEVER for every shift of the time, by shift or by category', () => {
+  const d = demandBase();
+  d.restrictions = [{ personId: 'P1', shiftId: 'A-E', weekday: 0, kind: 'NEVER' },
+    { personId: 'P2', category: 'EARLY', weekday: 1, kind: 'NEVER' }];
+  assert.equal(demandFindings(d).length, 1);
+  // only on another weekday: P2 can be planned on Mondays
+  d.restrictions[1].weekday = 2;
+  assert.deepEqual(demandFindings(d), []);
+  // only on request is no exclusion
+  d.restrictions[1] = { personId: 'P2', shiftId: 'A-E', weekday: 0, kind: 'ON_REQUEST' };
+  assert.deepEqual(demandFindings(d), []);
+});
+
+test('demand nobody can be planned for: only shifts overlapping the time count', () => {
+  const d = demandBase();
+  // the night shift does not overlap 07:00-13:00, the early shift does
+  d.restrictions = [{ personId: 'P1', shiftId: 'A-E', weekday: 0, kind: 'NEVER' }, { personId: 'P2', shiftId: 'A-E', weekday: 0, kind: 'NEVER' }];
+  assert.equal(demandFindings(d).length, 1);
+  d.restrictions = [{ personId: 'P1', shiftId: 'A-N', weekday: 0, kind: 'NEVER' }, { personId: 'P2', shiftId: 'A-N', weekday: 0, kind: 'NEVER' }];
+  assert.deepEqual(demandFindings(d), []);
+});
+
+test('demand nobody can be planned for: one person available, min 0, no shift of the time', () => {
+  const d = demandBase();
+  d.people.push(person('B1', ['B']));
+  assert.deepEqual(demandFindings(d), []);
+  d.people = [];
+  d.demand[0].min = 0;
+  assert.deepEqual(demandFindings(d), []);
+  // a window no shift of the area overlaps: nobody can be planned either
+  const e = demandBase();
+  e.demand[0] = { areaId: 'A', days: ['MON'], from: '15:00', to: '19:00', min: 1 };
+  assert.equal(demandFindings(e).length, 1);
+});
+
+test('demand nobody can be planned for: holidays and dated rules as the solver picks the rules of an area', () => {
+  const d = demandBase();
+  d.holidays = [{ date: '2030-03-11', name: 'Feiertag' }];
+  // a HOL rule applies on the holiday only and replaces the Monday rule there
+  d.demand.push({ areaId: 'A', days: ['HOL'], from: '07:00', to: '13:00', min: 1 });
+  d.restrictions = [{ personId: 'P1', shiftId: 'A-E', weekday: 0, kind: 'NEVER', validFrom: '2030-03-11', validTo: '2030-03-11' },
+    { personId: 'P2', shiftId: 'A-E', weekday: 0, kind: 'NEVER', validFrom: '2030-03-11', validTo: '2030-03-11' }];
+  const findings = demandFindings(d);
+  assert.deepEqual(findings.map((f) => f.demandIndex), [1]);
+  assert.equal(findings[0].text, 'Bereich Nord, Feiertag 07:00-13:00: an 1 Tag kann niemand eingeplant werden (ab 11.3.).');
+  // without a HOL rule of the area the Monday rule applies on the holiday
+  d.demand.pop();
+  assert.deepEqual(demandFindings(d).map((f) => f.demandIndex), [0]);
+  // a rule for the date replaces the others of the area on that date
+  d.demand.push({ areaId: 'A', date: '2030-03-11', from: '07:00', to: '13:00', min: 0 });
+  assert.deepEqual(demandFindings(d), []);
+  d.demand[1].min = 2;
+  assert.equal(demandFindings(d)[0].text, 'Bereich Nord, 11.3. 07:00-13:00: an 1 Tag kann niemand eingeplant werden (ab 11.3.).');
+});

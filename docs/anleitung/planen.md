@@ -156,7 +156,8 @@ oder die Lücke bewusst offen lassen und den Monat mit **Trotzdem abschließen**
 ![Ein Eintrag der Prüfung der Stammdaten](../screenshots/pruefen-stammdaten.png)
 
 Unabhängig vom Plan, was in den Stammdaten fehlt oder nicht zusammenpasst, mit dem Vermerk **Hinweis**. Jeder
-Eintrag sagt, was zu tun ist, und verweist auf die Person, die **Stammdaten** oder die **Regeln**:
+Eintrag sagt, was zu tun ist, und verweist auf die Person, die **Stammdaten** (beim Bedarf auf seine Zeile) oder die
+**Regeln**:
 
 | Hinweis | Was tun |
 |---|---|
@@ -164,6 +165,7 @@ Eintrag sagt, was zu tun ist, und verweist auf die Person, die **Stammdaten** od
 | „In ihrem Bereich gibt es keine Schicht.“ | für den Bereich Schichten anlegen oder der Person einen anderen Bereich zuordnen |
 | „Einschränkungen „Nie“ schließen jede Schicht ihrer Bereiche aus.“ | die Einschränkungen der Person prüfen |
 | „Bereich … hat keinen Bedarf.“ | Bedarf für den Bereich anlegen, sonst zählt jeder Dienst dort als Überbesetzung |
+| „Bereich …, Mo 07:00-15:00: an … Tagen kann niemand eingeplant werden (ab …).“ | für eine Bedarfszeile gibt es an diesen Tagen niemanden, der beschäftigt ist, den Bereich hat, nicht abwesend ist und eine Schicht des Bereichs zu dieser Zeit machen darf („Nur auf Anfrage“ zählt als möglich): Personen den Bereich zuordnen, Einschränkungen „Nie“ und Abwesenheiten prüfen oder den Bedarf ändern. Der Verweis **Zum Bedarf** zeigt die Zeile in den Stammdaten |
 | „Die gewohnte Verteilung … ergibt … statt 100 %.“ | die Anteile so ändern, dass sie 100 % ergeben |
 | „Die gewohnte Verteilung nennt den Bereich …, den die Person nicht hat.“ | den Anteil entfernen oder den Bereich zuordnen |
 | „Der Nachtanteil der gewohnten Verteilung zählt nicht, …“ | nichts, wenn das so gewollt ist (Einstellung **Nachtdienste** oder nie Nacht) |

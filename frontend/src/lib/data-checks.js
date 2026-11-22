@@ -1,8 +1,9 @@
 // Checks of the master data for the Prüfen page, independent of the plan: people who cannot be planned, areas
-// without demand, a usual distribution that does not fit. Pure, no DOM.
-import { monthDates } from './dates.js';
+// without demand, demand nobody can be planned for, a usual distribution that does not fit. Pure, no DOM.
+import { WEEKDAY_SHORT, dayCode, monthDates } from './dates.js';
+import { windowOverlapsShift } from './functions-model.js';
 import { personName } from './grid-model.js';
-import { shiftCategory } from './restrictions.js';
+import { restrictionAppliesOn, shiftCategory } from './restrictions.js';
 import { t } from './texts.js';
 
 const CATEGORY = { EARLY: t('masterdata.category.early'), DAY: t('masterdata.category.day'), LATE: t('masterdata.category.late'),
@@ -41,6 +42,38 @@ const noNightsRule = (p) => (p.familyRules ?? []).some((f) => f.noNights && [1, 
 export const neverNightShifts = (dataset, p, month, rules = null) => noNightsRule(p) || !plannableShifts({ ...dataset,
   restrictions: (dataset.restrictions ?? []).filter((r) => Number(r.weekday ?? 0) === 0) }, p, month, rules).some((s) => shiftCategory(s, rules) === 'NIGHT');
 
+/**
+ * Dates of the month a demand rule applies to, as the backend (RosterBuilder.rulesFor) picks the rules of an area per
+ * date: rules with that date replace all others; on a holiday the HOL rules replace the weekday rules if the area has
+ * any; else the rules of the weekday.
+ */
+function ruleDates(rule, areaRules, dates, holidays) {
+  const hasHol = areaRules.some((r) => !r.date && (r.days ?? []).includes('HOL'));
+  return dates.filter((date) => {
+    if (areaRules.some((r) => r.date === date)) return rule.date === date;
+    if (rule.date) return false;
+    return (rule.days ?? []).includes(holidays.has(date) && hasHol ? 'HOL' : dayCode(date));
+  });
+}
+
+/**
+ * Someone could be planned for the rule on the date: employed and not excluded, the area, not absent, and a shift of
+ * the area overlapping the rule's time that no NEVER restriction excludes that day (on request does not exclude;
+ * family rules are soft and do not count).
+ */
+function someoneFor(dataset, rule, date, absent, rules) {
+  const shifts = dataset.shifts.filter((s) => s.areaId === rule.areaId && windowOverlapsShift(rule, s));
+  return shifts.length > 0 && dataset.people.some((p) => (!p.entryDate || p.entryDate <= date) && (!p.exitDate || p.exitDate >= date)
+    && (!p.excludedFrom || p.excludedFrom > date) && (p.areaIds ?? []).includes(rule.areaId) && !absent.has(`${p.id}|${date}`)
+    && shifts.some((s) => !(dataset.restrictions ?? []).some((r) => r.personId === p.id && r.kind === 'NEVER' && restrictionAppliesOn(r, date)
+      && (r.shiftId ? r.shiftId === s.id : r.category === shiftCategory(s, rules)))));
+}
+
+const DAY_LABEL = { MON: WEEKDAY_SHORT[0], TUE: WEEKDAY_SHORT[1], WED: WEEKDAY_SHORT[2], THU: WEEKDAY_SHORT[3], FRI: WEEKDAY_SHORT[4],
+  SAT: WEEKDAY_SHORT[5], SUN: WEEKDAY_SHORT[6], HOL: t('masterdata.holiday') };
+const shortDate = (iso) => `${Number(iso.slice(8, 10))}.${Number(iso.slice(5, 7))}.`;
+const hhmm = (time) => String(time ?? '').slice(0, 5);
+
 /** A group of shares (categories or areas) that is set and does not sum to 1, or has a share outside 0 to 1. */
 function badSum(map) {
   const values = Object.values(map ?? {});
@@ -50,17 +83,18 @@ function badSum(map) {
 }
 
 /**
- * Findings on the master data for the month: [{ kind, severity: 'warning' | 'info', personId, areaId, text, todo,
- * link: 'masterdata' | 'rules' }]. People not employed in the month are left out. rules: the rules, for the night
- * setting (missing: HABIT) and the category of shifts without one in the dataset.
+ * Findings on the master data for the month: [{ kind, severity: 'warning' | 'info', personId, areaId, demandIndex, text,
+ * todo, link: 'masterdata' | 'rules' }]; demandIndex: the position of the demand rule in dataset.demand, else null.
+ * People not employed in the month are left out. rules: the rules, for the night setting (missing: HABIT) and the
+ * category of shifts without one in the dataset. absences: the absences of the month's period.
  */
-export function dataChecks(dataset, { month, rules = null }) {
+export function dataChecks(dataset, { month, rules = null, absences = [] }) {
   const nightDistribution = rules?.nightDistribution ?? 'HABIT';
   const out = [];
   const dates = monthDates(month);
   const areaName = new Map(dataset.areas.map((a) => [a.id, a.name ?? a.id]));
   const add = (kind, severity, ref, params, link = 'masterdata') => out.push({ kind, severity, personId: ref.personId ?? null,
-    areaId: ref.areaId ?? null, text: TEXT[kind](params), todo: TODO[kind](params), link });
+    areaId: ref.areaId ?? null, demandIndex: ref.demandIndex ?? null, text: TEXT[kind](params), todo: TODO[kind](params), link });
 
   for (const p of dataset.people) {
     if ((p.exitDate && p.exitDate < dates[0]) || (p.entryDate && p.entryDate > dates.at(-1)) || (p.excludedFrom && p.excludedFrom <= dates[0])) continue;
@@ -99,6 +133,18 @@ export function dataChecks(dataset, { month, rules = null }) {
   for (const a of dataset.areas) {
     if (!dataset.demand.some((d) => d.areaId === a.id && (d.min ?? 0) > 0)) add('areaNoDemand', 'warning', { areaId: a.id }, { area: a.name ?? a.id });
   }
+
+  const holidays = new Set((dataset.holidays ?? []).map((x) => x.date));
+  const absent = new Set(absences.map((x) => `${x.personId}|${x.date}`));
+  dataset.demand.forEach((rule, index) => {
+    if (!((rule.min ?? 0) > 0)) return;
+    const areaRules = dataset.demand.filter((r) => r.areaId === rule.areaId);
+    const none = ruleDates(rule, areaRules, dates, holidays).filter((date) => !someoneFor(dataset, rule, date, absent, rules));
+    if (!none.length) return;
+    const days = rule.date ? shortDate(rule.date) : (rule.days ?? []).map((d) => DAY_LABEL[d] ?? d).join(', ');
+    add('demandNoPeople', 'warning', { areaId: rule.areaId, demandIndex: index }, { area: areaName.get(rule.areaId) ?? rule.areaId, days,
+      time: `${hhmm(rule.from)}-${hhmm(rule.to)}`, count: none.length, first: shortDate(none[0]) });
+  });
   return out;
 }
 
@@ -107,6 +153,7 @@ const TEXT = {
   noShift: (p) => t('check.data.noShift', p),
   allNever: (p) => t('check.data.allNever', p),
   areaNoDemand: (p) => t('check.data.areaNoDemand', p),
+  demandNoPeople: (p) => t('check.data.demandNoPeople', p),
   mixSum: (p) => t('check.data.mixSum', p),
   mixArea: (p) => t('check.data.mixArea', p),
   mixCategory: (p) => t('check.data.mixCategory', p),
@@ -120,6 +167,7 @@ const TODO = {
   noShift: () => t('check.data.noShift.todo'),
   allNever: () => t('check.data.allNever.todo'),
   areaNoDemand: () => t('check.data.areaNoDemand.todo'),
+  demandNoPeople: () => t('check.data.demandNoPeople.todo'),
   mixSum: () => t('check.data.mixSum.todo'),
   mixArea: () => t('check.data.mixArea.todo'),
   mixCategory: () => t('check.data.mixCategory.todo'),
