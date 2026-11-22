@@ -6,7 +6,9 @@ import { CONSTRAINTS, DEFAULT_RULES, TEMPLATE, makeDataset } from './mock-data.m
 
 export function createMockApi({ dataset: initial = null, month = '2026-12', desktop = false, updateSource = '', askUpdates = false,
   release = '', plugins = [] } = {}) {
-  // plugins: [{ manifest, route(method, path, body, role) → { status, body } | null }], all off at the start
+  // plugins: [{ manifest, route(method, path, body, role, query) → { status, body } | null }], all off at the start;
+  // route.load(request, preview) → an error answer or null: the plugin's import source checks the request (without it:
+  // a JSON file in an allowed folder, { root, file })
   const extensions = new Map(plugins.map((p) => [p.manifest.id, { ...p, enabled: false }]));
   // folders plugins may read: one on the "server" while plugins are there, the desktop user's picks
   const roots = plugins.length && !desktop ? ['/srv/dispofold/quellen'] : [];
@@ -552,15 +554,18 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
       const id = a === 'plugins' ? b : c;
       const x = extensions.get(id);
       if (!x?.enabled) return err(404, 'Diese Erweiterung ist nicht eingeschaltet', 'plugin.unknown');
-      if (a === 'plugins') return x.route(method, parts.slice(2).join('/'), body, role) ?? err(404, `Unbekannter Pfad ${path}`);
+      if (a === 'plugins') return x.route(method, parts.slice(2).join('/'), body, role, query) ?? err(404, `Unbekannter Pfad ${path}`);
       if (role !== 'planner') return err(403, 'Nur für Planung');
-      if (!roots.includes(body?.root) || !String(body?.file ?? '').endsWith('.json')) return err(404, 'Ordner oder Datei nicht gefunden', 'files.notFound');
+      const load = x.route.load ?? ((req) => (!roots.includes(req?.root) || !String(req?.file ?? '').endsWith('.json')
+        ? err(404, 'Ordner oder Datei nicht gefunden', 'files.notFound') : null));
       // the plugin "loads" the dataset as it is: the same answers as an upload of it
-      if (d === 'preview') return json({ changed: changedSinceImport, kept: changedSinceImport ? 1 : 0, conflicts: [], notes: [] });
+      if (d === 'preview') return load(body, true) ?? json({ changed: changedSinceImport, kept: changedSinceImport ? 1 : 0, conflicts: [], notes: [] });
       const keep = query.get('keep') === 'true' && changedSinceImport;
       if (changedSinceImport && !keep && query.get('replace') !== 'true') {
-        return err(409, 'Die Stammdaten wurden seit dem letzten Import in Dispofold geändert', 'import.masterChanged');
+        return load(body, true) ?? err(409, 'Die Stammdaten wurden seit dem letzten Import in Dispofold geändert', 'import.masterChanged');
       }
+      const refused = load(body, false);
+      if (refused) return refused;
       changedSinceImport = false;
       return json({ source: dataset.source, people: dataset.people.length, areas: dataset.areas.length, shifts: dataset.shifts.length,
         months: dataset.periods.map((p) => p.month), warnings: [], kept: keep ? 1 : 0, notes: [] });
