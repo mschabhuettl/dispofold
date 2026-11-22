@@ -9,6 +9,8 @@ export async function render(root, ctx) {
   const api = ctx.api.plugin(ID);
   const dataset = await ctx.dataset().catch(() => null);
   const people = new Set((dataset?.people ?? []).map((p) => p.id));
+  // excluded in Dispofold (not taken over from the source): the import keeps them although the run leaves them out
+  const excluded = new Set((dataset?.people ?? []).filter((p) => p.excludedFrom).map((p) => p.id));
   const shifts = new Map((dataset?.shifts ?? []).map((s) => [s.id, s]));
   const areaNames = new Map((dataset?.areas ?? []).map((a) => [a.id, a.name]));
   const areaName = (id) => areaNames.get(id) ?? id;
@@ -59,6 +61,8 @@ export async function render(root, ctx) {
       section('removed', table('removed', [
         { label: t('plugin.sp5.compare.id'), value: (x) => x.id, cell: (x) => person(x.id) },
         { label: t('plugin.sp5.compare.name'), value: (x) => x.name },
+        { label: t('plugin.sp5.compare.note'), value: (x) => (excluded.has(x.id) ? 1 : 0),
+          cell: (x) => (excluded.has(x.id) ? t('plugin.sp5.compare.excluded') : '') },
       ], byId(r.people?.removed ?? []))),
       section('fields', table('fields', [
         { label: t('plugin.sp5.compare.person'), value: (x) => x.id, cell: (x) => person(x.id, x.name) },

@@ -3,6 +3,28 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.20.0 (unreleased)
+
+- **Seiten der Import-Erweiterung:** Die Erweiterung für das bisherige Planungssystem hat eine eigene Menügruppe
+  mit vier Seiten, so dass der ganze Weg in Dispofold geht:
+  - **Übersicht:** den Export für einen oder mehrere Monate ausführen, ohne zu importieren, mit Optionen nur für
+    diesen Lauf, seine Zahlen ansehen und genau diesen Lauf importieren, mit Vorschau und „Änderungen behalten“.
+  - **Bericht:** die Zeilen des Berichts nach Art, mit Erklärung, Suche, Filtern und Sortieren, Links auf die
+    Personen, und die Warnungen des Laufs; der Bericht als CSV bleibt.
+  - **Zuordnung:** ein Editor für die Zuordnung mit derselben Prüfung und denselben Meldungen wie der Export,
+    der für jede Schicht, Gruppe und Abwesenheitsart des Ordners zeigt, welche Regel gilt und was ohne Regel
+    bleibt; Laden und Speichern als `mapping.json` bleiben.
+  - **Vergleich:** der Lauf gegen den letzten Import oder eine frühere Datensatz-Datei, mit und ohne Korrekturen:
+    Personen neu, entfernt und geändert (je Feld, mit den Einschränkungen), Dienste je Monat und Bereich und
+    geänderter Bedarf.
+
+  Hilfe: [Ablauf](plugins/sp5/docs/ablauf.md) vom ersten Start bis zum Import und eine Seite je Seite, mit
+  Bildern.
+- **Für Entwickler:** `PluginHost.lastImport` (die Stammdaten des letzten Imports und die Monate, wie Dispofold sie
+  hat), `importFlow` (der Import des Kerns auf der Seite einer Erweiterung), `sortableTable` und Texte und
+  Formatierungen des Kerns über `plugin-api.js`; Hilfeseiten von Erweiterungen können Bilder zeigen
+  ([docs/plugins.md](docs/plugins.md)).
+
 ## 0.19.0 (2026-11-22)
 
 - **Import aus dem bisherigen Planungssystem als Erweiterung:** Die erste ausgelieferte Erweiterung liest dessen

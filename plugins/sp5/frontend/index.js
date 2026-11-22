@@ -72,5 +72,13 @@ export default {
       return () => months.value();
     },
   },
-  help: [{ page: 'sp5', title: 'Import aus Schichtplaner 5' }, { page: 'vergleich', title: 'Vergleich mit sp5-export' }],
+  help: [
+    { page: 'ablauf', title: 'Ablauf: von Schichtplaner 5 zum Import' },
+    { page: 'sp5', title: 'Import aus Schichtplaner 5' },
+    { page: 'uebersicht', title: 'Schichtplaner 5: Übersicht' },
+    { page: 'bericht', title: 'Schichtplaner 5: Bericht' },
+    { page: 'zuordnung', title: 'Schichtplaner 5: Zuordnung' },
+    { page: 'lauf-vergleich', title: 'Schichtplaner 5: Vergleich' },
+    { page: 'vergleich', title: 'Vergleich mit sp5-export' },
+  ],
 };

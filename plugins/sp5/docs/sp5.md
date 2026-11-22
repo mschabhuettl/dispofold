@@ -19,7 +19,8 @@ in Schichtplaner 5 ändert sich nichts.
      Rechner öffnet **Ordner wählen …** den Ordnerdialog.
    - **Zuordnung (JSON):** welche Schichten, Gruppen und Abwesenheiten zu welchen Bereichen gehören, im Format von
      `mapping.json` aus sp5-export. Eine Datei wählen oder den Text einfügen. Beim Speichern wird sie geprüft wie
-     von `sp5_export.py`; alle Fehler stehen in der Meldung.
+     von `sp5_export.py`; alle Fehler stehen in der Meldung. Bequemer geht es auf der Seite
+     [Zuordnung](plugin-sp5-zuordnung.md).
    - **Optionen:** dieselben wie die von `sp5_export.py`, mit denselben Standardwerten. Jede hat ein „i“ mit der
      Erklärung.
 3. **Einstellungen speichern.** Ausschalten der Erweiterung behält sie.
@@ -46,8 +47,9 @@ Die Korrekturen kommen von selbst: Die Erweiterung wendet die Korrekturdatei an,
 seit dem letzten Import bildet, und vermerkt sie im Datensatz. Eine Datei `korrekturen.json` braucht es dafür
 nicht mehr.
 
-Den Bericht und die Warnungen des Exports gibt es in dieser Version als Dateien: unter den Einstellungen der
-Erweiterung **Ergebnis speichern** (siehe [Vergleich mit sp5-export](plugin-sp5-vergleich.md)).
+Den Lauf vor dem Import ansehen, seinen Bericht und seine Warnungen lesen, die Zuordnung bearbeiten und mit dem
+letzten Import vergleichen geht auf den Seiten der Erweiterung im Menü **Schichtplaner 5** (siehe
+[Ablauf](plugin-sp5-ablauf.md)). Von dort lässt sich auch genau der angesehene Lauf importieren.
 
 ## Zyklen
 

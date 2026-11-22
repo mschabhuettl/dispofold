@@ -305,6 +305,8 @@ export const TEXTS = {
   'plugin.sp5.compare.diff': 'Differenz',
   'plugin.sp5.compare.id': 'Id',
   'plugin.sp5.compare.name': 'Name',
+  'plugin.sp5.compare.note': 'Hinweis',
+  'plugin.sp5.compare.excluded': 'in Dispofold ausgeschlossen: der Import behält die Person',
   'plugin.sp5.compare.person': 'Person',
   'plugin.sp5.compare.field': 'Feld',
   'plugin.sp5.compare.change': 'Änderung',

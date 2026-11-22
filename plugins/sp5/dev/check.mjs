@@ -262,6 +262,12 @@ export default async function run({ base, browser, check, shots }) {
     && withCorr.some((r) => r.includes('Austritt|offen|30.06.2027')) && withCorr.some((r) => r.includes('Gewohnte Verteilung|Früh 50 %, Spät 50 %')), withCorr.join(' / '));
   check('natural id order of new people', (await page.$$eval('[data-section="added"] tbody tr td:first-child', (tds) => tds.map((x) => x.textContent))).join(',') === 'E9,E10,E100');
   check('a removed person in Dispofold links to the person', (await page.locator('[data-section="removed"] a[href="#/person/P0150"]').count()) === 1);
+  check('no note on a removed person still taken over', !(await text(page, '[data-section="removed"] tbody'))?.includes('ausgeschlossen'));
+  await api(page, 'PUT', '/api/dataset/people/P0150/excluded', true);
+  await page.reload();
+  await page.waitForSelector('[data-section="removed"] tbody');
+  check('a removed person excluded in Dispofold: the import keeps her', (await text(page, '[data-section="removed"] tbody'))?.includes('in Dispofold ausgeschlossen'),
+    await text(page, '[data-section="removed"] tbody'));
   check('restrictions as text', (await text(page, '[data-section="restrictions"] tbody'))?.includes('+ Nur auf Anfrage: A1 Annahme früh 06:30, Mo, 01.01.2027 bis 31.03.2027'),
     await text(page, '[data-section="restrictions"] tbody'));
   check('demand with label and staffing', (await text(page, '[data-section="demand"] tbody'))?.includes('AN Mo–Fr 07:00–19:00\t1–2\t2'), await text(page, '[data-section="demand"] tbody'));

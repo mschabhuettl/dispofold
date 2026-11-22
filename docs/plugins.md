@@ -165,6 +165,8 @@ führt diese Prüfungen aus.
   `plugin-compare` (`plugins/sp5/tools/ci/compare.sh`) lässt dessen eigene Tests an einem festen Commit laufen und
   vergleicht jeden Lauf Byte für Byte mit dem Java-Port. `plugins/sp5/tools/sp5-vergleich.py` vergleicht
   dasselbe einmal mit echten Daten und gibt nur ein anonymes Ergebnis aus.
+- **Bilder der Hilfe:** `plugins/sp5/tools/screenshots.mjs` macht sie an einer frischen Instanz des Docker-Builds
+  mit einem synthetischen Ordner aus dem Generator des Vergleichsjobs (Aufruf im Kopf des Skripts).
 - **Namen:** Begriffe des Systems, aus dem sie importiert, stehen nur in `plugins/sp5/` (Code, Texte,
   Hilfeseiten); im Kern nur die technischen Tokens, die `scripts/check-repo.sh` zulässt.
 
