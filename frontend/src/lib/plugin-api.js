@@ -6,3 +6,4 @@ export { guarded, h, saveBlob, toast } from './dom.js';
 export { info } from './info.js';
 export { t } from './texts.js';
 export { folderPicker } from './folder-picker.js';
+export { compareValues, matchesTerms, searchTerms, sortRows, sortableTable } from './table.js';
