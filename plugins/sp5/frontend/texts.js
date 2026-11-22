@@ -73,7 +73,7 @@ export const TEXTS = {
   'plugin.sp5.count.demandRules': 'Bedarfsregeln',
   'plugin.sp5.count.warnings': 'Warnungen',
   'plugin.sp5.count.reportRows': 'Berichtszeilen',
-  'plugin.sp5.count.corrections': 'Korrekturen angewendet',
+  'plugin.sp5.count.corrections': 'Zeilen der Korrekturdatei',
   'plugin.sp5.import.heading': 'Diesen Lauf importieren',
   'plugin.sp5.import.heading.help': 'Importiert mit denselben Monaten und Optionen wie der letzte Lauf, also genau den Datensatz, den Bericht und Vergleich zeigen. Die Schritte sind dieselben wie auf der Seite Daten.',
   'plugin.sp5.import.noRun': 'Erst ausführen: importiert wird immer der letzte Lauf.',
