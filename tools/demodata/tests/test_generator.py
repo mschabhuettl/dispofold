@@ -88,7 +88,7 @@ def test_shape_and_formats(demo):
         start, end = interval(s["start"], s["end"])
         assert end - start <= 12 * 60
         assert s["category"] in {"EARLY", "DAY", "LATE", "NIGHT"}
-        assert s["unpopular"] == (s["category"] == "NIGHT")
+        assert s["unpopular"] is False  # "Fair verteilen" only where chosen; nights have their own rule
     for r in demo["demand"]:
         assert TIME.match(r["from"]) and TIME.match(r["to"])
         assert set(r["days"]) <= {"MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN", "HOL"}
@@ -100,6 +100,7 @@ def test_shape_and_formats(demo):
     assert all(t["reducesTarget"] for t in demo["absenceTypes"])
     assert [t["code"] for t in demo["absenceTypes"] if t["chargesAccount"]] == ["ZA"]
     assert [t["code"] for t in demo["absenceTypes"] if t["compensatoryRest"]] == ["ER"]
+    assert not {t["code"] for t in demo["absenceTypes"]} & {a["id"] for a in demo["areas"]}
     assert list(demo["people"][0])[-2:] == ["entryDate", "exitDate"]
     text = dumps(demo).lower()
     assert not re.search("clau" + "de|anthro" + "pic|op" + "enai|chat" + "gpt|l" + "lm", text)
@@ -266,7 +267,8 @@ def test_history(name, request):
                 surplus.append(change)
             else:
                 assert change == 0
-        assert all(h["compRestBalanceAfter"] >= 0 and h["compRestEarned"] == h["holidays"] for h in own)
+        assert all(h["compRestBalanceAfter"] >= 0 and h["compRestEarned"] == h["holidays"] and h["unpopular"] == 0
+                   for h in own)
         average = sum(h["hours"] for h in own) / 12
         if average:
             assert abs(average - p["weeklyHours"] * 4.33) <= 0.1 * p["weeklyHours"] * 4.33
@@ -287,6 +289,6 @@ def test_large_profile(large):
             expected = ("NIGHT" if end > DAY else "EARLY" if start < 7 * 60 else "DAY" if end <= 19 * 60
                         else "LATE")
             assert s["category"] == expected, s
-        assert s["unpopular"] == (s["category"] == "NIGHT")
+        assert s["unpopular"] is False  # "Fair verteilen" only where chosen; nights have their own rule
     assert {r["areaId"] for r in large["demand"]} == {"AN", "DR", "TV", "LF", "TS"}
     assert large["demand"] == generate("2027-01", 1)["demand"]

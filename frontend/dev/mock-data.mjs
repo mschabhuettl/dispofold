@@ -26,15 +26,15 @@ const SHIFTS = [
   s('AN-F', 'AN', 'A1', 'Annahme früh 06:30', '06:30', '14:30', 'EARLY', '#F3E3D8'),
   s('AN-T', 'AN', 'A2', 'Annahme Tag 07:00', '07:00', '19:00', 'DAY', '#F6EAE1'),
   s('AN-S', 'AN', 'A3', 'Annahme spät 14:00', '14:00', '22:00', 'LATE', '#EED9C9'),
-  s('AN-N', 'AN', 'A4', 'Annahme Nacht 21:30', '21:30', '06:30', 'NIGHT', '#E7C8B0', true),
+  s('AN-N', 'AN', 'A4', 'Annahme Nacht 21:30', '21:30', '06:30', 'NIGHT', '#E7C8B0'),
   s('DR-T', 'DR', 'R1', 'Disposition Tag 07:00', '07:00', '19:00', 'DAY', '#E3F0E8'),
   s('DR-M', 'DR', 'R2', 'Disposition Mitte 09:00', '09:00', '17:00', 'DAY', '#E3F0E8'),
   s('DR-A', 'DR', 'R3', 'Disposition Abend 13:00', '13:00', '21:00', 'LATE', '#CCE3D4'),
-  s('DR-N', 'DR', 'R4', 'Disposition Nacht 19:00', '19:00', '07:00', 'NIGHT', '#B4D6C1', true),
+  s('DR-N', 'DR', 'R4', 'Disposition Nacht 19:00', '19:00', '07:00', 'NIGHT', '#B4D6C1'),
   s('TV-F', 'TV', 'V1', 'Transport früh 07:30', '07:30', '15:30', 'EARLY', '#DCE6FC'),
   s('TV-S', 'TV', 'V2', 'Transport spät 11:30', '11:30', '19:30', 'LATE', '#CFDDFB'),
   s('LF-T', 'LF', 'L1', 'Lageführung Tag', '07:00', '19:00', 'DAY', '#EFE7FD'),
-  s('LF-N', 'LF', 'L2', 'Lageführung Nacht', '19:00', '07:00', 'NIGHT', '#D5C0F9', true),
+  s('LF-N', 'LF', 'L2', 'Lageführung Nacht', '19:00', '07:00', 'NIGHT', '#D5C0F9'),
   s('TS-T', 'TS', 'S1', 'Technik Tag 08:00', '08:00', '16:30', 'DAY', '#E2EEF2'),
 ];
 
@@ -133,8 +133,9 @@ export function makeDataset(month, seed = 1) {
   for (const p of people) {
     for (let k = 1; k <= 3; k++) {
       const wishesMade = Math.floor(r() * 6);
+      // no shift is marked "Fair verteilen" (0 * r() keeps the draw, so the other figures stay as they were)
       history.push({ personId: p.id, month: addMonths(month, -k), nights: Math.floor(r() * 6), weekendsWorked: Math.floor(r() * 4),
-        holidays: Math.floor(r() * 2), unpopular: Math.floor(r() * 7), wishes: wishesMade, wishesMet: Math.floor(r() * (wishesMade + 1)),
+        holidays: Math.floor(r() * 2), unpopular: 0 * r(), wishes: wishesMade, wishesMet: Math.floor(r() * (wishesMade + 1)),
         hours: 150 + Math.round(r() * 40) });
     }
   }
