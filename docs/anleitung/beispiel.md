@@ -76,7 +76,8 @@ beachten ist, etwa dass ein Bedarf „an einem Datum“ den ganzen Tag ersetzt, 
 ## 5. Eingaben erfassen
 
 Die Demodaten bringen schon viele Abwesenheiten und Wünsche mit. Drei kommen dazu: Anna Ahornbichler hat vom
-25. bis 29. Jänner Urlaub, Jakob Steinmayr wünscht sich den 15. frei, und am 22. hat er sicher frei.
+25. bis 29. Jänner Urlaub, Jakob Steinmayr wünscht sich den 15. frei, und am 22., den er sich schon frei
+gewünscht hat, soll er sicher frei haben.
 
 1. **Eingaben**, oben bei **Person** „Ahornbichler Anna“ wählen. Die Seite zeigt dann nur ihre Einträge, und die
    Formulare darunter haben sie schon gewählt.

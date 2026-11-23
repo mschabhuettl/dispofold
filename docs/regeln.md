@@ -12,8 +12,8 @@ selbst aus.
 
 ## Gruppen
 
-Die Bewertung eines Plans (technisch der Score) hat drei Teile (Gruppen), die streng nacheinander zählen. Technisch heißen sie `hard`, `medium` und
-`soft`:
+Die Bewertung eines Plans (technisch der Score) hat drei Teile (Gruppen), die streng nacheinander zählen.
+Technisch heißen sie `hard`, `medium` und `soft`:
 
 | Gruppe | Score | Bedeutung | Ziel |
 |---|---|---|---|
@@ -361,7 +361,7 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
   Person mit 90 % Tag und 10 % Nacht hat 10 Dienste; 9 Tag und 1 Nacht kosten nichts, 5 und 5 kosten
   2 × 40² = 3200 mal Gewicht. Quadriert, damit kleine Abweichungen wenig und eine ganz andere Verteilung viel
   kosten. Gewicht 100, damit die Verteilung den Plan sichtbar prägt: Im Demomonat mit klaren Verteilungen für
-  92 Personen sank die Abweichung der Anteile von 0,55 auf 0,30; ein höheres Gewicht (200: 0,26) kostet
+  92 Personen (gemessen mit den Demodaten vor 0.23.0) sank die Abweichung der Anteile von 0,55 auf 0,30; ein höheres Gewicht (200: 0,26) kostet
   deutlich mehr Blöcke und Abweichung vom Ziel. Bedarf und Überbesetzung (Gruppe Bedarf) gehen immer vor.
 - Wechselwirkung: Wer eine Verteilung je Kategorie hat (Früh, Tag, Spät, Nacht), zählt nicht für die
   Abwechslung Dienste, solange die Verteilung besteht; sonst würde diese Regel die Verteilung wieder einebnen.
@@ -493,7 +493,8 @@ Eine Einstellung der Regeln, `nightDistribution`:
 - **Beispiel `isolatedDayOff`:** Xenia hätte Dienst am Montag und Dienstag, frei am Mittwoch, Dienst am Donnerstag
   und Freitag. Der einzelne freie Mittwoch erholt wenig; die Regel zieht die freien Tage zusammen.
 - Gewichte (ab 0.6.0): Einzelner freier Tag 10000 je Fall, Blocklänge 6000 je Tag. Mit dem verkleinerten
-  Ziel prägen sie den Plan sichtbar: Im Demomonat sanken die einzelnen freien Tage von 261 auf 76, die
+  Ziel prägen sie den Plan sichtbar: Im Demomonat (gemessen mit den Demodaten von 0.6.0) sanken die einzelnen
+  freien Tage von 261 auf 76, die
   Tage außerhalb der Blocklänge (2 bis 4) von 602 auf 328; der Preis: unerfüllte Wünsche stiegen von 24 auf 38. Mit
   deutlich weniger Bedarf als Arbeit sanken die einzelnen freien Tage von 123 auf 16. Wer die Gewichte auf der
   Seite Regeln einmal gespeichert hat, behält die gespeicherten Werte; dort lassen sie sich auf die neuen

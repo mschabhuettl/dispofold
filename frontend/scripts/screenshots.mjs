@@ -37,9 +37,14 @@ const password = process.env.APP_PASSWORD ?? '';
 const viewerUser = process.env.VIEWER_USER ?? 'leser';
 const viewerPassword = process.env.VIEWER_PASSWORD ?? '';
 const month = process.env.MONTH ?? '2027-01';
-// the month a fresh instance shows first: the next one (main.js, defaultMonth)
+// the month a fresh instance shows first: the next one (main.js, defaultMonth); for the switch to the demo month in
+// the worked example a month without data, the one before MONTH if the next one is MONTH itself
 const now = new Date();
-const startMonth = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 1)).toISOString().slice(0, 7);
+const nextMonth = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 1)).toISOString().slice(0, 7);
+const [year, mon] = month.split('-').map(Number);
+const startMonth = nextMonth !== month ? nextMonth : new Date(Date.UTC(year, mon - 2, 1)).toISOString().slice(0, 7);
+// what the guide names but the run did not show: reported at the end, the run fails
+const mismatches = [];
 // the sick note of the worked example as the guide names it (beispiel.md step 8), if the plan allows
 const SICK = { firstName: 'Rosa', lastName: 'Erleneder', from: `${month}-19`, to: `${month}-20` };
 const outDir = resolve(process.argv[2] ?? 'screenshots-out');
@@ -270,6 +275,7 @@ async function serverPhase() {
   // 3. a person works fewer hours from this month on; her page before the plan first
   const parttime = smallPeople.find((p) => p.weeklyHours >= 30) ?? smallPeople[0];
   console.log('person of step 3:', parttime.firstName, parttime.lastName);
+  if (parttime.lastName !== 'Erlenhuber') mismatches.push(`step 3 is ${parttime.firstName} ${parttime.lastName}, the guide names Waltraud Erlenhuber`);
   await open(page, base, `person/${encodeURIComponent(parttime.id)}`, '#person-form');
   await shot(page, 'person-ohne-plan');
   await page.locator('#h-edit').evaluate((e) => { e.scrollIntoView(); scrollBy(0, -20); });
@@ -301,6 +307,9 @@ async function serverPhase() {
   const holidayPerson = dataset.people.find((p) => p.areaIds.includes(small) && p.id !== parttime.id) ?? dataset.people[1];
   const wishPerson = dataset.people.find((p) => p.areaIds.length === 1 && p.id !== holidayPerson.id) ?? dataset.people[2];
   console.log('inputs of step 5:', holidayPerson.firstName, holidayPerson.lastName, '/', wishPerson.firstName, wishPerson.lastName);
+  if (holidayPerson.lastName !== 'Ahornbichler' || wishPerson.lastName !== 'Steinmayr') {
+    mismatches.push(`step 5 is ${holidayPerson.lastName} / ${wishPerson.lastName}, the guide names Ahornbichler / Steinmayr`);
+  }
   const saveInputs = page.locator('.save-bar').getByRole('button', { name: 'Speichern', exact: true });
   await open(page, base, 'eingaben', '#inputs-filter');
   await select(page, '#inputs-filter', holidayPerson.id);
@@ -346,7 +355,8 @@ async function serverPhase() {
   // 7. Prüfen
   await open(page, base, 'pruefen', '#check-problems');
   await mark(page, [['#check-verdict', 1], ['#check-problems h2', 2], ['#check-gaps h2', 3], ['#check-quality h2', 4], ['#check-data h2', 5]]);
-  await shot(page, 'beispiel-pruefen');
+  // the whole page: the Stammdaten may end below the window
+  await shot(page, 'beispiel-pruefen', true);
 
   // 8. a sick note after planning: SICK if that person works in the small area on both days, else someone of the
   // small area with duties there on two working days in a row
@@ -368,8 +378,11 @@ async function serverPhase() {
     }
   }
   if (!sick) throw new Error(`nobody of ${small} works there on two working days in a row`);
-  console.log(`sick note: ${sick.person.firstName} ${sick.person.lastName} ${sick.from} to ${sick.to}`
-    + (sick.person === named && sick.from === SICK.from ? ' (as in the guide)' : ' (NOT as in the guide: change beispiel.md step 8 and SICK)'));
+  console.log(`sick note: ${sick.person.firstName} ${sick.person.lastName} ${sick.from} to ${sick.to}`);
+  if (sick.person !== named || sick.from !== SICK.from) {
+    mismatches.push(`sick note is ${sick.person.firstName} ${sick.person.lastName} ${sick.from} to ${sick.to}, the guide names `
+      + `${SICK.firstName} ${SICK.lastName} ${SICK.from} to ${SICK.to}: change beispiel.md step 8 and SICK`);
+  }
   await open(page, base, 'eingaben', '#inputs-filter');
   await select(page, '#inputs-filter', sick.person.id);
   await select(page, '#abs-from', sick.from);
@@ -592,6 +605,9 @@ async function serverPhase() {
   await page.locator('#check-quality').evaluate((e) => { e.scrollIntoView(); scrollBy(0, -20); });
   await mark(page, [['#check-group', 1], ['#check-filter-rule', 2, 'top'], ['#check-quality details.check-group > summary', 3]]);
   await shot(page, 'pruefen');
+  // the first day of open demand unfolded, then who could be asked
+  const firstDay = page.locator('#check-gaps details.check-group > summary').first();
+  if (await firstDay.count()) await firstDay.click();
   const ask = page.locator('#check-gaps .gap-item button').first();
   if (await ask.count()) {
     await ask.click();
@@ -849,6 +865,10 @@ try {
 if (external.length) {
   console.error('requests to other hosts (blocked):', [...new Set(external)]);
   process.exit(1);
+}
+if (mismatches.length) {
+  console.error('the guide names what this run did not show (pictures taken, text to change):', mismatches);
+  process.exitCode = 1;
 }
 console.log('no requests to other hosts');
 const optimize = spawnSync('python3', [join(root, '..', 'scripts', 'optimize-png.py'), ...saved], { stdio: 'inherit' });

@@ -40,7 +40,7 @@ Auf dem leeren Start **Demodaten zum Ausprobieren laden** klicken.
 
 So sieht es aus, wenn es geklappt hat: Oben steht der [Planungsmonat](begriffe.md#planungsmonat) **Jänner 2027**
 (1). Der Dienstplan zeigt 150 erfundene Personen (2), schon mit Urlauben und anderen
-[Abwesenheiten](begriffe.md#abwesenheit), aber noch ohne Dienste. **Planen** (3) ist jetzt blau.
+[Abwesenheiten](begriffe.md#abwesenheit), aber noch ohne Dienste. **Planen** (3) ist nicht mehr grau.
 
 Dasselbe geht auch unter **Einstellungen**, **Daten**, **Erweitert** mit **Demodaten laden (Jänner 2027)**; danach
 führt der Knopf **Zu Jänner 2027 wechseln** zum Monat der Demodaten. Die Demodaten ersetzen alle Stammdaten: nie
@@ -53,7 +53,7 @@ Die drei Stellen ansehen, die auf jeder Seite gleich sind.
 ![Die wichtigsten Stellen jeder Seite](../screenshots/schnellstart-04-rundgang.png)
 
 1. **Menü:** **Dienstplan**, **Prüfen**, **Eingaben**, **Personen**, **Einstellungen** und **Anleitung**. Auf einem
-   schmalen Bildschirm, etwa am Telefon, steckt das Menü hinter dem Knopf **Menü** oben links.
+   schmalen Bildschirm, etwa am Telefon, steckt das Menü hinter dem Knopf mit den drei Strichen (☰) oben.
 2. **Mehr dazu in der Anleitung:** Unter jedem Seitentitel sagt ein kurzer Text, wozu die Seite da ist; der Link
    öffnet den passenden Abschnitt dieser Anleitung. Ein **i** neben einer Zahl oder einem Feld erklärt sie.
 3. **Die Zeile über dem Plan:** Sie sagt nach dem Planen in Farbe, ob der Plan verwendbar ist. Jetzt steht dort
@@ -86,8 +86,8 @@ gespeichert“ (2). Nach **Speichern** ist die Markierung weg, und unten erschei
 
 Ein [Wunsch](begriffe.md#wunsch) heißt: vielleicht. Eine [Vorgabe](begriffe.md#vorgabe) heißt: sicher. Bei
 **Person** „Steinmayr Jakob“ wählen. Unter **Wünsche** (1) **Datum** 15.01. und **Art** „frei“ wählen,
-**Hinzufügen**. Unter **Vorgaben** (2) **Datum** 22.01. und **Dienst** „frei (freier Tag)“ wählen, **Hinzufügen**.
-Dann **Speichern** (3).
+**Hinzufügen**. Für den 22. hat er sich schon frei gewünscht; das soll sicher gelten: Unter **Vorgaben** (2)
+**Datum** 22.01. und **Dienst** „frei (freier Tag)“ wählen, **Hinzufügen**. Dann **Speichern** (3).
 
 ![Eingaben mit dem neuen Wunsch und der neuen Vorgabe](../screenshots/schnellstart-07-wunsch-vorgabe.png)
 

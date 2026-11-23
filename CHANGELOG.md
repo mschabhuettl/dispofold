@@ -45,8 +45,8 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
 - **Kleinere Änderungen der Oberfläche:** sichtbares Feld „Planungsmonat“, Dateifelder ganz zu sehen, die Seite
   einer Person mit eigenem Seitentext, „= Mindestens“ bei Bedarf ohne Höchstbesetzung, jedes Filterfeld der
   Stammdaten nach seiner Tabelle benannt, auf der Zeitachse die Besetzung über den Diensten, die Rolle „nur lesen“
-  ohne Knöpfe der Qualitätsregeln. Auf Telefonbreite klappt das Menü hinter **Menü**, und die Seite scrollt nicht
-  seitlich. Oberfläche und Anleitung sagen **Code** bei Bereichen, Schichten und Abwesenheitsarten; der Knopf unter
+  ohne Knöpfe der Qualitätsregeln. Auf Telefonbreite klappt das Menü hinter einen Knopf (☰), und die Seite scrollt
+  nicht seitlich. Oberfläche und Anleitung sagen **Code** bei Bereichen, Schichten und Abwesenheitsarten; der Knopf unter
   **Pseudonymisieren** heißt **Pseudonymisierte Kopie erstellen**; die Obergrenze der Monatsstunden steht als
   Prozent über dem Soll (beim festen Anteil über dem Ziel); gleitende Durchrechnung nennt mindestens 7 Wochen; ein Import in einen abgeschlossenen Monat nennt den
   nächsten Schritt.

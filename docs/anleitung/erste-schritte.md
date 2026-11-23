@@ -89,7 +89,7 @@ Es gibt drei Wege zu Daten:
   [Schnellstart](schnellstart.md) und [Ein Monat Schritt für Schritt](beispiel.md) beginnen genau so. Die
   Demodaten ersetzen alle Stammdaten, also nie in einer Installation laden, in der schon echte Daten stehen.
 - **Aus dem bisherigen Planungsprogramm:** Die mitgelieferte Erweiterung liest dessen Datenordner und übernimmt
-  Personen, Bereiche, Schichten, Bedarf, Abwesenheiten und Dienste. Schritt für Schritt mit Bildern:
+  Personen, Bereiche, Schichten, Bedarf, Abwesenheiten und Dienste. Schritt für Schritt:
   [Echte Daten aus dem bisherigen Planungsprogramm übernehmen](plugin-sp5-echte-daten.md).
 - **Als Datensatz:** eine Datei aus dem Quellsystem importieren (auf dem leeren Start **Datensatz importieren**
   oder unter **Einstellungen**, **Daten**). Die Datei liefert das Exportprogramm, das die IT einrichtet. Siehe

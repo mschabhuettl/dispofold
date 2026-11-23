@@ -4,7 +4,7 @@ Erweiterungen bringen zusätzliche Seiten und Funktionen ins Programm, zum Beisp
 Planungssystem. Sie kommen mit Dispofold mit; nachgeladen wird nichts. Jede Erweiterung ist aus, bis die Planung
 sie einschaltet. Die veröffentlichten Versionen enthalten eine Erweiterung für den Import aus dem bisherigen
 Planungssystem. Was sie tut und wie man sie einstellt, steht auf ihren Hilfeseiten, die nach dem Einschalten in
-dieser Anleitung hinter den Begriffen erscheinen. Der Einstieg, Schritt für Schritt mit Bildern:
+dieser Anleitung hinter den Begriffen erscheinen. Der Einstieg, Schritt für Schritt:
 [Echte Daten aus dem bisherigen Planungsprogramm übernehmen](plugin-sp5-echte-daten.md).
 
 ## Einschalten und ausschalten

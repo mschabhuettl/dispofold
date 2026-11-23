@@ -121,7 +121,7 @@ export const TEXTS = {
   'check.verdict.gaps': '{count|Lücke|Lücken} schließen ({hours} Personenstunden)',
   'check.verdict.notes': 'Die Hinweise zur Qualität und die Stammdaten weiter unten sind keine Fehler im Plan.',
   'check.quality.title': 'Hinweise zur Qualität (keine Fehler)',
-  'check.quality.help': 'Überbesetzung, Dienste ohne Bedarf und die Qualitätsregeln mit großem Anteil an den Abzügen der Planqualität (wie die Hinweise über dem Dienstplan). Kein Fehler: Der Plan ist trotzdem verwendbar, hier lässt er sich noch verbessern.',
+  'check.quality.help': 'Überbesetzung, Dienste ohne Bedarf und die Qualitätsregeln mit großem Anteil an den Abzügen der Planqualität (dieselben wie die Knöpfe über dem Dienstplan). Kein Fehler: Der Plan ist trotzdem verwendbar, hier lässt er sich noch verbessern.',
   'check.quality.none': 'Keine Überbesetzung und keine auffällige Qualitätsregel.',
   'check.quality.show': '{count|Hinweis|Hinweise} anzeigen',
   'help.check.quality': 'Eine Zeile je Hinweis, nach Regel, Person oder Tag gruppiert und filterbar. Überbesetzung: mehr Personen als die Höchstbesetzung des Bedarfs. Qualität: Regeln wie Dienstblöcke, Wünsche oder Stunden treffen, die die Planung so gut es geht erfüllt.',

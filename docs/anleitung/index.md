@@ -44,7 +44,7 @@ Bildern.
 1. **Menü:** **Dienstplan**, **Prüfen**, **Eingaben**, **Personen**, **Einstellungen** und **Anleitung**. Die
    Rolle „nur lesen“ sieht weniger, siehe [Rolle „nur lesen“](nur-lesen.md). Darunter führt **Quellcode
    (AGPL-3.0)** zum Quellcode des Programms. Auf einem schmalen Bildschirm, etwa am Telefon, steckt das Menü
-   hinter dem Knopf **Menü** oben links und klappt nach der Wahl wieder zu.
+   hinter dem Knopf mit den drei Strichen (☰) oben und klappt nach der Wahl wieder zu.
 2. **Planungsmonat:** Auf den Seiten eines Monats steht oben der Monat, um den es geht. Die Pfeile daneben wechseln
    einen Monat zurück oder vor, die Auswahl reicht ein Jahr zurück und eines voraus. Beim ersten Öffnen ist der
    nächste Monat gewählt, wenn es für ihn Daten gibt, sonst der letzte Monat mit Daten; danach merkt sich der
