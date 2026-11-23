@@ -279,19 +279,12 @@ export function unmatched(codes) {
 
 export const PROPOSAL_SECTIONS = ['areas', 'shifts', 'groups', 'compensatoryRest'];
 
-/** The areas a proposal needs ({ id, name, color } of the proposed ones), for a shift or group rule. */
-function neededAreas(proposal, choice) {
-  if (proposal.kind === 'choice') return [choice];
-  if (proposal.kind !== 'rule') return [];
-  return proposal.areaId ? [proposal.areaId] : proposal.areaIds ?? [];
-}
-
 /**
  * Takes a proposal into the mapping (in place): an area, a shift rule (a choice with the chosen area), a group rule,
- * an ignored shift or group, a compensatory rest type. A new area the entry needs comes along from proposedAreas.
- * Returns the ids of the areas added.
+ * an ignored shift or group, a compensatory rest type. A new area the entry needs comes along (the proposal's
+ * newAreas). Returns the ids of the areas added.
  */
-export function takeProposal(mapping, section, proposal, proposedAreas = [], choice = null) {
+export function takeProposal(mapping, section, proposal, choice = null) {
   const added = [];
   const addArea = (area) => {
     const areas = sectionList(mapping, 'areas');
@@ -304,7 +297,8 @@ export function takeProposal(mapping, section, proposal, proposedAreas = [], cho
     addArea(proposal);
     return added;
   }
-  for (const id of neededAreas(proposal, choice)) addArea(proposedAreas.find((a) => a.id === id));
+  const needed = proposal.kind === 'choice' ? [choice] : proposal.kind === 'rule' ? (proposal.areaId ? [proposal.areaId] : proposal.areaIds ?? []) : [];
+  for (const area of proposal.newAreas ?? []) if (needed.includes(area.id)) addArea(area);
   if (section === 'shifts') {
     if (proposal.kind === 'ignored') sectionList(mapping, 'ignoreShifts').push(proposal.match);
     else sectionList(mapping, 'shifts').push({ match: proposal.match, areaId: proposal.kind === 'choice' ? choice : proposal.areaId });

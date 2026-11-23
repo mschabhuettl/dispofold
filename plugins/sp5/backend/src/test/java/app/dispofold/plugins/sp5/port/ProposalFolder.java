@@ -15,12 +15,13 @@ import java.util.List;
  * A small synthetic folder for the mapping proposals: two teams with their shifts, a team of stand-ins, an umbrella
  * group with demand of its own, a group over everyone, a group without members and one without duties, a subgroup
  * whose duties go to its parent, a parent over two groups of different areas, a shift split between two teams, a
- * hidden, a rare and an unused shift, and the compensatory rest type. Invented names only.
+ * hidden, a rare and an unused shift, a shift without a short name, one worked only by a person in no group, a
+ * cycle without an end, and the compensatory rest type. Invented names only.
  */
 public final class ProposalFolder {
 
     /** Short names of the shifts, by id 1 to 11. */
-    public static final String[] SHIFTS = { "A1", "A2", "R1", "M1", "Z1", "H1", "T1", "T2", "N1", "S2", "Z0" };
+    public static final String[] SHIFTS = { "A1", "A2", "R1", "M1", "Z1", "H1", "T1", "T2", "N1", "S2", "Z0", "", "EXT" };
 
     private ProposalFolder() {
     }
@@ -60,7 +61,7 @@ public final class ProposalFolder {
         TestTables.write(dir, "5GRASG", List.of(n("ID", 11), n("EMPLOYEEID", 11), n("GROUPID", 11)),
                 grasg.toArray(new Object[0][]));
         List<Object[]> people = new ArrayList<>();
-        for (long e = 1; e <= 21; e++) {
+        for (long e = 1; e <= 22; e++) {
             people.add(row(e, "Person" + e, "Vorname" + e, "P" + e, 0L, ascii("1 1 1 1 1 0 0 0"), 1L, "8.00",
                     "40.00", "0.00", "0.00", "2015-01-01", null));
         }
@@ -70,7 +71,7 @@ public final class ProposalFolder {
         // {shift id, employees}: A1 70 % Team Annahme and 30 % stand-ins, M1 half and half, Z1 rare, T2 by the subgroup
         long[][] work = { { 1, 1, 2, 3, 4, 5, 6, 1, 13, 14, 13 }, { 2, 1, 2, 3, 4, 5, 6 }, { 3, 7, 8, 9, 10, 11, 12 },
                 { 4, 3, 4, 9, 10 }, { 5, 5, 6 }, { 6, 1 }, { 7, 16 }, { 8, 17, 17, 17 }, { 9, 18, 19, 18 },
-                { 10, 20, 21, 20 } };
+                { 10, 20, 21, 20 }, { 12, 1, 2, 3 }, { 13, 22, 22, 22, 22, 22 } };
         List<Object[]> duties = new ArrayList<>();
         for (long[] w : work) {
             for (int i = 1; i < w.length; i++) {
@@ -79,9 +80,18 @@ public final class ProposalFolder {
                 duties.add(row((long) duties.size() + 1, w[i], w[0], date, 0L));
             }
         }
-        duties.add(row((long) duties.size() + 1, 1L, 2L, "2027-01-28", 1L)); // a target-plan entry: no duty
+        duties.add(row((long) duties.size() + 1, 22L, 13L, "2027-01-28", 0L)); // the newest duty
+        duties.add(row((long) duties.size() + 1, 1L, 2L, "2027-01-29", 1L)); // a target-plan entry: no duty
         TestTables.write(dir, "5MASHI", List.of(n("ID", 11), n("EMPLOYEEID", 11), n("SHIFTID", 11), d("DATE"),
                 n("TYPE", 11)), duties.toArray(new Object[0][]));
+        // a cycle: S2 every day for person 20 from 20 January on, without an end in sight
+        TestTables.write(dir, "5CYCLE", List.of(n("ID", 11), c("NAME", 40), n("SIZE", 11), n("UNIT", 11)),
+                row(1L, "Täglich S2", 1L, 0L));
+        TestTables.write(dir, "5CYENT", List.of(n("ID", 11), n("CYCLEEID", 11), n("INDEX", 11), n("SHIFTID", 11),
+                n("WORKPLACID", 11)), row(1L, 1L, 0L, 10L, 0L));
+        TestTables.write(dir, "5CYASS", List.of(n("ID", 11), n("EMPLOYEEID", 11), n("CYCLEID", 11), d("START"),
+                d("END"), n("ENTRANCE", 11)), row(1L, 20L, 1L, "2027-01-20", "2099-12-31", 0L));
+        TestTables.write(dir, "5CYEXC", List.of(n("ID", 11), n("EMPLOYEEID", 11), n("CYCLEASSID", 11), d("DATE")));
         // demand: A1 in Team Annahme and in Schicht A, the others in one group each
         long[][] demand = { { 1, 1 }, { 4, 1 }, { 1, 2 }, { 2, 3 }, { 8, 7 }, { 11, 9 }, { 12, 10 } };
         List<Object[]> rows = new ArrayList<>();

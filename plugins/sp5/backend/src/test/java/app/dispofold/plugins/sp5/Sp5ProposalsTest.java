@@ -2,7 +2,10 @@ package app.dispofold.plugins.sp5;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -12,6 +15,8 @@ import java.util.Set;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import app.dispofold.plugins.sp5.port.ProposalFolder;
 import app.dispofold.plugins.sp5.port.PyJson;
@@ -61,6 +66,7 @@ class Sp5ProposalsTest {
                 Map.entry("R1", "TD"), Map.entry("M1", "choice [TA 50, TD 50]"), Map.entry("Z1", "ignored"),
                 Map.entry("H1", "ignored"), Map.entry("T1", "TE"), Map.entry("T2", "TE"), Map.entry("N1", "NO"),
                 Map.entry("S2", "SU"), Map.entry("Z0", "ignored"));
+        // no proposal for the shift without a short name (no pattern can name it) nor for EXT (nobody in a group)
         // Technik Nacht inherits from Technik: nothing of its own
         assertThat(brief(p, "groups")).containsOnly(Map.entry("Team Annahme", "TA"),
                 Map.entry("Team Disposition", "TD"), Map.entry("Springer Annahme", "TA"),
@@ -88,17 +94,55 @@ class Sp5ProposalsTest {
                 "Obergruppe von Gruppen mit verschiedenen Bereichen: Nord (NO), Süd (SU).");
         assertThat(why.get("rest:ER")).contains("„Ersatzruhe“");
         assertThat(p.get("discarded")).isEqualTo(0);
+        // the new area travels with the rules that need it
+        Map<String, Object> a1 = ((List<Map<String, Object>>) p.get("shifts")).stream()
+                .filter(x -> x.get("code").equals("A1")).findFirst().orElseThrow();
+        assertThat(a1.get("newAreas")).isEqualTo(List.of(Map.of("id", "TA", "name", "Team Annahme", "color", "#B45309")));
+    }
+
+    @Test
+    void cyclesCountUpToTheNewestDutyOrTodayAndAnAreaTakenAloneIsUsedAgain(@TempDir Path dir) throws Exception {
+        ProposalFolder.write(dir, "2027-01");
+        // S2: three duties and the cycle from 20 January; all months end at the newest duty or today
+        LocalDate end = LocalDate.now().isAfter(LocalDate.of(2027, 1, 28)) ? LocalDate.now() : LocalDate.of(2027, 1, 28);
+        long cycle = ChronoUnit.DAYS.between(LocalDate.of(2027, 1, 20), end) + 1;
+        assertThat(reasons(propose(dir, Map.of(), DEFAULTS)).get("shift:S2")).endsWith("der " + (3 + cycle) + " Dienste.");
+        // the last month only: up to its end
+        assertThat(reasons(propose(dir, Map.of(), settings(80, 3, 1, List.of("Ersatzruhe"), Set.of()))).get("shift:S2"))
+                .endsWith("der 15 Dienste.");
+        // the area of a proposal taken alone: the next run uses it and proposes no second one
+        Object mapping = PyJson.load("{\"areas\": [{\"id\": \"TA\", \"name\": \"Team Annahme\", \"color\": \"#B45309\"}],"
+                + " \"shifts\": [], \"groups\": []}");
+        Map<String, Object> again = propose(dir, mapping, DEFAULTS);
+        assertThat(brief(again, "areas")).doesNotContainKey("Team Annahme");
+        assertThat(brief(again, "shifts")).containsEntry("A1", "TA");
+        assertThat(brief(again, "groups")).containsEntry("Team Annahme", "TA");
+    }
+
+    @Test
+    void oddFoldersGiveNoCrashAndNoInvalidEntry(@TempDir Path dir) throws Exception {
+        ProposalFolder.write(dir, "2027-01");
+        // without memberships nobody is in a group: shifts without demand get no owner, no crash
+        Files.delete(dir.resolve("5GRASG.DBF"));
+        Map<String, Object> p = propose(dir, Map.of(), DEFAULTS);
+        assertThat(brief(p, "shifts")).doesNotContainKeys("M1", "EXT");
+        Object python = PyJson.load(new ObjectMapper().writeValueAsBytes(Sp5Proposals.taken(p)));
+        // without any area the mapping is not complete yet, but nothing taken points to a missing area
+        assertThat(Sp5Export.mappingErrors(python)).containsExactly("'areas' ist leer");
     }
 
     @Test
     void takingEveryProposalGivesAValidMappingThatMeetsEachCode(@TempDir Path dir) throws Exception {
         ProposalFolder.write(dir, "2027-01");
         Map<String, Object> mapping = Sp5Proposals.taken(propose(dir, Map.of(), DEFAULTS));
-        Object python = PyJson.load(new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsBytes(mapping));
+        Object python = PyJson.load(new ObjectMapper().writeValueAsBytes(mapping));
         assertThat(Sp5Export.mappingErrors(python)).isEmpty();
         Map<String, Object> codes = Sp5Codes.codes(dir, python, new ArrayList<>());
         for (String section : List.of("shifts", "groups")) {
             for (Map<String, Object> c : (List<Map<String, Object>>) codes.get(section)) {
+                if ("".equals(c.get("code")) || "EXT".equals(c.get("code"))) {
+                    continue; // no pattern names an empty code; nobody in a group worked EXT
+                }
                 assertThat(((Map<?, ?>) c.get("result")).get("kind")).as(section + " " + c.get("name"))
                         .isNotEqualTo("none");
             }

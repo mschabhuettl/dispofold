@@ -303,6 +303,7 @@ export async function render(root, ctx) {
   function done(section, p) {
     const list = proposals[section];
     const i = list.indexOf(p);
+    if (i < 0) return; // already gone (a second click, or a new list meanwhile)
     list.splice(i, 1);
     showProposals();
     const next = list[Math.min(i, list.length - 1)];
@@ -312,7 +313,8 @@ export async function render(root, ctx) {
   }
 
   function take(section, p, choice = null) {
-    const added = takeProposal(mapping, section, p, proposals.areas, choice);
+    if (!proposals[section].includes(p)) return;
+    const added = takeProposal(mapping, section, p, choice);
     // an area that came along with a rule is no proposal of its own any more
     proposals.areas = proposals.areas.filter((a) => section === 'areas' ? true : !added.includes(a.id));
     codes = null;
@@ -321,9 +323,11 @@ export async function render(root, ctx) {
     done(section, p);
   }
 
-  async function discard(section, p) {
+  async function discard(section, p, b) {
+    b.disabled = true;
     const saved = await guarded(() => api.post('zuordnung/vorschlaege/verwerfen', { key: p.key }));
-    if (!saved) return;
+    b.disabled = false;
+    if (!saved || !proposals[section].includes(p)) return;
     settings = { ...settings, proposals: saved.proposals };
     proposals.discarded = (proposals.discarded ?? 0) + 1;
     showReset(proposals.discarded);
@@ -356,7 +360,7 @@ export async function render(root, ctx) {
               h('div', {}, h('strong', {}, title)),
               h('p.muted', {}, p.reason),
               h('div.btn-row', {}, ...takeButtons,
-                button(t('plugin.sp5.propose.discard'), () => discard(section, p), { 'aria-label': t('plugin.sp5.propose.discard.aria', { what: title }) })));
+                button(t('plugin.sp5.propose.discard'), (e) => discard(section, p, e.currentTarget), { 'aria-label': t('plugin.sp5.propose.discard.aria', { what: title }) })));
           })));
       }));
   }

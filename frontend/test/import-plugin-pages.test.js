@@ -163,13 +163,14 @@ test('codes of the folder: result texts, the hits of each rule and pattern, code
 test('a taken proposal adds its entry and the new area it needs, once', () => {
   const areas = [{ id: 'TA', name: 'Team Annahme', color: '#B45309' }, { id: 'TD', name: 'Team Disposition', color: '#15803D' }];
   const mapping = { areas: [{ id: 'AN', name: 'Annahme', color: '#000000' }], shifts: [], groups: [] };
-  assert.deepEqual(m.takeProposal(mapping, 'shifts', { kind: 'rule', match: 'A1', areaId: 'TA' }, areas), ['TA']);
-  assert.deepEqual(m.takeProposal(mapping, 'groups', { kind: 'rule', match: 'Team Annahme', areaIds: ['TA'] }, areas), []);
-  assert.deepEqual(m.takeProposal(mapping, 'shifts', { kind: 'choice', match: 'M1', choices: [{ areaId: 'TA' }, { areaId: 'TD' }] }, areas, 'TD'), ['TD']);
-  m.takeProposal(mapping, 'shifts', { kind: 'ignored', match: 'X[*]' }, areas);
-  m.takeProposal(mapping, 'groups', { kind: 'ignored', match: 'Gesamt' }, areas);
-  m.takeProposal(mapping, 'compensatoryRest', { match: 'ER' }, areas);
-  m.takeProposal(mapping, 'areas', areas[0], areas);
+  assert.deepEqual(m.takeProposal(mapping, 'shifts', { kind: 'rule', match: 'A1', areaId: 'TA', newAreas: [areas[0]] }), ['TA']);
+  assert.deepEqual(m.takeProposal(mapping, 'groups', { kind: 'rule', match: 'Team Annahme', areaIds: ['TA'], newAreas: [areas[0]] }), []);
+  // a choice brings only the chosen new area
+  assert.deepEqual(m.takeProposal(mapping, 'shifts', { kind: 'choice', match: 'M1', choices: [{ areaId: 'TA' }, { areaId: 'TD' }], newAreas: areas }, 'TD'), ['TD']);
+  m.takeProposal(mapping, 'shifts', { kind: 'ignored', match: 'X[*]' });
+  m.takeProposal(mapping, 'groups', { kind: 'ignored', match: 'Gesamt' });
+  m.takeProposal(mapping, 'compensatoryRest', { match: 'ER' });
+  m.takeProposal(mapping, 'areas', areas[0]);
   assert.deepEqual(mapping, {
     areas: [{ id: 'AN', name: 'Annahme', color: '#000000' }, areas[0], areas[1]],
     shifts: [{ match: 'A1', areaId: 'TA' }, { match: 'M1', areaId: 'TD' }],
@@ -178,7 +179,7 @@ test('a taken proposal adds its entry and the new area it needs, once', () => {
   });
   // an existing area is used as it is
   const own = { areas: [{ id: 'AN', name: 'Annahme', color: '#000000' }], shifts: [], groups: [] };
-  assert.deepEqual(m.takeProposal(own, 'shifts', { kind: 'rule', match: 'A2', areaId: 'AN' }, areas), []);
+  assert.deepEqual(m.takeProposal(own, 'shifts', { kind: 'rule', match: 'A2', areaId: 'AN', newAreas: [] }), []);
   assert.equal(own.areas.length, 1);
 });
 

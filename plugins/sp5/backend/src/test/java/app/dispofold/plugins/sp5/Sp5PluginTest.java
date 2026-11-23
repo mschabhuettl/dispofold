@@ -180,7 +180,7 @@ class Sp5PluginTest {
                 .post("/api/plugins/sp5/ergebnis").then().statusCode(200).contentType("application/zip").extract()
                 .asByteArray());
         assertThat(zip).containsOnlyKeys("dataset.json", "report.csv", "warnings.txt", "anfrage.json",
-                "mapping.json", "korrekturen.json");
+                "mapping.json", "korrekturen.json", "vorschlag-vergleich.json");
         JsonNode question = mapper.readTree(zip.get("anfrage.json"));
         assertThat(question.path("format").asText()).isEqualTo("dispofold/sp5-ergebnis");
         assertThat(question.path("nightsFair").asBoolean()).isTrue();

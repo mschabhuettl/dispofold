@@ -68,6 +68,15 @@ public class Sp5Resource {
     @Path("einstellungen")
     @Consumes(MediaType.APPLICATION_JSON)
     public JsonNode save(JsonNode body) {
+        synchronized (SETTINGS_LOCK) {
+            return saveSettings(body);
+        }
+    }
+
+    /** Settings are read, changed and written whole: one change at a time, so that none is lost. */
+    private static final Object SETTINGS_LOCK = new Object();
+
+    private JsonNode saveSettings(JsonNode body) {
         ObjectNode s = Sp5Settings.checked(mapper, body);
         // the discarded proposals change only through their routes: a page with an older copy keeps them
         ((ObjectNode) s.get("proposals")).set("discarded", plugin.settings().get("proposals").get("discarded"));
@@ -120,10 +129,18 @@ public class Sp5Resource {
             if (inputs.correctionsFile() != null) {
                 entry(zip, Sp5Plugin.CORRECTIONS_FILE, inputs.correctionsFile());
             }
-            // how far the proposals for an empty mapping come to this mapping: counts only (sp5-vergleich.py --vorschlag)
-            entry(zip, "vorschlag-vergleich.json", mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(
-                    Sp5ProposalCheck.counts(request.folder(), request.mapping(),
-                            Sp5Settings.proposals(plugin.settings()))));
+            // how far the proposals for an empty mapping come to this mapping: counts only (sp5-vergleich.py
+            // --vorschlag); left out if a folder gives the proposals trouble, the result files come first
+            byte[] counts = null;
+            try {
+                counts = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(Sp5ProposalCheck.counts(
+                        request.folder(), request.mapping(), Sp5Settings.proposals(plugin.settings())));
+            } catch (RuntimeException e) {
+                // no counts
+            }
+            if (counts != null) {
+                entry(zip, "vorschlag-vergleich.json", counts);
+            }
         }
         String month = body == null ? "" : body.path("month").asText("").replaceAll("[^0-9-]", "");
         return Response.ok(bytes.toByteArray(), "application/zip")
@@ -201,6 +218,12 @@ public class Sp5Resource {
         if (key.isBlank()) {
             throw Sp5Settings.invalid("key");
         }
+        synchronized (SETTINGS_LOCK) {
+            return discard(key);
+        }
+    }
+
+    private JsonNode discard(String key) {
         ObjectNode s = (ObjectNode) plugin.settings().deepCopy();
         ArrayNode list = (ArrayNode) s.get("proposals").get("discarded");
         boolean known = false;
@@ -218,10 +241,12 @@ public class Sp5Resource {
     @POST
     @Path("zuordnung/vorschlaege/zuruecksetzen")
     public JsonNode resetDiscarded() {
-        ObjectNode s = (ObjectNode) plugin.settings().deepCopy();
-        ((ObjectNode) s.get("proposals")).putArray("discarded");
-        host.saveSettings(Sp5Plugin.ID, s);
-        return plugin.settings();
+        synchronized (SETTINGS_LOCK) {
+            ObjectNode s = (ObjectNode) plugin.settings().deepCopy();
+            ((ObjectNode) s.get("proposals")).putArray("discarded");
+            host.saveSettings(Sp5Plugin.ID, s);
+            return plugin.settings();
+        }
     }
 
     /** The last run against the last import (409 {@code plugin.sp5.noBaseline} before the first). */

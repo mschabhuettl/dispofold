@@ -70,9 +70,17 @@ final class Sp5Proposals {
         List<Map<String, Object>> groupRows = Sp5Codes.table(folder, "5GROUP");
         List<Object> groupCodes = (List<Object>) codes.get("groups");
         Map<Object, Group> groups = new LinkedHashMap<>();
+        Set<String> groupNames = new HashSet<>();
+        Set<Object> repeated = new HashSet<>(); // a group whose name came before: the same rule meets both
         for (int i = 0; i < groupRows.size(); i++) {
             Map<String, Object> r = groupRows.get(i);
             Object id = Py.key(r.get("ID"));
+            if (id == null || groups.containsKey(id)) {
+                continue;
+            }
+            if (!groupNames.add(Sp5Codes.text(r.get("NAME")))) {
+                repeated.add(id);
+            }
             groups.put(id, new Group(id, Sp5Codes.text(r.get("NAME")),
                     Py.truthy(r.get("SUPERID")) ? Py.key(r.get("SUPERID")) : null,
                     (Map<String, Object>) ((Map<String, Object>) groupCodes.get(i)).get("result")));
@@ -144,9 +152,17 @@ final class Sp5Proposals {
         Map<Object, Map<String, Object>> shiftById = new LinkedHashMap<>();
         Map<Object, String> shiftArea = new HashMap<>(); // shift -> area id (existing rules, then proposals)
         List<Map<String, Object>> shiftRows = Sp5Codes.table(folder, "5SHIFT");
+        Set<String> codesSeen = new HashSet<>();
+        Set<Object> noProposal = new HashSet<>(); // an empty or repeated code: no pattern of its own
         for (int i = 0; i < shifts.size(); i++) {
             Map<String, Object> sh = shifts.get(i);
             Object id = Py.key(shiftRows.get(i).get("ID"));
+            if (id == null || shiftById.containsKey(id)) {
+                continue;
+            }
+            if (!codesSeen.add((String) sh.get("code")) || ((String) sh.get("code")).isEmpty()) {
+                noProposal.add(id);
+            }
             shiftById.put(id, sh);
             Map<String, Object> r = (Map<String, Object>) sh.get("result");
             if ("rule".equals(r.get("kind")) && r.get("areaId") instanceof String a) {
@@ -159,10 +175,10 @@ final class Sp5Proposals {
         List<Object> open = new ArrayList<>();
         for (Map.Entry<Object, Map<String, Object>> e : shiftById.entrySet()) {
             Map<String, Object> sh = e.getValue();
-            if (!"none".equals(((Map<?, ?>) sh.get("result")).get("kind"))) {
+            Object id = e.getKey();
+            if (!"none".equals(((Map<?, ?>) sh.get("result")).get("kind")) || noProposal.contains(id)) {
                 continue;
             }
-            Object id = e.getKey();
             int n = byShift.getOrDefault(id, List.of()).size();
             Set<Object> d = demand.getOrDefault(id, Set.of());
             if (Boolean.TRUE.equals(sh.get("hidden"))) {
@@ -205,6 +221,9 @@ final class Sp5Proposals {
                 }
             }
             List<Object> workers = byShift.getOrDefault(id, List.of());
+            if (pool.stream().noneMatch(g -> part(workers, working.get(g)) > 0)) {
+                continue; // nobody in a group worked it: no group to give it to
+            }
             Comparator<Object> bySize = Comparator.comparingInt(g -> members.get(g).size());
             Object best;
             if (!usable.isEmpty()) {
@@ -248,10 +267,22 @@ final class Sp5Proposals {
                 groupAreas.put(g.id(), existing);
             }
         }
+        Map<String, String> areaByName = new HashMap<>(); // an area taken from an earlier proposal: its group's name
+        for (Object a : m.get("areas") instanceof List<?> l ? l : List.of()) {
+            if (a instanceof Map<?, ?> area && area.get("id") instanceof String id && area.get("name") instanceof String n) {
+                areaByName.putIfAbsent(n, id);
+            }
+        }
         List<Map<String, Object>> areaProposals = new ArrayList<>();
         Map<Object, String> newArea = new LinkedHashMap<>();
+        Map<String, Map<String, Object>> areaById = new HashMap<>();
         for (Object g : new LinkedHashSet<>(owner.values())) {
-            if (groupAreas.containsKey(g) || inheritsArea(g, groups, groupAreas)) {
+            if (groupAreas.containsKey(g) || inheritsArea(g, groups, groupAreas) || repeated.contains(g)) {
+                continue;
+            }
+            if (areaByName.containsKey(name(groups, g))) {
+                newArea.put(g, areaByName.get(name(groups, g)));
+                groupAreas.put(g, List.of(areaByName.get(name(groups, g))));
                 continue;
             }
             String id = areaId(name(groups, g), usedIds);
@@ -273,6 +304,7 @@ final class Sp5Proposals {
                     + members.get(g).size() + " Mitgliedern mit Diensten; eigene " + (own.size() == 1 ? "Schicht " : "Schichten ")
                     + String.join(", ", own) + ".");
             areaProposals.add(area);
+            areaById.put(id, area);
         }
         owner.forEach((sh, g) -> {
             List<String> a = areasOf(g, groups, groupAreas);
@@ -285,8 +317,8 @@ final class Sp5Proposals {
         Map<Object, Map<String, Object>> groupProposal = new LinkedHashMap<>();
         Set<Object> owners = new HashSet<>(owner.values());
         for (Group g : groups.values()) {
-            if (!"none".equals(g.result().get("kind")) || owners.contains(g.id())
-                    || inheritsArea(g.id(), groups, groupAreas)) {
+            if (!"none".equals(g.result().get("kind")) || owners.contains(g.id()) || repeated.contains(g.id())
+                    || g.name().isEmpty() || inheritsArea(g.id(), groups, groupAreas)) {
                 continue;
             }
             Set<Object> w = working.get(g.id());
@@ -318,7 +350,7 @@ final class Sp5Proposals {
                 continue; // its members work only shifts without an area: nothing to say
             }
             Map.Entry<String, Integer> top = ranked.get(0);
-            if (top.getValue() >= share * w.size() || ranked.size() == 1) {
+            if (top.getValue() >= share * w.size()) {
                 Map<String, Object> p = new LinkedHashMap<>();
                 p.put("key", "group:" + g.name());
                 p.put("name", g.name());
@@ -328,7 +360,7 @@ final class Sp5Proposals {
                         + percent(top.getValue(), w.size()) + ") haben Dienste im Bereich " + top.getKey() + ".");
                 groupProposal.put(g.id(), p);
                 groupAreas.put(g.id(), List.of(top.getKey()));
-            } else {
+            } else if (ranked.size() >= 2) {
                 groupProposal.put(g.id(), ignoredGroup(g, "Sammelgruppe: die " + w.size()
                         + " Mitglieder mit Diensten verteilen sich auf die Bereiche " + ranked.stream()
                                 .map(e -> e.getKey() + " (" + percent(e.getValue(), w.size()) + ")")
@@ -337,7 +369,8 @@ final class Sp5Proposals {
         }
         for (Object g : owners) {
             Group group = groups.get(g);
-            if ("none".equals(group.result().get("kind")) && newArea.containsKey(g)) {
+            if ("none".equals(group.result().get("kind")) && newArea.containsKey(g) && !repeated.contains(g)
+                    && !group.name().isEmpty()) {
                 Map<String, Object> p = new LinkedHashMap<>();
                 p.put("key", "group:" + group.name());
                 p.put("name", group.name());
@@ -428,6 +461,29 @@ final class Sp5Proposals {
             }
         }
 
+        // a new area travels with each proposal that needs it, so that taking one without the other stays valid
+        for (Map<String, Object> p : new ArrayList<>(shiftProposal.values())) {
+            List<Object> needed = new ArrayList<>();
+            if (p.get("areaId") instanceof String a && areaById.containsKey(a)) {
+                needed.add(areaById.get(a));
+            }
+            for (Object c : p.get("choices") instanceof List<?> l ? l : List.of()) {
+                if (areaById.containsKey(((Map<?, ?>) c).get("areaId"))) {
+                    needed.add(areaById.get(((Map<?, ?>) c).get("areaId")));
+                }
+            }
+            p.put("newAreas", needed.stream().map(Sp5Proposals::areaEntry).toList());
+        }
+        for (Map<String, Object> p : groupProposal.values()) {
+            List<Object> needed = new ArrayList<>();
+            for (Object a : p.get("areaIds") instanceof List<?> l ? l : List.of()) {
+                if (areaById.containsKey(a)) {
+                    needed.add(areaEntry(areaById.get(a)));
+                }
+            }
+            p.put("newAreas", needed);
+        }
+
         // ---- result without the discarded ones ----
         Map<String, Object> result = new LinkedHashMap<>();
         int[] discarded = { 0 };
@@ -480,6 +536,15 @@ final class Sp5Proposals {
         return m;
     }
 
+    private static Map<String, Object> areaEntry(Object area) {
+        Map<?, ?> a = (Map<?, ?>) area;
+        Map<String, Object> e = new LinkedHashMap<>();
+        e.put("id", a.get("id"));
+        e.put("name", a.get("name"));
+        e.put("color", a.get("color"));
+        return e;
+    }
+
     // ---- duties ----
 
     /** {employee, shift} of every duty in the window: all of them, or the last months up to the newest duty. */
@@ -498,7 +563,9 @@ final class Sp5Proposals {
         LocalDate newest = rows.stream().map(r -> (LocalDate) r[2]).filter(d -> d != null)
                 .max(Comparator.naturalOrder()).orElse(LocalDate.now());
         LocalDate from = months > 0 ? YearMonth.from(newest).minusMonths(months - 1L).atDay(1) : LocalDate.of(1900, 1, 1);
-        LocalDate to = months > 0 ? YearMonth.from(newest).atEndOfMonth() : LocalDate.of(9999, 12, 31);
+        // all months: up to the newest duty or today, whichever is later (a cycle may run on for years)
+        LocalDate today = LocalDate.now();
+        LocalDate to = months > 0 ? YearMonth.from(newest).atEndOfMonth() : newest.isAfter(today) ? newest : today;
         try {
             for (Map<String, Object> r : Sp5Export.cycleDuties(Sp5Codes.table(folder, "5CYASS"),
                     Sp5Codes.table(folder, "5CYCLE"), Sp5Codes.table(folder, "5CYENT"),

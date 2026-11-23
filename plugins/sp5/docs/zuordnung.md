@@ -54,8 +54,10 @@ Link hierher.
 
 So entstehen die Vorschläge (die Beispiele stammen aus einem erfundenen Ordner):
 
-- **Dienste:** Gezählt werden die Dienste im Ordner, auch die aus Dienstzyklen, im gewählten Zeitraum. Zu einer
-  Gruppe gehören auch die Mitglieder ihrer Untergruppen.
+- **Dienste:** Gezählt werden die Dienste im Ordner, auch die aus Dienstzyklen, im gewählten Zeitraum; „alle“
+  reicht bis zum neuesten Dienst oder bis heute, was später ist. Zu einer Gruppe gehören auch die Mitglieder ihrer
+  Untergruppen. Eine Schicht ohne Kürzel und eine Schicht, die nur Personen ohne Gruppe gemacht haben, bekommen
+  keinen Vorschlag.
 - **Bedarf zuerst:** Der Bedarf in Schichtplaner 5 verbindet eine Schicht direkt mit Gruppen. Hat nur eine Gruppe
   Bedarf für die Schicht, gehört die Schicht zu ihr. Beispiel: „R1: Bedarf in Schichtplaner 5 nur bei der Gruppe
   Team Disposition. Mitglieder der Gruppe Team Disposition (Bereich TD) haben 100 % der 42 Dienste.“ Haben mehrere
