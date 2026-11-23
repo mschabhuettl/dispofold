@@ -105,7 +105,7 @@ Rückfrage „Der Datensatz ersetzt die Stammdaten. Fortfahren?“ mit **OK** be
 
 **Änderungen aus Dispofold behalten** bleibt dabei leer: Beim ersten Import aus Schichtplaner 5 gibt es in Dispofold
 nichts zu behalten. Ist das Häkchen schon gesetzt, weil vorher etwa die Demodaten geändert wurden, es vor dem Klick
-entfernen. Erscheint statt der Rückfrage „Stammdaten wurden geändert.“, **Trotzdem importieren** wählen; die
+entfernen. Erscheint nach der Rückfrage noch „Stammdaten wurden geändert.“, **Trotzdem importieren** wählen; die
 Stammdaten zum Ausprobieren werden dann durch die echten ersetzt.
 
 So sieht es aus, wenn es geklappt hat: Unter dem Knopf steht „Import aus …“ mit der Zahl der Personen, Bereiche und

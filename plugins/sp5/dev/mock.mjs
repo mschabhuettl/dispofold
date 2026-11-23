@@ -164,7 +164,7 @@ export function mappingErrors(m) {
       if (!('match' in r)) errors.push(`${where}: Das Muster fehlt.`);
       else pattern(where, r.match);
       if (k === 'shifts') {
-        if (r.areaId == null) errors.push(`${where}: Es ist kein Bereich gewählt.`);
+        if (r.areaId == null || r.areaId === '') errors.push(`${where}: Es ist kein Bereich gewählt.`);
         else if (!ids.has(r.areaId)) errors.push(`${where}: ${noArea(r.areaId)}`);
         if ('category' in r && !['EARLY', 'DAY', 'LATE', 'NIGHT'].includes(r.category)) errors.push(`${where}: Die Kategorie muss Früh, Tag, Spät oder Nacht sein, oder leer (aus den Zeiten).`);
         if ('unpopular' in r && typeof r.unpopular !== 'boolean') errors.push(`${where}: „Fair verteilen“ muss ja, nein oder keine Angabe sein.`);

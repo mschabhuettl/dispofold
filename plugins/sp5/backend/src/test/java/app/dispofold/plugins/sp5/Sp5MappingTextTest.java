@@ -50,6 +50,19 @@ class Sp5MappingTextTest {
     }
 
     @Test
+    void anEmptyAreaIsNoAreaAndPatternsReadAsTyped() throws Exception {
+        // the patterns as typed: re:\d+( and re:it's(
+        String mapping = "{\"areas\": [{\"id\": \"AN\", \"name\": \"x\", \"color\": \"y\"}], \"groups\": [],"
+                + " \"shifts\": [{\"match\": \"re:\\\\d+(\", \"areaId\": \"\"}, {\"match\": \"re:it's(\", \"areaId\": \"AN\"}]}";
+        assertThat(Sp5MappingText.plain(Sp5Export.mappingErrors(PyJson.load(mapping)))).containsExactly(
+                "Schichtregel 1: Das Muster „re:\\d+(“ ist kein gültiger regulärer Ausdruck (missing ), unterminated "
+                        + "subpattern, Position 3).",
+                "Schichtregel 1: Es ist kein Bereich gewählt.",
+                "Schichtregel 2: Das Muster „re:it's(“ ist kein gültiger regulärer Ausdruck (missing ), unterminated "
+                        + "subpattern, Position 4).");
+    }
+
+    @Test
     void anUnknownMessagePassesUnchanged() {
         assertThat(Sp5MappingText.plain("etwas anderes")).isEqualTo("etwas anderes");
     }

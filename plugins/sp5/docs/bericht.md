@@ -1,6 +1,6 @@
 # Schichtplaner 5: Bericht
 
-Die Seite **Schichtplaner 5 → Bericht** zeigt den Bericht und die Warnungen des letzten Laufs der
+Die Seite **Schichtplaner 5 → Bericht** zeigt den Bericht und die Warnungen des letzten Laufs der Seite
 [Lauf und Import](plugin-sp5-uebersicht.md). Der Bericht enthält keine Namen, nur Personen-Ids (`E` und die Id aus
 Schichtplaner 5, wie in Dispofold), Bereichs- und Schichtkürzel und Zahlen.
 

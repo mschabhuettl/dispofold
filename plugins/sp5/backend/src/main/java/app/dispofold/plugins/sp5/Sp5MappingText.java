@@ -102,7 +102,8 @@ final class Sp5MappingText {
             return "Die Id " + quoted(m.group(1)) + " gibt es schon.";
         }
         if ((m = NO_AREA.matcher(problem)).matches()) {
-            return m.group(1).equals("None") ? "Es ist kein Bereich gewählt."
+            // the editor leaves the area empty (''), a file may leave it out (None)
+            return m.group(1).equals("None") || m.group(1).equals("''") ? "Es ist kein Bereich gewählt."
                     : "Der Bereich " + quoted(m.group(1)) + " ist unter „Bereiche“ nicht eingetragen.";
         }
         if ((m = NO_AREA_IN.matcher(problem)).matches()) {
@@ -117,11 +118,23 @@ final class Sp5MappingText {
         return null;
     }
 
-    /** A value as Python writes it ('AN'), in German quotation marks („AN“); other values as they are. */
+    /**
+     * A text as Python writes it ('AN', 're:\\d'), as typed and in German quotation marks („AN“, „re:\d“): escaped
+     * backslashes and quotes undone, other escapes kept. Other values as they are.
+     */
     private static String quoted(String repr) {
         if (repr.length() >= 2 && (repr.charAt(0) == '\'' || repr.charAt(0) == '"')
                 && repr.charAt(repr.length() - 1) == repr.charAt(0)) {
-            return "„" + repr.substring(1, repr.length() - 1) + "“";
+            String inner = repr.substring(1, repr.length() - 1);
+            StringBuilder out = new StringBuilder("„");
+            for (int i = 0; i < inner.length(); i++) {
+                char c = inner.charAt(i);
+                if (c == '\\' && i + 1 < inner.length() && "\\'\"".indexOf(inner.charAt(i + 1)) >= 0) {
+                    c = inner.charAt(++i);
+                }
+                out.append(c);
+            }
+            return out.append('“').toString();
         }
         return repr;
     }
