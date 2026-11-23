@@ -18,7 +18,7 @@ import app.dispofold.model.Rules;
  * it is settled outside the plan); goal = target - account / months left in the half-year, this one included
  * (January a sixth, June the whole rest). The goal stays between 0 and the target plus
  * {@code maxOverTargetPercent}; what does not fit is the rest, a note on the plan and no rule violation. The hard
- * cap is the smaller of goal and target plus that share.</li>
+ * cap is the target plus that share.</li>
  * </ul>
  *
  * @param accountBefore the account the month starts with (after the reset at the start of a period)
@@ -50,8 +50,9 @@ public record AccountGoal(double accountBefore, int goalMinutes, int limitMinute
         int need = targetMinutes - (int) Math.round(before * 60 / monthsLeft(month));
         int cap = (int) Math.round(Math.max(0, targetMinutes) * over);
         int goal = Math.max(0, Math.min(cap, need));
-        int limit = (int) Math.max(0, Math.round(Math.min(goal, targetMinutes) * over));
-        return new AccountGoal(before, goal, Math.max(limit, goal), need - goal, cap);
+        // the cap stays at the target plus the share: a goal lowered by plus hours would else leave no room for the
+        // credited absences of the month (a violation no plan can avoid); the target rule pulls towards the goal
+        return new AccountGoal(before, goal, cap, need - goal, cap);
     }
 
     /**

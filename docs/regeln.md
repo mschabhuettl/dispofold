@@ -302,8 +302,8 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
 - Obergrenze (`maxMonthHours`, Gruppe Regelverstoß): Die angerechneten Stunden des Monats (Dienste, angerechnete
   Abwesenheiten und Ersatzruhe) dürfen das Ziel um höchstens `maxOverTargetPercent` Prozent des Ziels
   überschreiten (Standard 10 %, auf der Seite Regeln einstellbar, 0 erlaubt). Beim Ausgleich bis Ende des
-  Halbjahrs liegt sie bei höchstens Soll plus diesem Anteil: Liegt das Ziel über dem Soll (Minusstunden), ist die
-  Grenze Soll plus Anteil. Abwesenheiten zählen mit, senken
+  Halbjahrs liegt sie immer bei Soll plus diesem Anteil, auch wenn Plusstunden das Ziel senken: Angerechnete
+  Abwesenheiten müssen darunter Platz haben; zum Ziel zieht die Regel „Stunden treffen“. Abwesenheiten zählen mit, senken
   also, was für Dienste bleibt. Strafe: Minuten darüber. Warum Regelverstoß: Ungedeckter Bedarf (Gruppe Bedarf) wiegt
   immer schwerer als das Ziel (Qualität); ohne Obergrenze füllt der Solver Lücken mit Teilzeitkräften bis
   zur gesetzlichen Wochengrenze auf. Die gesetzlichen Grenzen gelten weiter. Ein von Hand gesetzter oder fixer

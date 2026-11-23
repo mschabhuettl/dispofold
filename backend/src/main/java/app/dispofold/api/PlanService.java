@@ -390,7 +390,7 @@ public class PlanService {
             if (!before.equals(after)) {
                 requireNotSolving(period.month());
             }
-            period = withReplacedDuties(period);
+            period = withReplacedDuties(period, expectedRevision != null);
             long revision;
             try {
                 revision = store.savePeriod(period, expectedRevision);
@@ -514,11 +514,12 @@ public class PlanService {
     }
 
     /**
-     * A new absence in a month that has a plan keeps the duty it replaced: the hours of the plan's duty that day, or 0
-     * without one (for types that credit the planned duty). Absences that were there before keep what they had (an
-     * absence known before the planning replaced nothing); without a plan nothing is known yet.
+     * A new absence entered in a month that has a plan keeps the duty it replaced: the hours of the plan's duty that
+     * day, or 0 without one (for types that credit the planned duty). Absences that were there before keep what they
+     * had (an absence known before the planning replaced nothing); without a plan nothing is known yet. An import
+     * ({@code entered} false) brings no new values, the stored ones stay.
      */
-    Period withReplacedDuties(Period period) {
+    Period withReplacedDuties(Period period, boolean entered) {
         if (period.absences() == null || period.absences().isEmpty()) {
             return period;
         }
@@ -541,6 +542,10 @@ public class PlanService {
             if (a.replacedHours() != null || before.containsKey(key)) {
                 Double kept = a.replacedHours() != null ? a.replacedHours() : before.get(key).replacedHours();
                 absences.add(new Absence(a.personId(), a.date(), a.typeCode(), kept));
+                continue;
+            }
+            if (!entered) {
+                absences.add(a);
                 continue;
             }
             PlanAssignment duty = duties.get(key);

@@ -44,6 +44,19 @@ class ImportTest {
     }
 
     @Test
+    void anImportBringsNoReplacedDutyToItsAbsences() {
+        given().post("/api/import/demo?replace=true").then().statusCode(200);
+        given().contentType(ContentType.JSON).body("{}").post("/api/plans/2027-01/solve").then().statusCode(202);
+        org.awaitility.Awaitility.await().atMost(java.time.Duration.ofSeconds(10)).until(() -> !given()
+                .get("/api/plans/2027-01").then().extract().jsonPath().getBoolean("solving"));
+        // the month has a plan now; the next import of the same absences adds nothing to them
+        given().post("/api/import/demo?replace=true").then().statusCode(200);
+        given().get("/api/periods/2027-01").then().statusCode(200)
+                .body("absences.findAll { it.replacedHours != null }.size()", equalTo(0))
+                .body("absences.size()", org.hamcrest.Matchers.greaterThan(0));
+    }
+
+    @Test
     void brokenUploadsAnswerWithoutContent() {
         // not JSON at all, and a type error inside: the answer names the position, never the content
         given().contentType(ContentType.JSON).body("{\"format\": Muster").post("/api/import/dataset").then()

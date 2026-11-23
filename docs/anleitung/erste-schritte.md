@@ -4,8 +4,11 @@ Dispofold gibt es in zwei Formen. Bedienung und Planung sind gleich, nur Anmeldu
 
 - **Server (Docker):** Die IT betreibt Dispofold auf einem Server, alle arbeiten im Browser. Mehrere Personen
   können zugleich planen; daneben gibt es die Rolle „nur lesen“.
-- **Programm am eigenen Rechner (Desktop):** Dispofold läuft auf einem einzelnen Rechner unter Windows, macOS oder
-  Linux, ohne Server. Die Daten liegen verschlüsselt auf diesem Rechner.
+- **Programm am eigenen Rechner (Desktop):** Dispofold läuft auf einem einzelnen Rechner unter Windows, macOS (Mac
+  mit M-Prozessor) oder Linux (auch auf ARM-Rechnern), ohne Server. Die Daten liegen verschlüsselt auf diesem
+  Rechner. Die Programme sind nicht signiert: Beim ersten Start warnt das System. Unter macOS dann mit gedrückter
+  Ctrl-Taste auf Dispofold klicken und **Öffnen** wählen, unter Windows **Weitere Informationen** und **Trotzdem
+  ausführen** (Einzelheiten in [betrieb.md](../betrieb.md#unsignierte-programme)).
 
 Installieren, sichern und aktualisieren beschreibt [betrieb.md](../betrieb.md) für die IT. Diese Seite beginnt dort,
 wo das Programm läuft.

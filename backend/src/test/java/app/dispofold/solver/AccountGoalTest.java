@@ -59,9 +59,9 @@ class AccountGoalTest {
         assertThat(goal(DEFAULT, "2027-06", 0, after("2027-05", 9.5)).goalMinutes()).isEqualTo(TARGET - 570);
         // December too (second half-year)
         assertThat(goal(DEFAULT, "2027-12", 0, after("2027-11", -3)).goalMinutes()).isEqualTo(TARGET + 180);
-        // the hard cap is the goal plus 10 %
+        // the hard cap is the target plus 10 %, whatever the goal (credited absences must fit under it)
         AccountGoal june = goal(DEFAULT, "2027-06", 0, after("2027-05", 9.5));
-        assertThat(june.limitMinutes()).isEqualTo((int) Math.round((TARGET - 570) * 1.1));
+        assertThat(june.limitMinutes()).isEqualTo(11088);
     }
 
     @Test
@@ -101,7 +101,7 @@ class AccountGoalTest {
         AccountGoal plus = goal(DEFAULT, "2027-06", 0, after("2027-05", 200));
         assertThat(plus.goalMinutes()).isZero();
         assertThat(plus.restMinutes()).isEqualTo(TARGET - 200 * 60);
-        assertThat(plus.limitMinutes()).isZero();
+        assertThat(plus.limitMinutes()).isEqualTo(11088);
     }
 
     @Test
