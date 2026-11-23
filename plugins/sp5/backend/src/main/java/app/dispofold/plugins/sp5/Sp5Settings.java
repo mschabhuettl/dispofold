@@ -1,6 +1,10 @@
 package app.dispofold.plugins.sp5;
 
+import java.util.ArrayList;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import jakarta.ws.rs.core.Response.Status;
 
@@ -15,7 +19,9 @@ import app.dispofold.plugin.api.PluginErrors;
  * {@code {"root", "path", "mapping", "options": {historyMonths, areasFromHistory, shiftsFromHistory, demand,
  * mixMinDuties, shiftMix, hiddenShiftsMonths, recentMonths, nightsFair}}}. The options are those of sp5_export.py with
  * its defaults ({@code --no-shift-mix} is {@code shiftMix: false}); {@code nightsFair} (default off) marks night
- * shifts whose mapping rule leaves {@code unpopular} empty, as sp5_export.py always does.
+ * shifts whose mapping rule leaves {@code unpopular} empty, as sp5_export.py always does. {@code "proposals":
+ * {share, minDuties, months, restWords, discarded}} are the settings of the mapping proposals ({@link Sp5Proposals});
+ * the discarded keys change only through their own routes, a save keeps the stored ones.
  */
 final class Sp5Settings {
 
@@ -39,6 +45,12 @@ final class Sp5Settings {
         o.put("hiddenShiftsMonths", 3);
         o.put("recentMonths", 3);
         o.put("nightsFair", false);
+        ObjectNode p = s.putObject("proposals");
+        p.put("share", 80);
+        p.put("minDuties", 3);
+        p.put("months", 0);
+        p.putArray("restWords").add("Ersatzruhe");
+        p.putArray("discarded");
         return s;
     }
 
@@ -47,9 +59,9 @@ final class Sp5Settings {
         ObjectNode s = defaults(mapper);
         if (stored != null && stored.isObject()) {
             stored.fields().forEachRemaining(e -> {
-                if (e.getKey().equals("options")) {
+                if (e.getKey().equals("options") || e.getKey().equals("proposals")) {
                     if (e.getValue().isObject()) {
-                        e.getValue().fields().forEachRemaining(o -> ((ObjectNode) s.get("options"))
+                        e.getValue().fields().forEachRemaining(o -> ((ObjectNode) s.get(e.getKey()))
                                 .set(o.getKey(), o.getValue()));
                     }
                 } else if (s.has(e.getKey())) {
@@ -65,8 +77,10 @@ final class Sp5Settings {
         if (body == null || !body.isObject()) {
             throw invalid("options");
         }
-        if (body.has("options") && !body.get("options").isObject()) {
-            throw invalid("options");
+        for (String k : new String[] { "options", "proposals" }) {
+            if (body.has(k) && !body.get(k).isObject()) {
+                throw invalid(k);
+            }
         }
         ObjectNode s = withDefaults(mapper, body);
         if (!s.get("root").isTextual() || !s.get("path").isTextual()) {
@@ -101,10 +115,41 @@ final class Sp5Settings {
         if (!o.get("nightsFair").isBoolean()) {
             throw invalid("nightsFair");
         }
+        JsonNode p = s.get("proposals");
+        if (!intIn(p.get("share"), 1, 100)) {
+            throw invalid("proposals.share");
+        }
+        if (!intIn(p.get("minDuties"), 0, Integer.MAX_VALUE)) {
+            throw invalid("proposals.minDuties");
+        }
+        if (!intIn(p.get("months"), 0, 1200)) {
+            throw invalid("proposals.months");
+        }
+        for (String k : new String[] { "restWords", "discarded" }) {
+            if (!p.get(k).isArray()) {
+                throw invalid("proposals." + k);
+            }
+            for (JsonNode w : p.get(k)) {
+                if (!w.isTextual() || w.asText().isBlank()) {
+                    throw invalid("proposals." + k);
+                }
+            }
+        }
         if (!s.get("mapping").isNull() && !s.get("mapping").isObject()) {
             throw invalid("mapping");
         }
         return s;
+    }
+
+    /** The settings of the proposals. */
+    static Sp5Proposals.Settings proposals(JsonNode settings) {
+        JsonNode p = settings.get("proposals");
+        List<String> words = new ArrayList<>();
+        p.get("restWords").forEach(w -> words.add(w.asText()));
+        Set<String> discarded = new LinkedHashSet<>();
+        p.get("discarded").forEach(w -> discarded.add(w.asText()));
+        return new Sp5Proposals.Settings(p.get("share").asInt(), p.get("minDuties").asInt(), p.get("months").asInt(),
+                words, discarded);
     }
 
     private static boolean intIn(JsonNode n, int min, int max) {

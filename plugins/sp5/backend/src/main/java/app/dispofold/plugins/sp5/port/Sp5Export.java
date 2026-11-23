@@ -3,6 +3,7 @@ package app.dispofold.plugins.sp5.port;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -83,6 +84,18 @@ public final class Sp5Export {
     /** The import's match of a valid pattern against a value (fnmatch, or "re:" from the start of the value). */
     public static boolean matches(String pattern, String value) {
         return Sp5Import.matches(pattern, value);
+    }
+
+    /** A date of a table as the import reads it (an ISO date text), else null. */
+    public static LocalDate date(Object value) {
+        return TimeUtil.parseDate(value);
+    }
+
+    /** The duties of the cycle tables (5CYASS, 5CYCLE, 5CYENT, 5CYEXC) within [from, to], as the import expands them. */
+    public static List<Map<String, Object>> cycleDuties(List<Map<String, Object>> assignments,
+            List<Map<String, Object>> cycles, List<Map<String, Object>> entries, List<Map<String, Object>> exceptions,
+            LocalDate from, LocalDate to) {
+        return Sp5Calc.expandCycleAssignments(assignments, cycles, entries, exceptions, from, to);
     }
 
     private static String patternError(Object pattern) {

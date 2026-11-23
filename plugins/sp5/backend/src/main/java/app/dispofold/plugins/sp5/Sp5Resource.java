@@ -27,6 +27,7 @@ import jakarta.ws.rs.core.Response.Status;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import app.dispofold.model.Dataset;
@@ -68,6 +69,8 @@ public class Sp5Resource {
     @Consumes(MediaType.APPLICATION_JSON)
     public JsonNode save(JsonNode body) {
         ObjectNode s = Sp5Settings.checked(mapper, body);
+        // the discarded proposals change only through their routes: a page with an older copy keeps them
+        ((ObjectNode) s.get("proposals")).set("discarded", plugin.settings().get("proposals").get("discarded"));
         if (!s.get("root").asText().isEmpty()) {
             plugin.folder(s); // an allowed folder, or 404 files.notFound
         }
@@ -170,6 +173,50 @@ public class Sp5Resource {
         Object m = python(mapping);
         List<String> errors = Sp5Export.mappingErrors(m);
         return Sp5Codes.codes(plugin.folder(plugin.settings()), m, errors);
+    }
+
+    /**
+     * Proposals of mapping entries from the folder in the settings for what the mapping in the body does not meet
+     * yet, without the discarded ones ({@link Sp5Proposals}).
+     */
+    @POST
+    @Path("zuordnung/vorschlaege")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public Map<String, Object> proposals(JsonNode mapping) {
+        JsonNode s = plugin.settings();
+        return Sp5Proposals.propose(plugin.folder(s), python(mapping), Sp5Settings.proposals(s));
+    }
+
+    /** Remembers a proposal ({@code {"key"}}) as discarded: it is not proposed again until the reset. */
+    @POST
+    @Path("zuordnung/vorschlaege/verwerfen")
+    @Consumes(MediaType.APPLICATION_JSON)
+    public JsonNode discard(JsonNode body) {
+        String key = body == null ? "" : body.path("key").asText("");
+        if (key.isBlank()) {
+            throw Sp5Settings.invalid("key");
+        }
+        ObjectNode s = (ObjectNode) plugin.settings().deepCopy();
+        ArrayNode list = (ArrayNode) s.get("proposals").get("discarded");
+        boolean known = false;
+        for (JsonNode k : list) {
+            known |= k.asText().equals(key);
+        }
+        if (!known) {
+            list.add(key);
+        }
+        host.saveSettings(Sp5Plugin.ID, s);
+        return plugin.settings();
+    }
+
+    /** Forgets every discarded proposal. */
+    @POST
+    @Path("zuordnung/vorschlaege/zuruecksetzen")
+    public JsonNode resetDiscarded() {
+        ObjectNode s = (ObjectNode) plugin.settings().deepCopy();
+        ((ObjectNode) s.get("proposals")).putArray("discarded");
+        host.saveSettings(Sp5Plugin.ID, s);
+        return plugin.settings();
     }
 
     /** The last run against the last import (409 {@code plugin.sp5.noBaseline} before the first). */

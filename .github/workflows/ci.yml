@@ -146,19 +146,21 @@ jobs:
           pip install -r "$RUNNER_TEMP/sp5-export/requirements-dev.txt"
       - name: Compare
         run: plugins/sp5/tools/ci/compare.sh "$RUNNER_TEMP/sp5-export" "$RUNNER_TEMP/compare.json"
-      - name: A corrections file loaded on a fresh database, against the Python program with the same file
-        # LoadedCorrectionsCompareTest is skipped without EXPORT_CHECKOUT; here it has to run
+      - name: A corrections file loaded on a fresh database, against the Python program with the same file; the mapping proposals against the generator's mapping
+        # LoadedCorrectionsCompareTest and GeneratorMappingTest are skipped without EXPORT_CHECKOUT; here they have to run
         working-directory: backend
         env:
           EXPORT_CHECKOUT: ${{ runner.temp }}/sp5-export
           EXPORT_PYTHON: python
         run: |
-          ./mvnw -B test -Dtest=LoadedCorrectionsCompareTest -Dquarkus.datasource.db-kind=h2 \
+          ./mvnw -B test -Dtest='LoadedCorrectionsCompareTest,GeneratorMappingTest' -Dquarkus.datasource.db-kind=h2 \
             -Dquarkus.datasource.devservices.enabled=false \
             "-Dquarkus.datasource.jdbc.url=jdbc:h2:mem:dispofold;DB_CLOSE_DELAY=-1;CIPHER=AES" \
             "-Dquarkus.datasource.password=filepw userpw" -Dquarkus.datasource.username=sa
           grep -q 'tests="1" errors="0" skipped="0" failures="0"' \
             target/surefire-reports/TEST-*.LoadedCorrectionsCompareTest.xml
+          grep -q 'tests="2" errors="0" skipped="0" failures="0"' \
+            target/surefire-reports/TEST-*.GeneratorMappingTest.xml
 
   docs:
     # The documentation site in strict mode: a missing page, anchor or image fails. Published only by the release.

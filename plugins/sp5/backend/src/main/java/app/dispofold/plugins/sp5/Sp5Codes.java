@@ -138,12 +138,12 @@ final class Sp5Codes {
         return -1;
     }
 
-    private static String text(Object value) {
+    static String text(Object value) {
         return value instanceof String s ? Py.strip(s) : "";
     }
 
     /** The table as the import finds it (the file name in any case), or no rows. */
-    private static List<Map<String, Object>> table(Path folder, String name) {
+    static List<Map<String, Object>> table(Path folder, String name) {
         String wanted = (name + ".dbf").toLowerCase(Locale.ROOT);
         String[] entries = folder.toFile().list();
         for (String entry : entries == null ? new String[0] : entries) {

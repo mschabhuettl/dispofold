@@ -63,6 +63,8 @@ class Sp5PluginTest {
         Files.createDirectories(Sp5Profile.OUTSIDE);
         Sp5ExportTest.folder(folder);
         Sp5ExportTest.folder(Sp5Profile.OUTSIDE);
+        Files.createDirectories(Sp5Profile.ROOT.resolve("vorschlag"));
+        app.dispofold.plugins.sp5.port.ProposalFolder.write(Sp5Profile.ROOT.resolve("vorschlag"), "2027-01");
         // the same folder, but one table is a link out of the allowed folder
         try (Stream<Path> files = Files.list(folder)) {
             for (Path f : files.toList()) {
@@ -238,5 +240,41 @@ class Sp5PluginTest {
             }
         }
         return files;
+    }
+
+    @Test
+    void proposalsAreMadeDiscardedAndResetAndASaveKeepsTheDiscarded() throws IOException {
+        given().get("/api/plugins/sp5/einstellungen").then().statusCode(200).body("proposals.share", equalTo(80))
+                .body("proposals.minDuties", equalTo(3)).body("proposals.months", equalTo(0))
+                .body("proposals.restWords", equalTo(List.of("Ersatzruhe")))
+                .body("proposals.discarded", equalTo(List.of()));
+        ObjectNode s = settings("vorschlag");
+        s.putNull("mapping");
+        json().body(s).put("/api/plugins/sp5/einstellungen").then().statusCode(200);
+        json().body("{}").post("/api/plugins/sp5/zuordnung/vorschlaege").then().statusCode(200)
+                .body("shifts.find { it.code == 'Z1' }.kind", equalTo("ignored"))
+                .body("areas.id", equalTo(List.of("TA", "TD", "TE", "NO", "SU"))).body("discarded", equalTo(0));
+        json().body("{\"key\": \"shift:Z1\"}").post("/api/plugins/sp5/zuordnung/vorschlaege/verwerfen").then()
+                .statusCode(200).body("proposals.discarded", equalTo(List.of("shift:Z1")));
+        json().body("{}").post("/api/plugins/sp5/zuordnung/vorschlaege/verwerfen").then().statusCode(400);
+        // a page with an older copy of the settings saves: the discarded one stays, the other settings change
+        ((ObjectNode) s.putObject("proposals")).put("share", 50).putArray("discarded");
+        json().body(s).put("/api/plugins/sp5/einstellungen").then().statusCode(200)
+                .body("proposals.share", equalTo(50)).body("proposals.discarded", equalTo(List.of("shift:Z1")));
+        json().body("{}").post("/api/plugins/sp5/zuordnung/vorschlaege").then().statusCode(200)
+                .body("shifts.find { it.code == 'Z1' }", equalTo(null)).body("discarded", equalTo(1))
+                .body("shifts.find { it.code == 'M1' }.areaId", equalTo("TA"));
+        given().post("/api/plugins/sp5/zuordnung/vorschlaege/zuruecksetzen").then().statusCode(200)
+                .body("proposals.discarded", equalTo(List.of()));
+        json().body("{}").post("/api/plugins/sp5/zuordnung/vorschlaege").then().statusCode(200)
+                .body("shifts.find { it.code == 'Z1' }.kind", equalTo("ignored"));
+        for (String[] bad : List.of(new String[] { "share", "0" }, new String[] { "share", "101" },
+                new String[] { "minDuties", "-1" }, new String[] { "months", "1.5" },
+                new String[] { "restWords", "[\"\"]" }, new String[] { "restWords", "\"Ersatzruhe\"" })) {
+            ObjectNode b = settings("vorschlag");
+            b.putObject("proposals").set(bad[0], mapper.readTree(bad[1]));
+            json().body(b).put("/api/plugins/sp5/einstellungen").then().statusCode(400)
+                    .body("params.field", equalTo("proposals." + bad[0]));
+        }
     }
 }
