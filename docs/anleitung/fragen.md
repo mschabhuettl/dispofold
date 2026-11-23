@@ -8,9 +8,15 @@ der Seite.
 
 ## Häufige Fragen
 
+**Was ist Timefold?** Timefold Solver ist die freie Planungs-Engine, die in Dispofold rechnet: Sie probiert sehr
+viele mögliche Pläne aus und behält einen guten. Sie ist ein Teil des Programms und läuft auf dem eigenen Rechner
+oder dem eigenen Server; Dispofold nutzt weder einen Cloud-Dienst noch die kommerzielle Plattform von Timefold.
+Was Timefold rechnet und was Dispofold dazu beiträgt, steht unter [Wie das Programm plant](wie-plant.md).
+
 **Braucht Dispofold Internet?** Nein. Geplant wird auf dem eigenen Rechner oder dem eigenen Server, ohne
-Cloud-Dienst, und keine Daten verlassen ihn; auch diese Anleitung ist eingebaut, am Server wie im Programm am
-eigenen Rechner. Ins Netz gehen kann Dispofold nur für zwei Dinge:
+Cloud-Dienst, und keine Daten verlassen ihn. Auch diese Anleitung ist in jede Form eingebaut, am Server wie im
+Programm am eigenen Rechner, und geht ohne Internet: im Menü **Anleitung** und über „Mehr dazu in der Anleitung“.
+Ins Netz gehen kann Dispofold nur für zwei Dinge:
 
 - die Suche nach einer neuen Version: Der Server fragt beim Start und einmal am Tag anonym bei GitHub nach; die IT
   kann das abschalten. Das Programm am eigenen Rechner fragt beim ersten Start, ob es suchen soll, und geht nach
@@ -38,12 +44,29 @@ trägt man als [Vorgabe](eingaben.md#vorgaben) ein.
 **Wie bekommt jemand an einem Tag sicher frei?** Unter **Eingaben** eine Vorgabe **frei (freier Tag)** für den
 Tag eintragen, oder eine Abwesenheit, wenn es eine ist. Ein Wunsch „frei“ ist nur ein Wunsch.
 
-**Nach dem neuen Planen sieht der Plan anders aus.** Eine Planung verbessert den gespeicherten Plan und darf dabei
-alles ändern, was nicht fixiert ist. Was bleiben soll, vorher von Hand setzen oder fixieren (die Zelle anklicken,
-**Fixieren**). Siehe [Planen](planen.md#planen).
+**Neu planen hat Dienste anderer Personen verschoben.** Eine Planung verbessert den gespeicherten Plan und darf
+dabei alles ändern, was nicht [fixiert](begriffe.md#fixiert) ist, auch Dienste, die mit der Änderung nichts zu tun
+haben. Ist der Plan schon ausgehängt, vor dem neuen Planen **Plan fixieren** klicken: Das fixiert alle Dienste und
+Ersatzruhetage des Monats, und die Planung füllt Lücken nur noch an freien Tagen. Einzelne Zellen fixiert man in
+ihrer Auswahl mit **Fixieren**. Ist es schon passiert, die verschobenen Dienste von Hand zurücksetzen oder einen
+vorher exportierten Plan mit **Plan importieren** zurückholen (siehe [Daten](daten.md#plan-importieren)). Siehe
+[Planen](planen.md#planen).
 
-**Was tun bei einer Krankmeldung nach dem Planen?** Die Abwesenheit unter **Eingaben** eintragen, im Dienstplan die
-rote Zelle anklicken und **Dienst entfernen (frei)**, dann die Lücke füllen oder neu planen. Schritt für Schritt
+**Prüfen zeigt Hunderte Einträge, obwohl der Plan grün ist.** Das sind die **Hinweise zur Qualität (keine
+Fehler)**: jede Überbesetzung und jede Abweichung von einer Qualitätsregel, etwa ein Dienstblock, der kürzer ist als
+eingestellt. Auch ein sehr guter Plan hat davon viele. Zählt nur das Urteil oben: „Nichts zu tun: 0 Regelverstöße,
+0 Lücken“ heißt, der Plan ist verwendbar. Die Hinweise liest man nur, wenn eine Person auffällt. Siehe
+[Was die Zahlen bedeuten](zahlen.md#prüfen).
+
+**Was heißt „Überbesetzung: 90 Personenstunden“?** Über den ganzen Monat zusammengezählt waren 90 Stunden lang eine
+Person mehr eingeteilt, als der Bedarf verlangt, verteilt auf viele Tage und Bereiche. Das ist kein Fehler: Es
+entsteht vor allem, wo eine Schicht über mehrere Abschnitte des Bedarfs reicht und der nächste Abschnitt weniger
+Personen braucht. Siehe [Überbesetzung](zahlen.md#überbesetzung).
+
+**Was tun bei einer Krankmeldung nach dem Planen?** Die Abwesenheit unter **Eingaben** eintragen, im Dienstplan
+**Zum ersten Konflikt springen**, die rote Zelle anklicken und **Dienst entfernen (frei)**, dann die Lücke füllen
+(**Auf Anfrage verfügbar** oder von Hand). Neu planen nur nach **Plan fixieren**, wenn der Plan schon ausgehängt
+ist. Schritt für Schritt
 mit Bildern: [Ein Monat Schritt für Schritt](beispiel.md#8-eine-krankmeldung-nach-dem-planen).
 
 **Ich habe in Dispofold etwas geändert. Was passiert beim nächsten Import?** Mit dem Häkchen **Änderungen aus
