@@ -1,10 +1,9 @@
 # Import aus Schichtplaner 5
 
 Die Erweiterung **Schichtplaner 5** liest einen Datenordner von Schichtplaner 5 und importiert daraus Stammdaten,
-Abwesenheiten, die Dienste der letzten Monate als Historie, Feiertage und den Bedarf in Dispofold. Sie macht
-dasselbe wie das Programm `sp5_export.py` aus sp5-export, nur ohne Umweg über Dateien: Der Import läuft über die
-Seite **Daten**, mit Vorschau und der Wahl, die Änderungen aus Dispofold zu behalten. Den Ordner liest sie nur;
-in Schichtplaner 5 ändert sich nichts.
+Abwesenheiten, die Dienste der letzten Monate als Historie, Feiertage und den Bedarf in Dispofold. Den Ordner liest
+sie nur; in Schichtplaner 5 ändert sich nichts. Den Weg Schritt für Schritt beschreibt
+[Echte Daten aus Schichtplaner 5](plugin-sp5-echte-daten.md).
 
 > „Schichtplaner 5“ ist eine Marke ihres Inhabers. Diese Erweiterung ist ein unabhängiges Projekt und steht in
 > keiner Verbindung zum Hersteller von Schichtplaner 5.
@@ -17,69 +16,52 @@ in Schichtplaner 5 ändert sich nichts.
    - **Ordner von Schichtplaner 5:** der Datenordner (mit `5EMPL.DBF` und den anderen Tabellen). Am Server sind nur
      die Ordner wählbar, die die IT freigegeben hat (siehe [Betrieb](../betrieb.md#erweiterungen)); am eigenen
      Rechner öffnet **Ordner wählen …** den Ordnerdialog.
-   - **Zuordnung (JSON):** welche Schichten, Gruppen und Abwesenheiten zu welchen Bereichen gehören, im Format von
-     `mapping.json` aus sp5-export. Eine Datei wählen oder den Text einfügen. Beim Speichern wird sie geprüft wie
-     von `sp5_export.py`; alle Fehler stehen in der Meldung. Bequemer geht es auf der Seite
-     [Zuordnung](plugin-sp5-zuordnung.md).
-   - **Optionen:** dieselben wie die von `sp5_export.py`, mit denselben Standardwerten, und dazu **Nachtschichten
-     automatisch fair verteilen**. Jede hat ein „i“ mit der Erklärung.
+   - **Zuordnung (JSON):** welche Schichten, Gruppen und Abwesenheiten zu welchen Bereichen gehören, als Text.
+     Eine Datei wählen oder den Text einfügen; beim Speichern wird sie geprüft, alle Fehler stehen in der Meldung.
+     Bequemer geht es auf der Seite [Zuordnung](plugin-sp5-zuordnung.md), mit Vorschlägen aus dem Ordner.
+   - **Optionen:** wie der Import rechnet. Jede hat ein „i“ mit der Erklärung; die Standardwerte passen meist.
 3. **Einstellungen speichern.** Ausschalten der Erweiterung behält sie.
 
-| Einstellung | Standard | Entspricht |
-|---|---|---|
-| Monate Historie | 12 | `--history-months` |
-| Bereiche aus der Historie ab … Diensten | leer (aus) | `--areas-from-history` |
-| Schichten seltener als … Dienste nur auf Anfrage | leer (aus) | `--shifts-from-history` |
-| Bedarf | aus der Historie | `--demand` |
-| Gewohnte Verteilung übernehmen, ab … Diensten | an, 10 | `--no-shift-mix`, `--mix-min-duties` |
-| Ausgeblendete Schichten mit Diensten in den … Monaten davor | 3 | `--hidden-shifts-months` |
-| Bereiche ohne Dienst in den letzten … Monaten nur auf Anfrage | 3 | `--recent-months` |
-| Nachtschichten automatisch fair verteilen | aus | `sp5_export.py` tut das immer: eine Schichtregel ohne „Fair verteilen“ markiert dort Nachtschichten |
+| Einstellung | Standard |
+|---|---|
+| Monate Historie | 12 |
+| Bereiche aus der Historie ab … Diensten | leer (aus) |
+| Schichten seltener als … Dienste nur auf Anfrage | leer (aus) |
+| Bedarf | aus der Historie |
+| Gewohnte Verteilung übernehmen, ab … Diensten | an, 10 |
+| Ausgeblendete Schichten mit Diensten in den … Monaten davor | 3 |
+| Bereiche ohne Dienst in den letzten … Monaten nur auf Anfrage | 3 |
+| Nachtschichten automatisch fair verteilen | aus |
 
-Ohne diese Option wird eine Schicht nur fair verteilt, wenn ihre Schichtregel in der Zuordnung „Fair verteilen: ja“
-sagt; Nächte haben ohnehin ihre eigene Fairness-Regel. Eine Regel mit „ja“ oder „nein“ gilt immer so. Weil
-`sp5_export.py` die Nachtschichten markiert, gibt `sp5-vergleich.py` dem Python-Programm bei ausgeschalteter
-Option eine Zuordnung, in der jede Schichtregel ohne Angabe „nein“ sagt, und nennt das im Ergebnis.
+Ohne die letzte Option wird eine Schicht nur fair verteilt, wenn ihre Schichtregel in der Zuordnung „Fair
+verteilen: ja“ sagt; Nächte haben ohnehin ihre eigene Fairness-Regel. Eine Regel mit „ja“ oder „nein“ gilt immer
+so.
 
 ## Importieren
 
-1. Auf der Seite **Daten** im Abschnitt **Aus Schichtplaner 5** den ersten und, für mehrere Monate, den letzten
-   Monat wählen.
-2. **Änderungen aus Dispofold behalten** anhaken, wenn seit dem letzten Import in Dispofold etwas an den
-   Stammdaten geändert wurde, und **Importieren**. Die Vorschau zeigt, was übernommen wird und wo es Konflikte gibt
-   (siehe [Daten und Korrekturdatei](daten.md)).
+Importiert wird an einer Stelle: auf der Seite [Lauf und Import](plugin-sp5-uebersicht.md) im Menü
+**Schichtplaner 5**. Dort den ersten und, für mehrere Monate, den letzten Monat wählen, **Ausführen**, das
+Ergebnis ansehen und dann unter **Diesen Lauf importieren** importieren. **Änderungen aus Dispofold behalten**
+anhaken, wenn seit dem letzten Import in Dispofold etwas an den Stammdaten geändert wurde; die Vorschau zeigt, was
+übernommen wird und wo es Konflikte gibt (siehe [Daten und Korrekturdatei](daten.md)).
 
 Die Korrekturen kommen von selbst: Die Erweiterung wendet die Korrekturdatei an, die Dispofold aus den Änderungen
 seit dem letzten Import bildet, und vermerkt sie im Datensatz. Eine Datei `korrekturen.json` braucht es dafür
 nicht mehr.
 
-Den Lauf vor dem Import ansehen, seinen Bericht und seine Warnungen lesen, die Zuordnung bearbeiten und mit dem
-letzten Import vergleichen geht auf den Seiten der Erweiterung im Menü **Schichtplaner 5** (siehe
-[Ablauf](plugin-sp5-ablauf.md)). Von dort lässt sich auch genau der angesehene Lauf importieren.
+Den ganzen Weg mit Bericht, Zuordnung und Vergleich beschreibt [Ablauf](plugin-sp5-ablauf.md).
 
 ## Abwesenheiten auf Diensttagen
 
 In Schichtplaner 5 bleibt ein geplanter Dienst stehen, wenn an seinem Tag eine ganztägige Abwesenheit
 eingetragen wird. Der Import übernimmt solche Dienste nicht (der Bericht nennt sie, mit einer Warnung) und gibt
-an der Abwesenheit auch keine Stunden mit, damit das Ergebnis Byte für Byte dem von `sp5_export.py` gleicht. Die
-Gutschrift „Stunden des geplanten Dienstes“ einer Abwesenheitsart (Seite Stammdaten) gilt deshalb nur für
-Abwesenheiten, die nach der Planung in Dispofold eingetragen werden; importierte Abwesenheiten zählen mit
-Wochenstunden / 5, und die Personenseite sagt das. Die Erweiterung lässt die Gutschrift aller Arten beim Standard.
+an der Abwesenheit auch keine Stunden mit. Die Gutschrift „Stunden des geplanten Dienstes“ einer Abwesenheitsart
+(Seite Stammdaten) gilt deshalb nur für Abwesenheiten, die nach der Planung in Dispofold eingetragen werden;
+importierte Abwesenheiten zählen mit Wochenstunden / 5, und die Personenseite sagt das. Die Erweiterung lässt die
+Gutschrift aller Arten beim Standard.
 
-## Zyklen
+## Für die IT
 
-Eine Zyklus-Zuordnung (`5CYASS`) ohne Ende oder ohne Beginn ergibt keine Dienste, wie in Schichtplaner 5 (so
-auch openschichtplaner5 ab 1.0.1). `sp5_export.py` liest eine Zuordnung ohne Ende dagegen als offen und setzt
-Dienste ein. Nur in diesem Fall weichen die Ergebnisse ab.
-
-## Grenzfälle
-
-Verglichen wird Byte für Byte, ohne die Dateien vorher zu vereinheitlichen. Außer bei den Zyklen kennt die
-Erweiterung nur Unterschiede in Fällen, die in echten Daten kaum vorkommen:
-
-- Ein Muster in der Zuordnung mit `[[` oder `--` in einer Zeichenklasse: Python schreibt dazu eine Warnung des
-  Interpreters, die Erweiterung nicht. Ein Rückverweis innerhalb eines Lookbehind wird von der Erweiterung als
-  ungültiges Muster abgelehnt.
-- Zeichen, die erst Unicode 16 vergeben hat, in einer Meldung: Python und Java schreiben sie verschieden.
-- Fälle, in denen `sp5_export.py` mit einem Python-Traceback abbricht, statt eine Meldung zu geben.
-- Ganzzahl-Optionen über 2 147 483 647: Die Einstellungen lehnen sie ab.
+Wie sich die Erweiterung zum früheren Programm `sp5_export.py` verhält (gleiches Ergebnis, die gewollten
+Unterschiede, die Optionen der Kommandozeile) und wie man das mit echten Daten prüft, steht unter
+[Technik und Vergleich mit sp5-export](plugin-sp5-technik.md).

@@ -1,6 +1,6 @@
 # Schichtplaner 5: Vergleich
 
-Die Seite **Schichtplaner 5 → Vergleich** zeigt, was der letzte Lauf der [Übersicht](plugin-sp5-uebersicht.md)
+Die Seite **Schichtplaner 5 → Vergleich** zeigt, was der letzte Lauf der [Lauf und Import](plugin-sp5-uebersicht.md)
 gegenüber dem letzten Import ändern würde, bevor man importiert.
 
 ![Der Vergleich des letzten Laufs mit dem letzten Import](img/vergleich.png)
