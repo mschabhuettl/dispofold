@@ -12,7 +12,7 @@ selbst aus.
 
 ## Gruppen
 
-Der Score hat drei Teile (Gruppen), die streng nacheinander zählen. Technisch heißen sie `hard`, `medium` und
+Die Bewertung eines Plans (technisch der Score) hat drei Teile (Gruppen), die streng nacheinander zählen. Technisch heißen sie `hard`, `medium` und
 `soft`:
 
 | Gruppe | Score | Bedeutung | Ziel |
@@ -89,7 +89,7 @@ die Parameter (Seite Regeln, „Gesetz und Betriebsvereinbarung“; die Höchsts
 
 Einzelheiten:
 
-- **Tägliche Ruhezeit.** Die Strafe ist die fehlende Ruhe in Minuten. Die Verkürzung auf 9 h, die der
+- **Tägliche Ruhezeit.** Der Abzug ist die fehlende Ruhe in Minuten. Die Verkürzung auf 9 h, die der
   KV für unvorhersehbare Ereignisse im Betrieb erlaubt, ist nicht für die Planung gedacht. Der Parameter kann
   deshalb nicht unter 11 h gesetzt werden (die Regeln werden sonst abgelehnt), und der Solver plant nie
   darunter. Ein Dienst, der noch während der Ruhe nach einem langen Dienst beginnt, zählt ebenfalls.
@@ -311,7 +311,7 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
   überschreiten (Standard 10 %, auf der Seite Regeln einstellbar, 0 erlaubt). Beim Ausgleich bis Ende des
   Halbjahrs liegt sie immer bei Soll plus diesem Anteil, auch wenn Plusstunden das Ziel senken: Angerechnete
   Abwesenheiten müssen darunter Platz haben; zum Ziel zieht die Regel „Stunden treffen“. Abwesenheiten zählen mit, senken
-  also, was für Dienste bleibt. Strafe: Minuten darüber. Warum Regelverstoß: Ungedeckter Bedarf (Gruppe Bedarf) wiegt
+  also, was für Dienste bleibt. Abzug: Minuten darüber. Warum Regelverstoß: Ungedeckter Bedarf (Gruppe Bedarf) wiegt
   immer schwerer als das Ziel (Qualität); ohne Obergrenze füllt der Solver Lücken mit Teilzeitkräften bis
   zur gesetzlichen Wochengrenze auf. Die gesetzlichen Grenzen gelten weiter. Ein von Hand gesetzter oder fixer
   Dienst darf die Grenze überschreiten, erscheint dann aber als Regelverstoß; die Liste „Auf Anfrage
@@ -327,8 +327,8 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
   mehr, ändert sich nichts. Wer seinen Anteil nicht arbeiten kann (Sperren, wenige erlaubte Schichten), wird
   nicht eigens berücksichtigt: Die quadrierte Abweichung verteilt den Rest gleichmäßig auf die anderen, und die
   Obergrenze bleibt beim echten Ziel. Personenansicht und Analyse zeigen beide Ziele.
-- Die Strafe ist die Abweichung in Viertelstunden (vom verkleinerten Ziel), quadriert, damit sie sich auf viele Personen verteilt statt
-  bei wenigen hängen zu bleiben. Beispiel: 4 h Abweichung sind 16 Viertelstunden, Strafe 256 mal Gewicht.
+- Der Abzug ist die Abweichung in Viertelstunden (vom verkleinerten Ziel), quadriert, damit sie sich auf viele Personen verteilt statt
+  bei wenigen hängen zu bleiben. Beispiel: 4 h Abweichung sind 16 Viertelstunden, Abzug 256 mal Gewicht.
 - **Beispiel:** Mia und Noah bleiben zusammen 8 h unter ihren Zielen. Mia allein 8 h darunter kostet 32² = 1024
   mal Gewicht, Mia und Noah je 4 h darunter nur 2 × 256 = 512. Die Regel verhindert also, dass eine Person weit
   daneben liegt, während andere ihr Ziel genau treffen.
@@ -341,7 +341,7 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
 ### Freie Sonntage
 
 - Jede Person hat im Kalendermonat mindestens `minFreeSundays` Sonntage ohne Dienst (Standardwert 2, einstellbar;
-  0 schaltet die Regel aus). Gruppe Regelverstoß: Strafe je Sonntag zu viel.
+  0 schaltet die Regel aus). Gruppe Regelverstoß: ein Abzug je Sonntag zu viel.
 - Ein Sonntag ist frei, wenn kein Dienst ihn von 0 bis 24 Uhr berührt. Ein Nachtdienst von Samstag auf Sonntag
   nimmt den Sonntag also mit, auch wenn er am Morgen endet; so ist der Sonntag wirklich frei. Ein Nachtdienst
   ab Sonntagabend nimmt ihn ebenfalls.
@@ -357,7 +357,7 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
   exportiert): Anteile ihrer Dienste je Kategorie (Früh, Tag, Spät, Nacht) und je Bereich. Die Planung
   korrigiert sie in den Stammdaten oder entfernt sie.
 - Je Kategorie und Bereich wird verglichen: geplante Dienste des Monats gegen Anteil mal alle geplanten
-  Dienste der Person. Die Strafe ist die quadrierte Abweichung in Zehntel-Diensten, summiert. Beispiel: Eine
+  Dienste der Person. Der Abzug ist die quadrierte Abweichung in Zehntel-Diensten, summiert. Beispiel: Eine
   Person mit 90 % Tag und 10 % Nacht hat 10 Dienste; 9 Tag und 1 Nacht kosten nichts, 5 und 5 kosten
   2 × 40² = 3200 mal Gewicht. Quadriert, damit kleine Abweichungen wenig und eine ganz andere Verteilung viel
   kosten. Gewicht 100, damit die Verteilung den Plan sichtbar prägt: Im Demomonat mit klaren Verteilungen für
@@ -404,8 +404,9 @@ Eine Einstellung der Regeln, `nightDistribution`:
   ihrer Verteilung nicht, genau wie bei `EVEN`. Die übrigen Anteile werden auf zusammen 100 % hochgerechnet und
   gelten für die Dienste außer Nächten, auch für die Abwechslung Dienste. Beispiel: 90 % Tag und 10 % Nacht wird
   100 % Tag. Wer im Nachtausgleich ist oder bei `HABIT` wegen seiner Verteilung nicht, bleibt unverändert.
-- Demomonat mit klaren Verteilungen für 92 von 150 Personen, je 300 s: `HABIT` vergleicht 41 Personen (Nächte je
-  Person 0 bis 10, Mittel 1,5), `EVEN` 120 (0 bis 13, Mittel 2,3); die Strafe der Verteilung sinkt von rund
+- Gemessen mit den Demodaten vor 0.23.0 (alle Nächte als fair zu verteilen markiert), Demomonat mit klaren
+  Verteilungen für 92 von 150 Personen, je 300 s: `HABIT` vergleicht 41 Personen (Nächte je
+  Person 0 bis 10, Mittel 1,5), `EVEN` 120 (0 bis 13, Mittel 2,3); der Abzug der Verteilung sinkt von rund
   10,0 auf 4,5 Millionen, Einzeldienste 152 und 145, Bedarf in beiden Fällen gedeckt.
 - Die Personenansicht zeigt bei den Nächten „folgt gewohnter Verteilung (10 % Nacht)“, „im Nachtausgleich:
   Belastung x, Mittel y“ (die Last der Fairness Nachtdienste, siehe unten, als Nächte je 30 verfügbare Tage)
@@ -423,7 +424,7 @@ Eine Einstellung der Regeln, `nightDistribution`:
   sind die Tage in der Beschäftigung ohne Abwesenheit, dazu je Historienmonat rund 30 Tage. Wer im Monat
   eintritt oder lange abwesend war, bekommt dadurch nicht alle Nachtdienste; Teilzeit trägt anteilig weniger.
 - Verglichen werden alle, die solche Dienste machen können (z. B. Nachtdienste nur Personen im Nachtausgleich,
-  siehe Nachtverteilung). Die Strafe ist die Wurzel aus der Summe der quadrierten Abweichungen vom Mittelwert:
+  siehe Nachtverteilung). Der Abzug ist die Wurzel aus der Summe der quadrierten Abweichungen vom Mittelwert:
   0, wenn alle gleich belastet sind. Die Erklärung je Person zeigt die Abweichung vom Mittelwert und nur bei
   Personen über dem Mittelwert einen Treffer.
 - **Beispiel `fairNights`:** Paul und Rita, beide Vollzeit und im Nachtausgleich: Paul hatte in den letzten drei
@@ -436,20 +437,21 @@ Eine Einstellung der Regeln, `nightDistribution`:
   an dieselben, sondern verteilt sich auf alle, die sie machen können.
 - Die Beispiele zeigen, was die Regeln vergleichen und bevorzugen. Wie wenig das den fertigen Plan bewegt, steht
   im nächsten Punkt.
-- Wirkung der Wichtigkeit „Faire Verteilung“ (Messung im Demomonat mit klaren Verteilungen, 300 s): Das 0,25-,
+- Wirkung der Wichtigkeit „Faire Verteilung“ (Messung mit den Demodaten vor 0.23.0, als alle Nächte als fair zu
+  verteilen markiert waren, im Demomonat mit klaren Verteilungen, 300 s): Das 0,25-,
   1- oder 4-Fache (Gewichte 1, 3 oder 12, fair verteilte 1, 2 oder 8) ändert die Fairness nicht über das Rauschen
   zwischen zwei Läufen. Die Gründe:
-  - Die vier Fairness-Regeln sind zusammen rund 0,5 % der weichen Strafe. Den Rest tragen gewohnte Verteilung
+  - Die vier Fairness-Regeln sind zusammen rund 0,5 % der Abzüge der Planqualität. Den Rest tragen gewohnte Verteilung
     (47 %), Sollstunden (24 %), Blocklänge (15 %), einzelne freie Tage (8 %) und Wünsche (6 %).
-  - Die Strafe ist eine Wurzel über alle Verglichenen. Wandert ein Dienst von einer Person über dem Mittel zu
+  - Der Abzug ist eine Wurzel über alle Verglichenen. Wandert ein Dienst von einer Person über dem Mittel zu
     einer darunter, sinkt sie typisch nur um 15 bis 50 Punkte (mal Gewicht: 50 bis 150). Ein solcher Tausch zweier
     Personen am selben Tag kostet dagegen vor allem bei Sollstunden und Verteilung im Median 60 000 bis 110 000.
     Er lohnt sich im Median erst beim rund 500- bis 2000-Fachen des Gewichts; zwischen 0,25 und 4 lohnen sich
     praktisch dieselben Tausche.
   - Die Historie (3 Monate) trägt 80 bis 90 % der Last. Sie macht den Ausgleich nicht unmöglich: Ein Monat, der
-    nur auf Fairness achtet und sonst nichts beachtet, senkte die Strafe höchstens um 25 bis 40 %; der fertige
-    Plan liegt aber meist etwas über der Strafe der Historie allein.
-  - Der Solver ist nach 300 s nicht am Ende (die weiche Strafe sinkt auch in der letzten Minute um rund 4 %) und
+    nur auf Fairness achtet und sonst nichts beachtet, senkte den Abzug höchstens um 25 bis 40 %; der fertige
+    Plan liegt aber meist etwas über dem Abzug der Historie allein.
+  - Der Solver ist nach 300 s nicht am Ende (die Abzüge der Planqualität sinken auch in der letzten Minute um rund 4 %) und
     verbessert vor allem die großen Posten. Die Fairness schwankt dabei um ± 5 % ohne Richtung.
   - Die Fairness wirkt deshalb wie ein Ausgleich unter sonst gleichwertigen Plänen. Proben mit 120 s: Ohne sie
     (Gewicht 0) waren die Wochenenden rund 15 % ungleicher, die übrigen kaum; das 100-Fache brachte 5 bis 13 %
@@ -465,7 +467,7 @@ Eine Einstellung der Regeln, `nightDistribution`:
 
 - Je Person zählen höchstens `maxWishesPerPerson` Wünsche des Monats (Standard 6), die ersten nach Datum.
 - Arten: frei, Dienst, bestimmte Schicht, bestimmte Schicht nicht.
-- Ziel ist eine gleiche Erfüllungsquote je Person, nicht die Reihenfolge der Eingabe. Die Strafe ist
+- Ziel ist eine gleiche Erfüllungsquote je Person, nicht die Reihenfolge der Eingabe. Der Abzug ist
   100 × (U² - V²) / W: U die nicht erfüllten Wünsche mit den Vormonaten, V die nicht erfüllten der Vormonate
   allein, W alle Wünsche mit den Vormonaten. Ein weiterer unerfüllter Wunsch kostet bei der Person am meisten,
   deren Quote schon am schlechtesten ist.

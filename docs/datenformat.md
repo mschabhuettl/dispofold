@@ -241,7 +241,7 @@ gespeicherten Stammdaten geprüft.
   Ersatzruhetag.
 - `pinned: true` heißt: von der Planung festgelegt, der Solver ändert es beim Neuplanen nicht.
 - `status`: `EMPTY`, `SOLVING`, `SOLVED`, `STOPPED`, `FAILED`, `CLOSED` (Monat abgeschlossen).
-- Der Score hat drei Teile (Gruppen): `hard` (Regelverstoß: Regeln aus KV und Qualifikation, muss 0 sein), `medium` (Bedarf: nicht
+- Die Bewertung `score` (im Programm „Bewertung“) hat drei Teile (Gruppen): `hard` (Regelverstoß: Regeln aus KV und Qualifikation, muss 0 sein), `medium` (Bedarf: nicht
   gedeckter Bedarf und Überbesetzung, siehe [regeln.md](regeln.md)) und `soft` (Qualität: Wünsche, Fairness, Blöcke
   usw.).
 

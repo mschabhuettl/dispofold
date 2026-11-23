@@ -185,7 +185,7 @@ sie, antwortet das Backend mit `428` `period.revisionMissing`; hat inzwischen je
 | `GET` | `/api/plans/{month}/analysis` | `PlanAnalysis` (Score, Summen je Regel, Bedarfslücken, Kennzahlen je Person, `uncoveredHours` und `overstaffedHours`: ungedeckter Bedarf und Überbesetzung in Personenstunden, zusammen die mittlere Stufe) |
 | `GET` | `/api/plans/{month}/people/{personId}` | `PersonExplanation` (Kennzahlen und alle Regel-Treffer der Person) |
 | `GET` | `/api/plans/{month}/hits?constraint={id}` | Regel-Treffer aller Personen je Regel aus einer Analyse; siehe unten |
-| `GET` | `/api/plans/{month}/problems` | alle Strafen des Plans aus einer Analyse für die Problemliste, nur für `planner`; siehe unten |
+| `GET` | `/api/plans/{month}/problems` | alle Abzüge des Plans aus einer Analyse für die Problemliste, nur für `planner`; siehe unten |
 | `GET` | `/api/plans/{month}/coverage/{areaId}` | Liste von `CoverageSegment` für den ganzen Monat |
 | `GET` | `/api/plans/{month}/candidates?areaId=&from=&to=` | wer für eine Bedarfslücke gefragt werden kann, nur für `planner`; siehe unten |
 | `POST` | `/api/plans/{month}/finalize` | schließt den Monat ab (Status `CLOSED`), Antwort Liste von `HistoryEntry` mit `source: "plan"` |
@@ -230,7 +230,7 @@ Für `viewer` sind alle diese Felder `null`: Der Nachtausgleich würde die gewoh
 Familienregeln verraten; die übrigen Lasten sieht wie ihn nur die Planung.
 
 Problemliste: eine Liste `[{ "personId", "constraintId", "level", "date", "score", "code", "params" }]` mit jedem
-Treffer mit Strafe (`score < 0`), wie ihn `hits` liefert, und den Überbesetzungen (`overstaffing`), die keine Person
+Treffer mit Abzug (`score < 0`), wie ihn `hits` liefert, und den Überbesetzungen (`overstaffing`), die keine Person
 nennen (`personId: null`). Ungedeckter Bedarf steht nicht darin, er ist in den Bedarfslücken der Analyse.
 
 Regel-Treffer des Plans: Die Antwort ist ein Objekt mit der Regel-Id als Schlüssel (Reihenfolge des Katalogs,
