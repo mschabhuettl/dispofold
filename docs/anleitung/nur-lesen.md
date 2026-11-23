@@ -20,7 +20,8 @@ Rechner gibt es diese Rolle nicht.
 - Den Plan drucken oder als PDF speichern (**Ausgabe**, **Drucken**), so wie er am Bildschirm steht.
 - Die Seite jeder Person mit ihren Diensten, Stunden und Soll und der Antwort auf „Warum dieser Dienst?“.
 - Die Fairness-Übersicht: wie Nächte, Wochenenden, Feiertage und fair verteilte Dienste verteilt sind.
-- Die Zeile über dem Plan: ob der Plan Lücken hat und ob er **Entwurf** oder **abgeschlossen** ist. Ein Entwurf
+- Die Zeile über dem Plan: ob der Plan Lücken hat und ob er **Entwurf** oder **abgeschlossen** ist, ohne die
+  Knöpfe der einzelnen Regeln, die die Planung dort sieht. Ein Entwurf
   kann sich noch ändern; verbindlich ist ein abgeschlossener Monat oder was die Planung sagt.
 
 Sie kann nichts ändern, nicht planen, nicht abschließen und nicht exportieren. Die Zellen und die Zahlen der
