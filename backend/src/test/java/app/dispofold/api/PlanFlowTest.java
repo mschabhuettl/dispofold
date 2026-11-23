@@ -110,6 +110,21 @@ class PlanFlowTest {
         given().post("/api/plans/" + MONTH + "/unpin").then().statusCode(200);
         assertThat(plan().assignments()).contains(fixed)
                 .contains(new PlanAssignment("P0002", MONTH.atDay(5), "DR-N", false, false));
+        // "Plan fixieren": every duty and compensatory rest day pinned, free days stay open, nothing else changes
+        PlanAssignment free = new PlanAssignment("P0004", MONTH.atDay(7), null, false, false);
+        given().contentType(ContentType.JSON).body(mapper.writeValueAsString(free))
+                .put("/api/plans/" + MONTH + "/cells").then().statusCode(200);
+        List<PlanAssignment> before = plan().assignments();
+        given().post("/api/plans/" + MONTH + "/pin").then().statusCode(200);
+        List<PlanAssignment> after = plan().assignments();
+        assertThat(after).containsExactlyInAnyOrderElementsOf(before.stream()
+                .map(a -> new PlanAssignment(a.personId(), a.date(), a.shiftId(), a.compRest(),
+                        a.pinned() || a.shiftId() != null || a.compRest()))
+                .toList());
+        assertThat(after).contains(free, new PlanAssignment("P0002", MONTH.atDay(5), "DR-N", false, true));
+        given().post("/api/plans/" + MONTH + "/unpin").then().statusCode(200);
+        assertThat(plan().assignments()).contains(fixed)
+                .contains(new PlanAssignment("P0002", MONTH.atDay(5), "DR-N", false, false));
 
         given().get("/api/plans/" + MONTH + "/analysis").then().statusCode(200)
                 .body("people.personId", hasItem("P0002"));
@@ -133,6 +148,7 @@ class PlanFlowTest {
                 .put("/api/plans/" + MONTH + "/cells").then().statusCode(409).body("code", equalTo("plan.closed"));
         given().post("/api/plans/" + MONTH + "/solve").then().statusCode(409).body("code", equalTo("plan.closed"));
         given().post("/api/plans/" + MONTH + "/unpin").then().statusCode(409);
+        given().post("/api/plans/" + MONTH + "/pin").then().statusCode(409);
         given().post("/api/plans/" + MONTH + "/finalize").then().statusCode(409);
         // finalized history is part of the next planning input
         given().contentType(ContentType.JSON).body("{}").post("/api/plans/" + MONTH.plusMonths(1) + "/solve")
@@ -384,6 +400,7 @@ class PlanFlowTest {
         given().contentType(ContentType.JSON).body(mapper.writeValueAsString(cell))
                 .put("/api/plans/" + MONTH + "/cells").then().statusCode(409).body("error", containsString("läuft"));
         given().post("/api/plans/" + MONTH + "/unpin").then().statusCode(409);
+        given().post("/api/plans/" + MONTH + "/pin").then().statusCode(409);
         given().post("/api/plans/" + MONTH + "/finalize").then().statusCode(409);
         given().contentType(ContentType.JSON).body(mapper.writeValueAsString(plan())).post("/api/plans/" + MONTH
                 + "/import").then().statusCode(409);

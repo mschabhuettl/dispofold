@@ -436,6 +436,28 @@ public class PlanService {
                 (a, b) -> b));
     }
 
+    /**
+     * Pins every cell of the month that holds a duty or compensatory rest, so that the next solve keeps them; free
+     * days stay open, so a gap can still be filled there (by the solver or a person asked on request).
+     */
+    public Plan pin(YearMonth month) {
+        synchronized (lock(month)) {
+            requireOpen(month);
+            requireNotSolving(month);
+            Plan p = plan(month);
+            List<PlanAssignment> cells = p.assignments().stream()
+                    .map(a -> !a.pinned() && (a.shiftId() != null || a.compRest())
+                            ? new PlanAssignment(a.personId(), a.date(), a.shiftId(), a.compRest(), true)
+                            : a)
+                    .toList();
+            Plan pinned = with(p, p.status(), p.score(), cells);
+            StoredPlan stored = store.plan(month).orElse(null);
+            store.savePlan(pinned, stored == null ? 0 : stored.hardViolations(),
+                    stored == null ? 0 : stored.elapsedMillis());
+            return pinned;
+        }
+    }
+
     /** Releases all pins except those that come from {@link Period#fixed()}. */
     public Plan unpin(YearMonth month) {
         synchronized (lock(month)) {

@@ -96,6 +96,13 @@ public class PlanResource {
     }
 
     @POST
+    @Path("pin")
+    @RolesAllowed("planner")
+    public Plan pin(@PathParam("month") String month) {
+        return plans.pin(ApiErrors.month(month));
+    }
+
+    @POST
     @Path("unpin")
     @RolesAllowed("planner")
     public Plan unpin(@PathParam("month") String month) {
