@@ -234,10 +234,15 @@ class Sp5RunTest {
         List<String> errors = new ArrayList<>();
         post("zuordnung/pruefen", bad).path("errors").forEach(e -> errors.add(e.asText()));
         assertThat(errors).hasSizeGreaterThan(3);
+        // the problems the import names, in plain German
         assertThatThrownBy(() -> Sp5Export.validateMapping(PyJson.load(bad))).isInstanceOf(Sp5Export.Sp5Error.class)
-                .hasMessage(String.join("; ", errors));
-        assertThat(post("zuordnung/pruefen", "[]").path("errors"))
-                .containsExactly(mapper.readTree("\"die Zuordnung muss ein JSON-Objekt sein\""));
+                .hasMessage(String.join("; ", Sp5Export.mappingErrors(PyJson.load(bad))));
+        assertThat(errors).isEqualTo(Sp5MappingText.plain(Sp5Export.mappingErrors(PyJson.load(bad))))
+                .contains("Schichtregel 1: Das Muster fehlt.", "Gruppenregel 1: Es ist kein Bereich angekreuzt.");
+        assertThat(post("zuordnung/pruefen", "[]").path("errors")).containsExactly(mapper.readTree(
+                "\"Die Zuordnung muss ein JSON-Objekt sein, also mit { beginnen und mit } enden.\""));
+        assertThat(post("zuordnung/pruefen", "{\"areas\": [], \"shifts\": [], \"groups\": []}").path("errors"))
+                .containsExactly(mapper.readTree("\"Es ist noch kein Bereich eingetragen.\""));
     }
 
     @Test

@@ -1,7 +1,7 @@
 // The plugin's texts (plugin.sp5.…, error texts error.plugin.sp5.…), German.
 export const TEXTS = {
   'plugin.sp5.group': 'Schichtplaner 5',
-  'plugin.sp5.tab.uebersicht': 'Übersicht',
+  'plugin.sp5.tab.uebersicht': 'Lauf und Import',
   'plugin.sp5.tab.bericht': 'Bericht',
   'plugin.sp5.tab.zuordnung': 'Zuordnung',
   'plugin.sp5.tab.vergleich': 'Vergleich',
@@ -40,7 +40,6 @@ export const TEXTS = {
   'plugin.sp5.option.recentMonths.help': 'Ein Bereich, in dem jemand in seinen letzten so vielen Monaten mit Diensten nicht mehr gearbeitet hat, wird „nur auf Anfrage“ (Standard 3, 0: aus).',
   'plugin.sp5.save': 'Einstellungen speichern',
   'plugin.sp5.saved': 'Einstellungen gespeichert',
-  'plugin.sp5.import': 'Aus Schichtplaner 5',
   'plugin.sp5.month': 'Erster Monat',
   'plugin.sp5.to': 'Letzter Monat',
   'plugin.sp5.to.help': 'Leer: nur der erste Monat. Sonst bis zu 12 Monate danach.',
@@ -48,9 +47,10 @@ export const TEXTS = {
   'plugin.sp5.result.help': 'Speichert Datensatz, Bericht und Warnungen eines Exports als ZIP-Datei, mit allem, womit er gemacht wurde, für den Vergleich mit sp5_export.py (siehe Hilfe). Die Datei enthält personenbezogene Daten.',
   'plugin.sp5.result.run': 'Ergebnis speichern',
   'plugin.sp5.toSettings': 'Zu Einstellungen → Erweiterungen',
-  'plugin.sp5.toOverview': 'Zur Übersicht',
+  'plugin.sp5.toOverview': 'Zu Lauf und Import',
+  'plugin.sp5.toMapping': 'Zur Zuordnung',
 
-  // Übersicht
+  // Lauf und Import
   'plugin.sp5.overview.title': 'Lauf und Import',
   'plugin.sp5.run.heading': 'Export ausführen',
   'plugin.sp5.run.heading.help': 'Liest den Ordner, wendet die Korrekturdatei an und rechnet den Datensatz genau so, wie ihn der Import laden würde, importiert aber nichts. Der letzte Lauf bleibt bis zum nächsten Lauf oder einem Neustart des Servers.',
@@ -78,13 +78,15 @@ export const TEXTS = {
   'plugin.sp5.count.reportRows': 'Berichtszeilen',
   'plugin.sp5.count.corrections': 'Zeilen der Korrekturdatei',
   'plugin.sp5.import.heading': 'Diesen Lauf importieren',
-  'plugin.sp5.import.heading.help': 'Importiert mit denselben Monaten und Optionen wie der letzte Lauf, also genau den Datensatz, den Bericht und Vergleich zeigen. Die Schritte sind dieselben wie auf der Seite Daten.',
+  'plugin.sp5.import.heading.help': 'Importiert mit denselben Monaten und Optionen wie der letzte Lauf, also genau den Datensatz, den Bericht und Vergleich zeigen. Die Schritte sind dieselben wie beim Import einer Datensatz-Datei auf der Seite Daten.',
   'plugin.sp5.import.noRun': 'Erst ausführen: importiert wird immer der letzte Lauf.',
   'plugin.sp5.import.request': 'Importiert wird der Lauf vom {time} für {months}, mit seinen Optionen.',
   'plugin.sp5.import.range': '{from} bis {to}',
+  'plugin.sp5.import.closed': 'Abgeschlossen: {months}. Ändert der Import einen abgeschlossenen Monat, lehnt Dispofold ihn ab. Nächster Schritt: einen späteren ersten Monat wählen und noch einmal ausführen, oder den Monat unter Einstellungen → Daten mit „Monat wieder öffnen“ öffnen (mehrere: den neuesten zuerst) und dann importieren.',
+  'plugin.sp5.import.toData': '{month} unter Einstellungen → Daten wieder öffnen',
 
   // Bericht
-  'plugin.sp5.report.title': 'Bericht des letzten Laufs',
+  'plugin.sp5.report.title': 'Bericht',
   'plugin.sp5.report.search': 'Suchen',
   'plugin.sp5.report.search.help': 'Sucht in allen Spalten und in den Warnungen; mehrere Wörter müssen alle vorkommen.',
   'plugin.sp5.report.type': 'Zeilenart',
@@ -164,7 +166,7 @@ export const TEXTS = {
 
   // Zuordnung
   'plugin.sp5.map.title': 'Zuordnung',
-  'plugin.sp5.map.none': 'Noch keine Zuordnung gespeichert: Bereiche und Regeln eintragen oder eine mapping.json laden.',
+  'plugin.sp5.map.none': 'Noch keine Zuordnung gespeichert. Am einfachsten: unten „Zuordnung vorschlagen“ wählen, die Vorschläge übernehmen und „Zuordnung speichern“. Wer schon eine mapping.json hat, lädt sie stattdessen.',
   'plugin.sp5.map.save': 'Zuordnung speichern',
   'plugin.sp5.map.saved': 'Zuordnung gespeichert',
   'plugin.sp5.map.unsaved': 'Ungespeicherte Änderungen',
@@ -312,7 +314,7 @@ export const TEXTS = {
   'plugin.sp5.category.night': 'Nacht',
 
   // Vergleich
-  'plugin.sp5.compare.title': 'Vergleich des letzten Laufs',
+  'plugin.sp5.compare.title': 'Vergleich',
   'plugin.sp5.compare.corrections': 'Korrekturen anwenden',
   'plugin.sp5.compare.corrections.help': 'Mit Korrekturen ist der Lauf das, was der Import laden würde. Ohne sie zeigen sich auch die Unterschiede, die die Korrekturdatei macht.',
   'plugin.sp5.compare.against': 'Vergleichen mit',
@@ -369,10 +371,10 @@ export const TEXTS = {
   'plugin.sp5.field.excludedFrom': 'Nicht mehr übernommen ab',
   'plugin.sp5.field.id': 'Id',
 
-  'error.plugin.sp5.noMapping': 'Die Zuordnung fehlt: unter Einstellungen → Erweiterungen eintragen.',
+  'error.plugin.sp5.noMapping': 'Die Zuordnung fehlt: auf der Seite Zuordnung „Zuordnung vorschlagen“ wählen, die Vorschläge übernehmen und speichern.',
   'error.plugin.sp5.noFolder': 'Der Ordner von Schichtplaner 5 fehlt oder ist nicht lesbar: unter Einstellungen → Erweiterungen wählen.',
-  'error.plugin.sp5.setting': 'Eine Einstellung ist ungültig ({field}).',
-  'error.plugin.sp5.noRun': 'Noch kein Lauf seit dem Start des Servers. Unter Übersicht den Export ausführen.',
+  'error.plugin.sp5.setting': 'Eine Einstellung ist ungültig: {label}.',
+  'error.plugin.sp5.noRun': 'Noch kein Lauf seit dem Start des Servers. Unter Lauf und Import den Export ausführen.',
   'error.plugin.sp5.staleRun': 'Seit dem Lauf hat sich etwas geändert (ein neuer Lauf, die Zuordnung, die Korrekturen, die Optionen oder der Ordner): bitte noch einmal ausführen.',
   'error.plugin.sp5.noBaseline': 'Noch nichts importiert: es gibt keinen Import zum Vergleichen.',
   'error.plugin.sp5.dataset': 'Die Datei ist kein Datensatz von Dispofold.',

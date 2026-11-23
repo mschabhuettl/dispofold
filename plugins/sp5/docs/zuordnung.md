@@ -2,7 +2,9 @@
 
 Die Seite **Schichtplaner 5 → Zuordnung** bearbeitet die Zuordnung: welche Schichten, Gruppen und Abwesenheiten
 von Schichtplaner 5 zu welchen Bereichen von Dispofold gehören. Sie ist dieselbe Zuordnung wie in den
-Einstellungen der Erweiterung und hat dasselbe Format wie eine `mapping.json`.
+Einstellungen der Erweiterung und hat dasselbe Format wie eine `mapping.json`. Für den Anfang reicht
+**Zuordnung vorschlagen** (siehe [Vorschläge aus dem Ordner](#vorschläge-aus-dem-ordner)); fehlt die Zuordnung
+noch, führt der Hinweis „Die Zuordnung fehlt“ auf der Seite Lauf und Import mit **Zur Zuordnung** hierher.
 
 ![Die Zuordnung mit Bereichen und Schichtregeln](img/zuordnung.png)
 
@@ -12,7 +14,7 @@ Einstellungen der Erweiterung und hat dasselbe Format wie eine `mapping.json`.
 - **Schichtregeln:** ordnen Schichten nach ihrem Kürzel einem Bereich zu; die erste passende Regel gilt.
   **Kategorie** leer heißt: aus den Zeiten der Schicht; **Fair verteilen**: Dienste dieser Schicht werden über die Fairness gleichmäßig auf alle verteilt, die
   sie machen können; ohne Angabe nein, Nachtschichten nur mit der Option „Nachtschichten automatisch fair verteilen“
-  (Übersicht, Optionen). Die
+  (Lauf und Import, Optionen). Die
   Spalte **Trifft** zeigt die Kürzel aus dem Ordner, die die Regel trifft, oder „trifft nichts“.
 - **Ignorierte Schichten:** Schichten, die der Import nicht übernimmt, auch wenn eine Regel passt.
 - **Gruppen:** Personen in einer Gruppe, deren Name passt, bekommen die angekreuzten Bereiche.
@@ -29,8 +31,9 @@ am Anfang des Kürzels passen muss.
 
 - Jeder Abschnitt hat **… hinzufügen**; jede Zeile hat Knöpfe zum Verschieben nach oben und unten und zum
   Entfernen, auch mit der Tastatur erreichbar.
-- **Prüfung:** Nach jeder Änderung prüft der Server die Zuordnung wie der Export und nennt jedes Problem mit
-  Liste und Eintragsnummer, etwa „shifts, Eintrag 2: Muster 're:(' ist kein gültiger regulärer Ausdruck“.
+- **Prüfung:** Nach jeder Änderung prüft der Server die Zuordnung wie der Export und nennt jedes Problem mit dem
+  Eintrag, wie ihn die Seite nennt, etwa „Es ist noch kein Bereich eingetragen.“ oder „Schichtregel 2: Das Muster
+  „re:(“ ist kein gültiger regulärer Ausdruck (…).“
 - **Zuordnung speichern** speichert sie in den Einstellungen; der Server prüft sie dabei noch einmal und weist
   eine fehlerhafte ab. Ungespeicherte Änderungen sind markiert, und beim Verlassen der Seite fragt Dispofold nach.
 - **mapping.json laden** ersetzt die Zuordnung im Editor durch eine Datei, **Als mapping.json speichern**
@@ -49,7 +52,7 @@ ganze erste Zuordnung. Bestehende Einträge ändert ein Vorschlag nie.
 Jeder Vorschlag nennt seinen Grund mit den Zahlen dahinter. **Übernehmen** trägt ihn in den Editor ein,
 **Verwerfen** nimmt ihn aus der Liste, **Alle übernehmen** nimmt alle eines Abschnitts. Gespeichert wird erst mit
 **Zuordnung speichern**, mit derselben Prüfung wie sonst. Ein verworfener Vorschlag kommt nicht wieder, bis man
-**Verworfene zurücksetzen** wählt. Nach jedem Lauf nennt die Übersicht die Zahl der neuen Vorschläge mit einem
+**Verworfene zurücksetzen** wählt. Nach jedem Lauf nennt die Seite Lauf und Import die Zahl der neuen Vorschläge mit einem
 Link hierher.
 
 So entstehen die Vorschläge (die Beispiele stammen aus einem erfundenen Ordner):

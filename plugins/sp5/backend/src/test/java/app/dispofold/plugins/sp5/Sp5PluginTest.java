@@ -3,6 +3,7 @@ package app.dispofold.plugins.sp5;
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -113,8 +114,14 @@ class Sp5PluginTest {
             ObjectNode s = settings("ordner");
             ((ObjectNode) s.get("options")).set(bad[0], mapper.readTree(bad[1]));
             json().body(s).put("/api/plugins/sp5/einstellungen").then().statusCode(400)
-                    .body("code", equalTo("plugin.sp5.setting")).body("params.field", equalTo(bad[0]));
+                    .body("code", equalTo("plugin.sp5.setting")).body("params.field", equalTo(bad[0]))
+                    .body("params.label", not(equalTo(bad[0])));
         }
+        // the label names the setting as the page does
+        ObjectNode months = settings("ordner");
+        ((ObjectNode) months.get("options")).put("historyMonths", 25);
+        json().body(months).put("/api/plugins/sp5/einstellungen").then().statusCode(400)
+                .body("params.label", equalTo("Monate Historie (0 bis 24)"));
         for (String options : List.of("null", "[]", "3")) {
             ObjectNode o = settings("ordner");
             o.set("options", mapper.readTree(options));
@@ -124,8 +131,8 @@ class Sp5PluginTest {
         ObjectNode s = settings("ordner");
         ((ObjectNode) s.get("mapping")).putArray("ignoreGroups").add("re:*x");
         json().body(s).put("/api/plugins/sp5/einstellungen").then().statusCode(400)
-                .body("code", equalTo("plugin.sp5.mapping")).body("error", equalTo("ignoreGroups, Eintrag 1: Muster "
-                        + "'re:*x' ist kein gültiger regulärer Ausdruck (nothing to repeat, Position 0)"));
+                .body("code", equalTo("plugin.sp5.mapping")).body("error", equalTo("Ignorierte Gruppe 1: Das Muster "
+                        + "„re:*x“ ist kein gültiger regulärer Ausdruck (nothing to repeat, Position 0)."));
         json().body(settings("../sp5-geheim")).put("/api/plugins/sp5/einstellungen").then().statusCode(404)
                 .body("code", equalTo("files.notFound"));
         json().body(settings("ordner")).put("/api/plugins/sp5/einstellungen").then().statusCode(200)

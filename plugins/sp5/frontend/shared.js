@@ -17,10 +17,10 @@ const OPTIONS = [
 export function monthFields(ctx, prefix, start = {}) {
   const month = h('input', { id: `${prefix}-month`, type: 'month', value: start.month ?? ctx.month ?? '' });
   const to = h('input', { id: `${prefix}-to`, type: 'month', value: start.to ?? '' });
-  const element = h('div.toolbar', {},
+  // not .toolbar .field: its narrow inputs would cut the month off ("Januar 202")
+  const element = h('div.params', {},
     h('div.field', {}, h('label', { for: `${prefix}-month` }, t('plugin.sp5.month')), month),
-    h('div.field', {}, h('label', { for: `${prefix}-to` }, t('plugin.sp5.to')), to),
-    info(t('plugin.sp5.to.help'), t('plugin.sp5.to')));
+    h('div.field', {}, h('label', { for: `${prefix}-to` }, t('plugin.sp5.to'), info(t('plugin.sp5.to.help'), t('plugin.sp5.to'))), to));
   return { element, value: () => (month.value ? { month: month.value, to: to.value || null } : null) };
 }
 
@@ -54,12 +54,13 @@ export function optionFields(prefix, options = {}) {
   };
 }
 
-const SETTINGS_ERRORS = new Set(['plugin.sp5.noMapping', 'plugin.sp5.noFolder', 'plugin.sp5.setting']);
+const SETTINGS_ERRORS = new Set(['plugin.sp5.noFolder', 'plugin.sp5.setting']);
 
-/** An error as an alert; a missing folder or mapping links to the settings. */
+/** An error as an alert; a missing folder links to the settings, a missing mapping to the page Zuordnung. */
 export function problem(e) {
-  return h('div.alert.alert-error', { role: 'alert' }, h('strong', {}, e.message),
-    SETTINGS_ERRORS.has(e.code) ? [' ', h('a', { href: '#/erweiterungen' }, t('plugin.sp5.toSettings'))] : null);
+  const link = e.code === 'plugin.sp5.noMapping' ? h('a', { href: pageHref('zuordnung') }, t('plugin.sp5.toMapping'))
+    : SETTINGS_ERRORS.has(e.code) ? h('a', { href: '#/erweiterungen' }, t('plugin.sp5.toSettings')) : null;
+  return h('div.alert.alert-error', { role: 'alert' }, h('strong', {}, e.message), link ? [' ', link] : null);
 }
 
 /** No run since the server started: what to do. */

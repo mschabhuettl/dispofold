@@ -1,4 +1,4 @@
-// Übersicht: runs the export with chosen months and options (POST lauf, nothing is imported), shows the last run
+// Lauf und Import (path uebersicht): runs the export with chosen months and options (POST lauf, nothing is imported), shows the last run
 // with links to its report, the mapping and the comparison, and imports exactly that run with the core's import.
 import { guarded, h, importFlow, info, monthLabel, saveBlob, t, toast } from '../../../frontend/src/lib/plugin-api.js';
 import { proposalCount, unmatched } from './model.js';
@@ -99,8 +99,20 @@ export async function render(root, ctx) {
     }, () => {});
     const at = r.request.to && r.request.to !== r.request.month
       ? t('plugin.sp5.import.range', { from: monthLabel(r.request.month), to: monthLabel(r.request.to) }) : monthLabel(r.request.month);
+    // a closed month of the run: the import would be refused if it changed it; the way on before trying
+    const closed = h('div', { id: 'sp5-import-closed' });
     importBox.replaceChildren(h('p.muted', { id: 'sp5-import-request' }, t('plugin.sp5.import.request', { months: at, time })),
-      importFlow(ctx, ID, () => (last ? { ...last.request, run: last.id } : null)));
+      closed, importFlow(ctx, ID, () => (last ? { ...last.request, run: last.id } : null)));
+    Promise.all(r.months.map((m) => ctx.api.planState(m).then((s) => (s?.plan?.status === 'CLOSED' ? m : null), () => null)))
+      .then((months) => {
+        const shut = months.filter(Boolean);
+        if (shut.length) {
+          closed.replaceChildren(h('div.alert', { role: 'note' }, h('p', {}, t('plugin.sp5.import.closed', { months: shut.map(monthLabel).join(', ') })),
+            // reopened newest first, on Daten for the chosen month: that month is chosen on the way
+            h('p', {}, h('a', { href: '#/import', onclick: () => ctx.setMonth(shut.at(-1)) },
+              t('plugin.sp5.import.toData', { month: monthLabel(shut.at(-1)) })))));
+        }
+      });
   }
   showRun();
 }
