@@ -3,7 +3,7 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
-## 0.22.0 (unveröffentlicht)
+## 0.22.0 (2026-11-23)
 
 - **Zuordnung vorschlagen (Import-Erweiterung):** Auf der Seite Zuordnung schlägt Dispofold aus Gruppen,
   Mitgliedern, Bedarf und Diensten des Ordners Einträge vor, für alles, was die Zuordnung noch nicht trifft: neue
