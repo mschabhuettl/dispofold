@@ -43,7 +43,7 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
   und der ZIP-Datei aus „Ergebnis speichern“, wie nah der Vorschlag an die eigene Zuordnung kommt, nur als Anzahlen
   ([Vergleich](plugins/sp5/docs/vergleich.md)).
 
-## 0.21.0 (unveröffentlicht)
+## 0.21.0 (2026-11-23)
 
 - **Wochenschnitt je Person:** Die Regel zum Durchschnitt der Wochenstunden misst jede Person an ihrem eigenen
   Vertrag: Grenze sind die Wochenstunden plus ein Spielraum, neu auf der Seite Regeln (Standard 10 %, 0 erlaubt),
