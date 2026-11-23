@@ -86,7 +86,8 @@ test('every rules setting has a help text that says what raising or lowering it 
   const page = [...source('views/rules.js').matchAll(/\['(\w+)', t\('rules\.param\.\1\.label'\)/g)].map((m) => m[1]);
   assert.ok(page.length >= 15, `rules page fields: ${page.length}`);
   if (existsSync(rulesModel)) {
-    const record = readFileSync(rulesModel, 'utf8').match(/public record Rules\(([^)]*)\)/)[1].replace(/<[^>]*>/g, '');
+    // annotations such as @JsonInclude(...) on a component are left out first
+    const record = readFileSync(rulesModel, 'utf8').replace(/@[\w.]+\([^)]*\)\s*/g, '').match(/public record Rules\(([^)]*)\)/)[1].replace(/<[^>]*>/g, '');
     const fields = [...record.matchAll(/\b(\w+)\s*(?:,|$)/g)].map((m) => m[1]);
     assert.ok(fields.length >= 18, `Rules record components: ${fields.length}`);
     // weights are set per rule (help.constraint.*); the time zone is no setting of the interface

@@ -7,6 +7,7 @@ import java.time.Instant;
 import java.time.YearMonth;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.LinkedHashMap;
@@ -29,6 +30,7 @@ import org.jboss.logging.Logger;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import app.dispofold.model.Absence;
 import app.dispofold.model.Dataset;
 import app.dispofold.model.FixedAssignment;
 import app.dispofold.model.HistoryEntry;
@@ -178,16 +180,21 @@ public class PlanService {
     /**
      * Planning input from the stored dataset (history merged), period, rules and the given cells. The previous
      * duties come from the stored plan of the previous month (all its days), and only when there is none from the
-     * imported period.
+     * imported period. The dataset's periods hold only the absences of the previous and the next month.
      */
     public PlanningInput input(YearMonth month, List<PlanAssignment> assignments) {
         Dataset d = dataset();
         Dataset full = new Dataset(d.format(), d.version(), d.source(), d.areas(), d.shifts(), d.demand(),
                 d.holidays(), d.absenceTypes(), d.people(), d.restrictions(), store.mergedHistory(d.history()),
-                List.of());
+                List.of(absencesOf(month.minusMonths(1)), absencesOf(month.plusMonths(1))));
         Period p = period(month);
         Period withPrevious = new Period(p.month(), p.absences(), p.wishes(), p.fixed(), previousDuties(month, p));
         return new PlanningInput(full, withPrevious, store.rules(), assignments);
+    }
+
+    /** Only the absences of a neighbouring month, for the free days inside an absence across the month boundary. */
+    private Period absencesOf(YearMonth month) {
+        return new Period(month, period(month).absences(), List.of(), List.of(), List.of());
     }
 
     public PlanningInput input(YearMonth month) {
@@ -216,8 +223,16 @@ public class PlanService {
         List<HistoryEntry> before = d.history().stream()
                 .filter(h -> h.month() != null && h.month().compareTo(month.toString()) < 0).toList();
         Dataset relevant = new Dataset(d.format(), d.version(), d.source(), d.areas(), d.shifts(), d.demand(),
-                d.holidays(), d.absenceTypes(), d.people(), d.restrictions(), before, d.periods());
-        return hash(List.of(relevant, in.period(), in.rules()));
+                d.holidays(), d.absenceTypes(), d.people(), d.restrictions(), before, List.of());
+        // Of the neighbouring months only the absences near the month boundary matter (free days inside an
+        // absence look at most two weeks across it); they are hashed only when there are any, so that other
+        // absences of those months do not make this month stale.
+        List<Absence> boundary = d.periods().stream().flatMap(q -> q.absences().stream())
+                .filter(a -> a.date().isAfter(month.atDay(1).minusDays(15))
+                        && a.date().isBefore(month.atEndOfMonth().plusDays(15)))
+                .toList();
+        return boundary.isEmpty() ? hash(List.of(relevant, in.period(), in.rules()))
+                : hash(List.of(relevant, in.period(), in.rules(), boundary));
     }
 
     String previousHash(YearMonth month) {
@@ -519,12 +534,15 @@ public class PlanService {
                         params("month", month.toString(), "previous", month.minusMonths(1).toString()),
                         "Zuerst den Vormonat abschließen");
             }
-            PlanAnalysis analysis = facade().analyze(input(month));
+            PlanningInput in = input(month);
+            PlanAnalysis analysis = facade().analyze(in);
+            Map<String, Double> weekly = new HashMap<>();
+            in.dataset().people().forEach(person -> weekly.put(person.id(), person.weeklyHours()));
             List<HistoryEntry> entries = analysis.people().stream()
                     .map(s -> new HistoryEntry(s.personId(), month.toString(), HistoryEntry.PLAN, s.nights(),
                             s.weekendsWorked(), s.holidays(), s.unpopular(), s.wishes(), s.wishesMet(),
                             s.plannedHours(), s.accountAfter(), s.compRestBalanceAfter(), s.compRestPlanned(),
-                            s.compRestEarned()))
+                            s.compRestEarned(), weekly.get(s.personId())))
                     .toList();
             store.saveHistory(month.toString(), entries);
             StoredPlan stored = store.plan(month).orElseThrow();

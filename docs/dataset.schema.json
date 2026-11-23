@@ -218,7 +218,8 @@
         "hoursAccountAfter": { "type": ["number", "null"] },
         "compRestBalanceAfter": { "type": ["integer", "null"] },
         "compRestUsed": { "type": "integer", "minimum": 0 },
-        "compRestEarned": { "type": "integer", "minimum": 0 }
+        "compRestEarned": { "type": "integer", "minimum": 0 },
+        "weeklyHours": { "type": ["number", "null"], "exclusiveMinimum": 0 }
       }
     },
     "period": {

@@ -36,7 +36,7 @@ public class ViewerFilter implements ContainerResponseFilter {
      * goals (corrected by the hours account) in their parameters.
      */
     static final Set<String> HIDDEN_CONSTRAINTS = Set.of("wishes", "family", "neverRestriction", "onRequest",
-            "absence", "targetHours", "maxMonthHours", "shiftMix");
+            "absence", "freeInsideAbsence", "targetHours", "maxMonthHours", "shiftMix");
     static final Set<String> WISH_STATS = Set.of("wishes", "wishesMet", "historyWishes", "historyWishesMet");
     /** Personal balances: hours account and compensatory rest (and the absence hours and goals behind them). */
     static final Set<String> PERSON_BALANCES = Set.of("hoursAccount", "compRestBalance");

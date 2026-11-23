@@ -97,7 +97,15 @@ class MonthHoursTest {
         LocalDate fifth = LocalDate.of(2027, 1, 5);
         List<Candidate> found = facade.candidates(input, "AN", fifth.atTime(7, 0), fifth.atTime(19, 0));
         assertThat(found).extracting(Candidate::personId).doesNotContain("P0017");
-        PlanningInput generous = new PlanningInput(withRequest, base.period(), tolerance(1000), given);
+        // Far above the cap only the average limits: rolling over 52 weeks it is not yet a rule (in the default
+        // calendar half-year January alone counts at once).
+        Rules t = tolerance(1000);
+        Rules rolling = new Rules(t.minDailyRestHours(), t.minWeeklyRestHours(), t.maxDutyHours(), t.maxWeekHours(),
+                t.maxAverageWeekHours(), t.minBlock(), t.maxBlock(), t.maxWishesPerPerson(),
+                t.holidayWorkEarnsCompRest(), t.nightStart(), t.nightEnd(), t.nightMinHours(), t.accountCarryShare(),
+                t.historyMonths(), t.weights(), t.timeZone(), t.averagingWeeks(), t.maxOverTargetPercent(),
+                t.minFreeSundays(), t.nightDistribution(), null, null, app.dispofold.model.AveragingPeriod.ROLLING);
+        PlanningInput generous = new PlanningInput(withRequest, base.period(), rolling, given);
         assertThat(facade.candidates(generous, "AN", fifth.atTime(7, 0), fifth.atTime(19, 0)))
                 .extracting(Candidate::personId).contains("P0017");
     }

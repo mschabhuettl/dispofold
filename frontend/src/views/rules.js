@@ -12,14 +12,17 @@ const LEVELS = [
   ['MEDIUM', t('rules.level.medium.title'), t('rules.level.medium.help')],
 ];
 
-/** Rule parameters: key, label, help, type ('number' | 'time' | 'bool'), step ('any' for the decimal ones: the backend keeps any value). */
+/** Rule parameters: key, label, help, type ('number' | 'time' | 'bool' | 'choice'), step ('any' for the decimal ones: the backend keeps any value) or the choices [value, label]. */
 const PARAMS = [
   ['minDailyRestHours', t('rules.param.minDailyRestHours.label'), t('rules.param.minDailyRestHours.help'), 'number', 'any'],
   ['minWeeklyRestHours', t('rules.param.minWeeklyRestHours.label'), t('rules.param.minWeeklyRestHours.help'), 'number', 'any'],
   ['maxDutyHours', t('rules.param.maxDutyHours.label'), t('rules.param.maxDutyHours.help'), 'number', 'any'],
   ['maxWeekHours', t('rules.param.maxWeekHours.label'), t('rules.param.maxWeekHours.help'), 'number', 'any'],
   ['maxAverageWeekHours', t('rules.param.maxAverageWeekHours.label'), t('rules.param.maxAverageWeekHours.help'), 'number', 'any'],
+  ['averagingPeriod', t('rules.param.averagingPeriod.label'), t('rules.param.averagingPeriod.help'), 'choice',
+    [['HALF_YEAR', t('rules.param.averagingPeriod.halfYear')], ['ROLLING', t('rules.param.averagingPeriod.rolling')]]],
   ['averagingWeeks', t('rules.param.averagingWeeks.label'), t('rules.param.averagingWeeks.help'), 'number', 1],
+  ['averageTolerancePercent', t('rules.param.averageTolerancePercent.label'), t('rules.param.averageTolerancePercent.help'), 'number', 'any'],
   ['minBlock', t('rules.param.minBlock.label'), t('rules.param.minBlock.help'), 'number', 1],
   ['maxBlock', t('rules.param.maxBlock.label'), t('rules.param.maxBlock.help'), 'number', 1],
   ['maxWishesPerPerson', t('rules.param.maxWishesPerPerson.label'), t('rules.param.maxWishesPerPerson.help'), 'number', 1],
@@ -29,6 +32,7 @@ const PARAMS = [
   ['nightMinHours', t('rules.param.nightMinHours.label'), t('rules.param.nightMinHours.help'), 'number', 'any'],
   ['maxOverTargetPercent', t('rules.param.maxOverTargetPercent.label'), t('rules.param.maxOverTargetPercent.help'), 'number', 'any'],
   ['minFreeSundays', t('rules.param.minFreeSundays.label'), t('rules.param.minFreeSundays.help'), 'number', 1],
+  ['freeInsideAbsence', t('rules.param.freeInsideAbsence.label'), t('rules.param.freeInsideAbsence.help'), 'bool'],
   ['accountCarryShare', t('rules.param.accountCarryShare.label'), t('rules.param.accountCarryShare.help'), 'number', 'any'],
   ['historyMonths', t('rules.param.historyMonths.label'), t('rules.param.historyMonths.help'), 'number', 1],
 ];
@@ -50,7 +54,7 @@ const IMPORTANCE = [['less', t('rules.importance.less')], ['normal', t('rules.im
   ['more', t('rules.importance.more')], [CUSTOM, t('rules.importance.custom')]];
 const NIGHT_MODES = [['HABIT', t('rules.night.habit')], ['EVEN', t('rules.night.even')]];
 const LAW_FIELDS = ['minDailyRestHours', 'minWeeklyRestHours', 'maxDutyHours', 'maxWeekHours', 'maxAverageWeekHours',
-  'averagingWeeks', 'minFreeSundays', 'holidayWorkEarnsCompRest'];
+  'averagingPeriod', 'averagingWeeks', 'averageTolerancePercent', 'minFreeSundays', 'freeInsideAbsence', 'holidayWorkEarnsCompRest'];
 
 export async function render(root, ctx) {
   const { api, canEdit } = ctx;
@@ -60,6 +64,9 @@ export async function render(root, ctx) {
   const params = { ...rules, nightDistribution: nightDistribution(rules) };
   params.maxOverTargetPercent ??= 10; // rules saved before the setting existed
   params.minFreeSundays ??= 2;
+  params.averageTolerancePercent ??= 10;
+  params.freeInsideAbsence ??= true;
+  params.averagingPeriod ??= 'HALF_YEAR';
 
   root.append(h('h1', {}, t('nav.rules')));
   if (!canEdit) root.append(h('p.alert', {}, t('rules.readonly')));
@@ -159,6 +166,7 @@ export async function render(root, ctx) {
 
   function shown(key) {
     const type = PARAM[key][3];
+    if (type === 'choice') return PARAM[key][4].find(([value]) => value === params[key])?.[1] ?? String(params[key]);
     return type === 'bool' ? (params[key] ? t('common.yes') : t('common.no')) : type === 'time' ? String(params[key] ?? '').slice(0, 5)
       : key === 'accountCarryShare' ? String(percent(params[key])).replace('.', ',') : String(params[key]).replace('.', ',');
   }
@@ -171,6 +179,11 @@ export async function render(root, ctx) {
     if (type === 'bool') {
       return h('div.field', {}, h('div.with-info', {}, h('label', {}, h('input', { id: `param-${key}`, type: 'checkbox', checked: Boolean(params[key]),
         oninput: (e) => { params[key] = e.target.checked; } }), ' ', label), more), help && h('span', {}, help));
+    }
+    if (type === 'choice') {
+      return h('div.field', {}, h('div.with-info', {}, h('label', { for: `param-${key}` }, label), more),
+        h('select', { id: `param-${key}`, oninput: (e) => { params[key] = e.target.value; } },
+          PARAM[key][4].map(([value, text]) => h('option', { value, selected: params[key] === value }, text))), help && h('span', {}, help));
     }
     return h('div.field', {}, h('div.with-info', {}, h('label', { for: `param-${key}` }, label), more), paramInput(key), help && h('span', {}, help));
   }
@@ -188,8 +201,9 @@ export async function render(root, ctx) {
     const p = formatParams(params);
     // each line with its own help, made once so that an open help stays open while the values change
     lawText.replaceChildren(...[[t('rules.law.rest', p), t('help.law.rest')], [t('rules.law.day', p), t('help.law.day')],
-      [t('rules.law.week', p), t('help.law.week')], [t('rules.law.month', p), t('help.law.month')], [t('rules.law.average', p), t('help.law.average')],
+      [t('rules.law.week', p), t('help.law.week')], [t('rules.law.month', p), t('help.law.month')], [params.averagingPeriod === 'ROLLING' ? t('rules.law.average', p) : t('rules.law.averageHalfYear', p), t('help.law.average')],
       [t('rules.law.sundays', p), t('help.law.sundays')],
+      [params.freeInsideAbsence ? t('rules.law.insideAbsence') : t('rules.law.noInsideAbsence'), t('help.law.insideAbsence')],
       [params.holidayWorkEarnsCompRest ? t('rules.law.holiday') : t('rules.law.noHoliday'), t('help.law.holiday')]]
       .map(([line, help]) => h('li', {}, line, lawHelp[help] ??= info(help, line))));
     monthNote.textContent = t('rules.law.month', p);

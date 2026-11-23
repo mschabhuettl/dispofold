@@ -157,7 +157,7 @@ function figures(explanation, person, areaNames, constraintLabels, nightDistribu
         s.availableDays != null && kpi(t('person.kpi.availableDays'), fmt.num(s.availableDays), t('help.figure.availableDays')),
         canEdit && s.chargedHours != null && kpi(t('person.kpi.charged'), hours(s.chargedHours), t('help.figure.chargedHours')),
         // the 52-week average is only binding when the history covers the whole period
-        s.averageWeekHours != null && kpi(s.averageComplete ? t('person.kpi.averageWeek') : t('person.kpi.averageWeekPartial'), hours(s.averageWeekHours), t('help.figure.averageWeekHours')))),
+        s.averageWeekHours != null && kpi(s.averageComplete ? t('person.kpi.averageWeek') : t('person.kpi.averageWeekPartial'), s.averageLimitHours != null ? t('person.kpi.averageWeekOf', { value: hours(s.averageWeekHours), limit: hours(s.averageLimitHours) }) : hours(s.averageWeekHours), t('help.figure.averageWeekHours')))),
     h('section.section', { 'aria-labelledby': 'h-load' }, h('h2', { id: 'h-load' }, t('person.section.load')),
       h('div.kpis', {},
         nightsTile(s, person.shiftMix), kpi(t('person.kpi.weekendsWorked'), fmt.num(s.weekendsWorked), t('help.figure.weekendsWorked')), kpi(t('person.kpi.weekendsOff'), fmt.num(s.weekendsOff), t('help.figure.weekendsOff')),

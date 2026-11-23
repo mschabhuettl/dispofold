@@ -392,6 +392,7 @@ public final class RosterAnalyzer {
                 weekendsOff, holidayDuties, unpopular, wishes, wishesMet, compRestPlanned, compRestEarned,
                 balance - compRestPlanned + compRestEarned, singleDays, h.nights(), h.weekends(), h.holidays(),
                 h.unpopular(), h.wishes(), h.wishesMet(), available, round(charged), round(average), a.complete(),
+                round(a.maxWeekMinutes() / 60),
                 round(staff.getTargetMinutes() / 60.0), round(staff.getScaledTargetMinutes() / 60.0),
                 shares(byCategory, byArea, duties), nightLoad != null, nightReason,
                 nightLoad == null ? null : round(nightLoad), nightMean, load(roster, 1, personId),

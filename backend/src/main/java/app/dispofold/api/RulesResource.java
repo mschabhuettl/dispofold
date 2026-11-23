@@ -68,7 +68,8 @@ public class RulesResource {
                 || r.maxAverageWeekHours() <= 0 || r.nightMinHours() < 0 || r.historyMonths() < 0
                 || r.maxWishesPerPerson() < 0 || r.averagingWeeks() < 1
                 || (r.maxOverTargetPercent() != null && r.maxOverTargetPercent() < 0)
-                || (r.minFreeSundays() != null && r.minFreeSundays() < 0)) {
+                || (r.minFreeSundays() != null && r.minFreeSundays() < 0)
+                || (r.averageTolerancePercent() != null && !(r.averageTolerancePercent() >= 0))) {
             return "rules.values";
         }
         if (r.minBlock() < 1 || r.maxBlock() < r.minBlock()) {

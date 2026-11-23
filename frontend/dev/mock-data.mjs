@@ -159,7 +159,7 @@ export function makeDataset(month, seed = 1) {
 // from the texts of the user interface (constraint.<id>).
 export const CONSTRAINTS = [
   ...['dailyRest', 'weeklyRest', 'maxDutyLength', 'maxWeekHours', 'maxMonthHours', 'freeSundays', 'averageWeekHours',
-    'qualification', 'absence', 'employment', 'neverRestriction', 'compRestBalance', 'missingShift'].map((id) => [id, 'HARD', 1]),
+    'qualification', 'absence', 'freeInsideAbsence', 'employment', 'neverRestriction', 'compRestBalance', 'missingShift'].map((id) => [id, 'HARD', 1]),
   ['demand', 'MEDIUM', 1000000000], ['overstaffing', 'MEDIUM', 1], ['uselessDuty', 'MEDIUM', 1],
   ['targetHours', 'SOFT', 20], ['fairNights', 'SOFT', 3], ['fairWeekends', 'SOFT', 3], ['fairHolidays', 'SOFT', 3],
   ['fairUnpopular', 'SOFT', 2], ['wishes', 'SOFT', 300], ['blockLength', 'SOFT', 6000], ['isolatedDayOff', 'SOFT', 10000],
@@ -173,5 +173,5 @@ export const DEFAULT_RULES = {
   minDailyRestHours: 11, minWeeklyRestHours: 36, maxDutyHours: 12, maxWeekHours: 60, maxAverageWeekHours: 46.16,
   minBlock: 2, maxBlock: 4, maxWishesPerPerson: 6, holidayWorkEarnsCompRest: true, nightStart: '22:00', nightEnd: '06:00',
   nightMinHours: 2, maxOverTargetPercent: 10, minFreeSundays: 2, accountCarryShare: 0.25, historyMonths: 3, averagingWeeks: 52, weights: {},
-  nightDistribution: 'HABIT',
+  nightDistribution: 'HABIT', averageTolerancePercent: 10, freeInsideAbsence: true, averagingPeriod: 'HALF_YEAR',
 };

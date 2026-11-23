@@ -80,9 +80,10 @@ public final class Staff {
      * Worked minutes and weeks of the history months inside the averaging period, for the average weekly hours.
      *
      * @param complete the history covers the whole averaging period, so the average is a hard rule
-     * @param maxWeekMinutes the allowed average per week
+     * @param maxWeekMinutes the person's own limit of the average per week: the weekly hours of each month plus the
+     *        tolerance, at most the rules' maximum, weighted by the month's weeks
      */
-    public record Average(long minutes, double weeks, boolean complete, int maxWeekMinutes) {
+    public record Average(long minutes, double weeks, boolean complete, double maxWeekMinutes) {
         public static final Average NONE = new Average(0, 0, false, Integer.MAX_VALUE);
     }
 

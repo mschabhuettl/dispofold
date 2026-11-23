@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import app.dispofold.model.Absence;
+import app.dispofold.model.AveragingPeriod;
 import app.dispofold.model.AbsenceType;
 import app.dispofold.model.Dataset;
 import app.dispofold.model.DemandRule;
@@ -89,6 +90,15 @@ public final class RosterBuilder {
         for (Absence a : list(period.absences())) {
             absences.putIfAbsent(key(a.personId(), a.date()), a);
         }
+        // With the absences of the neighbouring months, for the free days inside an absence at the month boundary.
+        Map<String, Absence> around = new HashMap<>(absences);
+        for (Period q : list(dataset.periods())) {
+            for (Absence a : list(q.absences())) {
+                if (!YearMonth.from(a.date()).equals(month)) {
+                    around.putIfAbsent(key(a.personId(), a.date()), a);
+                }
+            }
+        }
         Map<String, FixedAssignment> fixed = new HashMap<>();
         for (FixedAssignment a : list(period.fixed())) {
             fixed.putIfAbsent(key(a.personId(), a.date()), a);
@@ -124,7 +134,7 @@ public final class RosterBuilder {
             nights(s, p, ownRestrictions);
             staff.add(s);
             cells.addAll(previousCells(s, before));
-            cells.addAll(monthCells(p, s, ownRestrictions, counted, absences,
+            cells.addAll(monthCells(p, s, ownRestrictions, counted, absences, around,
                     absenceTypes, fixed, assignments));
         }
         cells.forEach(c -> c.setTimes(timeLine));
@@ -214,7 +224,7 @@ public final class RosterBuilder {
         Staff.Fairness fairness = Staff.Fairness.of(p.weeklyHours(),
                 available == 0 ? 0 : available + h.months() * MONTH_DAYS, nights, unpopular);
         Staff staff = new Staff(p.id(), p.weeklyHours(), Set.copyOf(list(p.areaIds())), credit, target,
-                compRestBalance, limits, h, wishCount, fairness, average(history), previousCounts);
+                compRestBalance, limits, h, wishCount, fairness, average(p, history), previousCounts);
         return staff;
     }
 
@@ -336,22 +346,42 @@ public final class RosterBuilder {
 
     /**
      * Worked hours of the history months inside the averaging period. The rule is hard when the history covers
-     * the whole period before this month, otherwise the average is only shown.
+     * the whole period before this month, otherwise the average is only shown. The person's own limit per week is
+     * the weekly hours plus the tolerance, at most the rules' maximum; a history month with its own weekly hours
+     * counts with them, the others and this month with the person's weekly hours; the months are weighted by their
+     * weeks. A person without weekly hours has the maximum.
+     *
+     * <p>Calendar half-year: the months of the half-year before this month, each with its days / 7 weeks; complete
+     * when all of them are in the history (in January and July always). Rolling: the months of the last
+     * {@code averagingWeeks} weeks, each history month with 365.25 / 12 / 7 weeks.
      */
-    private Staff.Average average(List<HistoryEntry> history) {
-        int months = (int) Math.round(rules.averagingWeeks() * 7 / MONTH_DAYS) - 1;
+    private Staff.Average average(Person p, List<HistoryEntry> history) {
+        boolean halfYear = rules.averaging() == AveragingPeriod.HALF_YEAR;
+        YearMonth first = halfYear ? YearMonth.of(month.getYear(), month.getMonthValue() <= 6 ? 1 : 7)
+                : month.minusMonths((int) Math.round(rules.averagingWeeks() * 7 / MONTH_DAYS) - 1);
+        int months = (int) first.until(month, java.time.temporal.ChronoUnit.MONTHS);
         long minutes = 0;
         int found = 0;
+        double weeks = month.lengthOfMonth() / 7.0;
+        double allowed = ownLimit(p.weeklyHours()) * weeks;
         for (HistoryEntry e : history) {
             YearMonth m = YearMonth.parse(e.month());
-            if (m.isBefore(month) && !m.isBefore(month.minusMonths(months))) {
+            if (m.isBefore(month) && !m.isBefore(first)) {
+                double w = halfYear ? m.lengthOfMonth() / 7.0 : MONTH_DAYS / 7;
                 minutes += Math.round(e.hours() * 60);
                 found++;
+                weeks += w;
+                allowed += ownLimit(e.weeklyHours() != null ? e.weeklyHours() : p.weeklyHours()) * w;
             }
         }
-        double weeks = (found * MONTH_DAYS + month.lengthOfMonth()) / 7;
-        return new Staff.Average(minutes, weeks, months > 0 && found >= months,
-                (int) Math.round(rules.maxAverageWeekHours() * 60));
+        boolean complete = halfYear ? found >= months : months > 0 && found >= months;
+        return new Staff.Average(minutes, weeks, complete, allowed / weeks);
+    }
+
+    /** The average limit in minutes per week for these weekly hours. */
+    double ownLimit(double weeklyHours) {
+        double max = Math.round(rules.maxAverageWeekHours() * 60);
+        return weeklyHours > 0 ? Math.min(max, weeklyHours * 60 * (1 + rules.averageTolerance() / 100)) : max;
     }
 
     static Staff.History history(List<HistoryEntry> entries, YearMonth month, int months) {
@@ -423,7 +453,7 @@ public final class RosterBuilder {
     }
 
     private List<DutyCell> monthCells(Person p, Staff s, List<Restriction> restrictions, List<Wish> wishes,
-            Map<String, Absence> absences, Map<String, AbsenceType> absenceTypes,
+            Map<String, Absence> absences, Map<String, Absence> around, Map<String, AbsenceType> absenceTypes,
             Map<String, FixedAssignment> fixed, Map<String, PlanAssignment> assignments) {
         List<DutyCell> result = new ArrayList<>();
         for (LocalDate d = month.atDay(1); !d.isAfter(month.atEndOfMonth()); d = d.plusDays(1)) {
@@ -475,6 +505,7 @@ public final class RosterBuilder {
                 AbsenceType type = absenceTypes.get(absence.typeCode());
                 c.setAbsence(absence.typeCode(), type != null && type.reducesTarget());
             }
+            c.setInsideAbsence(insideAbsence(p, d, around, absenceTypes));
             FixedAssignment fix = fixed.get(key(p.id(), d));
             PlanAssignment assignment = assignments.get(key(p.id(), d));
             ShiftOption given = assignment == null ? null
@@ -494,7 +525,7 @@ public final class RosterBuilder {
                     range.add(given);
                 }
                 c.setShift(given);
-            } else if (absence != null || !p.employedOn(d)) {
+            } else if (absence != null || !p.employedOn(d) || c.isInsideAbsence()) {
                 pin(c, null);
             } else if (given != null && range.contains(given)) {
                 c.setShift(given);
@@ -502,6 +533,58 @@ public final class RosterBuilder {
             result.add(c);
         }
         return result;
+    }
+
+    /**
+     * A holiday, Saturday or Sunday without an absence is free when the nearest workday before it and the nearest
+     * workday after it both have an absence that lowers the target (any such types). A holiday from Monday to
+     * Friday is also free when every other workday of its calendar week inside the employment (at least one) has
+     * such an absence. Absences of the neighbouring months count when the data has them; without them the day is
+     * not free.
+     */
+    boolean insideAbsence(Person p, LocalDate d, Map<String, Absence> around, Map<String, AbsenceType> types) {
+        if (!rules.freeDaysInsideAbsence() || isWorkday(d) || around.containsKey(key(p.id(), d))) {
+            return false;
+        }
+        if (lowersTarget(p, nearestWorkday(d, -1), around, types)
+                && lowersTarget(p, nearestWorkday(d, 1), around, types)) {
+            return true;
+        }
+        if (d.getDayOfWeek().getValue() > 5) {
+            return false;
+        }
+        int covered = 0;
+        for (LocalDate w = d.with(DayOfWeek.MONDAY); w.getDayOfWeek().getValue() <= 5; w = w.plusDays(1)) {
+            if (isWorkday(w) && p.employedOn(w)) {
+                if (!lowersTarget(p, w, around, types)) {
+                    return false;
+                }
+                covered++;
+            }
+        }
+        return covered > 0;
+    }
+
+    private boolean isWorkday(LocalDate d) {
+        return d.getDayOfWeek().getValue() <= 5 && !holidays.contains(d);
+    }
+
+    /** The nearest workday in this direction, or null after two weeks without one. */
+    private LocalDate nearestWorkday(LocalDate d, int step) {
+        for (int i = 0; i < 14; i++) {
+            d = d.plusDays(step);
+            if (isWorkday(d)) {
+                return d;
+            }
+        }
+        return null;
+    }
+
+    private static boolean lowersTarget(Person p, LocalDate d, Map<String, Absence> around,
+            Map<String, AbsenceType> types) {
+        Absence a = d == null ? null : around.get(key(p.id(), d));
+        AbsenceType type = a == null ? null : types.get(a.typeCode());
+        return type != null && type.reducesTarget();
     }
 
     /** A fixed shift that no longer exists (e.g. after a new import) is reported, not turned into a day off. */

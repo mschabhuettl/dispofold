@@ -103,7 +103,7 @@ public final class Anonymizer {
                 list(d.history()).stream().map(h -> new HistoryEntry(map.apply(h.personId()), h.month(), h.source(),
                         h.nights(), h.weekendsWorked(), h.holidays(), h.unpopular(), h.wishes(), h.wishesMet(),
                         h.hours(), h.hoursAccountAfter(), h.compRestBalanceAfter(), h.compRestUsed(),
-                        h.compRestEarned())).toList(),
+                        h.compRestEarned(), h.weeklyHours())).toList(),
                 list(d.periods()).stream().map(p -> new Period(p.month(),
                         list(p.absences()).stream().map(a -> new Absence(map.apply(a.personId()), a.date(),
                                 a.typeCode())).toList(),

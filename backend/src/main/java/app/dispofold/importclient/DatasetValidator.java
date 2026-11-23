@@ -247,6 +247,9 @@ public final class DatasetValidator {
                     && !HistoryEntry.PLAN.equals(h.source())) {
                 error("import.badHistorySource", "personId", h.personId(), "month", month);
             }
+            if (h.weeklyHours() != null && !(h.weeklyHours() > 0)) {
+                error("import.badWeeklyHours", "personId", h.personId(), "weeklyHours", h.weeklyHours());
+            }
         });
     }
 

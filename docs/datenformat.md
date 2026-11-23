@@ -127,6 +127,7 @@ leer sein. Felder, die im Beispiel `null` sind, dürfen fehlen.
 | history | `hoursAccountAfter` | Stundenkonto nach dem Monat, `null` = unbekannt |
 | history | `compRestBalanceAfter` | offene Ersatzruhetage nach dem Monat, `null` = unbekannt |
 | history | `compRestUsed`, `compRestEarned` | im Monat genommene und (durch Feiertagsarbeit) erworbene Ersatzruhetage |
+| history | `weeklyHours` | optional: Wochenstunden laut Vertrag in diesem Monat, für die eigene Grenze des Wochenschnitts; fehlt sie, gilt der Wert aus dem abgeschlossenen Plan desselben Monats, sonst die heutigen Wochenstunden der Person. Der Monatsabschluss schreibt sie |
 | period | `absences` | Abwesenheiten mit Abwesenheitsart |
 | period | `wishes` | `OFF` (frei), `DUTY` (Dienst), `SHIFT` (diese Schicht), `NOT_SHIFT` (diese Schicht nicht); bei `SHIFT` und `NOT_SHIFT` ist `shiftId` Pflicht |
 | period | `fixed` | Vorgaben; `shiftId: null` gibt einen freien Tag vor |
@@ -270,7 +271,7 @@ der Monat des Eintrags.
 | `import.unknownAbsenceType` | `personId`, `typeCode`, `date` | unbekannte Abwesenheitsart |
 | `import.badMonth` | `personId`, `month` | Monat eines Historieneintrags ist nicht `YYYY-MM` |
 | `import.badHistorySource` | `personId`, `month` | `source` eines Historieneintrags ist weder `import` noch `plan` |
-| `import.badWeeklyHours` | `personId`, `weeklyHours` | Wochenstunden kleiner oder gleich 0 |
+| `import.badWeeklyHours` | `personId`, `weeklyHours` | Wochenstunden einer Person oder eines Historieneintrags kleiner oder gleich 0 |
 | `import.badEmployment` | `personId` | `exitDate` liegt vor `entryDate` |
 | `import.badShiftMix` | `personId` | gewohnte Verteilung ungültig: Anteil außerhalb von 0 bis 1, Summe ungleich 1 oder Bereich, der nicht zur Person gehört |
 | `import.badDemandDay` | `areaId`, `index`, `day` | unbekannter Tagestyp im Bedarf (erlaubt `MON`..`SUN`, `HOL`) |

@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Test;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import app.dispofold.model.Absence;
 import app.dispofold.model.HistoryEntry;
 import app.dispofold.model.Plan;
 import app.dispofold.model.PlanAssignment;
@@ -121,7 +122,9 @@ class PlanFlowTest {
                 .statusCode() == 200;
         given().post("/api/plans/" + MONTH + "/finalize").then().statusCode(200)
                 .body("find { it.personId == 'P0002' }.nights", equalTo(1))
-                .body("find { it.personId == 'P0002' }.source", equalTo("plan"));
+                .body("find { it.personId == 'P0002' }.source", equalTo("plan"))
+                // the contract hours of the month, for the person's own average limit
+                .body("find { it.personId == 'P0002' }.weeklyHours", equalTo(40.0f));
         // a closed month is read-only until it is reopened
         given().get("/api/plans/" + MONTH).then().body("plan.status", equalTo("CLOSED"));
         given().contentType(ContentType.JSON).body(mapper.writeValueAsString(cell))
@@ -134,6 +137,12 @@ class PlanFlowTest {
                 .then().statusCode(202);
         assertThat(facade.lastInput().dataset().history())
                 .anyMatch(h -> h.personId().equals("P0002") && h.month().equals(MONTH.toString()));
+        // the absences of the neighbouring months reach the solver, for free days at the month boundary
+        assertThat(facade.lastInput().dataset().periods()).anySatisfy(p -> {
+            assertThat(p.month()).isEqualTo(MONTH);
+            assertThat(p.absences()).extracting(Absence::personId).contains("P0001");
+            assertThat(p.wishes()).isEmpty();
+        });
         assertThat(facade.lastOptions().seed()).isEqualTo(1);
         assertThat(facade.lastOptions().timeLimitSeconds()).isEqualTo(defaultTimeLimit);
         await().atMost(Duration.ofSeconds(10)).until(() -> !facade.isSolving(MONTH.plusMonths(1)));
@@ -170,6 +179,29 @@ class PlanFlowTest {
         given().contentType(ContentType.JSON).body("{}").post("/api/plans/" + MONTH + "/solve").then()
                 .statusCode(202);
         await().atMost(Duration.ofSeconds(10)).until(() -> !solving());
+        given().get("/api/plans/" + MONTH).then().body("stale", equalTo(false));
+
+        // an absence in the next month far from the boundary leaves the plan as it is; one next to it (free days
+        // inside an absence look across the boundary) makes it stale
+        YearMonth next = MONTH.plusMonths(1);
+        long nextRevision = given().get("/api/periods/" + next).then().statusCode(200).extract().jsonPath()
+                .getLong("revision");
+        String far = "{\"month\":null,\"absences\":[{\"personId\":\"P0004\",\"date\":\"" + next.atDay(20)
+                + "\",\"typeCode\":\"U\"}],\"wishes\":[],\"fixed\":[],\"previousDuties\":[]}";
+        given().contentType(ContentType.JSON).header("If-Match", nextRevision).body(far)
+                .put("/api/periods/" + next).then().statusCode(200);
+        given().get("/api/plans/" + MONTH).then().body("stale", equalTo(false));
+        nextRevision = given().get("/api/periods/" + next).then().statusCode(200).extract().jsonPath()
+                .getLong("revision");
+        String near = far.replace(next.atDay(20).toString(), next.atDay(1).toString());
+        given().contentType(ContentType.JSON).header("If-Match", nextRevision).body(near)
+                .put("/api/periods/" + next).then().statusCode(200);
+        given().get("/api/plans/" + MONTH).then().body("stale", equalTo(true));
+        nextRevision = given().get("/api/periods/" + next).then().statusCode(200).extract().jsonPath()
+                .getLong("revision");
+        given().contentType(ContentType.JSON).header("If-Match", nextRevision)
+                .body("{\"month\":null,\"absences\":[],\"wishes\":[],\"fixed\":[],\"previousDuties\":[]}")
+                .put("/api/periods/" + next).then().statusCode(200);
         given().get("/api/plans/" + MONTH).then().body("stale", equalTo(false));
 
         // the previous month gets a plan afterwards: its duties become the previous duties, and the change shows

@@ -41,7 +41,7 @@ final class Candidates {
             long hardBefore = 0;
             for (DutyCell c : own) {
                 if (!c.isInMonth() || c.isPinned() || c.getShift() != null || c.getAbsenceCode() != null
-                        || c.isOutsideEmployment()) {
+                        || c.isOutsideEmployment() || c.isInsideAbsence()) {
                     continue;
                 }
                 List<ShiftOption> requested = roster.getShiftOptions().stream()

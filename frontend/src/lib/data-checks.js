@@ -92,6 +92,39 @@ function badSum(map) {
 }
 
 /**
+ * Holidays, Saturdays and Sundays without an absence whose nearest workday before and after (Monday to Friday, no
+ * holiday) both have an absence that lowers the target, and holidays whose other workdays of the week all have one,
+ * as the solver keeps them free (RosterBuilder.insideAbsence).
+ * Only the month's absences are known here, so days next to the month boundary are not free. Keys personId|date.
+ */
+function freeInsideAbsence(dataset, dates, holidays, absences, absent) {
+  const lowers = new Set((dataset.absenceTypes ?? []).filter((t) => t.reducesTarget).map((t) => t.code));
+  const lowering = new Set(absences.filter((a) => lowers.has(a.typeCode)).map((a) => `${a.personId}|${a.date}`));
+  const workday = (date) => { const d = new Date(`${date}T12:00:00Z`).getUTCDay(); return d >= 1 && d <= 5 && !holidays.has(date); };
+  const nearest = (i, step) => { for (let j = i + step; j >= 0 && j < dates.length; j += step) if (workday(dates[j])) return dates[j]; return null; };
+  // a holiday from Monday to Friday whose other workdays of the calendar week (inside the month) all have one
+  const coveredWeek = (personId, i) => {
+    const weekday = new Date(`${dates[i]}T12:00:00Z`).getUTCDay();
+    if (weekday < 1 || weekday > 5) return false;
+    const week = dates.slice(Math.max(0, i - weekday + 1), i + 6 - weekday).filter((d) => d !== dates[i] && workday(d));
+    // the week must lie in the month: the absences of the neighbouring months are not known here
+    if (i - weekday + 1 < 0 || i + 6 - weekday > dates.length) return false;
+    return week.length > 0 && week.every((d) => lowering.has(`${personId}|${d}`));
+  };
+  const out = [];
+  for (const personId of new Set(absences.map((a) => a.personId))) {
+    dates.forEach((date, i) => {
+      if (workday(date) || absent.has(`${personId}|${date}`)) return;
+      const before = nearest(i, -1);
+      const after = nearest(i, 1);
+      if (before && after && lowering.has(`${personId}|${before}`) && lowering.has(`${personId}|${after}`)) out.push(`${personId}|${date}`);
+      else if (coveredWeek(personId, i)) out.push(`${personId}|${date}`);
+    });
+  }
+  return out;
+}
+
+/**
  * Findings on the master data for the month: [{ kind, severity: 'warning' | 'info', personId, areaId, demandIndex, text,
  * todo, link: 'masterdata' | 'rules' }]; demandIndex: the position of the demand rule in dataset.demand, else null.
  * People not employed in the month are left out. rules: the rules, for the night setting (missing: HABIT) and the
@@ -145,6 +178,7 @@ export function dataChecks(dataset, { month, rules = null, absences = [] }) {
 
   const holidays = new Set((dataset.holidays ?? []).map((x) => x.date));
   const absent = new Set(absences.map((x) => `${x.personId}|${x.date}`));
+  if (rules?.freeInsideAbsence !== false) for (const key of freeInsideAbsence(dataset, dates, holidays, absences, absent)) absent.add(key);
   dataset.demand.forEach((rule, index) => {
     if (!((rule.min ?? 0) > 0)) return;
     const areaRules = dataset.demand.filter((r) => r.areaId === rule.areaId);

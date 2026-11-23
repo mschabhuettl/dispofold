@@ -36,6 +36,7 @@ public class DutyCell {
     private long weekend;
     private String absenceCode;
     private boolean outsideEmployment;
+    private boolean insideAbsence;
     private String missingShiftId;
     private boolean absenceCredits;
     private Set<String> onRequest;
@@ -213,6 +214,18 @@ public class DutyCell {
 
     public void setOutsideEmployment(boolean outsideEmployment) {
         this.outsideEmployment = outsideEmployment;
+    }
+
+    /**
+     * A holiday, Saturday or Sunday without an absence between two workdays with an absence that lowers the target:
+     * no duty may start on it. It is not an absence and credits nothing.
+     */
+    public boolean isInsideAbsence() {
+        return insideAbsence;
+    }
+
+    public void setInsideAbsence(boolean insideAbsence) {
+        this.insideAbsence = insideAbsence;
     }
 
     /** A pinned shift id that is not in the shift catalogue (any more). */

@@ -39,7 +39,7 @@ public class RosterConstraints implements ConstraintProvider {
     public Constraint[] defineConstraints(ConstraintFactory f) {
         return new Constraint[] {
                 dailyRest(f), weeklyRest(f), maxDutyLength(f), maxWeekHours(f), maxMonthHours(f), freeSundays(f), averageWeekHours(f),
-                qualification(f), absence(f), employment(f), neverRestriction(f), compRestBalance(f), missingShift(f),
+                qualification(f), absence(f), freeInsideAbsence(f), employment(f), neverRestriction(f), compRestBalance(f), missingShift(f),
                 demand(f), overstaffing(f), uselessDuty(f),
                 targetHours(f), fairNights(f), fairWeekends(f), fairHolidays(f), fairUnpopular(f), wishes(f),
                 blockLength(f), isolatedDayOff(f), forwardRotation(f), splitWeekend(f), compRestUse(f),
@@ -200,6 +200,15 @@ public class RosterConstraints implements ConstraintProvider {
                 .penalize(HARD)
                 .justifyWith((c, s) -> hit(c, "typeCode", c.getAbsenceCode()))
                 .asConstraint(ConstraintCatalog.ABSENCE);
+    }
+
+    /** A duty on a holiday or weekend day that lies inside an absence (fixed or set by planners). */
+    Constraint freeInsideAbsence(ConstraintFactory f) {
+        return monthWork(f)
+                .filter(DutyCell::isInsideAbsence)
+                .penalize(HARD)
+                .justifyWith((c, s) -> hit(c, "shiftId", c.getShift().getId()))
+                .asConstraint(ConstraintCatalog.FREE_INSIDE_ABSENCE);
     }
 
     Constraint neverRestriction(ConstraintFactory f) {

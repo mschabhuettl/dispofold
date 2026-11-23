@@ -63,5 +63,12 @@ class InputValidationTest {
                 Map.of(), Rules.DEFAULT_TIME_ZONE, 52, null, null, null);
         assertThat(RulesResource.problem(old)).isNull();
         assertThat(old.overTargetPercent()).isEqualTo(Rules.DEFAULT_OVER_TARGET_PERCENT);
+        // The tolerance of the average limit may be 0, not negative.
+        assertThat(RulesResource.problem(new Rules(11, 36, 12, 60, 46.16, 2, 4, 6, true, ok.nightStart(),
+                ok.nightEnd(), 2, 0.25, 3, Map.of(), Rules.DEFAULT_TIME_ZONE, 52, 10.0, 2, null, -1.0, null, null)))
+                .isEqualTo("rules.values");
+        assertThat(RulesResource.problem(new Rules(11, 36, 12, 60, 46.16, 2, 4, 6, true, ok.nightStart(),
+                ok.nightEnd(), 2, 0.25, 3, Map.of(), Rules.DEFAULT_TIME_ZONE, 52, 10.0, 2, null, 0.0, false,
+                app.dispofold.model.AveragingPeriod.ROLLING))).isNull();
     }
 }

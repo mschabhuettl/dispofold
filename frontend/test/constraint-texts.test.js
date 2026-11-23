@@ -7,7 +7,7 @@ import { TEXTS } from '../src/lib/texts.js';
 /** Constraints whose description names a rule parameter, with the parameters it names. */
 const NAMED = {
   dailyRest: ['minDailyRestHours'], weeklyRest: ['minWeeklyRestHours'], maxDutyLength: ['maxDutyHours'],
-  maxWeekHours: ['maxWeekHours'], averageWeekHours: ['averagingWeeks', 'maxAverageWeekHours'], freeSundays: ['minFreeSundays'],
+  maxWeekHours: ['maxWeekHours'], averageWeekHours: ['maxAverageWeekHours', 'averageTolerancePercent'], freeSundays: ['minFreeSundays'],
   maxMonthHours: ['maxOverTargetPercent'], blockLength: ['minBlock', 'maxBlock'], wishes: ['maxWishesPerPerson'],
 };
 const descriptions = Object.entries(TEXTS).filter(([k]) => /^constraint\.\w+\.description$/.test(k));

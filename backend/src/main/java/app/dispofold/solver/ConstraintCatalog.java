@@ -24,6 +24,7 @@ public final class ConstraintCatalog {
     public static final String FREE_SUNDAYS = "freeSundays";
     public static final String QUALIFICATION = "qualification";
     public static final String ABSENCE = "absence";
+    public static final String FREE_INSIDE_ABSENCE = "freeInsideAbsence";
     public static final String NEVER = "neverRestriction";
     public static final String COMP_REST_BALANCE = "compRestBalance";
     public static final String AVERAGE_WEEK = "averageWeekHours";
@@ -61,7 +62,7 @@ public final class ConstraintCatalog {
     /** Display order: hard, medium, soft. Texts are in the user interface under constraint.<id>. */
     public static final List<ConstraintInfo> ALL = List.of(
             hard(DAILY_REST), hard(WEEKLY_REST), hard(MAX_DUTY), hard(MAX_WEEK), hard(MAX_MONTH), hard(FREE_SUNDAYS), hard(AVERAGE_WEEK),
-            hard(QUALIFICATION), hard(ABSENCE), hard(EMPLOYMENT), hard(NEVER), hard(COMP_REST_BALANCE),
+            hard(QUALIFICATION), hard(ABSENCE), hard(FREE_INSIDE_ABSENCE), hard(EMPLOYMENT), hard(NEVER), hard(COMP_REST_BALANCE),
             hard(MISSING_SHIFT),
             // Medium: staffing against demand, in person minutes. One missing minute weighs more than any staffing
             // above the demand in the whole plan (DEMAND_WEIGHT), so a gap is never left open to avoid it; and

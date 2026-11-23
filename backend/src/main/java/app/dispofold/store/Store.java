@@ -335,7 +335,7 @@ public class Store {
 
     /**
      * An imported entry wins over the closed plan's entry of the same person and month for every value it has; a
-     * balance it leaves empty (unknown) is taken from the closed plan.
+     * balance or weekly hours it leaves empty (unknown) is taken from the closed plan.
      */
     static List<HistoryEntry> merge(List<HistoryEntry> closed, List<HistoryEntry> imported) {
         Map<String, HistoryEntry> merged = new LinkedHashMap<>();
@@ -344,12 +344,14 @@ public class Store {
         }
         for (HistoryEntry e : imported == null ? List.<HistoryEntry> of() : imported) {
             HistoryEntry plan = merged.get(e.personId() + "/" + e.month());
-            if (plan != null && (e.hoursAccountAfter() == null || e.compRestBalanceAfter() == null)) {
+            if (plan != null && (e.hoursAccountAfter() == null || e.compRestBalanceAfter() == null
+                    || e.weeklyHours() == null)) {
                 e = new HistoryEntry(e.personId(), e.month(), e.source(), e.nights(), e.weekendsWorked(),
                         e.holidays(), e.unpopular(), e.wishes(), e.wishesMet(), e.hours(),
                         e.hoursAccountAfter() != null ? e.hoursAccountAfter() : plan.hoursAccountAfter(),
                         e.compRestBalanceAfter() != null ? e.compRestBalanceAfter() : plan.compRestBalanceAfter(),
-                        e.compRestUsed(), e.compRestEarned());
+                        e.compRestUsed(), e.compRestEarned(),
+                        e.weeklyHours() != null ? e.weeklyHours() : plan.weeklyHours());
             }
             merged.put(e.personId() + "/" + e.month(), e);
         }

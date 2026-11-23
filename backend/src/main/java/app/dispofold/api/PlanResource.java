@@ -125,7 +125,7 @@ public class PlanResource {
                 s.duties(), s.nights(), s.weekendsWorked(), s.weekendsOff(), s.holidays(), s.unpopular(), 0, 0,
                 s.compRestPlanned(), s.compRestEarned(), s.compRestBalanceAfter(), s.singleDays(), s.historyNights(),
                 s.historyWeekends(), s.historyHolidays(), s.historyUnpopular(), 0, 0, s.availableDays(), 0,
-                s.averageWeekHours(), s.averageComplete(), 0, 0, s.plannedMix(), null, null, null, null, null, null, null);
+                s.averageWeekHours(), s.averageComplete(), s.averageLimitHours(), 0, 0, s.plannedMix(), null, null, null, null, null, null, null);
     }
 
     /**
@@ -133,7 +133,7 @@ public class PlanResource {
      * planners only.
      */
     static final Set<String> PRIVATE_HITS = Set.of("hit.wishes", "hit.family", "hit.onRequest",
-            "hit.neverRestriction", "hit.targetHours", "hit.maxMonthHours", "hit.shiftMix");
+            "hit.neverRestriction", "hit.targetHours", "hit.maxMonthHours", "hit.shiftMix", "hit.freeInsideAbsence");
 
     @GET
     @Path("people/{personId}")

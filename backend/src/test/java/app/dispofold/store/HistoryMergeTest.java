@@ -31,4 +31,15 @@ class HistoryMergeTest {
         assertThat(Store.merge(List.of(), List.of(entry(HistoryEntry.IMPORT, 160, null, null))))
                 .containsExactly(entry(HistoryEntry.IMPORT, 160, null, null));
     }
+
+    @Test
+    void unknownImportedWeeklyHoursComeFromTheClosedPlan() {
+        HistoryEntry plan = new HistoryEntry("P1", "2027-01", HistoryEntry.PLAN, 1, 1, 0, 0, 0, 0, 150, 5.0, 2, 0, 0,
+                30.0);
+        HistoryEntry imported = entry(HistoryEntry.IMPORT, 160, 7.5, 3);
+        assertThat(Store.merge(List.of(plan), List.of(imported)).get(0).weeklyHours()).isEqualTo(30.0);
+        HistoryEntry own = new HistoryEntry("P1", "2027-01", HistoryEntry.IMPORT, 1, 1, 0, 0, 0, 0, 160, 7.5, 3, 0, 0,
+                20.0);
+        assertThat(Store.merge(List.of(plan), List.of(own))).containsExactly(own);
+    }
 }

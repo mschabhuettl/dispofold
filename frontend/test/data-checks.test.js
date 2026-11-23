@@ -170,6 +170,26 @@ test('demand nobody can be planned for: everybody excluded, not employed or abse
   assert.deepEqual(demandFindings(d, absences.slice(0, 1)), []);
 });
 
+test('demand nobody can be planned for: a holiday inside both people\'s vacation is free, unless switched off', () => {
+  const d = demandBase();
+  d.demand = [{ areaId: 'A', days: ['HOL'], from: '07:00', to: '13:00', min: 1 }];
+  d.holidays = [{ date: '2030-03-13' }]; // a Wednesday
+  d.absenceTypes = [{ code: 'U', reducesTarget: true }, { code: 'X', reducesTarget: false }];
+  const vacation = (type) => ['P1', 'P2'].flatMap((personId) => ['2030-03-12', '2030-03-14']
+    .map((date) => ({ personId, date, typeCode: type })));
+  assert.match(demandFindings(d, vacation('U'))[0].text, /an 1 Tag .* \(ab 13\.3\.\)/);
+  // an absence that does not lower the target leaves the day plannable
+  assert.deepEqual(demandFindings(d, vacation('X')), []);
+  assert.deepEqual(dataChecks(d, { month, absences: vacation('U'), rules: { freeInsideAbsence: false } })
+    .filter((f) => f.kind === 'demandNoPeople'), []);
+  // a holiday Monday with vacation Tuesday to Friday of the same week
+  d.holidays = [{ date: '2030-03-11' }];
+  const rest = ['P1', 'P2'].flatMap((personId) => ['2030-03-12', '2030-03-13', '2030-03-14', '2030-03-15']
+    .map((date) => ({ personId, date, typeCode: 'U' })));
+  assert.match(demandFindings(d, rest)[0].text, /an 1 Tag .* \(ab 11\.3\.\)/);
+  assert.deepEqual(demandFindings(d, rest.filter((a) => a.date !== '2030-03-15')), []);
+});
+
 test('demand nobody can be planned for: NEVER for every shift of the time, by shift or by category', () => {
   const d = demandBase();
   d.restrictions = [{ personId: 'P1', shiftId: 'A-E', weekday: 0, kind: 'NEVER' },
