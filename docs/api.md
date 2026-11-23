@@ -180,6 +180,7 @@ sie, antwortet das Backend mit `428` `period.revisionMissing`; hat inzwischen je
 | `POST` | `/api/plans/{month}/solve` | startet die Planung im Hintergrund, Antwort sofort `202` mit `PlanState`. Body optional: `{ "seed", "timeLimitSeconds", "moveLimit", "coldStart" }` |
 | `POST` | `/api/plans/{month}/stop` | beendet die Planung, der beste Stand bleibt |
 | `PUT` | `/api/plans/{month}/cells` | ändert eine Zelle, Body `PlanAssignment`; eine von Hand gesetzte Zelle ist normalerweise `pinned: true`. Antwort `Plan` |
+| `POST` | `/api/plans/{month}/pin` | fixiert alle Zellen mit Dienst oder Ersatzruhe („Plan fixieren“); freie Tage bleiben offen. Antwort `Plan` |
 | `POST` | `/api/plans/{month}/unpin` | löst alle Fixierungen, die nicht aus `Period.fixed` kommen |
 | `GET` | `/api/plans/{month}/analysis` | `PlanAnalysis` (Score, Summen je Regel, Bedarfslücken, Kennzahlen je Person, `uncoveredHours` und `overstaffedHours`: ungedeckter Bedarf und Überbesetzung in Personenstunden, zusammen die mittlere Stufe) |
 | `GET` | `/api/plans/{month}/people/{personId}` | `PersonExplanation` (Kennzahlen und alle Regel-Treffer der Person) |
@@ -200,7 +201,7 @@ Planung:
   heißt, dass der Vormonat nach dieser Planung geändert wurde. Die Dienste der Vorwoche kommen aus dem
   gespeicherten Plan des Vormonats (`previousFromPlan: true`), sonst aus den importierten Vordiensten.
 - Während einer laufenden Planung fragt die Oberfläche `GET /api/plans/{month}` etwa alle zwei Sekunden ab.
-  Zellen, `unpin`, `finalize`, `import`, Exporte und ein zweites `solve` sind dann gesperrt (`409`). Der beste
+  Zellen, `pin`, `unpin`, `finalize`, `import`, Exporte und ein zweites `solve` sind dann gesperrt (`409`). Der beste
   Stand wird höchstens alle zwei Sekunden gespeichert. Nach `stop` ist der Status `STOPPED`, nach Ablauf
   `SOLVED`, nach einem Fehler `FAILED`.
 

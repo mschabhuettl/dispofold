@@ -1,7 +1,7 @@
 // The user guide (docs/anleitung/*.md, one page per task): on the documentation site, which always shows the latest
-// release, and in the desktop program as the copy built into this version (#/anleitung/<page>/<anchor>). The desktop
-// window opens no outside pages and the program makes no calls to the internet, so it always shows its own copy.
-// scripts/build.mjs uses this module too.
+// release, and in the program as the copy built into this version (#/anleitung/<page>/<anchor>), on the server as on
+// the own computer. The program shows its own copy, readable without internet; the site is only a fallback (a link
+// at the bottom of each page of the guide). scripts/build.mjs uses this module too.
 
 export const SITE = 'https://mschabhuettl.github.io/dispofold/';
 export const GUIDE_URL = `${SITE}anleitung/`;
@@ -47,10 +47,10 @@ export function slug(text) {
   return text.trim().toLowerCase().replace(/[^\p{L}\p{N}\p{M}_\- ]/gu, '').replace(/ /g, '-');
 }
 
-/** Address of the guide or one of its sections ("<page>" or "<page>#<anchor>"): the built-in copy in the desktop
- * program, else the site. */
-export function guideHref(desktop, section = '') {
+/** Address of the guide or one of its sections ("<page>" or "<page>#<anchor>"): the copy built into the program, else
+ * the site. */
+export function guideHref(builtIn, section = '') {
   const [page = 'index', anchor = ''] = section ? section.split('#') : [];
-  if (desktop) return `#/anleitung${page === 'index' && !anchor ? '' : `/${page}`}${anchor ? `/${anchor}` : ''}`;
+  if (builtIn) return `#/anleitung${page === 'index' && !anchor ? '' : `/${page}`}${anchor ? `/${anchor}` : ''}`;
   return `${GUIDE_URL}${page === 'index' ? '' : `${page}/`}${anchor ? `#${anchor}` : ''}`;
 }

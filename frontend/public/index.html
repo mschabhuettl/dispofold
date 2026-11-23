@@ -20,6 +20,8 @@
       <div class="brand">
         <img src="img/logo.svg" alt="">
         <p class="app-name" data-t="app.name"></p>
+        <button class="btn-icon nav-toggle" id="nav-toggle" type="button" aria-expanded="false" aria-controls="nav"
+                data-t-aria-label="app.menu">&#9776;</button>
       </div>
       <ul id="nav"></ul>
       <a class="source-link" href="https://github.com/mschabhuettl/dispofold" target="_blank" rel="noopener"
@@ -29,7 +31,7 @@
       <header class="topbar">
         <div class="month-picker">
           <button class="btn-icon" id="month-prev" type="button" data-t-aria-label="app.monthPrev">&#8249;</button>
-          <label class="visually-hidden" for="month" data-t="app.monthLabel"></label>
+          <label class="month-label" for="month" data-t="app.monthLabel"></label>
           <select id="month"></select>
           <button class="btn-icon" id="month-next" type="button" data-t-aria-label="app.monthNext">&#8250;</button>
         </div>

@@ -23,15 +23,15 @@ export function candidateList({ api, month, gap, dataset, onSet }) {
     try {
       const rows = candidateRows(await api.candidates(month, gap), people, shifts);
       content = rows.length
-        ? h('ul', {}, rows.map((r) => h('li', {}, h('button', { type: 'button', 'aria-label': r.label, onclick: () => pick(r) },
+        ? [h('p.muted.candidates-hint', {}, t('candidates.hint')), h('ul', {}, rows.map((r) => h('li', {}, h('button', { type: 'button', 'aria-label': r.label, onclick: () => pick(r) },
           h('span.cell-code', r.color ? { class: 'tinted', style: tintStyle(r.color) } : { class: 'outlined' }, r.code),
-          h('span.candidate-name', {}, r.name), h('span.muted', {}, r.day), h('span.muted', {}, r.hours)))))
+          h('span.candidate-name', {}, r.name), h('span.muted', {}, r.day), h('span.muted', {}, r.hours)))))]
         : h('p.muted', {}, t('candidates.none'));
     } catch (e) {
       content = h('p.alert.alert-error', {}, e.message || String(e));
     }
     if (!box.isConnected) return;
-    box.replaceChildren(content);
+    box.replaceChildren(...[content].flat());
     box.dataset.loaded = 'true';
   })();
   return box;

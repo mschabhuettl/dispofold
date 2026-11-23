@@ -1,5 +1,6 @@
 // Eingaben of the month: absences (entered and shown as date ranges, stored per day), wishes and fixed duties, with a
-// person filter for all three. Saved together via PUT /api/periods/{month}.
+// person filter for all three and links to the three sections. Saved together via PUT /api/periods/{month} from a bar
+// that stays at the bottom of the window; rows added since then are marked.
 import { dayLabel, monthDates, monthLabel } from '../lib/dates.js';
 import { append, guarded, h, toast } from '../lib/dom.js';
 import { absenceName, personName } from '../lib/grid-model.js';
@@ -28,6 +29,9 @@ export async function render(root, ctx) {
   const dates = monthDates(month);
   const limit = rules.maxWishesPerPerson;
   let dirty = false;
+  // "<personId>|<date>" of the days added since the last save, per list; the last one added is scrolled to
+  const added = { absences: new Set(), wishes: new Set(), fixed: new Set() };
+  let lastAdded = null;
 
   const name = (id) => (byId.has(id) ? personName(byId.get(id)) : id);
   const shiftLabel = (id) => (id ? `${shifts.get(id)?.code ?? id} ${shifts.get(id)?.name ?? ''}` : t('inputs.free'));
@@ -66,9 +70,17 @@ export async function render(root, ctx) {
     draw();
   } }, h('option', { value: '' }, t('inputs.filter.all')), people.map((p) => h('option', { value: p.id }, personName(p))));
 
+  // links to the three sections (buttons: a link to an anchor would be taken for a page of the program)
+  const jumpTo = (key, label) => h('button.btn-link', { type: 'button', onclick: () => {
+    const heading = root.querySelector(`#h-${key}`);
+    heading.scrollIntoView({ block: 'start' });
+    heading.focus({ preventScroll: true });
+  } }, label);
   root.append(h('h1', {}, t('inputs.title', { month: monthLabel(month) })),
-    canEdit ? h('div', {}, h('div.toolbar', {}, saveBtn, h('span.muted', { id: 'dirty-note' }, '')), problems)
+    canEdit ? problems
       : h('p.alert', {}, closed ? (ctx.canEdit ? t('inputs.closed') : t('common.closedReadonly')) : t('inputs.readonly')),
+    h('nav.jump-links', { 'aria-label': t('inputs.jumpLabel') }, jumpTo('absences', t('inputs.section.absences')),
+      showWishes && jumpTo('wishes', t('inputs.section.wishes')), jumpTo('fixed', t('inputs.section.fixed'))),
     h('div.toolbar', {}, h('div.field', {}, h('div.with-info', {}, h('label', { for: 'inputs-filter' }, t('inputs.filter')),
       info(t('help.field.inputs.filter'), t('inputs.filter'))), filter)),
     section(t('inputs.section.absences'), 'absences', t('help.field.inputs.absences'), canEdit && addForm('abs', [
@@ -82,12 +94,16 @@ export async function render(root, ctx) {
         return;
       }
       period.absences = addAbsenceRange(period.absences, range);
+      for (const a of period.absences) {
+        if (a.personId === range.personId && a.date >= range.from && a.date <= range.to) added.absences.add(`${a.personId}|${a.date}`);
+      }
+      lastAdded = { key: 'absences', id: `${range.personId}|${range.from}` };
       changed();
     })),
     // '' instead of false: root.append would print "false"
     !showWishes ? '' : section(t('inputs.section.wishes'), 'wishes', t('help.field.inputs.wishes'), canEdit && addForm('wish', [
       [t('inputs.person'), personSelect('wish-person'), t('help.field.inputs.wishPerson')], [t('inputs.date'), dateSelect('wish-date'), t('help.field.inputs.wishDate')],
-      [t('inputs.type'), h('select', { id: 'wish-kind' }, Object.entries(WISH_KINDS).map(([k, v]) => h('option', { value: k }, v))), t('help.field.inputs.wishKind')],
+      [t('inputs.type'), h('select', { id: 'wish-kind', onchange: wishShiftNeeded }, Object.entries(WISH_KINDS).map(([k, v]) => h('option', { value: k }, v))), t('help.field.inputs.wishKind')],
       [t('inputs.wishShift'), shiftSelect('wish-shift', false, 'wish-person'), t('help.field.inputs.wishShift')],
     ], () => {
       const kind = val('wish-kind');
@@ -97,11 +113,21 @@ export async function render(root, ctx) {
       [t('inputs.person'), personSelect('fix-person'), t('help.field.inputs.fixedPerson')], [t('inputs.date'), dateSelect('fix-date'), t('help.field.inputs.fixedDate')],
       [t('inputs.duty'), shiftSelect('fix-shift', true, 'fix-person'), t('help.field.inputs.fixedShift')],
     ], () => add('fixed', { personId: val('fix-person'), date: val('fix-date'), shiftId: val('fix-shift') || null }))),
+    // as on the rules page: the save button stays at the bottom of the window
+    canEdit ? h('div.save-bar', {}, saveBtn, h('span.muted', { id: 'dirty-note', role: 'status' }, '')) : '',
   );
+  if (canEdit) wishShiftNeeded();
+
+  /** The shift of a wish only for "diese Schicht" and "diese Schicht nicht". */
+  function wishShiftNeeded() {
+    const kind = root.querySelector('#wish-kind')?.value;
+    const shift = root.querySelector('#wish-shift');
+    if (shift) shift.disabled = kind !== 'SHIFT' && kind !== 'NOT_SHIFT';
+  }
 
   function section(title, key, help, form, note) {
     const id = `h-${key}`;
-    return h('section.section', { 'aria-labelledby': id }, h('h2', { id }, title, info(help, title)), note, form, sections[key]);
+    return h('section.section', { 'aria-labelledby': id }, h('h2', { id, tabindex: '-1' }, title, info(help, title)), note, form, sections[key]);
   }
 
   /** Fields: [label, control, help (optional)]. */
@@ -120,11 +146,14 @@ export async function render(root, ctx) {
     const i = list.findIndex((x) => x.personId === item.personId && x.date === item.date);
     if (i >= 0) list.splice(i, 1);
     list.push(item);
+    added[key].add(`${item.personId}|${item.date}`);
+    lastAdded = { key, id: `${item.personId}|${item.date}` };
     changed();
   }
 
   function remove(key, item) {
     period[key] = period[key].filter((x) => x !== item);
+    added[key].delete(`${item.personId}|${item.date}`);
     changed();
   }
 
@@ -135,7 +164,10 @@ export async function render(root, ctx) {
     draw();
   }
 
+  /** Saved or reloaded: no row is new any more. */
   function setSaved() {
+    for (const set of Object.values(added)) set.clear();
+    draw();
     base = structuredClone(period);
     dirty = false;
     saveBtn.disabled = true;
@@ -153,6 +185,7 @@ export async function render(root, ctx) {
         // every finding, not only the first (e.g. a date outside the month)
         problems.replaceChildren(h('div.alert.alert-error', { role: 'alert' }, h('strong', {}, e.message),
           h('ul', {}, errors.map((x) => h('li', {}, messageText(x))))));
+        problems.scrollIntoView({ block: 'nearest' });
       }
       toast(e.message, true);
       return;
@@ -160,7 +193,6 @@ export async function render(root, ctx) {
     problems.replaceChildren();
     toast(t('inputs.saved'));
     if (res) Object.assign(period, res); // the server drops entries with unknown ids and counts up the revision
-    draw();
     setSaved();
   }
 
@@ -177,7 +209,6 @@ export async function render(root, ctx) {
       toast(conflicts.length ? t('inputs.conflict.mergedClashes', { count: conflicts.length }) : t('inputs.conflict.merged'));
     } else {
       Object.assign(period, server);
-      draw();
       setSaved();
       toast(t('inputs.conflict.reloaded'));
     }
@@ -193,13 +224,26 @@ export async function render(root, ctx) {
     return h('table.data', { 'data-table': 'absences' },
       h('thead', {}, h('tr', {}, h('th', {}, t('inputs.col.range')), h('th', {}, t('inputs.person')), h('th', {}, t('inputs.type')), h('th.num', {}, t('inputs.col.days')),
         canEdit && h('th', {}, ''))),
-      h('tbody', {}, ranges.map((r) => h('tr', {}, h('td', {}, label(r)), h('td', {}, name(r.personId)), h('td', {}, `${r.typeCode} ${absenceName(r.typeCode, types)}`),
+      h('tbody', {}, ranges.map((r) => h('tr', addedRow('absences', r.entries), h('td', {}, label(r)), h('td', {}, name(r.personId)), h('td', {}, `${r.typeCode} ${absenceName(r.typeCode, types)}`),
         h('td.num', {}, String(r.entries.length)),
-        canEdit && h('td', {}, h('button.btn-link', { type: 'button', 'aria-label': t('inputs.removeRangeLabel', { range: label(r), name: name(r.personId) }),
+        canEdit && h('td', {}, addedNote('absences', r.entries), h('button.btn-link', { type: 'button', 'aria-label': t('inputs.removeRangeLabel', { range: label(r), name: name(r.personId) }),
           onclick: () => {
             period.absences = period.absences.filter((x) => !r.entries.includes(x));
+            for (const x of r.entries) added.absences.delete(`${x.personId}|${x.date}`);
             changed();
           } }, t('inputs.remove')))))));
+  }
+
+  const isAdded = (key, entries) => entries.some((x) => added[key].has(`${x.personId}|${x.date}`));
+  /** Attributes of a row: marked when one of its days was added since the last save. */
+  function addedRow(key, entries) {
+    if (!isAdded(key, entries)) return {};
+    const scroll = lastAdded?.key === key && entries.some((x) => `${x.personId}|${x.date}` === lastAdded.id);
+    return { class: 'row-added', 'data-scroll': scroll ? 'true' : null };
+  }
+
+  function addedNote(key, entries) {
+    return isAdded(key, entries) && h('span.added-note', {}, t('inputs.added'));
   }
 
   function table(key, columns, rows) {
@@ -207,9 +251,9 @@ export async function render(root, ctx) {
     if (!sorted.length) return h('p.muted', {}, t('inputs.none'));
     return h('table.data', {},
       h('thead', {}, h('tr', {}, h('th', {}, t('inputs.date')), h('th', {}, t('inputs.person')), columns.map(([label]) => h('th', {}, label)), canEdit && h('th', {}, ''))),
-      h('tbody', {}, sorted.map((r) => h('tr', {}, h('td', {}, dayLabel(r.date)), h('td', {}, name(r.personId)),
+      h('tbody', {}, sorted.map((r) => h('tr', addedRow(key, [r]), h('td', {}, dayLabel(r.date)), h('td', {}, name(r.personId)),
         columns.map(([, get]) => h('td', {}, get(r))),
-        canEdit && h('td', {}, h('button.btn-link', { type: 'button', onclick: () => remove(key, r), 'aria-label': t('inputs.removeLabel', { day: dayLabel(r.date), name: name(r.personId) }) }, t('inputs.remove')))))));
+        canEdit && h('td', {}, addedNote(key, [r]), h('button.btn-link', { type: 'button', onclick: () => remove(key, r), 'aria-label': t('inputs.removeLabel', { day: dayLabel(r.date), name: name(r.personId) }) }, t('inputs.remove')))))));
   }
 
   function draw() {
@@ -218,12 +262,15 @@ export async function render(root, ctx) {
     for (const w of period.wishes) counts.set(w.personId, (counts.get(w.personId) ?? 0) + 1);
     sections.wishes.replaceChildren(table('wishes', [
       [t('inputs.col.wish'), (r) => `${WISH_KINDS[r.kind] ?? r.kind}${r.shiftId ? `: ${shiftLabel(r.shiftId)}` : ''}`],
-      [t('inputs.col.wishCount'), (r) => {
+      [t('inputs.col.wishCount', { limit }), (r) => {
         const n = counts.get(r.personId);
         return n > limit ? h('strong.text-danger', {}, t('inputs.tooMany', { value: n, total: limit })) : t('common.outOf', { value: n, total: limit });
       }],
     ], period.wishes));
     sections.fixed.replaceChildren(table('fixed', [[t('inputs.duty'), (r) => shiftLabel(r.shiftId)]], period.fixed));
+    // the row just added: into view (it may be far down the list); hidden by the person filter it stays unseen
+    lastAdded = null;
+    root.querySelector('tr[data-scroll]')?.scrollIntoView({ block: 'center' });
   }
   draw();
   ctx.isDirty = () => dirty;

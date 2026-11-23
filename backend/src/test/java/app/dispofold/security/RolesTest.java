@@ -24,7 +24,8 @@ class RolesTest {
             { "PUT", "/api/dataset/people/P0001/excluded" },
             { "POST", "/api/import/demo" }, { "POST", "/api/import/dataset" },
             { "POST", "/api/plans/2032-01/solve" }, { "POST", "/api/plans/2032-01/stop" },
-            { "PUT", "/api/plans/2032-01/cells" }, { "POST", "/api/plans/2032-01/unpin" },
+            { "PUT", "/api/plans/2032-01/cells" }, { "POST", "/api/plans/2032-01/pin" },
+            { "POST", "/api/plans/2032-01/unpin" },
             { "POST", "/api/plans/2032-01/finalize" }, { "POST", "/api/plans/2032-01/import" } };
 
     @Test

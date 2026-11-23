@@ -11,7 +11,7 @@ Personen, Bereiche und Schichten es gibt; **Personen bearbeiten** führt zur Lis
 dieselben Knöpfe:
 
 1. **Neu** legt einen Eintrag an. Unter der Überschrift öffnet sich ein Formular.
-2. **Filtern** zeigt nur die Zeilen, in denen der eingegebene Text vorkommt.
+2. **… filtern** (etwa **Bedarf filtern**) zeigt nur die Zeilen, in denen der eingegebene Text vorkommt.
 3. **Bearbeiten** öffnet das Formular einer Zeile, **Entfernen** nimmt sie heraus (siehe
    [Entfernen](#entfernen)).
 
@@ -84,7 +84,7 @@ Planung: Jede fehlende Person ist eine [Lücke](begriffe.md#lücke).
 | Datum | der eine Tag bei „an einem Datum“ |
 | Von, Bis | der Zeitraum; liegt „Bis“ vor „Von“, endet er am nächsten Tag |
 | Mindestens | so viele Personen müssen da sein; jede fehlende ist offener Bedarf |
-| Höchstens | mehr Personen zählen als Überbesetzung; leer heißt: die Mindestbesetzung ist auch die Höchstbesetzung |
+| Höchstens | mehr Personen zählen als Überbesetzung; leer heißt: die Mindestbesetzung ist auch die Höchstbesetzung (die Tabelle zeigt dann „= Mindestens“) |
 
 Wichtig, damit der Bedarf so wirkt wie gedacht:
 

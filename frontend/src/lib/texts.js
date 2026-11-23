@@ -7,6 +7,7 @@ export const TEXTS = {
   'app.title': '{page} · Dispofold',
   'app.skipLink': 'Zum Inhalt springen',
   'app.mainNav': 'Hauptnavigation',
+  'app.menu': 'Menü',
   'app.monthLabel': 'Planungsmonat',
   'app.monthPrev': 'Vorheriger Monat',
   'app.monthNext': 'Nächster Monat',
@@ -44,7 +45,6 @@ export const TEXTS = {
   'nav.extensions': 'Erweiterungen',
   'nav.tab.extensions': 'Erweiterungen',
   'nav.guide': 'Anleitung',
-  'nav.guide.newTab': 'Öffnet die Anleitung auf der Dokumentations-Website in einem neuen Tab',
 
   // Prüfen (stage 3: problem list, open demand, master data checks) and the fairness loads
   'check.title': 'Prüfen: {month}',
@@ -172,7 +172,6 @@ export const TEXTS = {
   'people.excluded.confirmOff': '{name} wieder aus dem Quellsystem übernehmen? Die nächste Korrekturdatei schließt die Person nicht mehr aus.',
   'people.excluded.on': 'Wird nicht mehr übernommen',
   'people.excluded.off': 'Wird wieder übernommen',
-  'masterdata.filter': 'Filtern',
   'masterdata.filterLabel': '{section} filtern',
   'masterdata.noMatch': 'Keine Treffer.',
   'masterdata.peopleLink': 'Personen bearbeiten',
@@ -299,7 +298,7 @@ export const TEXTS = {
   'help.button.label': 'Hilfe: {label}',
   'help.page.plan': 'Der Dienstplan des Monats: eine Zeile je Person, eine Spalte je Tag. Die Zeile über dem Plan sagt, ob er Regelverstöße oder offenen Bedarf hat.',
   'help.page.funktionen': 'Derselbe Plan nach Funktionen: je Schicht eines Bereichs eine Zeile pro Position, darin die eingeteilten Personen. Die Zeile „offen“ zeigt, wo jemand fehlt.',
-  'help.page.zeitachse': 'Die Dienste eines Bereichs auf einer Zeitachse, darunter die Besetzung gegen den Bedarf. So ist zu sehen, zu welcher Uhrzeit Personen fehlen oder zu viele da sind.',
+  'help.page.zeitachse': 'Die Dienste eines Bereichs auf einer Zeitachse, darüber die Besetzung gegen den Bedarf. So ist zu sehen, zu welcher Uhrzeit Personen fehlen oder zu viele da sind.',
   'help.page.pruefen': 'Was am Plan des Monats zu tun ist, in dieser Reihenfolge: Regelverstöße, offener Bedarf, dann Hinweise zur Qualität und Überbesetzung (keine Fehler), dazu Auffälligkeiten in den Stammdaten.',
   'help.page.fairness': 'Wie gleichmäßig Nächte, Wochenenden, Feiertage und fair verteilte Dienste verteilt sind, je Person und mit den Vormonaten. Jeder Punkt in den Streifen ist eine Person.',
   'help.page.eingaben': 'Was für diesen Monat feststeht oder gewünscht ist: Abwesenheiten, Wünsche und Vorgaben. Die Planung hält Abwesenheiten und Vorgaben ein und erfüllt Wünsche, so gut es geht.',
@@ -311,7 +310,7 @@ export const TEXTS = {
   'help.page.erweiterungen': 'Erweiterungen, die mit diesem Programm kommen: jede ist aus, bis eine Planerin oder ein Planer sie einschaltet. Ausschalten behält ihre Einstellungen.',
   'help.field.extensions.enabled': 'Eine eingeschaltete Erweiterung sieht alle Planungsdaten und zeigt ihre Seiten im Menü. Ausschalten blendet sie wieder aus; ihre Einstellungen bleiben gespeichert.',
   'help.field.settings.checkOnStart': 'Bei jedem Start fragt das Programm die Update-Quelle nach einer neueren Version und zeigt dann oben einen Hinweis. Gesendet wird dabei nichts, die Quelle sieht nur die IP-Adresse. Aus: nur noch mit „Jetzt suchen“.',
-  'help.page.anleitung': 'Die Anleitung genau dieser Version, im Programm enthalten und auch ohne Internet lesbar.',
+  'help.page.anleitung': 'Die Anleitung genau dieser Version, im Programm enthalten und auch ohne Internet lesbar, am Server wie am eigenen Rechner.',
   'help.guideLink': 'Mehr dazu in der Anleitung',
 
   'help.constraint.dailyRest': 'Zwischen dem Ende eines Dienstes und dem Beginn des nächsten liegt mindestens die tägliche Ruhezeit, auch über den Monatswechsel. Immer einzuhalten, kein Gewicht. Eine längere Ruhezeit lässt weniger Dienstfolgen zu, z. B. kein Frühdienst nach einem Spätdienst.',
@@ -725,10 +724,23 @@ export const TEXTS = {
   // Wer kann gefragt werden? (Dienste nur auf Anfrage)
   'candidates.title': 'Auf Anfrage verfügbar',
   'candidates.none': 'Niemand passt. Gefragt werden können nur Personen, die den Dienst nur auf Anfrage machen und an dem Tag frei sind.',
-  'candidates.hours': '{planned} von {target} h',
+  'candidates.hours': 'geplant {planned} h von Ziel {target} h',
   'candidates.item': '{name}, {code} am {day}, {hours}: Dienst setzen und fixieren',
   'candidates.set': 'Dienst {code} am {day} für {name} gesetzt und fixiert',
   'candidates.gap': '{area}, {time}: fehlt {count}',
+
+  // beginner UI: Plan fixieren, the jump to the first conflict, Eingaben with jump links and a save bar, the guide
+  // built into every form
+  'candidates.hint': 'Klick auf einen Namen setzt den Dienst und fixiert ihn.',
+  'roster.pinAll': 'Plan fixieren',
+  'roster.pinnedAll': 'Alle Dienste und Ersatzruhetage fixiert; freie Tage bleiben offen',
+  'help.plan.pinAll': '„Plan fixieren“ fixiert alle geplanten Dienste und Ersatzruhetage des Monats, etwa wenn der Plan schon ausgehängt ist. Neu planen ändert sie dann nicht mehr und füllt Lücken nur an freien Tagen. Eine später eingetragene Abwesenheit auf einem fixierten Dienst bleibt ein Konflikt, bis man den Dienst in der Zelle entfernt. „Fixierungen lösen“ löst alle Fixierungen des Monats, auch die einzeln gesetzten.',
+  'roster.jumpConflict': 'Zum ersten Konflikt springen',
+  'roster.jumpGap': 'Zur ersten Lücke springen',
+  'inputs.jumpLabel': 'Abschnitte der Seite',
+  'inputs.added': 'Hinzugefügt, noch nicht gespeichert',
+  'help.page.personOne': 'Die Zahlen dieser Person im gewählten Monat und warum sie welchen Dienst bekommen hat.',
+  'masterdata.maxIsMin': '= Mindestens',
 
   // coverage chart
   'coverage.gapTitle': 'Lücke {from} bis {to}: Bedarf {required}, geplant {planned}',
@@ -962,7 +974,7 @@ export const TEXTS = {
   'inputs.removeLabel': 'Eintrag {day} {name} entfernen',
   'inputs.none': 'Keine Einträge.',
   'inputs.col.wish': 'Wunsch',
-  'inputs.col.wishCount': 'Wünsche der Person',
+  'inputs.col.wishCount': 'Wünsche dieser Person (max. {limit})',
   'inputs.tooMany': '{value} von {total} (zu viele)',
 
   // master data view

@@ -12,8 +12,8 @@ test('candidate rows keep the server order and show name, shift code, date and h
     { personId: 'P7', date: '2027-01-05', shiftId: 'X-Q', plannedHours: 120.25, targetHours: 120 },
   ], people, shifts);
   assert.equal(rows.length, 2);
-  assert.deepEqual([rows[0].name, rows[0].code, rows[0].day, rows[0].hours, rows[0].color], ['Erste Anna', 'T1', 'Mo 04.01.', '96,0 von 160,5 h', '#AABBCC']);
-  assert.equal(rows[0].label, 'Erste Anna, T1 am Mo 04.01., 96,0 von 160,5 h: Dienst setzen und fixieren');
+  assert.deepEqual([rows[0].name, rows[0].code, rows[0].day, rows[0].hours, rows[0].color], ['Erste Anna', 'T1', 'Mo 04.01.', 'geplant 96,0 h von Ziel 160,5 h', '#AABBCC']);
+  assert.equal(rows[0].label, 'Erste Anna, T1 am Mo 04.01., geplant 96,0 h von Ziel 160,5 h: Dienst setzen und fixieren');
   // unknown person or shift: the ids
   assert.deepEqual([rows[1].name, rows[1].code, rows[1].color], ['P7', 'X-Q', null]);
 });

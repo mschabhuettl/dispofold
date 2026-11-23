@@ -130,10 +130,10 @@ Meldungen erscheinen unten rechts: Erfolgsmeldungen („Eingaben gespeichert“)
 Fehlermeldungen bleiben, bis man sie schließt. Was eine Meldung bedeutet, steht unter
 [Häufige Fragen und Fehlerbehebung](fragen.md).
 
-Der Menüpunkt **Anleitung** führt zu dieser Anleitung. Am Server öffnet er die Dokumentations-Website in einem
-neuen Tab (mit Suche, Stand des neuesten Releases). Im Programm am eigenen Rechner zeigt er die eingebaute
-Anleitung genau dieser Version, die auch ohne Internet geht; die Adresse der Website steht über jeder Seite, unten
-führen Links zur Übersicht und zur vorigen und nächsten Seite.
+Der Menüpunkt **Anleitung** und die Links „Mehr dazu in der Anleitung“ führen zu dieser Anleitung, und zwar zur
+eingebauten Anleitung genau dieser Version, die auch ohne Internet geht: am Server wie im Programm am eigenen
+Rechner. Unter jeder Seite führen Links zur Übersicht und zur vorigen und nächsten Seite; darunter steht die
+Adresse derselben Seite auf der Website (mit Suche, Stand des neuesten Releases).
 
 ## Typischer Ablauf
 

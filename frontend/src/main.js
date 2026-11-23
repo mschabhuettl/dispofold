@@ -46,7 +46,7 @@ const SETTINGS_ROUTE = { path: 'einstellungen', group: 'settings', label: t('nav
 // planners: the plugins, switched on and off; a change shows the program anew with the plugin's pages or without
 const EXTENSIONS_ROUTE = { path: 'erweiterungen', group: 'settings', label: t('nav.extensions'), tab: t('nav.tab.extensions'),
   view: extensionsView(PLUGINS, () => location.reload()) };
-// desktop only: the guide built into the program; in a browser the menu links to the documentation site instead
+// the guide built into the program (every form, also for viewers); the documentation site is only a fallback
 const GUIDE_ROUTE = { path: 'anleitung', group: 'guide', label: t('nav.guide'), view: guide };
 /** The intro under the title of each page, by path. */
 const INTROS = { plan: t('help.page.plan'), funktionen: t('help.page.funktionen'), zeitachse: t('help.page.zeitachse'),
@@ -58,9 +58,8 @@ const GROUPS = { plan: t('nav.group.plan'), check: t('nav.group.check'), inputs:
 
 let desktop = false;
 let frontEnd = 'window'; // desktop only: 'window' or 'browser' (GET /__shell/mode)
-/** Link to the guide or one of its sections: in the desktop program its built-in copy, else the site in a new tab. */
-const guideLink = (anchor = '') => (desktop ? { href: guideHref(true, anchor) }
-  : { href: guideHref(false, anchor), target: '_blank', rel: 'noopener', title: t('nav.guide.newTab') });
+/** Link to the guide or one of its sections: its copy built into the program, readable without internet. */
+const guideLink = (anchor = '') => ({ href: guideHref(true, anchor) });
 const api = createApi({
   onUnauthorized: () => {
     // the desktop program has no login page: the request did not come through its window
@@ -182,7 +181,9 @@ async function render() {
     }
     // the short intro of the page under its title, again after a view draws itself anew
     const section = route.section ?? SECTIONS[route.path];
-    const intro = h('p.page-intro.muted', {}, route.intro ?? INTROS[route.path], section && [' ', h('a', guideLink(section), t('help.guideLink'))]);
+    // one person's page has its own intro, the list the general one
+    const text = route.intro ?? (route.path === 'person' && params[0] ? t('help.page.personOne') : INTROS[route.path]);
+    const intro = h('p.page-intro.muted', {}, text, section && [' ', h('a', guideLink(section), t('help.guideLink'))]);
     const placeIntro = () => {
       const title = container.querySelector('h1');
       if (title && title.nextElementSibling !== intro) title.after(intro);
@@ -255,7 +256,6 @@ async function start() {
     // Updates with the other settings, before Erweiterungen
     const settingsEnd = ROUTES.findLastIndex((r) => r.group === 'settings' && r !== EXTENSIONS_ROUTE);
     ROUTES.splice(settingsEnd + 1, 0, SETTINGS_ROUTE);
-    ROUTES.push(GUIDE_ROUTE);
     const quitButton = document.getElementById('quit');
     quitButton.hidden = false;
     quitButton.addEventListener('click', quit);
@@ -268,10 +268,10 @@ async function start() {
       location.href = 'login.html';
     });
   }
+  ROUTES.push(GUIDE_ROUTE);
   const first = new Map();
   for (const r of ROUTES) if (!first.has(r.group)) first.set(r.group, r);
   const items = [...first.values()].map((r) => h('li', {}, h('a', { href: `#/${r.path}`, 'data-group': r.group }, GROUPS[r.group])));
-  if (!desktop) items.push(h('li', {}, h('a', { ...guideLink(), 'data-group': 'guide' }, t('nav.guide'))));
   document.getElementById('nav').replaceChildren(...items);
 
   const months = (await guarded(() => api.months())) ?? [];
@@ -283,6 +283,15 @@ async function start() {
     else history.replaceState(null, '', currentHash || '#/');
   });
   window.addEventListener('beforeunload', (e) => { if (ctx.isDirty?.()) e.preventDefault(); });
+  // narrow windows: the menu is folded away behind a button and folds again after a choice
+  const navToggle = document.getElementById('nav-toggle');
+  const sidebar = document.querySelector('.sidebar');
+  const fold = (open) => {
+    sidebar.classList.toggle('open', open);
+    navToggle.setAttribute('aria-expanded', String(open));
+  };
+  navToggle.addEventListener('click', () => fold(!sidebar.classList.contains('open')));
+  document.getElementById('nav').addEventListener('click', (e) => { if (e.target.closest('a')) fold(false); });
   document.querySelector('.skip-link').addEventListener('click', (e) => {
     e.preventDefault();
     main.focus();
