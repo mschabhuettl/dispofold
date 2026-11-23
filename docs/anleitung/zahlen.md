@@ -78,9 +78,11 @@ unter [Fairness](auswertungen.md#fairness).
 ![Die Seite einer Person vor dem Planen](../screenshots/person-ohne-plan.png)
 
 Vor dem Planen sagt die Seite „Noch kein Plan für Jänner 2027: …“ und zeigt nur, was ohne Plan feststeht: die
-Kachel **Stunden** mit [Ziel](begriffe.md#ziel) und [Soll](begriffe.md#soll), etwa „Ziel 101,1 h (Soll 114,0 h)“,
-und darunter den Grund, wenn beide sich unterscheiden, etwa „12,9 h weniger wegen Plusstunden im Stundenkonto“.
-Dazu das [Stundenkonto](begriffe.md#stundenkonto) vorher, die verfügbaren Tage und die Historie.
+Kachel **Stunden** mit [Ziel](begriffe.md#ziel) und [Soll](begriffe.md#soll), im Bild „Ziel 109,2 h (Soll 129,2 h)“,
+und darunter den Grund, wenn beide sich unterscheiden, im Bild „20,0 h weniger, weil der Bedarf …“ (ein
+[verkleinertes Ziel](begriffe.md#ziel)). Dazu das [Stundenkonto](begriffe.md#stundenkonto) vorher, was am Ende des
+vorigen Halbjahrs abgerechnet wurde, wie viel vom Stundenkonto in diesen Monat fließt, die verfügbaren Tage und die
+Historie.
 
 ![Die Seite einer Person nach dem Planen](../screenshots/person.png)
 

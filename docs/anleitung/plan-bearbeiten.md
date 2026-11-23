@@ -76,8 +76,9 @@ Dienst dann von Hand.
   Lückenliste der **Zeitachse** und unter **Prüfen**, **Offener Bedarf**. Sie nennt die Personen, für die eine
   Schicht des Bereichs in dieser Lücke an diesem Tag nur auf Anfrage geht, die an dem Tag frei sind (kein Dienst,
   keine Abwesenheit, nicht fixiert) und für die der Dienst keinen Regelverstoß ergibt (auch nicht die
-  Höchststunden im Monat). Je Person stehen Schicht, Datum und Stunden, etwa „geplant 96,0 h von Ziel 101,1 h“;
-  wer am wenigsten Stunden hat, steht oben. Darüber steht „Klick auf einen Namen setzt den Dienst und fixiert
+  Höchststunden im Monat). Je Person stehen Schicht, Datum und Stunden, etwa „geplant 96,0 h von Ziel 114,0 h“
+  (das Ziel aus Soll und Stundenkonto, noch ohne Verkleinerung durch den Bedarf; auf der Seite der Person kann es
+  deshalb kleiner sein); wer am wenigsten Stunden hat, steht oben. Darüber steht „Klick auf einen Namen setzt den Dienst und fixiert
   ihn.“ Passt niemand, sagt die Liste das: „Niemand passt.“ Dann jemanden von Hand einteilen, der den Dienst
   normal machen darf (die leere Zelle der Person anklicken und die Schicht wählen), oder neu planen.
 - **Ein Klick auf einen Namen** setzt den Dienst für diese Person und fixiert ihn. Die nächste Planung behält

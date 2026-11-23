@@ -11,7 +11,8 @@ export async function render(container, ctx, [page = 'index', anchor] = []) {
   // the help page of a plugin that is switched off (core pages link to it, e.g. to read before switching it on):
   // built in all the same, shown without the neighbouring pages
   const plugin = found < 0 && /^plugin-[a-z0-9]+-[a-z0-9-]+$/.test(page) ? page : null;
-  const index = Math.max(0, found);
+  // an unknown page opens the overview
+  const index = found >= 0 ? found : PAGES.findIndex(([id]) => id === 'index');
   const id = plugin ?? PAGES[index][0];
   const res = await fetch(guideFile(id), { credentials: 'same-origin' }).catch(() => null);
   const html = res?.ok ? await res.text() : '';

@@ -43,7 +43,7 @@ export async function render(root, ctx) {
   root.classList.add('function-view', 'print-view');
   append(root, [
     h('h1', {}, title),
-    !dataset.people.length && h('p.alert', {}, canEdit ? t('common.noMasterdata') : t('common.noMasterdataReadonly')),
+    !dataset.people.length && h('p.alert', {}, canEdit ? [t('common.noMasterdata'), ' ', h('a', { href: '#/plan' }, t('common.toEmptyStart'))] : t('common.noMasterdataReadonly')),
     dataset.people.length > 0 && !state.plan.assignments.length && h('p.alert', {}, t('common.noPlan')),
     state.solving && h('p.alert', {}, t('roster.lockedWhileSolving')),
     state.plan.status === 'CLOSED' && h('p.alert', {}, canEdit ? t('roster.closedHint') : t('common.closedReadonly')),

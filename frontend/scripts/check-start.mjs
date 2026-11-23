@@ -53,6 +53,14 @@ try {
   check('"Planen" disabled without data', await page.getByRole('button', { name: 'Planen', exact: true }).isDisabled());
   const status = await page.locator('.status-details strong').first().innerText();
   check('status "noch kein Plan" instead of Entwurf', status === 'noch kein Plan', status);
+  for (const tab of ['funktionen', 'zeitachse']) {
+    await page.goto(`${base}/#/${tab}`);
+    const back = page.locator('#main p.alert a[href="#/plan"]');
+    await back.first().waitFor({ timeout: 5000 }).catch(() => {});
+    check(`${tab} without data: a link to the empty start`, await back.count() === 1);
+  }
+  await page.goto(`${base}/#/plan`);
+  await start.waitFor();
   await start.getByRole('link', { name: 'Datensatz importieren' }).click();
   await page.waitForURL((u) => u.hash === '#/import');
   await page.locator('#dataset-file').waitFor();

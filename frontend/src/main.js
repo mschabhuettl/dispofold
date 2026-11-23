@@ -182,7 +182,7 @@ async function render() {
     // the short intro of the page under its title, again after a view draws itself anew
     const section = route.section ?? SECTIONS[route.path];
     // one person's page has its own intro, the list the general one
-    const text = route.intro ?? (route.path === 'person' && params[0] ? t('help.page.personOne') : INTROS[route.path]);
+    const text = route.intro ?? (route.path === 'person' && params[0] && params[0] !== 'neu' ? t('help.page.personOne') : INTROS[route.path]);
     const intro = h('p.page-intro.muted', {}, text, section && [' ', h('a', guideLink(section), t('help.guideLink'))]);
     const placeIntro = () => {
       const title = container.querySelector('h1');

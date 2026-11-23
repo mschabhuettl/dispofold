@@ -47,7 +47,7 @@ Tag eintragen, oder eine Abwesenheit, wenn es eine ist. Ein Wunsch „frei“ is
 **Neu planen hat Dienste anderer Personen verschoben.** Eine Planung verbessert den gespeicherten Plan und darf
 dabei alles ändern, was nicht [fixiert](begriffe.md#fixiert) ist, auch Dienste, die mit der Änderung nichts zu tun
 haben. Ist der Plan schon ausgehängt, vor dem neuen Planen **Plan fixieren** klicken: Das fixiert alle Dienste und
-Ersatzruhetage des Monats, und die Planung füllt Lücken nur noch an freien Tagen. Einzelne Zellen fixiert man in
+Ersatzruhetage des Monats, und die Planung setzt Dienste nur noch an freien Tagen: in Lücken und, wo ein Bedarf ein **Höchstens** über dem **Mindestens** hat, auch zusätzlich, um Stunden zu treffen. Einzelne Zellen fixiert man in
 ihrer Auswahl mit **Fixieren**. Ist es schon passiert, die verschobenen Dienste von Hand zurücksetzen oder einen
 vorher exportierten Plan mit **Plan importieren** zurückholen (siehe [Daten](daten.md#plan-importieren)). Siehe
 [Planen](planen.md#planen).

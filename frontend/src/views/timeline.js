@@ -99,7 +99,7 @@ export async function render(root, ctx, [linkArea, linkDate] = []) {
     timeline = null;
     host.replaceChildren();
     if (!dataset.areas.length) {
-      host.append(h('p.alert', {}, canEdit ? t('common.noMasterdata') : t('common.noMasterdataReadonly')));
+      host.append(h('p.alert', {}, canEdit ? [t('common.noMasterdata'), ' ', h('a', { href: '#/plan' }, t('common.toEmptyStart'))] : t('common.noMasterdataReadonly')));
     } else if (!state.plan.assignments.length) {
       host.append(h('p.alert', {}, t('common.noPlan')));
     } else {

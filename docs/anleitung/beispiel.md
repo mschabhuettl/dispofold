@@ -212,7 +212,7 @@ frei ist und den Dienst machen darf:
 
 **Achtung bei einem ausgehängten Plan:** Neu planen darf alle Zellen ändern, die nicht fixiert sind, auch die
 Dienste anderer Personen. Ist der Plan schon ausgehängt, vorher **Plan fixieren** klicken: Das fixiert alle
-Dienste und Ersatzruhetage des Monats, und neu planen füllt die Lücken nur noch an freien Tagen. Einzelne Zellen
+Dienste und Ersatzruhetage des Monats, und neu planen setzt Dienste nur noch an freien Tagen (vor allem in Lücken; wo ein Bedarf ein **Höchstens** über dem **Mindestens** hat, auch zusätzliche Dienste, um Stunden zu treffen). Einzelne Zellen
 fixiert man in ihrer Auswahl mit **Fixieren**.
 
 ## 10. Den Monat abschließen

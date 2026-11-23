@@ -27,7 +27,7 @@ import ai.timefold.solver.core.api.score.stream.test.ConstraintVerifier;
 
 import org.junit.jupiter.api.Test;
 
-/** Free Sundays per calendar month (works agreement, adjustable): January 2027 has five Sundays. */
+/** Free Sundays per calendar month (a default value, adjustable): January 2027 has five Sundays. */
 class FreeSundaysTest {
 
     private static final ConstraintVerifier<RosterConstraints, Roster> VERIFIER = ConstraintVerifier.build(
