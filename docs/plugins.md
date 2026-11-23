@@ -139,7 +139,8 @@ export default {
 eigenen Routen, `ctx.canEdit`, `ctx.me`, `ctx.month` und die übrigen. Hilfeseiten sind so geschrieben, als
 lägen sie in `docs/anleitung/`: Links auf `daten.md` oder `erweiterungen.md#einschalten-und-ausschalten` gehen
 auf die Seiten des Kerns. Bilder liegen in `docs/img/<name>.png` und stehen in der Seite als
-`![Text](img/<name>.png)`; Programm und Website zeigen sie unter `plugin-<id>-img/`.
+`![Text](img/<name>.png)`; Programm und Website zeigen sie unter `plugin-<id>-img/`. Eine Seite des Kerns zeigt
+ein solches Bild als `![Text](plugin-<id>-img/<name>.png)`.
 
 Für den Entwicklungsserver liefert `dev/mock.mjs` die Routen der Erweiterung (`mock()` gibt eine Funktion
 `(methode, pfad, body, rolle, query)` zurück; `route.load(anfrage, vorschau)` prüft die Anfrage ihres Imports).

@@ -151,11 +151,14 @@ let current = '';
 const guide = new Marked({
   walkTokens(token) {
     if (token.type === 'image') {
-      // a plugin's images: plugins/<id>/docs/img/<name>.png, next to the guide as plugin-<id>-img/<name>.png
-      const plugin = pluginImages.get(current);
-      if (plugin && !/^img\/[a-z0-9-]+\.png$/.test(token.href)) throw new Error(`${current}: plugin help pages show only img/<name>.png, not ${token.href}`);
-      const file = plugin ? `${plugin.target}/${token.href.slice(4)}` : relative(docs, join(guideDocs, token.href)).split('\\').join('/');
-      const source = plugin ? join(plugin.dir, token.href) : join(docs, file);
+      // a plugin's images: plugins/<id>/docs/img/<name>.png, next to the guide as plugin-<id>-img/<name>.png; a core page
+      // shows one as plugin-<id>-img/<name>.png
+      const own = pluginImages.get(current);
+      if (own && !/^img\/[a-z0-9-]+\.png$/.test(token.href)) throw new Error(`${current}: plugin help pages show only img/<name>.png, not ${token.href}`);
+      const plugin = own ?? [...pluginImages.values()].find((p) => token.href.startsWith(`${p.target}/`));
+      const name = own ? token.href.slice(4) : plugin ? token.href.slice(plugin.target.length + 1) : null;
+      const file = plugin ? `${plugin.target}/${name}` : relative(docs, join(guideDocs, token.href)).split('\\').join('/');
+      const source = plugin ? join(plugin.dir, 'img', name) : join(docs, file);
       const png = readFileSync(source);
       if (png.toString('latin1', 1, 4) !== 'PNG') throw new Error(`anleitung/${current}.md shows ${token.href}, which is not a PNG`);
       images.set(file, source);
