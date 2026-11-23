@@ -2,7 +2,7 @@
 # Builds the bundled Java runtime (jlink image) for one target operating system from pinned Temurin JDKs.
 # Usage: scripts/desktop/build-runtime.sh linux|windows|macos <output-dir>
 #   Linux builds the linux and windows runtimes (jlink of the Linux JDK against the Windows jmods, same version);
-#   macos runs on a mac. Downloads are checked against the SHA-256 below and cached in $DISPOFOLD_CACHE
+#   an arm64 Linux machine builds the aarch64 linux runtime (the windows one only on x86_64); macos runs on a mac. Downloads are checked against the SHA-256 below and cached in $DISPOFOLD_CACHE
 #   (default ~/.cache/dispofold).
 # Needs: curl, tar, unzip, sha256sum or shasum.
 set -euo pipefail
@@ -15,6 +15,7 @@ BASE="https://api.adoptium.net/v3/binary/version/jdk-${VERSION/+/%2B}"
 # name|os|arch|archive|sha256
 JDKS="
 linux-x64|linux|x64|tar.gz|d7f5d5cf865a2902b70ff549b97586a7d3f234e016f041ab447ea740c7d66d1c
+linux-aarch64|linux|aarch64|tar.gz|e3522e707fc7dbe2a72c30746b1e7068301a0213ecd213d4491f35a14eb55578
 windows-x64|windows|x64|zip|a4dbaa05fca4bd89d84584e58c459bd732efebb1722af80ab13c6516832004f9
 mac-aarch64|mac|aarch64|tar.gz|bf036b35b071bfb2f54f2c0af8ee8d88afa95ee6eb3dce02c0f94cfc2524d04a
 mac-x64|mac|x64|tar.gz|9aa1d1c17ae5467a022679e7e0af5c00797d94ac462ed1a46f4db07a8a34a6dd
@@ -48,12 +49,13 @@ jdk_home() {
 
 case "$(uname -s)-$(uname -m)" in
   Linux-x86_64) host=linux-x64 ;;
+  Linux-aarch64) host=linux-aarch64 ;;
   Darwin-arm64) host=mac-aarch64 ;;
   Darwin-x86_64) host=mac-x64 ;;
   *) echo "unsupported build machine $(uname -sm)" >&2; exit 1 ;;
 esac
 case "$TARGET" in
-  linux) [ "$host" = linux-x64 ] || { echo "linux runtime is built on Linux" >&2; exit 1; }; jmods_of=linux-x64 ;;
+  linux) case "$host" in linux-*) jmods_of=$host ;; *) echo "linux runtime is built on Linux" >&2; exit 1 ;; esac ;;
   windows) [ "$host" = linux-x64 ] || { echo "windows runtime is built on Linux" >&2; exit 1; }; jmods_of=windows-x64 ;;
   macos) case "$host" in mac-*) jmods_of=$host ;; *) echo "macos runtime is built on a mac" >&2; exit 1 ;; esac ;;
   *) echo "unknown target $TARGET" >&2; exit 1 ;;

@@ -46,11 +46,12 @@ Internet gehen nur:
 
 | Auslieferung | Datei im Release | Für |
 |---|---|---|
-| Docker-Server | `dispofold-<version>-images.tar.gz` oder Registry, dazu `docker-compose.yml` und `env.example` | mehrere Planerinnen und Planer im Netz, Betrieb durch die IT, Anmeldung mit Benutzer und Rolle |
+| Docker-Server | `dispofold-<version>-images.tar.gz` (amd64), `dispofold-<version>-images-arm64.tar.gz` (arm64) oder Registry (beide Plattformen), dazu `docker-compose.yml` und `env.example` | mehrere Planerinnen und Planer im Netz, Betrieb durch die IT, Anmeldung mit Benutzer und Rolle |
 | Windows-Setup | `Dispofold-<version>-windows-setup.exe` | ein Arbeitsplatz, Installation je Benutzer ohne Adminrechte |
 | Windows portabel | `Dispofold-<version>-windows-portable.zip` | ein Arbeitsplatz ohne Installation, Daten im Ordner neben dem Programm |
-| Linux-Pakete | `Dispofold-<version>-linux-amd64.deb`, `Dispofold-<version>-linux-x86_64.rpm` | ein Arbeitsplatz |
-| macOS | `Dispofold-<version>-macos.dmg` (nur, wenn ein macOS-Runner eingetragen ist) | ein Arbeitsplatz |
+| Linux-Pakete (x86_64) | `Dispofold-<version>-linux-amd64.deb`, `Dispofold-<version>-linux-x86_64.rpm` | ein Arbeitsplatz |
+| Linux-Pakete (arm64) | `Dispofold-<version>-linux-arm64.deb`, `Dispofold-<version>-linux-aarch64.rpm` | ein Arbeitsplatz mit ARM-Prozessor |
+| macOS (Apple Silicon) | `Dispofold-<version>-macos.dmg` | ein Mac mit M-Prozessor |
 
 Die Desktop-Varianten bringen ihre eigene Java-Laufzeit mit, laufen ohne Server in einem eigenen Programmfenster
 (unter Linux standardmäßig im Standardbrowser) und speichern die Daten verschlüsselt mit einem Passwort. Updates

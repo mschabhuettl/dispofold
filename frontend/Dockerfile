@@ -1,5 +1,6 @@
 # Build context is the repository root (the image also ships LICENSE and THIRD_PARTY.md).
-FROM node:22-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a AS build
+# The static files are the same for every platform: built on the build machine's platform (amd64 and arm64 images).
+FROM --platform=$BUILDPLATFORM node:22-alpine@sha256:1314fb30ec37592d5845e5a160d522c0e680972aa534549940b8d73bde88481a AS build
 # The layout of the repository: scripts/build.mjs reads ../docs (the guide) and ../plugins (the shipped plugins,
 # whose front ends import ../../../frontend/src/lib/plugin-api.js).
 WORKDIR /src/frontend

@@ -15,6 +15,12 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
   wieder. Anteil, seltene Schichten, Zeitraum und die Wörter für die Ersatzruhe sind Einstellungen. Die Übersicht
   nennt nach einem Lauf die Zahl der neuen Vorschläge. Import und Export rechnen unverändert. Hilfe:
   [Zuordnung](plugins/sp5/docs/zuordnung.md).
+- **Mac mit Apple Silicon und Linux auf ARM:** Neu im Release sind das dmg für Macs mit M-Prozessor, die
+  Linux-Pakete für arm64 (`Dispofold-<version>-linux-arm64.deb`, `Dispofold-<version>-linux-aarch64.rpm`, mit
+  eigener Java-Laufzeit für aarch64) und die Docker-Images für arm64 (in der Registry unter demselben Namen wie
+  für amd64, dazu das Archiv `dispofold-<version>-images-arm64.tar.gz`). Jedes Paket wird vor dem Hochladen auf
+  einem Runner seiner Plattform installiert und mit dem Selbsttest des Programms gestartet. Unsigniert wie unter
+  Windows; wie man es beim ersten Start öffnet, steht in [docs/betrieb.md](docs/betrieb.md#unsignierte-programme).
 - **Vorschläge gegen die eigene Zuordnung prüfen:** Das Vergleichsskript der Erweiterung zeigt mit `--vorschlag`
   und der ZIP-Datei aus „Ergebnis speichern“, wie nah der Vorschlag an die eigene Zuordnung kommt, nur als Anzahlen
   ([Vergleich](plugins/sp5/docs/vergleich.md)).

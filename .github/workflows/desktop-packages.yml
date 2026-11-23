@@ -1,0 +1,240 @@
+name: ARM packages and images
+
+# The desktop packages that need a machine of their own: macOS for Apple Silicon (dmg) and Linux arm64 (deb, rpm).
+# Each is built, installed and started with the program's self-test (window, bundled Java runtime, backend: open,
+# demo data, plan, export, quit); screenshots of the open window and the result are kept as workflow artefacts.
+# Called by the release (publish: upload to the release of the tag), and run by hand as a check that publishes
+# nothing (Actions, "ARM packages and images", Run workflow); the check also builds and starts the Docker stack on
+# arm64 and runs the smoke test against it. GitHub's hosted runners; the repository is public.
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: version x.y.z of the packages
+        required: true
+        type: string
+      publish:
+        description: upload the packages and their SHA-256 file to the release of the tag
+        required: true
+        type: boolean
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  API: ${{ vars.API_URL || github.api_url }}
+  UPLOAD_ORIGIN: ${{ vars.API_URL }}
+
+jobs:
+  macos:
+    # Apple Silicon (arm64); MACOS_RUNNER can name another hosted or own runner
+    runs-on: ${{ vars.MACOS_RUNNER || 'macos-15' }}
+    timeout-minutes: 75
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ inputs.version || '0.0.0' }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Cache of the Maven of the wrapper (a download per job failed now and then)
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.m2/wrapper/dists
+          key: maven-wrapper-${{ runner.os }}-${{ hashFiles('backend/.mvn/wrapper/maven-wrapper.properties') }}
+      - name: Maven of the wrapper (with retries)
+        run: scripts/fetch-maven.sh
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+      - name: Rust
+        run: |
+          command -v cargo >/dev/null || curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+      - name: Version into the builds
+        if: inputs.publish
+        run: scripts/release/set-version.sh "$GITHUB_REF_NAME"
+      - name: dmg
+        run: scripts/desktop/package.sh "$VERSION" macos release-assets
+      - name: Install from the dmg and run the self-test
+        # as a user would: mount the dmg, copy the app into a folder of programs, start it from there
+        run: |
+          brew list jq >/dev/null 2>&1 || brew install jq
+          mnt=$(mktemp -d)
+          hdiutil attach -nobrowse -readonly -mountpoint "$mnt" "release-assets/Dispofold-$VERSION-macos.dmg"
+          mkdir -p "$RUNNER_TEMP/Programme"
+          cp -R "$mnt/Dispofold.app" "$RUNNER_TEMP/Programme/"
+          hdiutil detach "$mnt"
+          ls -l release-assets
+          scripts/desktop/selftest-package.sh "$RUNNER_TEMP/Programme/Dispofold.app/Contents/MacOS/dispofold" selftest
+      - name: Result and screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: macos-selftest
+          path: selftest/
+          if-no-files-found: warn
+          retention-days: 30
+      - name: SHA-256
+        if: inputs.publish
+        run: cd release-assets && shasum -a 256 -- * > "dispofold-$VERSION-macos-SHA256SUMS.txt"
+      - name: Upload to the release
+        if: inputs.publish
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+        run: scripts/release/publish-release.sh "$API" "${{ github.repository }}" "$GITHUB_REF_NAME" upload release-assets
+
+  linux-arm64:
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 75
+    permissions:
+      contents: write
+    env:
+      VERSION: ${{ inputs.version || '0.0.0' }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Cache of the Maven of the wrapper (a download per job failed now and then)
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.m2/wrapper/dists
+          key: maven-wrapper-${{ runner.os }}-${{ hashFiles('backend/.mvn/wrapper/maven-wrapper.properties') }}
+      - name: Maven of the wrapper (with retries)
+        run: scripts/fetch-maven.sh
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: "22"
+      - name: Rust
+        run: |
+          command -v cargo >/dev/null || curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+      - name: Version into the builds
+        if: inputs.publish
+        run: scripts/release/set-version.sh "$GITHUB_REF_NAME"
+      - name: Packaging tools
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libwebkit2gtk-4.1-dev libgtk-3-dev librsvg2-dev libayatana-appindicator3-dev \
+            patchelf rpm file zip xvfb xauth dbus-x11 jq imagemagick
+      - name: deb and rpm
+        run: scripts/desktop/package.sh "$VERSION" linux release-assets
+      - name: Install the deb and run the self-test
+        run: |
+          ls -l release-assets
+          sudo apt-get install -y -qq "./release-assets/Dispofold-$VERSION-linux-arm64.deb"
+          scripts/desktop/selftest-package.sh /usr/bin/dispofold selftest
+      - name: The rpm holds the same program
+        run: |
+          rpm -qip "release-assets/Dispofold-$VERSION-linux-aarch64.rpm" | grep -E '^(Name|Version|Architecture)'
+          rpm -qip "release-assets/Dispofold-$VERSION-linux-aarch64.rpm" | grep -q '^Architecture: aarch64'
+      - name: Result and screenshots
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: linux-arm64-selftest
+          path: selftest/
+          if-no-files-found: warn
+          retention-days: 30
+      - name: SHA-256
+        if: inputs.publish
+        run: cd release-assets && sha256sum -- * > "dispofold-$VERSION-linux-arm64-SHA256SUMS.txt"
+      - name: Upload to the release
+        if: inputs.publish
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+        run: scripts/release/publish-release.sh "$API" "${{ github.repository }}" "$GITHUB_REF_NAME" upload release-assets
+
+  images-arm64:
+    # Only in the check: the stack built and started natively on arm64, with the smoke test (the release builds the
+    # arm64 images on amd64, the last stage emulated)
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 40
+    env:
+      COMPOSE_PROJECT_NAME: dispofold-arm-${{ github.run_id }}
+      COMPOSE_FILE: docker-compose.yml:docker-compose.build.yml:.github/compose-maven-seed.yml
+      HTTP_PORT: "0"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Cache of the Maven of the wrapper (a download per job failed now and then)
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.m2/wrapper/dists
+          key: maven-wrapper-${{ runner.os }}-${{ hashFiles('backend/.mvn/wrapper/maven-wrapper.properties') }}
+      - name: Maven of the wrapper (with retries)
+        run: scripts/fetch-maven.sh
+      - name: Maven repository for the image build
+        working-directory: backend
+        run: ./mvnw -B dependency:go-offline package -DskipTests
+      - name: Build and start the stack
+        run: |
+          read -r CI_USER CI_PASSWORD < <(scripts/make-env.sh "arm-${{ github.run_id }}")
+          echo "::add-mask::$CI_PASSWORD"
+          printf 'CI_USER=%s\nCI_PASSWORD=%s\n' "$CI_USER" "$CI_PASSWORD" >> "$GITHUB_ENV"
+          docker compose up -d --build --wait --wait-timeout 600
+          docker image inspect -f '{{.Architecture}}' "dispofold.invalid/dispofold-backend:arm-${{ github.run_id }}"
+      - name: Smoke test
+        run: |
+          docker run --rm -i -e CI_USER -e CI_PASSWORD --network "${COMPOSE_PROJECT_NAME}_default" \
+            alpine:3.22@sha256:49340b346798875b5592e5d420241f2f9cfba5f47e62ebb1446a1b34734e898f \
+            sh -c 'apk add -q --no-cache bash curl && bash -s http://frontend:8080 "$CI_USER" "$CI_PASSWORD"' < scripts/smoke-test.sh
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs --no-color
+      - name: Stop
+        if: always()
+        run: docker compose down -v
+
+  release-images:
+    # Only in the check: the image steps of the release (amd64, then arm64 with the last stage emulated, both
+    # archives with their SHA-256 file), without pushing or uploading
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
+        with:
+          distribution: temurin
+          java-version: "21"
+      - name: Cache of the Maven of the wrapper (a download per job failed now and then)
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
+        with:
+          path: ~/.m2/wrapper/dists
+          key: maven-wrapper-${{ runner.os }}-${{ hashFiles('backend/.mvn/wrapper/maven-wrapper.properties') }}
+      - name: Maven of the wrapper (with retries)
+        run: scripts/fetch-maven.sh
+      - name: Maven repository for the image build
+        working-directory: backend
+        run: ./mvnw -B dependency:go-offline package -DskipTests
+      - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
+        with:
+          platforms: arm64
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - name: Images and archives for amd64 and arm64
+        run: |
+          for arch in amd64 arm64; do
+            MAVEN_SEED="$HOME/.m2/repository" ARCH=$arch scripts/release/build-images.sh 0.0.0
+            docker image inspect -f '{{.Architecture}}' dispofold.invalid/dispofold-backend:0.0.0 | grep -qx "$arch"
+            docker image inspect -f '{{.Architecture}}' dispofold.invalid/dispofold-frontend:0.0.0 | grep -qx "$arch"
+            ARCH=$arch scripts/release/save-images.sh 0.0.0 images-out
+          done
+          cat images-out/dispofold-0.0.0-SHA256SUMS.txt
+          (cd images-out && sha256sum -c dispofold-0.0.0-SHA256SUMS.txt)
+          # the arm64 archive holds arm64 images, the database included
+          docker image rm -f $(docker image ls -q 'dispofold.invalid/*') >/dev/null
+          gunzip -c images-out/dispofold-0.0.0-images-arm64.tar.gz | docker load
+          for image in backend frontend postgres; do
+            docker image inspect -f "$image {{.Architecture}}" "dispofold.invalid/dispofold-$image:0.0.0" | grep -q ' arm64$'
+          done

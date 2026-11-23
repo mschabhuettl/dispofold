@@ -1,13 +1,16 @@
 #!/usr/bin/env bash
 # Writes the images of a version into one compressed archive plus a SHA-256 file, next to docker-compose.yml
-# and env.example.
-# Usage: scripts/release/save-images.sh <version> <output-dir>
+# and env.example. ARCH=arm64 writes the archive of the arm64 images (built with ARCH=arm64, with the database
+# image for arm64) as dispofold-<version>-images-arm64.tar.gz; the SHA-256 file then lists both archives.
+# Usage: [ARCH=arm64] scripts/release/save-images.sh <version> <output-dir>
 set -euo pipefail
 VERSION=${1:?version}
 OUT=${2:?output directory}
 PREFIX=${IMAGE_PREFIX:-dispofold.invalid}
 mkdir -p "$OUT"
+ARCH=${ARCH:-amd64}
 archive="dispofold-$VERSION-images.tar.gz"
+[ "$ARCH" = amd64 ] || archive="dispofold-$VERSION-images-$ARCH.tar.gz"
 images=()
 for service in backend frontend; do
   images+=("$PREFIX/dispofold-$service:$VERSION" "$PREFIX/dispofold-$service:latest")
@@ -18,7 +21,7 @@ done
 db_image=$(sed -n 's/.*POSTGRES_IMAGE:-\(postgres:[^}]*\)}.*/\1/p' docker-compose.yml)
 [ -n "$db_image" ] || { echo "database image not found in docker-compose.yml"; exit 1; }
 db_local="$PREFIX/dispofold-postgres:$VERSION"
-docker pull -q "$db_image"
+docker pull -q --platform "linux/$ARCH" "$db_image"
 docker tag "$db_image" "$db_local"
 images+=("$db_local")
 docker save "${images[@]}" | gzip -n -6 > "$OUT/$archive"
@@ -26,5 +29,6 @@ docker save "${images[@]}" | gzip -n -6 > "$OUT/$archive"
 cp docker-compose.yml "$OUT/"
 { sed "s/^TAG=.*/TAG=$VERSION/" .env.example
   printf '\n# Database image from the archive\nPOSTGRES_IMAGE=%s\n' "$db_local"; } > "$OUT/env.example"
-(cd "$OUT" && sha256sum "$archive" docker-compose.yml env.example > "dispofold-$VERSION-SHA256SUMS.txt")
+(cd "$OUT" && sha256sum dispofold-"$VERSION"-images*.tar.gz docker-compose.yml env.example \
+  > "dispofold-$VERSION-SHA256SUMS.txt")
 ls -l "$OUT"

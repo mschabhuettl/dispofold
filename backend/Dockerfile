@@ -6,7 +6,9 @@
 # requests per address, and a cold build fetches the whole tree.
 FROM scratch AS m2seed
 
-FROM maven:3.9-eclipse-temurin-21@sha256:99e61abcff91a9b1333463bd8451fb18495d6eba9250ac66a338b518f8278320 AS build
+# The application is the same for every platform: Maven runs on the build machine's platform, also when the image
+# is built for another one (amd64 and arm64).
+FROM --platform=$BUILDPLATFORM maven:3.9-eclipse-temurin-21@sha256:99e61abcff91a9b1333463bd8451fb18495d6eba9250ac66a338b518f8278320 AS build
 WORKDIR /src/backend
 COPY backend/pom.xml ./
 COPY backend/.mvn/maven.config ./.mvn/

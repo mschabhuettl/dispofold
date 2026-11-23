@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # Builds the two images. They are named <prefix>/dispofold-<service>:<version> and :latest, with the
 # prefix from IMAGE_PREFIX (default: dispofold.invalid, as in docker-compose.yml; a name that never resolves).
-# Usage: scripts/release/build-images.sh <version>
+# ARCH=amd64 or arm64 builds them for that platform (default: the machine's); the application and the static files
+# are built on the machine's platform, only the last stage runs for the target (emulated by QEMU when it differs).
+# Usage: [ARCH=arm64] scripts/release/build-images.sh <version>
 set -euo pipefail
 VERSION=${1:?version}
 PREFIX=${IMAGE_PREFIX:-dispofold.invalid}
@@ -15,7 +17,7 @@ build() {
   local service=$1
   shift
   docker buildx build --builder dispofold-release --build-arg SOURCE_DATE_EPOCH --provenance=false \
-    --output type=docker,rewrite-timestamp=true \
+    --output type=docker,rewrite-timestamp=true ${ARCH:+--platform "linux/$ARCH"} \
     -t "$PREFIX/dispofold-$service:$VERSION" -t "$PREFIX/dispofold-$service:latest" "$@"
 }
 # Both are built from the repository root (demo dataset, LICENSE, THIRD_PARTY.md). MAVEN_SEED, if set, is a Maven

@@ -16,7 +16,7 @@ permissions:
 # Repository settings (see docs/release.md):
 #   vars.REGISTRY          registry/namespace to push the images to; without it, no push (the archive is enough)
 #   vars.API_URL           API address for uploads, if the default one must not be used for large files
-#   vars.MACOS_RUNNER      runner label for the macOS installer; without it, the job is skipped
+#   vars.MACOS_RUNNER      runner label for the macOS dmg (desktop-packages.yml); without it, GitHub's macos-15
 #   secrets.RELEASE_TOKEN  token for the registry and the release; without it, the job token is used
 #   secrets.UPDATE_SIGNING_KEY  private Ed25519 key for the update bundle; required, the release fails without it
 #   vars.SIGNPATH_ORGANIZATION_ID  switches on the Windows signature with SignPath; without it, nothing changes.
@@ -94,24 +94,37 @@ jobs:
         # the image build on a fresh runner would fetch the whole tree. Resolves what that build does.
         working-directory: backend
         run: ./mvnw -B dependency:go-offline package -DskipTests
+      # arm64: only the last stage of the images runs emulated (the application is built natively)
+      - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
+        with:
+          platforms: arm64
       - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
       - name: Version into the builds
         run: scripts/release/set-version.sh "$GITHUB_REF_NAME"
-      - name: Build images
-        run: MAVEN_SEED="$HOME/.m2/repository" scripts/release/build-images.sh "$VERSION"
-      - name: Image archive with SHA-256
-        run: scripts/release/save-images.sh "$VERSION" release-assets
+      - name: Registry login
+        if: env.REGISTRY != ''
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
+        run: echo "$RELEASE_TOKEN" | docker login "${REGISTRY%%/*}" -u "${{ github.repository_owner }}" --password-stdin
+      # amd64 and arm64 one after the other: each is built, saved into its archive and pushed under its own tags
+      - name: Images for amd64
+        run: |
+          MAVEN_SEED="$HOME/.m2/repository" ARCH=amd64 scripts/release/build-images.sh "$VERSION"
+          ARCH=amd64 scripts/release/save-images.sh "$VERSION" release-assets
+          if [ -n "$REGISTRY" ]; then scripts/release/push-images.sh "$VERSION" "$REGISTRY" amd64; fi
+      - name: Images for arm64
+        run: |
+          MAVEN_SEED="$HOME/.m2/repository" ARCH=arm64 scripts/release/build-images.sh "$VERSION"
+          docker image inspect -f '{{.Architecture}}' "dispofold.invalid/dispofold-backend:$VERSION" | grep -qx arm64
+          ARCH=arm64 scripts/release/save-images.sh "$VERSION" release-assets
+          if [ -n "$REGISTRY" ]; then scripts/release/push-images.sh "$VERSION" "$REGISTRY" arm64; fi
+      - name: One name for both platforms in the registry
+        if: env.REGISTRY != ''
+        run: scripts/release/push-images.sh "$VERSION" "$REGISTRY" manifest
       - name: Upload to the release
         env:
           RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
         run: scripts/release/publish-release.sh "$API" "${{ github.repository }}" "$GITHUB_REF_NAME" upload release-assets
-      - name: Push images
-        if: env.REGISTRY != ''
-        env:
-          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
-        run: |
-          echo "$RELEASE_TOKEN" | docker login "${REGISTRY%%/*}" -u "${{ github.repository_owner }}" --password-stdin
-          scripts/release/push-images.sh "$VERSION" "$REGISTRY"
 
   desktop-linux:
     needs: [version, draft]
@@ -258,53 +271,23 @@ jobs:
           RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
         run: scripts/release/publish-release.sh "$API" "${{ github.repository }}" "$GITHUB_REF_NAME" upload release-assets
 
-  desktop-macos:
-    if: vars.MACOS_RUNNER != ''
+  desktop-arm:
+    # macOS for Apple Silicon and Linux arm64: built, installed and self-tested on their own runners
     needs: [version, draft]
-    runs-on: ${{ vars.MACOS_RUNNER || 'ubuntu-latest' }}
-    timeout-minutes: 60
     permissions:
       contents: write
-    env:
-      VERSION: ${{ needs.version.outputs.version }}
-    steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
-      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4.9.1
-        with:
-          distribution: temurin
-          java-version: "21"
-      - name: Cache of the Maven of the wrapper (a download per job failed now and then)
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        with:
-          path: ~/.m2/wrapper/dists
-          key: maven-wrapper-${{ runner.os }}-${{ hashFiles('backend/.mvn/wrapper/maven-wrapper.properties') }}
-      - name: Maven of the wrapper (with retries)
-        run: scripts/fetch-maven.sh
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version: "22"
-      - name: Rust
-        run: |
-          command -v cargo >/dev/null || curl -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
-          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
-      - name: Version into the builds
-        run: scripts/release/set-version.sh "$GITHUB_REF_NAME"
-      - name: dmg
-        run: scripts/desktop/package.sh "$VERSION" macos release-assets
-      - name: SHA-256
-        run: cd release-assets && shasum -a 256 -- * > "dispofold-$VERSION-macos-SHA256SUMS.txt"
-      - name: Upload to the release
-        env:
-          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN || github.token }}
-        run: scripts/release/publish-release.sh "$API" "${{ github.repository }}" "$GITHUB_REF_NAME" upload release-assets
+    uses: ./.github/workflows/desktop-packages.yml
+    with:
+      version: ${{ needs.version.outputs.version }}
+      publish: true
+    secrets: inherit
 
   publish:
-    # Publishes the draft only when every upload job succeeded (the macOS job may be skipped).
-    needs: [images, desktop-linux, desktop-windows, desktop-macos]
+    # Publishes the draft only when every upload job succeeded.
+    needs: [images, desktop-linux, desktop-windows, desktop-arm]
     if: >-
       always() && needs.images.result == 'success' && needs.desktop-linux.result == 'success'
-      && needs.desktop-windows.result == 'success'
-      && (needs.desktop-macos.result == 'success' || needs.desktop-macos.result == 'skipped')
+      && needs.desktop-windows.result == 'success' && needs.desktop-arm.result == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:

@@ -27,8 +27,8 @@ Auf GitHub unter **Settings**, **Secrets and variables**, **Actions**:
    GitHub aufbewahren.
 3. Variable `WINDOWS_TEST` = `true`: Die CI installiert das unter Linux gebaute Setup auf einem Windows-Runner
    (`windows-latest`) und startet den Selbsttest.
-4. Optional die Variable `MACOS_RUNNER` mit dem Label eines macOS-Runners, z. B. `macos-latest`; ohne sie wird
-   das macOS-Paket übersprungen.
+4. Optional die Variable `MACOS_RUNNER` mit dem Label eines anderen macOS-Runners; ohne sie baut das Release das
+   dmg auf dem gehosteten Runner `macos-15` (Apple Silicon), der für öffentliche Repositorys kostenlos ist.
 5. Einmalig unter **Settings**, **Pages** die **Source** auf **GitHub Actions** stellen. Ohne diese Einstellung
    scheitert der letzte Schritt des Releases (Dokumentations-Website), das Release selbst ist dann schon
    veröffentlicht.
@@ -48,8 +48,14 @@ Gitea hält nur eine Kopie des Codes (`main` und Tags per Push) und führt keine
 
 - **Windows:** braucht keinen eigenen Runner. Setup und portables ZIP entstehen auf dem Linux-Runner
   (Cross-Build mit `cargo-xwin`; dabei lädt es das Windows-SDK von Microsoft, etwa 1 GB).
-- **macOS:** nur auf Apple-Hardware (Lizenzbedingung von Apple). Die gehosteten Runner von GitHub genügen:
-  `MACOS_RUNNER=macos-latest`.
+- **macOS:** nur auf Apple-Hardware (Lizenzbedingung von Apple). Die gehosteten Runner von GitHub genügen
+  (`macos-15`, Apple Silicon). Ein dmg für Intel-Macs bräuchte einen zweiten Job auf `macos-15-intel` mit der
+  Intel-JDK (in `build-runtime.sh` schon hinterlegt) und ein eigenes dmg; das gibt es derzeit nicht.
+- **Linux arm64:** auf dem gehosteten Runner `ubuntu-24.04-arm` (deb, rpm, mit der aarch64-Laufzeit).
+- **Prüflauf vor einem Release:** **Actions**, **ARM packages and images**, **Run workflow**. Baut dmg und arm64-Pakete,
+  installiert sie, startet jeweils den Selbsttest des Programms (Fenster, Laufzeit, Backend: Demodaten, Planen,
+  Export) und legt Ergebnis und Bildschirmfotos als Artefakte ab; dazu den Docker-Stack nativ auf arm64 mit dem
+  Smoke-Test und die Image-Schritte des Releases für beide Plattformen. Veröffentlicht nichts.
 
 ## Release
 
@@ -71,19 +77,24 @@ Der Release-Workflow macht dann:
    vorher wird nichts veröffentlicht.
 2. Das Release wird als **Entwurf** angelegt; niemand außer den Berechtigten sieht es.
 3. Danach parallel, jeweils mit der Version aus dem Tag in allen Builds (`scripts/release/set-version.sh`):
-   - **Images:** baut `backend` und `frontend`, hängt das Archiv `dispofold-<version>-images.tar.gz` (mit dem
-     PostgreSQL-Image), die SHA-256-Datei, `docker-compose.yml` und `env.example` an das Release und pusht die
-     Images in die Registry, wenn `REGISTRY` gesetzt ist.
+   - **Images:** baut `backend` und `frontend` für amd64 und für arm64 (die Anwendung auf dem Runner, nur die
+     letzte Stufe für arm64 unter QEMU), hängt die Archive `dispofold-<version>-images.tar.gz` (amd64) und
+     `dispofold-<version>-images-arm64.tar.gz` (jeweils mit dem PostgreSQL-Image der Plattform), die
+     SHA-256-Datei, `docker-compose.yml` und `env.example` an das Release und pusht die Images in die Registry,
+     wenn `REGISTRY` gesetzt ist: je Plattform als `<version>-amd64` und `<version>-arm64`, dazu `<version>` und
+     `latest` für beide.
    - **Linux:** `.deb` und `.rpm`, dazu das signierte Update-Paket `dispofold-<version>-update.zip`. Das
      Update-Paket wird gleich danach gegen den eingebauten öffentlichen Schlüssel geprüft. Fehlt der Schlüssel
      oder scheitert die Prüfung, scheitert das Release.
    - **Windows:** Setup und portables ZIP, auf dem Linux-Runner gebaut. Ist SignPath eingerichtet, werden sie
      vor den Prüfsummen signiert (siehe [Windows-Signatur mit SignPath](#windows-signatur-mit-signpath)).
-   - **macOS:** das dmg, nur wenn `MACOS_RUNNER` gesetzt ist. macOS verlangt eine Version, die nicht mit 0
-     beginnt; eine Version `0.y.z` wird dort als `1.y.z` verpackt, die Anwendung darin behält `0.y.z`.
+   - **macOS und Linux arm64** (Workflow `desktop-packages.yml`): das dmg und die arm64-Pakete, jeweils
+     installiert und mit dem Selbsttest des Programms geprüft, bevor sie hochgeladen werden. macOS verlangt eine
+     Version, die nicht mit 0 beginnt; eine Version `0.y.z` wird dort als `1.y.z` verpackt, die Anwendung darin
+     behält `0.y.z`.
 
    Jeder dieser Teile lädt seine Dateien mit einer eigenen `*-SHA256SUMS.txt` hoch.
-4. Erst wenn alle Teile erfolgreich waren (macOS darf fehlen), wird der Entwurf **veröffentlicht**. Scheitert ein
+4. Erst wenn alle Teile erfolgreich waren, wird der Entwurf **veröffentlicht**. Scheitert ein
    Teil, bleibt es beim Entwurf. Ausnahme: Die Images liegen dann schon in der Registry (Schritt 3), sind aber
    noch keinem veröffentlichten Release zugeordnet.
 5. Nach dem Veröffentlichen baut der Job `pages` die Dokumentations-Website aus `docs/` und `README.md` dieses Tags

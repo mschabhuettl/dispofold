@@ -2,7 +2,8 @@
 # Builds the desktop delivery of Dispofold: the Tauri program window (desktop-shell/) with the bundled Java runtime
 # and the Java application next to it.
 # Usage: scripts/desktop/package.sh <version> linux|windows|macos <output-dir>
-#   linux:   Dispofold-<version>-linux-amd64.deb and Dispofold-<version>-linux-x86_64.rpm (built on Linux)
+#   linux:   Dispofold-<version>-linux-amd64.deb and Dispofold-<version>-linux-x86_64.rpm (built on x86_64 Linux),
+#            Dispofold-<version>-linux-arm64.deb and Dispofold-<version>-linux-aarch64.rpm (built on arm64 Linux)
 #   windows: Dispofold-<version>-windows-setup.exe (NSIS, per user) and Dispofold-<version>-windows-portable.zip,
 #            cross-built on Linux with cargo-xwin
 #   macos:   Dispofold-<version>-macos.dmg (built on a mac)
@@ -73,8 +74,10 @@ case "$TARGET" in
   linux)
     tauri --bundles deb,rpm
     no_build_paths target/release/dispofold
-    cp target/release/bundle/deb/Dispofold_"${VERSION}"_amd64.deb "$OUT/Dispofold-$VERSION-linux-amd64.deb"
-    cp target/release/bundle/rpm/Dispofold-"${VERSION}"-1.x86_64.rpm "$OUT/Dispofold-$VERSION-linux-x86_64.rpm"
+    # the packages of the machine's architecture: amd64/x86_64 or arm64/aarch64
+    case "$(uname -m)" in aarch64) deb=arm64 rpm=aarch64 ;; *) deb=amd64 rpm=x86_64 ;; esac
+    cp target/release/bundle/deb/Dispofold_"${VERSION}_$deb".deb "$OUT/Dispofold-$VERSION-linux-$deb.deb"
+    cp target/release/bundle/rpm/Dispofold-"${VERSION}-1.$rpm".rpm "$OUT/Dispofold-$VERSION-linux-$rpm.rpm"
     ;;
   windows)
     # Windows SDK and CRT pinned; the cache is reused between builds

@@ -9,11 +9,12 @@ der Download ein GitHub-Konto mit Lesezugriff, den der Eigentümer einrichtet.
 
 | Auslieferung | Dateien im Release | Für | Daten |
 |---|---|---|---|
-| Server (Docker) | `dispofold-<version>-images.tar.gz`, `docker-compose.yml`, `env.example`; Images auch in der Registry `ghcr.io/mschabhuettl` | mehrere Planerinnen und Planer im Netz | PostgreSQL im Docker-Volume |
+| Server (Docker) | `dispofold-<version>-images.tar.gz` (amd64) oder `dispofold-<version>-images-arm64.tar.gz` (arm64), `docker-compose.yml`, `env.example`; Images für beide Plattformen auch in der Registry `ghcr.io/mschabhuettl` | mehrere Planerinnen und Planer im Netz | PostgreSQL im Docker-Volume |
 | Windows-Setup | `Dispofold-<version>-windows-setup.exe` | ein Arbeitsplatz, ohne Adminrechte | verschlüsselte Datei im Benutzerprofil |
 | Windows portabel | `Dispofold-<version>-windows-portable.zip` | ohne Installation | verschlüsselte Datei im Ordner `daten\` neben dem Programm |
-| Linux | `Dispofold-<version>-linux-amd64.deb`, `Dispofold-<version>-linux-x86_64.rpm` | ein Arbeitsplatz | verschlüsselte Datei im Benutzerordner |
-| macOS | `Dispofold-<version>-macos.dmg` (nur, wenn ein macOS-Runner eingetragen ist) | ein Arbeitsplatz | verschlüsselte Datei im Benutzerordner |
+| Linux (x86_64) | `Dispofold-<version>-linux-amd64.deb`, `Dispofold-<version>-linux-x86_64.rpm` | ein Arbeitsplatz | verschlüsselte Datei im Benutzerordner |
+| Linux (arm64) | `Dispofold-<version>-linux-arm64.deb`, `Dispofold-<version>-linux-aarch64.rpm` | ein Arbeitsplatz mit ARM-Prozessor | verschlüsselte Datei im Benutzerordner |
+| macOS (Apple Silicon) | `Dispofold-<version>-macos.dmg` | ein Mac mit M-Prozessor | verschlüsselte Datei im Benutzerordner |
 | Update für alle Desktop-Varianten | `dispofold-<version>-update.zip` (signiert) | Updates ohne neuen Installer | |
 
 Die Bedienung für die Dienstplanung steht in [der Anleitung](anleitung/index.md), technische Einzelheiten der
@@ -96,6 +97,10 @@ docker compose up -d
 docker compose ps  # alle Dienste "healthy"
 ```
 
+Auf einem Server mit ARM-Prozessor (arm64) statt `dispofold-1.0.0-images.tar.gz` das Archiv
+`dispofold-1.0.0-images-arm64.tar.gz` laden; die Images darin heißen gleich. `docker version` zeigt unter
+`OS/Arch`, welche Plattform der Server hat.
+
 Ist das Archiv im Release in Teile zerlegt (`...images.tar.gz.part-00`, `-01`, ...), vorher zusammensetzen:
 `cat dispofold-1.0.0-images.tar.gz.part-* > dispofold-1.0.0-images.tar.gz`. Die SHA-256-Datei enthält dann das
 ganze Archiv und die Teile.
@@ -119,6 +124,8 @@ cd /srv/dispofold
 docker compose pull
 docker compose up -d
 ```
+
+Die Registry hat die Images für amd64 und arm64 unter demselben Namen; Docker holt die des Servers.
 
 ### Reverse Proxy, HTTPS und Anmeldebegrenzung
 
@@ -445,7 +452,9 @@ Start, startet aber trotzdem. Das portable ZIP gehört deshalb auf ein lokales L
 ### Linux: .deb und .rpm
 
 - **Installieren:** `sudo apt install ./Dispofold-<version>-linux-amd64.deb` oder
-  `sudo dnf install ./Dispofold-<version>-linux-x86_64.rpm`. Das Paket heißt `dispofold`, das Programm liegt in
+  `sudo dnf install ./Dispofold-<version>-linux-x86_64.rpm`; auf einem Rechner mit ARM-Prozessor (arm64,
+  `uname -m` zeigt `aarch64`) `sudo apt install ./Dispofold-<version>-linux-arm64.deb` oder
+  `sudo dnf install ./Dispofold-<version>-linux-aarch64.rpm`. Das Paket heißt `dispofold`, das Programm liegt in
   `/usr/lib/Dispofold`, der Befehl ist `dispofold`, dazu ein Eintrag im Anwendungsmenü. Voraussetzungen: GTK 3
   und WebKitGTK 4.1 (zieht der Paketmanager nach).
 - **Oberfläche:** Standardmäßig öffnet sich die Oberfläche im Standardbrowser, weil die eingebaute Webansicht
@@ -458,7 +467,7 @@ Start, startet aber trotzdem. Das portable ZIP gehört deshalb auf ein lokales L
 
 ### macOS: .dmg
 
-Gibt es nur, wenn der Eigentümer einen macOS-Runner eingetragen hat (siehe [release.md](release.md)).
+Für Macs mit Apple Silicon (M-Prozessor). Ältere Macs mit Intel-Prozessor werden nicht unterstützt.
 
 - **Installieren:** dmg öffnen und Dispofold in den Ordner „Programme“ ziehen. Erst von dort starten. Startet
   man direkt aus dem dmg oder aus „Downloads“, kopiert macOS das Programm in einen versteckten, schreibgeschützten
@@ -636,6 +645,10 @@ Für Benutzerinnen und Benutzer:
   macOS das nicht an: **Systemeinstellungen**, **Datenschutz & Sicherheit**, **Dennoch öffnen**. Vorher
   Dispofold nach „Programme“ ziehen (siehe macOS).
 - **Linux:** keine Warnung.
+
+Die Prüfsummen der übrigen Dateien stehen in `dispofold-<version>-linux-SHA256SUMS.txt`,
+`dispofold-<version>-linux-arm64-SHA256SUMS.txt`, `dispofold-<version>-macos-SHA256SUMS.txt` und (Server)
+`dispofold-<version>-SHA256SUMS.txt`; geprüft wird genauso.
 
 Für die IT (Freigabe per Richtlinie, zum Beispiel mit AppLocker oder App Control for Business):
 
