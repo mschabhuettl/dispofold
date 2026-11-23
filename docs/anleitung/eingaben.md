@@ -10,7 +10,7 @@ hier ergänzt und ändert man sie, zum Beispiel bei einer Krankmeldung nach dem 
    diese Person vorbelegt. Gespeichert wird trotzdem immer der ganze Monat.
 2. [Abwesenheiten](#abwesenheiten)
 3. [Wünsche](#wünsche)
-4. [Vorgaben](#vorgaben)
+4. [Vorgaben](#vorgaben) (im Bild der Link unter dem Titel; die Liste steht unter den Wünschen)
 5. **Speichern** übernimmt alle Änderungen der Seite auf einmal. Der Knopf steht in einer Leiste, die beim
    Scrollen unten im Fenster bleibt.
 

@@ -46,7 +46,7 @@ const startMonth = nextMonth !== month ? nextMonth : new Date(Date.UTC(year, mon
 // what the guide names but the run did not show: reported at the end, the run fails
 const mismatches = [];
 // the sick note of the worked example as the guide names it (beispiel.md step 8), if the plan allows
-const SICK = { firstName: 'Rosa', lastName: 'Erleneder', from: `${month}-19`, to: `${month}-20` };
+const SICK = { firstName: 'Rosa', lastName: 'Erleneder', from: `${month}-11`, to: `${month}-12` };
 const outDir = resolve(process.argv[2] ?? 'screenshots-out');
 if (process.env.SEED_DEMO !== '1') throw new Error('SEED_DEMO=1 is required: the script replaces the master data with demo data');
 mkdirSync(outDir, { recursive: true });
@@ -281,6 +281,8 @@ async function serverPhase() {
   await page.locator('#h-edit').evaluate((e) => { e.scrollIntoView(); scrollBy(0, -20); });
   await page.locator('#person-form #f-weeklyHours').fill(String(parttime.weeklyHours - 4));
   const personSave = page.locator('#person-form button[type=submit], #person-form .btn-primary').first();
+  // the form with its button: the heading may go above the window, Speichern stays in it
+  await personSave.evaluate((e) => { e.scrollIntoView({ block: 'end' }); scrollBy(0, 16); });
   await both(page, 'beispiel-person-ganz', 'beispiel-person', [['#person-form #f-weeklyHours', 1, 'left', true], [personSave, 2]],
     ['#h-edit', '#person-form #f-firstName', '#person-form #f-weeklyHours', personSave]);
   await personSave.click();
@@ -297,7 +299,7 @@ async function serverPhase() {
   const min = form.locator("#f-min");
   await min.fill(String(Number(await min.inputValue()) + 1));
   await form.evaluate((e) => e.scrollIntoView({ block: 'center' }));
-  await both(page, 'beispiel-bedarf-ganz', 'beispiel-bedarf', [[min, 1, 'left', true], [form.getByRole('button', { name: 'Speichern', exact: true }), 2, 'right']],
+  await both(page, 'beispiel-bedarf-ganz', 'beispiel-bedarf', [[min, 1, 'left', true], [form.getByRole('button', { name: 'Speichern', exact: true }), 2, 'bottom']],
     ['section:has([data-table="demand"]) h2', '[data-table="demand"] thead', 'tr:has(+ tr.edit-row)', 'tr.edit-row']);
   await form.getByRole('button', { name: 'Speichern', exact: true }).click();
   await page.waitForTimeout(1500);
@@ -559,7 +561,7 @@ async function serverPhase() {
   await page.locator('dialog.dialog').getByRole('button', { name: 'Abbrechen', exact: true }).click();
   await open(page, base, 'plan', 'table.roster');
   await page.locator('.plan-actions details.advanced summary, details.advanced summary').first().click();
-  await mark(page, [['#seed', 1, 'bottom'], ['#limit', 2, 'bottom'], ['#move-limit', 3, 'bottom'], ['#cold-start', 4, 'bottom']]);
+  await mark(page, [['#seed', 1, 'end'], ['#limit', 2, 'end'], ['#move-limit', 3, 'end'], ['#cold-start', 4, 'top']]);
   await clip(page, 'planen-erweitert', ['.plan-actions', 'details.advanced']);
   await open(page, base, 'plan', 'table.roster');
   await mark(page, [['.statusbar .plan-headline', 1], ['.statusbar .chips', 2], ['.statusbar .status-details', 3]]);
@@ -593,7 +595,7 @@ async function serverPhase() {
     await page.waitForTimeout(1000);
     await shot(page, dark ? 'zeitachse-dunkel' : 'zeitachse', true);
     if (!dark) {
-      await mark(page, [['#tl-area', 1], ['#tl-mode', 2], ['#tl-date', 3], ['.coverage', 4, 'inside'], ['.gap-list', 5, 'inside']]);
+      await mark(page, [['#tl-area', 1], ['#tl-mode', 2], ['#tl-date', 3], ['.coverage', 4, 'inside'], ['.gap-list', 5]]);
       await shot(page, 'zeitachse-teile', true);
     }
   }
@@ -603,7 +605,7 @@ async function serverPhase() {
   await open(page, base, 'pruefen', '#check-data');
   await page.locator('#check-quality details.check-quality > summary').click();
   await page.locator('#check-quality').evaluate((e) => { e.scrollIntoView(); scrollBy(0, -20); });
-  await mark(page, [['#check-group', 1], ['#check-filter-rule', 2, 'top'], ['#check-quality details.check-group > summary', 3]]);
+  await mark(page, [['#check-group', 1], ['#check-filter-rule', 2, 'bottom'], ['#check-quality details.check-group > summary', 3]]);
   await shot(page, 'pruefen');
   // the first day of open demand unfolded, then who could be asked
   const firstDay = page.locator('#check-gaps details.check-group > summary').first();
@@ -631,11 +633,6 @@ async function serverPhase() {
   await open(page, base, 'fairness', '.spread svg');
   await shot(page, 'fairness');
 
-  // Einstellungen → Erweiterungen as the release has it: the import extension, off
-  await open(page, base, 'erweiterungen', 'section.extension');
-  await mark(page, [['.page-tabs a[aria-current="page"]', 1, 'bottom'], ['section.extension input[type=checkbox]', 2, 'left']]);
-  await shot(page, 'erweiterungen');
-
   // Eingaben
   await open(page, base, 'eingaben', '#inputs-filter');
   // one person with entries in all three lists, so that everything fits on the screen
@@ -644,7 +641,7 @@ async function serverPhase() {
   const filled = dataset.people.find((p) => has('absences', p.id) && has('wishes', p.id) && has('fixed', p.id))
     ?? dataset.people.find((p) => has('fixed', p.id)) ?? dataset.people[0];
   await select(page, '#inputs-filter', filled.id);
-  await mark(page, [['#inputs-filter', 1], ['#h-absences', 2], ['#h-wishes', 3], ['#h-fixed', 4], [page.getByRole('button', { name: 'Speichern', exact: true }), 5]]);
+  await mark(page, [['#inputs-filter', 1], ['#h-absences', 2], ['#h-wishes', 3], ['nav.jump-links button:last-child', 4, 'right'], [page.getByRole('button', { name: 'Speichern', exact: true }), 5]]);
   await shot(page, 'eingaben');
 
   // Personen: the person page, its parts and the form

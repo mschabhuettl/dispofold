@@ -143,13 +143,13 @@ die Zahlen im Einzelnen bedeuten: [Was die Zahlen bedeuten](zahlen.md).
 
 ## 8. Eine Krankmeldung nach dem Planen
 
-Nach dem Planen meldet sich Rosa Erleneder aus Technik und Systeme für Dienstag, 19., und Mittwoch, 20. Jänner
+Nach dem Planen meldet sich Rosa Erleneder aus Technik und Systeme für Montag, 11., und Dienstag, 12. Jänner
 krank. Sie hat an beiden Tagen Dienst „S1“. Das ergibt zwei typische Befunde nacheinander: einen Regelverstoß und
 danach eine Lücke.
 
 **Erster Befund: Regelverstoß „Abwesenheit“.**
 
-1. **Eingaben**: bei **Person** „Erleneder Rosa“ wählen, **Von** 19.01., **Bis** 20.01., **Art** „K Krankenstand“,
+1. **Eingaben**: bei **Person** „Erleneder Rosa“ wählen, **Von** 11.01., **Bis** 12.01., **Art** „K Krankenstand“,
    **Hinzufügen**, **Speichern**.
 2. **Dienstplan**, unter **Bereich** „Technik und Systeme“ wählen, dann **Zum ersten Konflikt springen** (3)
    klicken: Der Plan scrollt zur ersten roten Zelle.
@@ -181,12 +181,11 @@ Behoben wird der Regelverstoß in der Zelle:
 
 Über der Liste **Auf Anfrage verfügbar** steht „Klick auf einen Namen setzt den Dienst und fixiert ihn.“ Die Liste
 nennt Personen, die diese Schicht nur auf Anfrage machen und an dem Tag frei sind, mit ihren Stunden, etwa
-„geplant 96,0 h von Ziel 101,1 h“. In Technik und Systeme ist das Waltraud Erlenhuber, wenn sie an dem Tag frei
-ist. Man fragt die Person und
-klickt bei Zusage auf ihren Namen: Der Dienst ist gesetzt und [fixiert](begriffe.md#fixiert), im Plan mit einer
-kleinen Ecke unten links.
+„geplant 100,0 h von Ziel 114,0 h“. In Technik und Systeme ist das Waltraud Erlenhuber, wenn sie an dem Tag frei
+ist, im Bild am 11. Man fragt die Person und klickt bei Zusage auf ihren Namen: Der Dienst ist gesetzt und
+[fixiert](begriffe.md#fixiert), im Plan mit einer kleinen Ecke unten links.
 
-**Wenn niemand passt.** Am 19. hat Waltraud Erlenhuber selbst Ersatzruhe; dort sagt die Liste:
+**Wenn niemand passt.** Am 12. hat Waltraud Erlenhuber selbst Dienst; dort sagt die Liste:
 
 ![Die Lücke eines Tages, an dem niemand auf Anfrage passt](../screenshots/niemand-passt.png)
 
