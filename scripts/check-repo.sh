@@ -7,6 +7,7 @@
 # 5. No mention of the old planning system in commit messages, nor in files outside its import plugin.
 # 6. No organisation, region, previous project or font names.
 # 7. No private domain, LAN address or account name of the owner's own hosting.
+# 8. No company agreement named as the source of a value in user-facing text (self-test: test-check-repo.sh).
 # The search patterns use character classes so that this file does not match itself.
 set -euo pipefail
 export LC_ALL=C.UTF-8
@@ -80,6 +81,21 @@ if git log --format='%B' | grep -n -E "$codes|$areas"; then
 fi
 if git grep -I -n -E "$codes|$areas"; then
   echo "Real codes or area names in tracked files"; fail=1
+fi
+
+# Default values are "Standardwert, einstellbar": user-facing text never names a company agreement as their source.
+# Generic text stays allowed ("Gesetz und Betriebsvereinbarung", "entscheidet die Betriebsvereinbarung",
+# "Einzelheiten einer Betriebsvereinbarung"); a hint is the abbreviation, a source word or possessive before the noun
+# ("laut", "gemäß", "nach", "unsere"), or a name, date or subject after it ("für", "der", "vom", a number, a quote).
+# Lines are joined first, since the guide wraps its text.
+agreement='[*_]*(?i:[b]etriebs|[d]ienst)vereinbarung(?:en)?\b'
+hint="\\b(?i:laut|lt\\.|gem(?:äß|\\.)|nach|entsprechend|siehe|unser\\w*|hiesige\\w*|(?:aus|in) (?:der|einer|unserer))"
+hint="$hint\\s+(?:(?i:der|die|einer|unserer|dieser)\\s+)?$agreement"
+hint="$hint|$agreement\\s+(?:(?i:für|über|vom|von|der|des|zur|zum|Nr\\.?)\\b|[0-9„\"'])|\\b[B]Vs?\\b"
+if git grep -z -l -I -i -E '[v]ereinbarung|\b[b]vs?\b' -- '*.md' mkdocs.yml tools/docs frontend/src plugins \
+    backend/src/main/resources | HINT="$hint" xargs -0 -r perl -0777 -ne \
+    'BEGIN { $re = qr/$ENV{HINT}/ } s/\s+/ /g; print "$ARGV: $1\n" while /($re)/g' | grep .; then
+  echo "Company agreement named as a source in user-facing text"; fail=1
 fi
 
 # The owner's own hosting stays out of the repository. The public account name (as in ghcr.io/<account>) is

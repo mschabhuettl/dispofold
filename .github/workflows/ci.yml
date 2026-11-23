@@ -19,7 +19,9 @@ jobs:
         with:
           fetch-depth: 0
       - name: Data files and repository hygiene
-        run: scripts/check-repo.sh
+        run: |
+          scripts/check-repo.sh
+          scripts/test-check-repo.sh
       - name: OCR tools
         run: |
           SUDO=$(command -v sudo || true)
