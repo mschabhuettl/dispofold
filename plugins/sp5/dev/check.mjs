@@ -97,6 +97,13 @@ export default async function run({ base, browser, check, shots }) {
   await page.waitForSelector('#sp5-codes-summary, #sp5-propose');
   check('"Zur Zuordnung" opens the tab Zuordnung', page.url().endsWith(`${P}/zuordnung`)
     && (await text(page, '.page-tabs a[aria-current="page"]')) === 'Zuordnung', page.url());
+  check('without a saved mapping the page says so', await page.isVisible('#sp5-map-none'));
+  await page.click('summary:text("JSON anzeigen und bearbeiten")');
+  await page.fill('#sp5-map-json', JSON.stringify(MAPPING));
+  await page.click('#sp5-map-apply');
+  await page.click('#sp5-map-save');
+  await page.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('Zuordnung gespeichert'));
+  check('saved, the page no longer says that no mapping is saved', await page.isHidden('#sp5-map-none'));
   await api(page, 'PUT', '/api/plugins/sp5/einstellungen', { root: '/srv/dispofold/quellen', path: '2027', mapping: MAPPING });
   await open(page, `${P}/uebersicht`, '#h-sp5-run');
   check('options prefilled from the settings', (await page.inputValue('#sp5-run-historyMonths')) === '12');

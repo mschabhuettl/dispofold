@@ -420,6 +420,7 @@ export async function render(root, ctx) {
     settings = saved;
     dirty = false;
     marker.hidden = true;
+    none?.remove(); // a mapping is saved now
     return undefined;
   });
   const download = button(t('plugin.sp5.map.download'), () => saveBlob(new Blob([mappingJson(mapping)], { type: 'application/json' }), 'mapping.json'),
@@ -442,9 +443,10 @@ export async function render(root, ctx) {
     return undefined;
   }, { id: 'sp5-map-apply' });
   raw.value = mappingJson(mapping);
+  const none = settings.mapping == null ? h('p.alert', { id: 'sp5-map-none' }, t('plugin.sp5.map.none')) : null;
 
   root.append(h('h1', {}, t('plugin.sp5.map.title')),
-    settings.mapping == null ? h('p.alert', {}, t('plugin.sp5.map.none')) : '',
+    none ?? '',
     h('div.toolbar', {}, save, marker, download,
       h('div', {}, h('label', { for: 'sp5-map-file' }, t('plugin.sp5.map.file')), ' ', file)), // not a .field: its input would be too narrow
     h('section.section', { 'aria-labelledby': 'h-sp5-map-check' }, h('h2', { id: 'h-sp5-map-check' }, t('plugin.sp5.map.check'),
