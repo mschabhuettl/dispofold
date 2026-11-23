@@ -268,8 +268,8 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
 - Es zählen nur die Verhältnisse: das Doppelte bei einem Ziel wirkt wie die Hälfte bei allen anderen
   Qualitätsregeln zugleich. Werden alle Gewichte mit derselben Zahl malgenommen, bleibt die Reihenfolge aller
   Pläne gleich.
-- Gemessen ist die Wirkung bisher nur für die faire Verteilung (siehe Fairness): dort ändert sie nichts über das
-  Rauschen zwischen zwei Läufen. Für die anderen Ziele ist das 0,5- und 2-Fache nicht gemessen; was unten dazu
+- Gemessen ist die Wirkung bisher nur für die faire Verteilung (siehe Fairness): dort ist sie vom Rauschen
+  zwischen zwei Läufen nicht zu unterscheiden. Für die anderen Ziele ist das 0,5- und 2-Fache nicht gemessen; was unten dazu
   steht, folgt aus den Formeln und ist eine Erwartung, keine Messung. Nachmessen lässt es sich mit
   `WeightFactorBenchmarkTest` im Backend (z. B. `-Dsolver.weightFactor=2 -Dsolver.weightFactor.ids=wishes`).
 - Die Wahl einer Wichtigkeit überschreibt Gewichte, die unter Erweitert von Hand gesetzt wurden.
@@ -361,8 +361,9 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
   Person mit 90 % Tag und 10 % Nacht hat 10 Dienste; 9 Tag und 1 Nacht kosten nichts, 5 und 5 kosten
   2 × 40² = 3200 mal Gewicht. Quadriert, damit kleine Abweichungen wenig und eine ganz andere Verteilung viel
   kosten. Gewicht 100, damit die Verteilung den Plan sichtbar prägt: Im Demomonat mit klaren Verteilungen für
-  92 Personen (gemessen mit den Demodaten vor 0.23.0) sank die Abweichung der Anteile von 0,55 auf 0,30; ein höheres Gewicht (200: 0,26) kostet
-  deutlich mehr Blöcke und Abweichung vom Ziel. Bedarf und Überbesetzung (Gruppe Bedarf) gehen immer vor.
+  92 Personen (je 300 s) sinkt die Abweichung der Anteile von 0,59 auf 0,29; ein höheres Gewicht (200: 0,25)
+  kostet deutlich mehr Abweichung vom Ziel (Abzug der Sollstunden fast doppelt so hoch) und mehr Tage außerhalb
+  der Blocklänge (476 statt 435). Bedarf und Überbesetzung (Gruppe Bedarf) gehen immer vor.
 - Wechselwirkung: Wer eine Verteilung je Kategorie hat (Früh, Tag, Spät, Nacht), zählt nicht für die
   Abwechslung Dienste, solange die Verteilung besteht; sonst würde diese Regel die Verteilung wieder einebnen.
   Für die Fairness Nachtdienste (den Nachtausgleich) entscheidet die Nachtverteilung (siehe unten). Wer eine
@@ -372,7 +373,7 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
 - **Beispiel:** Olga macht seit Jahren fast nur Tagdienste (90 % Tag, 10 % Nacht). Die Regel verhindert, dass sie
   in einem Monat plötzlich zur Hälfte Nächte bekommt, nur weil das bei anderen Regeln etwas spart.
 - **Wichtigkeit:** Die Regel gehört zu keinem Planungsziel, ihr Gewicht steht nur unter Erweitert. Gemessen ist
-  nur, was oben steht (Gewicht 100 und 200 gegen den Ausgangswert 0,55); ein Gewicht unter 100 ist nicht
+  nur, was oben steht (Gewicht 100 und 200 gegen den Ausgangswert 0,59); ein Gewicht unter 100 ist nicht
   gemessen. Erwartbar weicht die Verteilung dann stärker ab, zugunsten von Blöcken und Stunden.
 
 ### Nachtverteilung
@@ -404,10 +405,9 @@ Eine Einstellung der Regeln, `nightDistribution`:
   ihrer Verteilung nicht, genau wie bei `EVEN`. Die übrigen Anteile werden auf zusammen 100 % hochgerechnet und
   gelten für die Dienste außer Nächten, auch für die Abwechslung Dienste. Beispiel: 90 % Tag und 10 % Nacht wird
   100 % Tag. Wer im Nachtausgleich ist oder bei `HABIT` wegen seiner Verteilung nicht, bleibt unverändert.
-- Gemessen mit den Demodaten vor 0.23.0 (alle Nächte als fair zu verteilen markiert), Demomonat mit klaren
-  Verteilungen für 92 von 150 Personen, je 300 s: `HABIT` vergleicht 41 Personen (Nächte je
-  Person 0 bis 10, Mittel 1,5), `EVEN` 120 (0 bis 13, Mittel 2,3); der Abzug der Verteilung sinkt von rund
-  10,0 auf 4,5 Millionen, Einzeldienste 152 und 145, Bedarf in beiden Fällen gedeckt.
+- Demomonat mit klaren Verteilungen für 92 von 150 Personen, je 300 s: `HABIT` vergleicht 41 Personen (Nächte je
+  Person 0 bis 9, Mittel 1,1), `EVEN` 120 (0 bis 12, Mittel 2,3); der Abzug der Verteilung sinkt von rund
+  8,1 auf 3,5 Millionen, einzelne freie Tage 112 und 111, Bedarf in beiden Fällen gedeckt.
 - Die Personenansicht zeigt bei den Nächten „folgt gewohnter Verteilung (10 % Nacht)“, „im Nachtausgleich:
   Belastung x, Mittel y“ (die Last der Fairness Nachtdienste, siehe unten, als Nächte je 30 verfügbare Tage)
   oder „nicht im Nachtausgleich (nie Nacht)“. Hat eine Person, die nie Nacht macht, einen Nachtanteil, sagen
@@ -437,27 +437,30 @@ Eine Einstellung der Regeln, `nightDistribution`:
   an dieselben, sondern verteilt sich auf alle, die sie machen können.
 - Die Beispiele zeigen, was die Regeln vergleichen und bevorzugen. Wie wenig das den fertigen Plan bewegt, steht
   im nächsten Punkt.
-- Wirkung der Wichtigkeit „Faire Verteilung“ (Messung mit den Demodaten vor 0.23.0, als alle Nächte als fair zu
-  verteilen markiert waren, im Demomonat mit klaren Verteilungen, 300 s): Das 0,25-,
-  1- oder 4-Fache (Gewichte 1, 3 oder 12, fair verteilte 1, 2 oder 8) ändert die Fairness nicht über das Rauschen
-  zwischen zwei Läufen. Die Gründe:
-  - Die vier Fairness-Regeln sind zusammen rund 0,5 % der Abzüge der Planqualität. Den Rest tragen gewohnte Verteilung
-    (47 %), Sollstunden (24 %), Blocklänge (15 %), einzelne freie Tage (8 %) und Wünsche (6 %).
+- Wirkung der Wichtigkeit „Faire Verteilung“ (im Demomonat mit klaren Verteilungen, je 300 s; keine Schicht ist
+  dort „Fair verteilen“ angekreuzt, es zählen also Nächte, Wochenenden und Feiertage): Das 0,25-, 1- oder 4-Fache
+  (Gewichte 1, 3 oder 12, fair verteilte 1, 2 oder 8) ist vom Rauschen zwischen zwei Läufen nicht zu
+  unterscheiden, und keine Richtung gilt für alle drei Regeln. Bei allen drei Faktoren (das 1-Fache in zwei
+  Läufen) lag die Wurzel (siehe oben) für Nächte zwischen 6850 und 7270, für Wochenenden zwischen 9170 und 9960
+  und für Feiertage zwischen 4780 und 5020. Die Gründe:
+  - Die Fairness-Regeln sind zusammen rund 0,4 % der Abzüge der Planqualität. Den Rest tragen gewohnte Verteilung
+    (48 %), Sollstunden (24 %), Blocklänge (16 %), einzelne freie Tage (7 %) und Wünsche (6 %).
   - Der Abzug ist eine Wurzel über alle Verglichenen. Wandert ein Dienst von einer Person über dem Mittel zu
-    einer darunter, sinkt sie typisch nur um 15 bis 50 Punkte (mal Gewicht: 50 bis 150). Ein solcher Tausch zweier
-    Personen am selben Tag kostet dagegen vor allem bei Sollstunden und Verteilung im Median 60 000 bis 110 000.
-    Er lohnt sich im Median erst beim rund 500- bis 2000-Fachen des Gewichts; zwischen 0,25 und 4 lohnen sich
+    einer darunter, sinkt sie typisch nur um rund 15 bis 60 Punkte (mal Gewicht: 40 bis 185). Ein solcher Tausch zweier
+    Personen am selben Tag kostet dagegen vor allem bei Sollstunden und Verteilung im Median 80 000 bis 110 000.
+    Er lohnt sich im Median erst beim rund 700- bis 1700-Fachen des Gewichts; zwischen 0,25 und 4 lohnen sich
     praktisch dieselben Tausche.
-  - Die Historie (3 Monate) trägt 80 bis 90 % der Last. Sie macht den Ausgleich nicht unmöglich: Ein Monat, der
-    nur auf Fairness achtet und sonst nichts beachtet, senkte den Abzug höchstens um 25 bis 40 %; der fertige
+  - Die Historie (3 Monate) trägt 80 bis 93 % der Last. Sie macht den Ausgleich nicht unmöglich: Ein Monat, der
+    nur auf Fairness achtet und sonst nichts beachtet, senkte den Abzug höchstens um rund 20 bis 40 %; der fertige
     Plan liegt aber meist etwas über dem Abzug der Historie allein.
-  - Der Solver ist nach 300 s nicht am Ende (die Abzüge der Planqualität sinken auch in der letzten Minute um rund 4 %) und
-    verbessert vor allem die großen Posten. Die Fairness schwankt dabei um ± 5 % ohne Richtung.
-  - Die Fairness wirkt deshalb wie ein Ausgleich unter sonst gleichwertigen Plänen. Proben mit 120 s: Ohne sie
-    (Gewicht 0) waren die Wochenenden rund 15 % ungleicher, die übrigen kaum; das 100-Fache brachte 5 bis 13 %
-    mehr Ausgleich (ein Lauf, Nächte und fair verteilte Dienste im Rauschen). Der Bereich 0,25 bis 4 ist also viel zu
-    klein, um die Fairness spürbar zu verschieben; die Gewichte bleiben, wie sie sind. Nachrechnen:
-    `FairnessAnalysisTest` im Backend.
+  - Der Solver ist nach 300 s nicht am Ende (die Abzüge der Planqualität sinken auch in der letzten Minute um rund
+    6 %) und verbessert vor allem die großen Posten. Die Fairness schwankt dabei ohne Richtung, von einem
+    Zwischenstand zum nächsten meist um bis zu 10 %, einmal um 20 %.
+  - Die Fairness wirkt deshalb wie ein Ausgleich unter sonst gleichwertigen Plänen. Proben mit 120 s (je ein Lauf,
+    verglichen mit den Läufen oben nach 120 s): Ohne sie (Gewicht 0) lag keine der drei Regeln außerhalb des
+    Rauschens; das 100-Fache brachte bei Nächten rund 12 % und bei Wochenenden rund 9 % mehr Ausgleich, Feiertage
+    im Rauschen. Der Bereich 0,25 bis 4 ist also viel zu klein, um die Fairness spürbar zu verschieben; die
+    Gewichte bleiben, wie sie sind. Nachrechnen: `FairnessAnalysisTest` im Backend.
 - Nachtdienst: ein Dienst, der mindestens `nightMinHours` (2 h) im Nachtfenster `nightStart` bis `nightEnd`
   (22:00 bis 06:00) liegt.
 - Wochenende gearbeitet: ein Dienst beginnt am Samstag oder Sonntag.
@@ -493,15 +496,14 @@ Eine Einstellung der Regeln, `nightDistribution`:
 - **Beispiel `isolatedDayOff`:** Xenia hätte Dienst am Montag und Dienstag, frei am Mittwoch, Dienst am Donnerstag
   und Freitag. Der einzelne freie Mittwoch erholt wenig; die Regel zieht die freien Tage zusammen.
 - Gewichte (ab 0.6.0): Einzelner freier Tag 10000 je Fall, Blocklänge 6000 je Tag. Mit dem verkleinerten
-  Ziel prägen sie den Plan sichtbar: Im Demomonat (gemessen mit den Demodaten von 0.6.0) sanken die einzelnen
-  freien Tage von 261 auf 76, die
-  Tage außerhalb der Blocklänge (2 bis 4) von 602 auf 328; der Preis: unerfüllte Wünsche stiegen von 24 auf 38. Mit
-  deutlich weniger Bedarf als Arbeit sanken die einzelnen freien Tage von 123 auf 16. Wer die Gewichte auf der
-  Seite Regeln einmal gespeichert hat, behält die gespeicherten Werte; dort lassen sie sich auf die neuen
-  Standards setzen. Die Analyse zeigt beide Zahlen (`singleDaysOff`, `blockDays`).
+  Ziel prägen sie den Plan sichtbar. Im Demomonat (je 300 s) gibt es mit ihnen statt mit den alten Standards
+  (600 und 400) 48 statt 211 einzelne freie Tage und 293 statt 592 Tage außerhalb der Blocklänge (2 bis 4); der
+  Preis: 42 statt 26 unerfüllte Wünsche. Mit deutlich weniger Bedarf als Arbeit (Bedarf mal 0,6) sind es 12 statt
+  91 einzelne freie Tage. Wer die Gewichte auf der Seite Regeln einmal gespeichert hat, behält die gespeicherten
+  Werte; dort lassen sie sich auf die neuen Standards setzen. Die Analyse zeigt beide Zahlen (`singleDaysOff`, `blockDays`).
 - **Wichtigkeit („Dienstblöcke“, Gewichte 3000, 6000 oder 12000 je Tag und 5000, 10000 oder 20000 je
   einzelnem freien Tag):** Gemessen ist nur der Sprung von den alten Standards (600 und 400, also das 10- und
-  25-Fache) auf die heutigen, zusammen mit dem verkleinerten Ziel, mit den Zahlen oben. Das 0,5- und 2-Fache
+  25-Fache) auf die heutigen, mit den Zahlen oben. Das 0,5- und 2-Fache
   ist nicht gemessen. Erwartbar wirkt es in dieselbe Richtung, aber schwächer: „mehr“ gibt weniger Einzeldienste
   und einzelne freie Tage und kostet eher Wünsche und Stunden nahe am Ziel, „weniger“ umgekehrt.
 - Vorwärtsrotation: die Reihenfolge Früh, Tag, Spät, Nacht. Ein Wechsel von einem Tag auf den nächsten in

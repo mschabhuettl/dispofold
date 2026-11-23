@@ -86,15 +86,19 @@ fi
 # Default values are "Standardwert, einstellbar": user-facing text never names a company agreement as their source.
 # Generic text stays allowed ("Gesetz und Betriebsvereinbarung", "entscheidet die Betriebsvereinbarung",
 # "Einzelheiten einer Betriebsvereinbarung"); a hint is the abbreviation, a source word or possessive before the noun
-# ("laut", "gemäß", "nach", "unsere"), or a name, date or subject after it ("für", "der", "vom", a number, a quote).
-# Lines are joined first, since the guide wraps its text.
-agreement='[*_]*(?i:[b]etriebs|[d]ienst)vereinbarung(?:en)?\b'
-hint="\\b(?i:laut|lt\\.|gem(?:äß|\\.)|nach|entsprechend|siehe|unser\\w*|hiesige\\w*|(?:aus|in) (?:der|einer|unserer))"
-hint="$hint\\s+(?:(?i:der|die|einer|unserer|dieser)\\s+)?$agreement"
-hint="$hint|$agreement\\s+(?:(?i:für|über|vom|von|der|des|zur|zum|Nr\\.?)\\b|[0-9„\"'])|\\b[B]Vs?\\b"
+# ("laut", "gemäß", "nach", "unsere"; with "laut", "gemäß" and "unsere" also a plain "Vereinbarung"), the noun in
+# brackets or after "Quelle", or a name, date or subject after it ("für", "der", "vom", a number, a quote).
+# Lines are joined within a paragraph first, since the guide wraps its text (\h then never crosses a paragraph);
+# perl reads bytes, hence „ as a group and not in a character class.
+agreement='[*_]*(?i:[b]etriebs|[d]ienst)vereinbarung(?:en|s)?\b[*_]*'
+article='(?:(?i:der|die|einer|unserer|dieser)\h+)?'
+hint="\\b(?i:laut|lt\\.|gem(?:äß|\\.)|nach|entsprechend|siehe|unser\\w*|hiesige\\w*|aus (?:der|einer|unserer))\\h+$article$agreement"
+hint="$hint|\\b(?i:laut|gem(?:äß|\\.)|unser\\w*)\\h+$article[*_]*[V]ereinbarung"
+hint="$hint|\\(\\h*$agreement\\h*\\)|\\b(?i:quelle):?\\h+$article$agreement"
+hint="$hint|$agreement\\h+(?:(?:für|über|vom|von|der|des|zur|zum|Nr\\.?)\\b|[0-9\"']|„)|\\b[B]Vs?\\b"
 if git grep -z -l -I -i -E '[v]ereinbarung|\b[b]vs?\b' -- '*.md' mkdocs.yml tools/docs frontend/src plugins \
     backend/src/main/resources | HINT="$hint" xargs -0 -r perl -0777 -ne \
-    'BEGIN { $re = qr/$ENV{HINT}/ } s/\s+/ /g; print "$ARGV: $1\n" while /($re)/g' | grep .; then
+    'BEGIN { $re = qr/$ENV{HINT}/ } s/[ \t]*\n(?![ \t]*\n)[ \t]*/ /g; print "$ARGV: $1\n" while /($re)/g' | grep .; then
   echo "Company agreement named as a source in user-facing text"; fail=1
 fi
 

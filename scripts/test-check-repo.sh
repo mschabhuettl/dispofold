@@ -26,6 +26,8 @@ planted=(
   "docs/anleitung/einstellungen.md|Das gilt laut\n$noun der Leitstelle."
   "frontend/src/lib/texts.js|// Werte aus unserer $noun"
   "plugins/beispiel/docs/beispiel.md|Siehe $noun vom 1. März."
+  "docs/anleitung/einstellungen.md|Standard 11 h ($noun)."
+  "docs/anleitung/fragen.md|Das gilt laut Vereinbarung mit dem Betriebsrat."
 )
 for case in "${planted[@]}"; do
   file=${case%%|*}
@@ -38,7 +40,8 @@ done
 
 # The generic sentences stay allowed.
 printf '\n%s\n' "Gesetz und $noun" "Einzelheiten einer $noun." "Das entscheidet die $noun." \
-  "Offene Punkte für die $noun" "Grenzen aus Kollektivvertrag und $noun." >> docs/anleitung/fragen.md
+  "Offene Punkte für die $noun" "" "1. Der erste Punkt." "" "## Gesetz und $noun" "" "Der Text." \
+  "Grenzen aus Kollektivvertrag und $noun – mehr dazu …" >> docs/anleitung/fragen.md
 if ! "$ROOT/scripts/check-repo.sh" > "$WORK/out" 2>&1; then
   echo "Generic sentences fail:"; cat "$WORK/out"; fail=1
 fi

@@ -3,6 +3,15 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.23.1 (2026-11-23)
+
+- **Regeln neu gemessen:** Die Messungen in den [Regeln](docs/regeln.md), die noch mit früheren Demodaten
+  entstanden, wurden mit den heutigen wiederholt (gewohnte Verteilung, Nachtverteilung, Wirkung der Wichtigkeit
+  „Faire Verteilung“ samt den Proben mit 120 s, Gewichte der Dienstblöcke); der Vermerk dazu entfällt. Die Aussagen bleiben, die Zahlen
+  ändern sich. Die Gewichte der Dienstblöcke sind jetzt gegen die alten Standards mit dem heutigen Ziel gemessen.
+- **Prüfung des Repositorys:** Sie schlägt an, wenn ein Text für Benutzer eine Betriebsvereinbarung als Quelle
+  eines Werts nennt; Standardwerte sind einstellbar.
+
 ## 0.23.0 (2026-11-23)
 
 - **Anleitung für Einsteiger:** Neu vorn in der Anleitung und oben auf der Startseite der

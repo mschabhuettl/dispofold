@@ -149,6 +149,11 @@ class FairnessAnalysisTest {
         List<String> ids = new ArrayList<>(loads.keySet());
         Collections.sort(ids);
         int n = ids.size();
+        if (n == 0) {
+            // e.g. no shift marked "Fair verteilen": nobody is compared
+            LOG.infof("FAIR %s   %-14s people   0", label, FAIR.get(index));
+            return;
+        }
         double[] total = new double[n];
         double[] hist = new double[n];
         double[] month = new double[n];
