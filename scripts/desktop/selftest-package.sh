@@ -29,10 +29,11 @@ shot() { # shot <name>
 
 HOME="$WORK/home" "$APP" --selftest "$OUT/selftest.json" --data "$WORK/data" > "$OUT/selftest.log" 2>&1 &
 PID=$!
-# screenshots while the window is open: after the start, during the planning
-for at in 15 40 80; do
-  for _ in $(seq 1 "$at"); do kill -0 "$PID" 2>/dev/null || break 2; sleep 1; done
-  shot "${at}s"
+# screenshots while the window is open (the whole run can take less than 15 s)
+for at in $(seq 1 90); do
+  kill -0 "$PID" 2>/dev/null || break
+  case "$at" in 3|5|7|9|12|20|40|80) shot "$(printf '%02d' "$at")s" ;; esac
+  sleep 1
 done
 code=0
 wait "$PID" || code=$?

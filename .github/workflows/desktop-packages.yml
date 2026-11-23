@@ -65,7 +65,8 @@ jobs:
         run: |
           brew list jq >/dev/null 2>&1 || brew install jq
           mnt=$(mktemp -d)
-          hdiutil attach -nobrowse -readonly -mountpoint "$mnt" "release-assets/Dispofold-$VERSION-macos.dmg"
+          # the dmg shows the licence first; "Y" agrees, as a user does in the dialog
+          yes | PAGER=cat hdiutil attach -nobrowse -readonly -mountpoint "$mnt" "release-assets/Dispofold-$VERSION-macos.dmg" > /dev/null
           mkdir -p "$RUNNER_TEMP/Programme"
           cp -R "$mnt/Dispofold.app" "$RUNNER_TEMP/Programme/"
           hdiutil detach "$mnt"
@@ -76,7 +77,10 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: macos-selftest
-          path: selftest/
+          path: |
+            selftest/selftest.json
+            selftest/selftest.log
+            selftest/window-*.png
           if-no-files-found: warn
           retention-days: 30
       - name: SHA-256
@@ -139,7 +143,10 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: linux-arm64-selftest
-          path: selftest/
+          path: |
+            selftest/selftest.json
+            selftest/selftest.log
+            selftest/window-*.png
           if-no-files-found: warn
           retention-days: 30
       - name: SHA-256
@@ -232,9 +239,6 @@ jobs:
           done
           cat images-out/dispofold-0.0.0-SHA256SUMS.txt
           (cd images-out && sha256sum -c dispofold-0.0.0-SHA256SUMS.txt)
-          # the arm64 archive holds arm64 images, the database included
-          docker image rm -f $(docker image ls -q 'dispofold.invalid/*') >/dev/null
-          gunzip -c images-out/dispofold-0.0.0-images-arm64.tar.gz | docker load
-          for image in backend frontend postgres; do
-            docker image inspect -f "$image {{.Architecture}}" "dispofold.invalid/dispofold-$image:0.0.0" | grep -q ' arm64$'
-          done
+          # each archive holds the images of its platform only, the database included
+          scripts/release/image-platforms.py images-out/dispofold-0.0.0-images.tar.gz amd64
+          scripts/release/image-platforms.py images-out/dispofold-0.0.0-images-arm64.tar.gz arm64

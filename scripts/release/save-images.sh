@@ -24,7 +24,8 @@ db_local="$PREFIX/dispofold-postgres:$VERSION"
 docker pull -q --platform "linux/$ARCH" "$db_image"
 docker tag "$db_image" "$db_local"
 images+=("$db_local")
-docker save "${images[@]}" | gzip -n -6 > "$OUT/$archive"
+# only the platform of this archive (a store that keeps several platforms of one image would save them all)
+docker save --platform "linux/$ARCH" "${images[@]}" | gzip -n -6 > "$OUT/$archive"
 # Without the leading dot: release uploads (and shell globs) skip dot files.
 cp docker-compose.yml "$OUT/"
 { sed "s/^TAG=.*/TAG=$VERSION/" .env.example
