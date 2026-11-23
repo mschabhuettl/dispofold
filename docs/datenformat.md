@@ -36,7 +36,7 @@ Allgemeine Regeln:
     { "id": "AN-F", "areaId": "AN", "code": "A1", "name": "Annahme früh 06:30",
       "start": "06:30", "end": "14:30", "category": "EARLY", "color": "#F6E3D3", "unpopular": false },
     { "id": "AN-N", "areaId": "AN", "code": "A3", "name": "Annahme Nacht 19:00",
-      "start": "19:00", "end": "07:00", "category": "NIGHT", "color": "#D9D3F6", "unpopular": true },
+      "start": "19:00", "end": "07:00", "category": "NIGHT", "color": "#D9D3F6", "unpopular": false },
     { "id": "TV-T", "areaId": "TV", "code": "T2", "name": "Vermittlung Tag 07:00",
       "start": "07:00", "end": "19:00", "category": "DAY", "color": "#D3E6F6", "unpopular": false }
   ],
@@ -76,7 +76,7 @@ Allgemeine Regeln:
   ],
   "history": [
     { "personId": "P0001", "month": "2026-10", "source": "import", "nights": 3, "weekendsWorked": 2,
-      "holidays": 0, "unpopular": 2, "wishes": 4, "wishesMet": 3, "hours": 171.5,
+      "holidays": 0, "unpopular": 0, "wishes": 4, "wishesMet": 3, "hours": 171.5,
       "hoursAccountAfter": 6.5, "compRestBalanceAfter": 2, "compRestUsed": 1, "compRestEarned": 0 }
   ],
   "periods": [
@@ -98,10 +98,10 @@ leer sein. Felder, die im Beispiel `null` sind, dürfen fehlen.
 |---|---|---|
 | area | `id`, `name`, `color` | Planungsbereich, z. B. Notrufannahme, Disposition Rettung, Transportvermittlung, Lageführung |
 | shift | `areaId` | Bereich, zu dem die Schicht gehört |
-| shift | `code` | Kurzzeichen im Raster |
+| shift | `code` | Code, wie die Schicht im Plan steht |
 | shift | `start`, `end` | Dienstbeginn und -ende; die Dauer ist die bezahlte Dienstzeit (bezahlte Pausen sind enthalten). Höchstens so lang wie die Regel „Höchstdauer eines Dienstes" (`maxDutyHours`, Standard 12 Stunden) |
 | shift | `category` | `EARLY`, `DAY`, `LATE`, `NIGHT`; fehlt sie, wird sie aus den Zeiten abgeleitet |
-| shift | `unpopular` | „Fair verteilen“: Dienste dieser Schicht werden über die Fairness gleichmäßig auf alle verteilt, die sie machen können |
+| shift | `unpopular` | „Fair verteilen“: Dienste dieser Schicht werden über die Fairness gleichmäßig auf alle verteilt, die sie machen können. Nur setzen, wo das gewollt ist; Nachtschichten brauchen es nicht, sie haben ihre eigene Fairness-Regel |
 | demand | `days` / `date` | Gültigkeit: Tagestypen `MON`..`SUN`, `HOL`, oder ein einzelnes Datum |
 | demand | `from`, `to`, `min`, `max` | Zeitfenster und Mindest- (optional Höchst-) Besetzung des Bereichs |
 | absenceType | `code` | Kürzel, auf das sich Abwesenheiten beziehen |

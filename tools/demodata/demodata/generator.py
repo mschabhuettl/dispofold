@@ -110,7 +110,7 @@ ABSENCE_TYPES = [
     ("PF", "Pflegefreistellung", True, False, False, "#E7B98C"),
     ("SU", "Sonderurlaub", True, False, False, "#A9C9E6"),
     ("FB", "Fortbildung", True, False, False, "#8FB3D9"),
-    ("DR", "Dienstreise", True, False, False, "#A7B7C7"),
+    ("REI", "Dienstreise", True, False, False, "#A7B7C7"),
     ("AU", "Arbeitsunfall", True, False, False, "#D98F8F"),
     ("PM", "Papamonat", True, False, False, "#C7B6A0"),
 ]
@@ -586,7 +586,7 @@ def _history(people, month, holidays, karenz, rng):
                     nights=nights,
                     weekendsWorked=rng.randint(1, 4),
                     holidays=rng.randint(0, min(2, holiday_counts[m])),
-                    unpopular=nights,
+                    unpopular=0,  # no shift is marked "Fair verteilen"
                     wishes=wishes,
                     wishesMet=rng.randint(max(0, wishes - 2), wishes),
                     hours=hours,
@@ -675,7 +675,7 @@ def generate_with_mixes(month: str, seed: int = 1, people: int = 150, areas: lis
         "source": "synthetic",
         "areas": [{"id": a, "name": n, "color": c} for a, n, c in AREAS if a in area_ids],
         "shifts": [{"id": s[0], "areaId": s[1], "code": s[2], "name": s[3], "start": s[4], "end": s[5],
-                    "category": s[6], "color": s[7], "unpopular": s[6] == "NIGHT"}
+                    "category": s[6], "color": s[7], "unpopular": False}
                    for s in shifts.values()],
         "demand": demand,
         "holidays": holidays,

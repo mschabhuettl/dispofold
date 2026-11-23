@@ -4,9 +4,10 @@ Dieses Dokument beschreibt alle Regeln, nach denen der Solver den Dienstplan rec
 in welcher Gruppe sie wirkt, woher sie kommt und welcher Parameter sie steuert. Es richtet sich an die
 Dienstplanung und an alle, die die Betriebsvereinbarung dazu abstimmen.
 
-Quelle der Standardwerte: ein für Leitstellen typischer Kollektivvertrag, im Folgenden "KV". Die genauen
-Fundstellen im jeweils anwendbaren KV hält die einführende Organisation selbst fest. Wo der Text eine Frage
-offenlässt oder die Betriebsvereinbarung entscheidet, ist der Wert ein Parameter. Das Programm legt dort nichts
+Quelle der Standardwerte: ein für Leitstellen typischer Kollektivvertrag, im Folgenden "KV". Wo es auf eine
+bestimmte Stelle ankommt, nennt dieses Dokument sie (siehe [Offene Punkte](#offene-punkte-für-die-betriebsvereinbarung));
+ob sie im eigenen KV gleich lautet, prüft die einführende Organisation. Wo der Text eine Frage offenlässt oder die
+Betriebsvereinbarung entscheidet, ist der Wert ein Parameter. Das Programm legt dort nichts
 selbst aus.
 
 ## Gruppen
@@ -66,7 +67,8 @@ die Regeln der Gruppe Regelverstoß und der Bedarf haben kein einstellbares Gewi
 Diese Regeln haben weder ein Gewicht noch eine Wichtigkeit: Ein Plan mit einem Verstoß ist immer schlechter als
 einer ohne, gleich wie viel Bedarf dafür offen bleibt oder wie viel Qualität es kostet. Ein Verstoß entsteht
 deshalb praktisch nur durch von Hand gesetzte Dienste und Vorgaben; die Analyse zeigt ihn. Ändern lassen sich nur
-die Parameter (Seite Regeln, „Gesetz und Betriebsvereinbarung“).
+die Parameter (Seite Regeln, „Gesetz und Betriebsvereinbarung“; die Höchststunden im Monat,
+`maxOverTargetPercent`, unter „Stunden treffen“).
 
 | Id | Regel | Quelle | Parameter (Standard) |
 |---|---|---|---|
@@ -74,8 +76,8 @@ die Parameter (Seite Regeln, „Gesetz und Betriebsvereinbarung“).
 | `weeklyRest` | Mindestens 36 h ununterbrochene Ruhe je Kalenderwoche | KV, Ruhezeit | `minWeeklyRestHours` (36) |
 | `maxDutyLength` | Ein Dienst dauert höchstens 12 h | KV, Durchrechnung | `maxDutyHours` (12) |
 | `maxWeekHours` | Höchstens 60 h Dienst je Kalenderwoche | KV, Durchrechnung | `maxWeekHours` (60) |
-| `maxMonthHours` | Im Monat höchstens das Ziel plus eine Toleranz (Dienste, angerechnete Abwesenheiten und Ersatzruhe) | Betrieb | `maxOverTargetPercent` (10 % des Ziels) |
-| `freeSundays` | Mindestens N Sonntage je Kalendermonat ohne Dienst | Betriebsvereinbarung, anpassbar | `minFreeSundays` (2, 0 = aus) |
+| `maxMonthHours` | Im Monat höchstens das Soll (beim festen Anteil je Monat: das Ziel) plus eine Toleranz (Dienste, angerechnete Abwesenheiten und Ersatzruhe) | Betrieb | `maxOverTargetPercent` (10 %) |
+| `freeSundays` | Mindestens N Sonntage je Kalendermonat ohne Dienst | Standardwert, einstellbar | `minFreeSundays` (2, 0 = aus) |
 | `averageWeekHours` | Im Durchschnitt des Durchrechnungszeitraums höchstens die eigenen Wochenstunden plus Spielraum, nie mehr als 46,16 h je Woche | KV, Durchrechnung; Teilzeit siehe unten | `maxAverageWeekHours` (46,16), `averageTolerancePercent` (10 %), `averagingPeriod` (Kalenderhalbjahr), `averagingWeeks` (52, nur gleitend) |
 | `qualification` | Nur Personen, die für den Bereich eingeteilt werden dürfen | Stammdaten | `areaIds` der Person |
 | `absence` | Kein Dienst und keine Ersatzruhe an Abwesenheitstagen | Abwesenheiten | |
@@ -103,19 +105,24 @@ Einzelheiten:
   darin stehen; im Jänner und im Juli zählt nur der geplante Monat, und die Regel gilt sofort. Im Juli zählen
   die Monate davor nicht mehr. Zum Stundenkonto am Halbjahresende siehe Stunden treffen. Gleitend
   (`ROLLING`): die letzten `averagingWeeks` Wochen (Standard 52) bis zum Monatsende, jeder Historienmonat mit
-  365,25 / 12 / 7 Wochen.
+  365,25 / 12 / 7 Wochen. Die Vormonate, die zählen, ergeben sich aus `averagingWeeks` × 7 / (365,25 / 12),
+  gerundet, minus dem geplanten Monat. Bei 1 bis 6 Wochen ist das kein Vormonat: Der Durchschnitt umfasst dann nur
+  den geplanten Monat, wird nur angezeigt und nie vollständig, die Regel wird also nie zum Regelverstoß. Wer gleitend
+  rechnet, setzt deshalb mindestens 7 Wochen (ein Vormonat).
 - **Eigene Grenze des Durchschnitts.** Jede Person wird an ihrem eigenen Vertrag gemessen: Grenze = Wochenstunden
   plus `averageTolerancePercent` Prozent davon (Standard 10 %, 0 erlaubt), höchstens `maxAverageWeekHours`
-  (46,16 h). Bei 10 % sind das für 40 h 44 h, für 20 h 22 h; für 42 h wären es 46,2 h, es gilt also 46,16 h. Eine
-  Person ohne Wochenstunden hat die Grenze 46,16 h. Kennzahl `averageLimitHours`; die Erklärung eines Verstoßes
-  nennt diese Grenze.
+  (46,16 h). Bei 10 % sind das für 40 h 44 h, für 20 h 22 h; für 42 h wären es 46,2 h, es gilt also 46,16 h.
+  Wochenstunden sind immer größer als 0 (Import und Stammdaten lehnen anderes ab). Kennzahl `averageLimitHours`;
+  die Erklärung eines Verstoßes nennt diese Grenze.
 - **Wochenstunden geändert.** Jeder Monat des Zeitraums zählt mit seinen eigenen Wochenstunden, gewichtet mit
-  seinen Wochen: Ein Historienmonat zählt 365,25 / 12 / 7 Wochen, dieser Monat seine Tage / 7. Die Wochenstunden
+  seinen Wochen: Ein Historienmonat zählt beim Kalenderhalbjahr seine Tage / 7, gleitend 365,25 / 12 / 7 Wochen,
+  dieser Monat immer seine Tage / 7. Die Wochenstunden
   eines Historienmonats stehen im Feld `weeklyHours` des Historieneintrags; der Monatsabschluss schreibt sie.
   Fehlt das Feld in einem importierten Eintrag, gilt der Wert aus dem abgeschlossenen Plan desselben Monats; gibt
   es keinen, zählen die heutigen Wochenstunden der Person.
   Beispiel (Kalenderhalbjahr): Juli mit 40 h, August mit 20 h, September und der geplante Oktober mit 40 h,
-  Spielraum 10 %: die Grenze liegt bei (31 × 44 + 31 × 22 + 30 × 44 + 31 × 44) / 123 = 39,0 h je Woche.
+  Spielraum 10 %: die Grenze liegt bei (31 × 44 + 31 × 22 + 30 × 44 + 31 × 44) / 123 = 4730 / 123 = 38,46 h je
+  Woche.
 - **Frei mitten in einer Abwesenheit.** Ein Feiertag, Samstag oder Sonntag, an dem die Person keine Abwesenheit
   hat, ist frei, wenn der nächste Werktag davor und der nächste Werktag danach (Montag bis Freitag, kein Feiertag)
   beide eine Abwesenheit haben, die das Soll senkt (`reducesTarget`: Urlaub, Krankenstand, Zeitausgleich usw.;
@@ -333,9 +340,8 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
 
 ### Freie Sonntage
 
-- Jede Person hat im Kalendermonat mindestens `minFreeSundays` Sonntage ohne Dienst (Standard 2; Quelle: eine
-  Betriebsvereinbarung für den Schichtdienst; ob sie für jede Leitstelle gilt, entscheidet der Betrieb, deshalb
-  einstellbar, 0 schaltet die Regel aus). Gruppe Regelverstoß: Strafe je Sonntag zu viel.
+- Jede Person hat im Kalendermonat mindestens `minFreeSundays` Sonntage ohne Dienst (Standardwert 2, einstellbar;
+  0 schaltet die Regel aus). Gruppe Regelverstoß: Strafe je Sonntag zu viel.
 - Ein Sonntag ist frei, wenn kein Dienst ihn von 0 bis 24 Uhr berührt. Ein Nachtdienst von Samstag auf Sonntag
   nimmt den Sonntag also mit, auch wenn er am Morgen endet; so ist der Sonntag wirklich frei. Ein Nachtdienst
   ab Sonntagabend nimmt ihn ebenfalls.
@@ -609,16 +615,16 @@ ist ein Parameter, entscheidet die Betriebsvereinbarung.
    (`averagingPeriod`). Ob Abwesenheiten als Arbeitszeit zählen, ist festzulegen. Das Stundenkonto gleicht sich
    standardmäßig bis Ende des Halbjahrs aus (`accountBalancing`); `accountCarryShare` ist der feste Anteil der
    Alternative.
-9. **Abwesenheitsarten.** Welche Abwesenheiten das Soll senken und welche das Stundenkonto belasten
+6. **Abwesenheitsarten.** Welche Abwesenheiten das Soll senken und welche das Stundenkonto belasten
    (`reducesTarget`, `chargesAccount`), legt der Import je Art fest; die Zuordnung ist mit der
    Personalverrechnung abzustimmen. Ebenso die Gutschrift (`credit`): Wochenstunden / 5 oder der ersetzte Dienst.
-10. **Zeitumstellung.** Ein 12-Stunden-Nachtdienst dauert in der Herbstnacht 13 echte Stunden. Das Programm
-    zählt diese Stunden, misst die Höchstdauer aber an der Dauer laut Schichtkatalog; ob das so gelten soll,
-    entscheidet die Betriebsvereinbarung.
-6. **KV: 24.12. und 31.12.** Diese Tage sind grundsätzlich dienstfrei; Arbeit an ihnen bringt einen
+7. **Zeitumstellung.** Ein 12-Stunden-Nachtdienst dauert in der Herbstnacht 13 echte Stunden. Das Programm
+   zählt diese Stunden, misst die Höchstdauer aber an der Dauer laut Schichtkatalog; ob das so gelten soll,
+   entscheidet die Betriebsvereinbarung.
+8. **KV: 24.12. und 31.12.** Diese Tage sind grundsätzlich dienstfrei; Arbeit an ihnen bringt einen
    Ersatzanspruch. Das ist nicht als Regel umgesetzt und muss geklärt werden (z. B. als Bedarfsregel mit
    `date` und eigener Abwesenheitsart).
-7. **KV: Vorlaufzeit.** Der Dienstplan ist zwei Wochen, der Rahmendienstplan einen Monat im Voraus
+9. **KV: Vorlaufzeit.** Der Dienstplan ist zwei Wochen, der Rahmendienstplan einen Monat im Voraus
    bekanntzugeben. Das betrifft den Ablauf der Planung, nicht den Solver.
-8. **Gewichte der Qualitätsregeln.** Die Standardgewichte sind ein Startpunkt. Welche Regel wie viel zählt,
-   ist eine Entscheidung der Dienstplanung und der Betriebsvereinbarung.
+10. **Gewichte der Qualitätsregeln.** Die Standardgewichte sind ein Startpunkt. Welche Regel wie viel zählt,
+    ist eine Entscheidung der Dienstplanung und der Betriebsvereinbarung.

@@ -19,7 +19,8 @@ Programm keinen Dienst. Die **Abwesenheitsart** legt fest, ob die Tage das [Soll
 ## Angerechnet
 
 Stunden, die zählen, als wäre gearbeitet worden: Abwesenheitstage, die das Soll senken, und Ersatzruhetage, je
-Arbeitstag Wochenstunden durch 5. Die Planung vergleicht geplante plus angerechnete Stunden mit dem [Ziel](#ziel).
+Arbeitstag Wochenstunden durch 5 oder, je nach Abwesenheitsart, die Stunden des Dienstes, den die Abwesenheit
+ersetzt hat. Die Planung vergleicht geplante plus angerechnete Stunden mit dem [Ziel](#ziel).
 
 ## Auf Anfrage verfügbar
 
@@ -44,6 +45,12 @@ vergleichbar. Die [Fairness](#fairness) vergleicht die Belastung. Siehe [Auswert
 Ein Arbeitsplatz oder Aufgabengebiet mit eigenen Schichten und eigenem Bedarf, im Demodatensatz zum Beispiel
 „Notrufannahme“. Eine Person wird nur in ihren Bereichen eingeplant. Siehe
 [Bereiche, Schichten und Bedarf](stammdaten.md).
+
+## Code
+
+Wie eine Schicht, ein Bereich oder eine Abwesenheitsart im Plan steht, zum Beispiel „A1“ für eine Schicht oder „U“
+für Urlaub. Bei Bereichen und Abwesenheitsarten ist der Code zugleich die Id und lässt sich nach dem Anlegen nicht
+mehr ändern. Personen haben stattdessen ein [Kürzel](#kürzel). Siehe [Ids und Codes](stammdaten.md#ids-und-codes).
 
 ## Datensatz
 
@@ -78,10 +85,23 @@ Status eines Plans, der noch geändert und neu geplant werden kann. Gegenstück:
 Ein freier Tag als Ausgleich für einen Dienst an einem Feiertag, im Plan „ER“. Wer einen Feiertagsdienst hat,
 erwirbt einen Ersatzruhetag; offene Ersatzruhetage plant das Programm in den Folgemonaten ein.
 
+## Erweitert
+
+Ein zugeklappter Abschnitt mit Einstellungen, die man für den Anfang nicht braucht. Es gibt ihn dreimal: im
+**Dienstplan** neben **Planen** (Startwert, Zeitlimit, Schrittzahl, **Neu beginnen** und der [Score](#score)), unter
+**Regeln** (Nachtzeit, die [Gewichte](#gewicht) und alle Regeln mit Beschreibung) und unter **Daten** (die
+Demodaten).
+
 ## Exportprogramm
 
 Das Programm, das den [Datensatz](#datensatz) aus dem [Quellsystem](#quellsystem) erzeugt. Es wendet dabei die
 [Korrekturdatei](#korrekturdatei) an. Es gehört nicht zu Dispofold; die IT richtet es ein.
+
+## Fair verteilte Dienste
+
+Dienste in Schichten, die in den Stammdaten **Fair verteilen** angekreuzt haben. Die Fairness verteilt sie
+gleichmäßig auf alle, die sie machen können. Markiert wird nur, was jemand ankreuzt; Nächte haben ohnehin ihre
+eigene Fairness-Regel.
 
 ## Fairness
 
@@ -118,20 +138,27 @@ Anteilen an. Siehe [Person bearbeiten](personen.md#person-bearbeiten).
 
 ## Historie
 
-Die Zahlen der abgeschlossenen Vormonate je Person: Nächte, Wochenenden, Feiertage, fair verteilte Dienste, Wünsche,
-Stundenkonto und Ersatzruhe. Sie zählt für die Fairness und als Ausgangspunkt für Stundenkonto und Ersatzruhe des
-nächsten Monats.
+Die Zahlen der abgeschlossenen Vormonate je Person: gearbeitete Stunden, Wochenstunden, Nächte, Wochenenden,
+Feiertage, fair verteilte Dienste, Wünsche, Stundenkonto und Ersatzruhe. Sie zählt für die Fairness, für den
+Wochenschnitt (Durchrechnung) und als Ausgangspunkt für Stundenkonto und Ersatzruhe des nächsten Monats.
 
 ## Höchststunden im Monat
 
-Die Grenze, wie weit die Stunden einer Person über ihrem [Ziel](#ziel) liegen dürfen (Standard 10 %). Darüber ist
-es ein [Regelverstoß](#regelverstoß).
+Die Grenze, wie weit die Stunden einer Person über ihrem [Soll](#soll) liegen dürfen (Standard 10 %; beim festen
+Anteil je Monat über ihrem [Ziel](#ziel)). Darüber ist es ein [Regelverstoß](#regelverstoß).
 
 ## Korrekturdatei
 
 Die Datei `korrekturen.json` mit allen Änderungen, die in Dispofold an Personen, Einschränkungen und Bedarf gemacht
 wurden. Das [Exportprogramm](#exportprogramm) wendet sie bei jedem Export an, so kommen die Änderungen mit jedem
-neuen Datensatz wieder mit. Siehe [Daten und Korrekturdatei](daten.md#korrekturdatei).
+neuen Datensatz wieder mit. Eine vorhandene Korrekturdatei lässt sich auch in Dispofold laden, etwa beim Umstieg
+auf eine Import-Erweiterung; der nächste Import über die Erweiterung wendet sie dann an. Siehe
+[Daten und Korrekturdatei](daten.md#korrekturdatei) und [Korrekturdatei laden](daten.md#korrekturdatei-laden).
+
+## Kürzel
+
+Das Namenskürzel einer Person, zum Beispiel „WER“. Der Dienstplan kann statt der Namen die Kürzel zeigen (Anzeige
+**Kürzel**). Schichten, Bereiche und Abwesenheitsarten haben stattdessen einen [Code](#code).
 
 ## Lücke
 
@@ -147,8 +174,15 @@ verteilt. Wer [nie Nacht](#nie-nacht) macht, ist nie im Nachtausgleich.
 
 ## Nie Nacht
 
-Eine Person, die keine Nachtdienste macht: Sie hat eine Einschränkung „Nie“ für jeden Tag auf alle Nachtschichten
-ihrer Bereiche oder eine Familienregel „keine Nacht“ an allen sieben Wochentagen.
+Eine Person, die keine Nachtdienste macht, in einem dieser drei Fälle:
+
+- Ihre Bereiche haben keine Nachtschicht.
+- Sie hat Einschränkungen „Nie“ an **jedem Tag** (nicht sieben einzelne Wochentage), die zusammen jede Nachtschicht
+  ihrer Bereiche abdecken, als Schichtart Nacht oder Schicht für Schicht, und die den ganzen Planungsmonat gelten. Eine Einschränkung nur für
+  einige Wochentage, nur für einen Teil des Monats oder nur für eine von mehreren Nachtschichten genügt nicht.
+- Sie hat eine Familienregel „keine Nacht“ an allen sieben Wochentagen.
+
+Siehe [regeln.md](../regeln.md#nachtverteilung).
 
 ## Plan veraltet
 
@@ -159,6 +193,12 @@ der Plan des Vormonats geändert. Abhilfe: neu planen. Siehe
 ## Planungsmonat
 
 Der Monat, um den es auf einer Seite geht. Er steht oben auf jeder Seite, die zu einem Monat gehört.
+
+## Pseudonymisieren
+
+Namen, Kürzel und Ids der Personen durch Pseudonyme (P001, P002, ...) ersetzen, damit Datensatz und Plan ohne
+Personendaten weitergegeben werden können, etwa für eine Fehlersuche. Der Schlüssel dazu bleibt in der Planung.
+Siehe [Pseudonymisieren](daten.md#pseudonymisieren).
 
 ## Qualität
 
@@ -171,15 +211,22 @@ deckt (Stunden, Fairness, Wünsche, Blöcke, Familienregeln, gewohnte Verteilung
 Das System, in dem die Personen und ihre Verträge gepflegt werden, etwa die Personalverwaltung. Dispofold bekommt
 die Daten als [Datensatz](#datensatz) über das [Exportprogramm](#exportprogramm).
 
+## Regeln mit Treffern
+
+Die Knöpfe über dem Dienstplan: je Regel mit Regelverstößen und je Qualitätsregel mit großem Anteil an der
+Bewertung einer, mit der Zahl der Treffer. Ein Klick listet Person und Tag. Dieselben Regeln stehen auf der Seite
+**Prüfen**. Siehe [Das Ergebnis lesen](planen.md#das-ergebnis-lesen).
+
 ## Regelverstoß
 
-Die erste und wichtigste Gruppe der Bewertung: Ruhezeiten, Höchstarbeitszeiten, Höchststunden im Monat, freie
-Sonntage, Qualifikation, Abwesenheiten, Sperren. Ein Plan mit Regelverstößen darf so nicht verwendet werden. Siehe
+Die erste und wichtigste Gruppe der Bewertung: Ruhezeiten, Höchstarbeitszeiten je Dienst und Woche, Höchststunden
+im Monat, der Wochenschnitt über die Durchrechnung (je Person die eigenen Wochenstunden plus Spielraum), freie
+Sonntage, frei mitten in einer Abwesenheit, Qualifikation, Abwesenheiten, Sperren. Ein Plan mit Regelverstößen darf so nicht verwendet werden. Siehe
 [regeln.md](../regeln.md#regelverstoß).
 
 ## Schicht
 
-Ein Dienst mit Beginn und Ende in einem Bereich, im Plan mit seinem Kürzel, zum Beispiel „A1“. Jede Schicht hat eine
+Ein Dienst mit Beginn und Ende in einem Bereich, im Plan mit seinem [Code](#code), zum Beispiel „A1“. Jede Schicht hat eine
 **Schichtart** (Kategorie): Früh, Tag, Spät oder Nacht, oder „aus den Zeiten“.
 
 ## Schichtart
@@ -190,8 +237,8 @@ auf die Schichtart, nicht auf die einzelne Schicht.
 ## Score
 
 Die Bewertung des Plans in den drei Gruppen, etwa `0hard/-1680medium/-5952198soft`: Regelverstöße, Bedarf,
-Qualität. Je näher an 0, desto besser; die Gruppen zählen streng nacheinander. Er steht unter **Erweitert** über
-dem Dienstplan.
+Qualität. Je näher an 0, desto besser; die Gruppen zählen streng nacheinander. Er steht im Dienstplan unter
+**Erweitert** neben **Planen**.
 
 ## Soll
 
@@ -223,12 +270,6 @@ Monatsabschluss steht der neue Stand in der Historie.
 Mehr Personen eingeplant, als die Höchstbesetzung erlaubt (wo keine gesetzt ist, als die Mindestbesetzung
 verlangt), oder Dienste, die gar keinen Bedarf abdecken. Gehört zur Gruppe Bedarf.
 
-## Fair verteilte Dienste
-
-Dienste in Schichten, die in den Stammdaten **Fair verteilen** angekreuzt haben. Die Fairness verteilt sie
-gleichmäßig auf alle, die sie machen können. Markiert wird nur, was jemand ankreuzt; Nächte haben ohnehin ihre
-eigene Fairness-Regel.
-
 ## Vorgabe
 
 Ein Dienst oder freier Tag, der für einen Tag fest gilt, eingetragen unter **Eingaben**. Die Planung ändert ihn
@@ -248,6 +289,8 @@ Planung erfüllt Wünsche, so gut es geht, und verteilt die Erfüllung gleichmä
 ## Ziel
 
 Die Stunden, die die Planung für eine Person im Monat anstrebt: das [Soll](#soll), korrigiert um einen Teil des
-[Stundenkontos](#stundenkonto) (Standard 25 %: Plusstunden senken das Ziel, Minusstunden erhöhen es). Beispiel:
-Soll 160 h, Stundenkonto +20 h ergibt ein Ziel von 155 h. Braucht der Bedarf weniger Arbeit, als alle Ziele
+[Stundenkontos](#stundenkonto). Plusstunden senken das Ziel, Minusstunden erhöhen es. Standard: Das Konto soll am
+Ende des Kalenderhalbjahrs bei 0 stehen, jeder Monat gleicht seinen Teil aus. Beispiel: Soll 160 h und
+Stundenkonto +20 h im April (bis Ende Juni noch drei Monate) ergeben ein Ziel von 160 - 20 / 3 = 153,3 h. Statt
+dessen lässt sich ein fester Anteil je Monat einstellen (25 %), siehe [Regeln einstellen](einstellungen.md). Braucht der Bedarf weniger Arbeit, als alle Ziele
 zusammen ergeben, plant das Programm gegen ein **verkleinertes Ziel**: Jedes Ziel schrumpft um denselben Anteil.

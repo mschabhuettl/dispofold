@@ -36,7 +36,11 @@ Im Docker-Betrieb begrenzt nginx die Anmeldeversuche auf 10 je Minute und Adress
 | `POST` | `/api/import/demo?replace=true` | lädt die mitgelieferten synthetischen Demodaten (150 Personen, Jänner 2027), Antwort `ImportSummary` |
 | `POST` | `/api/import/dataset?keep=true` | Import, der die seit dem letzten Import in Dispofold geänderten Stammdaten übernimmt (siehe unten), Antwort `ImportSummary` |
 | `POST` | `/api/import/preview` | Probelauf von `keep=true` ohne zu speichern (Body: `Dataset`), Antwort `{ "changed": bool, "kept": n, "conflicts": [{ "personId", "areaId", "field" }], "notes": [{ code, params }] }`; lehnt wie der Import ab (`import.invalid`), wenn der zusammengeführte Datensatz Fehler hätte |
-| `GET` | `/api/data/corrections` | Alle geltenden Korrekturen (beim letzten Import angewendete und Änderungen seit dem Import) als Korrekturdatei: `{ "file": { "format": "dispofold/corrections", "version": 2, "people": {...}, "demand": {...} }, "notes": [{ code, params }], "count": n, "earlier": n, "withdrawn": n, "complete": true }`, nur für `planner` |
+| `GET` | `/api/data/corrections` | Alle geltenden Korrekturen (beim letzten Import angewendete und Änderungen seit dem Import; solange eine geladene Korrekturdatei wartet, diese mit den Änderungen seit dem Import darüber, siehe unten) als Korrekturdatei: `{ "file": { "format": "dispofold/corrections", "version": 2, "people": {...}, "demand": {...} }, "notes": [{ code, params }], "count": n, "earlier": n, "withdrawn": n, "complete": true }`, nur für `planner` |
+| `GET` | `/api/data/corrections/state` | `{ "loaded": "<Zeitpunkt>" \| null, "summary": Summary \| null, "none": bool }`: die geladene Korrekturdatei, die auf einen Import wartet (wann geladen, was sie bringt), und ob es gar keine Korrekturen gibt; nur für `planner` |
+| `POST` | `/api/data/corrections/check` | prüft eine Korrekturdatei, ohne zu speichern (Body: die Datei, `application/json` oder ihre Bytes als `application/octet-stream`), Antwort `Summary`; nur für `planner` |
+| `PUT` | `/api/data/corrections/loaded` | lädt eine Korrekturdatei (Body wie bei `check`) und ersetzt eine vorher geladene, Antwort `Summary`; nur für `planner` |
+| `DELETE` | `/api/data/corrections/loaded` | entfernt die geladene Korrekturdatei, Antwort `204`; nur für `planner` |
 | `GET` | `/api/data/anonymized?month=YYYY-MM` | pseudonymisierter Datensatz (alle Planungsmonate) und Plan des Monats mit getrenntem Schlüssel: `{ "dataset", "plan", "key": "CSV", "people": n }`, nur für `planner` |
 
 Stammdaten bearbeiten:
@@ -45,7 +49,7 @@ Stammdaten bearbeiten:
   `absenceTypes` (`AbsenceType`, `code`), `holidays` (`Holiday`, Position in der Liste ab 0), `demand`
   (`DemandRule`, Position ab 0).
 - Ids neuer Personen (`PN1`, `PN2`, ...) und Schichten (`SN1`, ...) vergibt das Backend; eine Id im Body wird
-  beim Anlegen ignoriert und nie wieder vergeben. Bereiche und Abwesenheitsarten haben als Id ihr Kürzel, das
+  beim Anlegen ignoriert und nie wieder vergeben. Bereiche und Abwesenheitsarten haben als Id ihren Code, der
   im Plan steht: Es wird beim Anlegen angegeben (`masterdata.idMissing`), danach nicht mehr geändert
   (`masterdata.idMismatch`) und ist nach dem Entfernen gesperrt (`masterdata.idTaken`).
 - `MasterChange`: `{ "revision": n, "key": "<key>", "item": { ... } }`.
@@ -102,6 +106,33 @@ alten Ausgangsstand oder aus Dispofold, sonst wie oben berechnet). Sie gehören 
 sind also keine Änderung seit dem Import und kein Hinweis `corrections.personMissing`. Danach ist der neue, unveränderte Import der Ausgangsstand; wurde
 etwas übernommen, bleibt `changedSinceImport` wahr. Installationen aus älteren Versionen haben bis zum nächsten
 Import keinen Ausgangsstand (`409` `corrections.noBaseline`).
+
+Korrekturdatei laden (siehe [Korrekturdatei laden](anleitung/daten.md#korrekturdatei-laden)): Eine vorhandene
+Korrekturdatei (Format `dispofold/corrections`, Version 1 oder 2) wartet nach `PUT .../loaded` auf den nächsten
+Import über eine Importquelle (eine Erweiterung). Dieser wendet sie an, als hätte ein früherer Import sie
+angewendet; nennt die Quelle die angewendeten Korrekturen und ist die geladene Datei noch dieselbe wie vor dem
+Import, wartet sie danach nicht mehr. Ein Import einer Datensatz-Datei ändert an ihr nichts. Solange sie wartet,
+liefert `GET /api/data/corrections` diese Datei mit den Änderungen seit dem letzten Import darüber (je Person und
+Feld gewinnt Dispofold, eine in Dispofold entfernte oder ausgeschlossene Person ist ausgeschlossen, ein Bereich
+mit geändertem Bedarf bekommt alle Regeln aus Dispofold); die Korrekturen, die der letzte Import angewendet hat,
+ersetzt sie. Dann ist `complete` immer `true`, und auch ohne Ausgangsstand gibt es keinen Fehler
+`corrections.noBaseline`.
+
+Die Datei wird als Ganzes geprüft wie vom Exportprogramm: UTF-8 ohne Byte-Order-Mark, ein JSON-Objekt, dem nichts
+folgt, das richtige Format, eine bekannte Version, `people` und (ab Version 2) `demand` als Objekte. Scheitert
+eine Prüfung, antworten `check` und `PUT .../loaded` mit `400` und einem Code `corrections.load.*` (siehe
+Fehlercodes) und speichern nichts. Einzelne Einträge werden nur für die Zusammenfassung angesehen; die
+Importquelle prüft jeden beim Import noch einmal.
+
+`Summary`: `{ "version", "people", "existing", "fields": { "<Feld>": n }, "skipped": [{ "code", "params" }],
+"overridden", "replaced" }`. `version` ist die Version der Datei, `people` die Zahl ihrer Personeneinträge,
+`existing` davon die Personen in den aktuellen Daten (`null`, solange es keine Personen gibt). `fields` zählt je
+Feld die Einträge, die wirken können, in der Reihenfolge `weeklyHours`, `areaIds`, `hoursAccount`,
+`compRestBalance`, `familyRules`, `entryDate`, `exitDate`, `shiftMix`, `restrictions`, `exclude` und `demand`
+(Bereiche). `skipped` nennt die Einträge, die nicht wirken, je mit einem Hinweis-Code (siehe Fehlercodes,
+Hinweise); er nennt Ids, Feldnamen, Bereichsschlüssel und Anzahlen, einen Personenschlüssel, der keine Id ist,
+aber nicht (`personId` ist dann leer). `overridden` zählt die Einträge der Datei, die von Änderungen in Dispofold
+seit dem letzten Import überdeckt werden, `replaced` die Einträge der Korrekturen des letzten Imports, die die Datei ersetzt.
 
 `ImportSummary`: `{ "source", "people", "areas", "shifts", "months": ["YYYY-MM"], "warnings": [{ "code", "params" }], "kept": n, "notes": [{ "code", "params" }] }`.
 Ein Import ersetzt die Stammdaten und die Planungsmonate, die im Datensatz enthalten sind. Pläne bleiben.
@@ -195,7 +226,7 @@ Nachtausgleich in den Kennzahlen je Person (`PersonStats` in Analyse und Persone
   Dienste, wie die Fairness-Regeln sie vergleichen (Treffer `hit.fairWeekends` usw.); `null`, wenn nicht verglichen.
 
 Für `viewer` sind alle diese Felder `null`: Der Nachtausgleich würde die gewohnte Verteilung, Sperren oder
-Familienregeln verraten, die übrigen Lasten bleiben wie er bei der Planung.
+Familienregeln verraten; die übrigen Lasten sieht wie ihn nur die Planung.
 
 Problemliste: eine Liste `[{ "personId", "constraintId", "level", "date", "score", "code", "params" }]` mit jedem
 Treffer mit Strafe (`score < 0`), wie ihn `hits` liefert, und den Überbesetzungen (`overstaffing`), die keine Person
@@ -207,8 +238,9 @@ nur Regeln mit Treffern) und je Regel einer Liste `[{ "personId", "constraintId"
 (bei einer unbekannten Id oder ohne Treffer `{}`). Die Treffer sind dieselben wie die aller Personenansichten
 zusammen, auch für `viewer`, berechnet aber nur einmal.
 
-Monatsabschluss: `finalize` speichert je Person das Stundenkonto und die Ersatzruhe nach dem Monat (verbraucht
-und neu erworben, Arbeit an einem Feiertag erwirbt eine). Importierte Ist-Werte (`source: "import"`) werden nie
+Monatsabschluss: `finalize` speichert je Person die Kennzahlen des Monats, die geplanten Stunden (`hours`), die
+Wochenstunden der Person (`weeklyHours`, für die eigene Grenze des Wochenschnitts), das Stundenkonto und die
+Ersatzruhe nach dem Monat (verbraucht und neu erworben, Arbeit an einem Feiertag erwirbt eine). Importierte Ist-Werte (`source: "import"`) werden nie
 überschrieben. Ein abgeschlossener Monat ist nur lesbar (`409` `plan.closed`), bis ihn `reopen` wieder öffnet.
 Monate werden der Reihe nach abgeschlossen (`plan.previousOpen`) und rückwärts wieder geöffnet (`plan.nextClosed`).
 
@@ -301,6 +333,8 @@ Import:
 | `import.masterChanged` | 409 | |
 | `import.demoMissing` | 500 | |
 | `corrections.noBaseline` | 409 | |
+| `corrections.load.unreadable` | 400 | (kein JSON-Objekt, Zeichen nach dem Objekt, kein UTF-8 oder mit Byte-Order-Mark) |
+| `corrections.load.format`, `corrections.load.version`, `corrections.load.people`, `corrections.load.demand` | 400 | |
 | `anonymize.leak` | 409 | `count`, `places` (JSON-Pfade, durch Komma getrennt, nie Namen) |
 
 Erweiterungen:
@@ -322,6 +356,16 @@ Hinweise (`notes`) der Korrekturdatei und des Imports mit `keep=true`, alle mit 
 | `corrections.master` | 200 | `kind`, `key`, `change` (`added`, `removed`, `changed`) |
 | `corrections.demandArea` | 200 | `areaId` |
 | `corrections.idFormat` | 200 | `count` |
+
+Hinweise in `skipped` der Zusammenfassung einer Korrekturdatei (`check`, `PUT .../loaded`, `state`), alle mit
+Status 200; dazu `corrections.idFormat` und `corrections.demandArea` wie oben:
+
+| Code | Status | Parameter |
+|---|---|---|
+| `corrections.load.personMissing`, `corrections.load.notObject`, `corrections.load.unknownField` | 200 | `personId` |
+| `corrections.load.fixedField`, `corrections.load.invalid`, `corrections.load.unknownArea`, `corrections.load.unknownShift` | 200 | `personId`, `field` |
+| `corrections.load.versionIgnored` | 200 | `personId`, `field` (für `exclude`); nur `field` (für `demand`) |
+| `corrections.load.demandInvalid` | 200 | `areaId` |
 
 Die Codes in `errors` und `warnings` stehen in `docs/datenformat.md` unter "Fehlercodes beim Import".
 

@@ -51,10 +51,10 @@ Server, und keine Daten verlassen ihn. Was ins Netz gehen kann, steht unter
   gewohnter Verteilung), Bereiche, Schichten, Bedarf je Bereich und Tageszeit, Abwesenheitsarten und Feiertage.
   Sie ändern sich selten und kommen meist als Datensatz aus dem Quellsystem.
 - **Eingaben des Monats:** Abwesenheiten, Wünsche und Vorgaben.
-- **Regeln:** Grenzen aus Kollektivvertrag und Betriebsvereinbarung (Ruhezeiten, Höchstarbeitszeiten, freie
-  Sonntage) und die Planungsziele mit ihren Gewichten.
-- **Historie:** die Zahlen der abgeschlossenen Vormonate (Nächte, Wochenenden, Feiertage, fair verteilte Dienste,
-  erfüllte Wünsche, Stundenkonto, Ersatzruhe).
+- **Regeln:** feste Grenzen (Ruhezeiten, Höchstarbeitszeiten und Wochenschnitt nach dem Kollektivvertrag, freie
+  Sonntage als einstellbarer Standardwert) und die Planungsziele mit ihren Gewichten.
+- **Historie:** die Zahlen der abgeschlossenen Vormonate (gearbeitete Stunden, Wochenstunden, Nächte, Wochenenden,
+  Feiertage, fair verteilte Dienste, erfüllte Wünsche, Stundenkonto, Ersatzruhe).
 
 **Was herauskommt:** ein Dienstplan für den Monat, eine Zelle je Person und Tag: frei, ein Dienst aus den
 Schichten ihrer Bereiche oder ein Ersatzruhetag.
@@ -62,8 +62,9 @@ Schichten ihrer Bereiche oder ein Ersatzruhetag.
 **Wie der Solver abwägt.** Der [Solver](begriffe.md#solver) ist der Teil des Programms, der plant. Er bewertet
 jeden Plan in drei Gruppen, die streng nacheinander zählen:
 
-1. **Regelverstoß:** Ruhezeiten, Höchstarbeitszeiten, Höchststunden im Monat, freie Sonntage, Qualifikation,
-   Abwesenheiten, Sperren. Muss 0 sein. Ein Plan mit Regelverstößen darf so nicht verwendet werden.
+1. **Regelverstoß:** Ruhezeiten, Höchstarbeitszeiten, Höchststunden im Monat, der Wochenschnitt über die
+   Durchrechnung (je Person die eigenen Wochenstunden plus Spielraum), freie Sonntage, frei mitten in einer
+   Abwesenheit, Qualifikation, Abwesenheiten, Sperren. Muss 0 sein. Ein Plan mit Regelverstößen darf so nicht verwendet werden.
 2. **Bedarf:** fehlende Besetzung (Lücken) und Besetzung über dem Bedarf, in Personenminuten. Eine fehlende
    Minute wiegt schwerer als jeder ganze Dienst über dem Bedarf.
 3. **Qualität:** Stunden treffen, faire Verteilung, Wünsche, Dienstblöcke, Familienregeln, gewohnte Verteilung
@@ -94,8 +95,8 @@ Bedarf hinaus sammeln.
 
 **Monate und Historie.** Jeder Monat hat seine Eingaben und seinen Plan. Ein Plan ist zuerst **Entwurf**: Er kann
 geändert und neu geplant werden. Ist der Monat fertig, wird er **abgeschlossen**: Seine Zahlen kommen in die
-Historie, er ist danach nur lesbar. Die Historie zählt für die Fairness und die Wünsche der Folgemonate, das
-Stundenkonto und die Ersatzruhe nach dem Monat für den nächsten. Die letzten Dienste des Vormonats zählen für die
+Historie, er ist danach nur lesbar. Die Historie zählt für die Fairness, die Wünsche und den Wochenschnitt der
+Folgemonate, das Stundenkonto und die Ersatzruhe nach dem Monat für den nächsten. Die letzten Dienste des Vormonats zählen für die
 Ruhezeiten am Monatsanfang. Monate werden der Reihe nach abgeschlossen.
 
 ## Die Oberfläche

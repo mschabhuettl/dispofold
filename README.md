@@ -4,8 +4,8 @@ Dienstplanung für Leitstellen. Ein Solver (Timefold) berechnet den Monatsdienst
 Mitarbeiterinnen und Mitarbeiter. Die Dienstplanung prüft, ändert, fixiert, schließt ab und exportiert ihn.
 
 - Regeln aus Kollektivvertrag und Qualifikation, jede Abweichung ein Regelverstoß: 11 h tägliche und 36 h wöchentliche Ruhe, höchstens
-  12 h je Dienst, 60 h je Woche und 46,16 h im Durchschnitt des Durchrechnungszeitraums, nur qualifizierte
-  Personen, Abwesenheiten und Sperren.
+  12 h je Dienst, 60 h je Woche und im Durchschnitt des Durchrechnungszeitraums die eigenen Wochenstunden plus
+  Spielraum (Standard 10 %, höchstens 46,16 h), nur qualifizierte Personen, Abwesenheiten und Sperren.
 - Bedarf je Bereich und Tageszeit. Der Solver wählt unter den Schichtvarianten des Bereichs. Ist der Bedarf
   nicht erfüllbar, zeigt das Programm die Lücken genau an.
 - Qualitätsregeln mit sichtbaren Gewichten: Stunden treffen, Fairness (Nächte, Wochenenden, Feiertage, fair verteilte

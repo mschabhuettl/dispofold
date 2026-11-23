@@ -1,8 +1,9 @@
 # Regeln einstellen
 
 **Einstellungen** hat die Reiter **Regeln**, **Stammdaten** (siehe
-[Bereiche, Schichten und Bedarf](stammdaten.md)), **Daten** (siehe [Daten und Korrekturdatei](daten.md)) und im
-Programm am eigenen Rechner **Updates** (siehe [Updates](updates.md)). Diese Seite beschreibt den Reiter **Regeln**:
+[Bereiche, Schichten und Bedarf](stammdaten.md)), **Daten** (siehe [Daten und Korrekturdatei](daten.md)), im
+Programm am eigenen Rechner **Updates** (siehe [Updates](updates.md)) und **Erweiterungen** (siehe
+[Erweiterungen](erweiterungen.md)). Diese Seite beschreibt den Reiter **Regeln**:
 wonach die Planung einen Plan bewertet. Die Regeln gelten für alle Monate und wirken ab der nächsten Planung;
 schon geplante Monate zeigen nach dem Speichern „Plan veraltet: neu planen“.
 
@@ -99,7 +100,7 @@ die Vereinbarung ändert.
 | Höchstarbeitszeit je Woche (h) | 60 | Stunden je Kalenderwoche |
 | Durchschnittliche Wochenarbeitszeit bei Vollzeit (h) | 46,16 | Obergrenze des Wochenschnitts für alle |
 | Durchrechnung | je Kalenderhalbjahr | Zeitraum des Wochenschnitts: je Kalenderhalbjahr (Jänner bis Juni, Juli bis Dezember) oder gleitend über den Durchrechnungszeitraum |
-| Durchrechnungszeitraum (Wochen) | 52 | nur bei gleitender Durchrechnung |
+| Durchrechnungszeitraum (Wochen) | 52 | nur bei gleitender Durchrechnung; mindestens 7 eintragen, bei 1 bis 6 Wochen zählt kein Vormonat und der Schnitt wird nie zum Regelverstoß |
 | Spielraum über den eigenen Wochenstunden (%) | 10 | eigene Grenze des Wochenschnitts: Wochenstunden plus dieser Anteil, höchstens der Vollzeitschnitt; 0 = genau die Wochenstunden |
 | Freie Sonntage je Monat | 2 | Sonntage ohne Dienst je Person und Kalendermonat; 0 schaltet die Regel aus |
 | Frei mitten in einer Abwesenheit | ja | ein Feiertag, Samstag oder Sonntag zwischen zwei Werktagen mit Urlaub, Krankenstand oder Zeitausgleich bekommt keinen Dienst |

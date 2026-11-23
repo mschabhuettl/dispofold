@@ -81,10 +81,16 @@ Regeln im Einzelnen (alle mit **i** auf der Seite **Regeln**, ausführlich in [r
   (Standard 2; 0 schaltet die Regel aus). Ein Sonntag ist nur frei, wenn kein Dienst ihn berührt, auch kein
   Nachtdienst von Samstag auf Sonntag; Abwesenheiten zählen als frei.
 - **Höchststunden im Monat:** Die Stunden einer Person im Monat (Dienste, angerechnete Abwesenheitstage und
-  Ersatzruhe) dürfen das Ziel höchstens um eine Toleranz übersteigen, voreingestellt 10 %. Das Programm plant nie
+  Ersatzruhe) dürfen das Soll (beim festen Anteil je Monat: das Ziel) höchstens um eine Toleranz übersteigen,
+  voreingestellt 10 %. Das Programm plant nie
   darüber. Ein von Hand gesetzter Dienst darf darüber gehen, zählt dann aber als Regelverstoß. Die gesetzlichen
-  Grenzen wie die Höchstarbeitszeit je Woche gelten unabhängig davon. Für die Obergrenze zählt immer das echte,
-  nicht das verkleinerte Ziel.
+  Grenzen wie die Höchstarbeitszeit je Woche gelten unabhängig davon. Beim festen Anteil zählt für die Obergrenze
+  das echte, nicht das verkleinerte Ziel.
+- **Wochenschnitt:** Im Durchrechnungszeitraum (Standard: das Kalenderhalbjahr) arbeitet eine Person im Schnitt
+  höchstens ihre eigenen Wochenstunden plus einen Spielraum (Standard 10 %), nie mehr als 46,16 h je Woche. Ein
+  Regelverstoß ist das erst, wenn die Historie alle Vormonate des Zeitraums enthält.
+- **Frei mitten in einer Abwesenheit:** Ein Feiertag, Samstag oder Sonntag zwischen zwei Werktagen mit Urlaub,
+  Krankenstand oder einer anderen Abwesenheit, die das Soll senkt, bleibt frei (abschaltbar).
 - **Bedarfslücken** sind kein Fehler des Solvers: Reicht das Personal nicht, bleibt die Lücke sichtbar. Ist
   jemand frei und darf den Dienst machen, wird eine Lücke immer zuerst gefüllt.
 

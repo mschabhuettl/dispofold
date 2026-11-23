@@ -29,7 +29,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  *        {@link AveragingPeriod#ROLLING}
  * @param maxOverTargetPercent a person's counted hours of a month may exceed the target by at most this share of
  *        the target (hard); null in rules saved before it existed means {@link #DEFAULT_OVER_TARGET_PERCENT}
- * @param minFreeSundays Sundays of each calendar month without work per person (hard; works agreement, adjustable,
+ * @param minFreeSundays Sundays of each calendar month without work per person (hard; a default value, adjustable,
  *        0 switches it off); null in rules saved before it existed means {@link #DEFAULT_FREE_SUNDAYS}
  * @param nightDistribution how nights are distributed; null in rules saved before it existed means
  *        {@link NightDistribution#HABIT}

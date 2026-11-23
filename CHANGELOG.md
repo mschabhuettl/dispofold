@@ -3,6 +3,25 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.23.0 (unveröffentlicht)
+
+- **Anleitung und Dokumentation an den Code angeglichen:** Die Planungsregeln rechnen einen Historienmonat beim
+  Kalenderhalbjahr mit seinen Tagen / 7 (365,25 / 12 / 7 Wochen nur gleitend), das Beispiel zur eigenen Grenze ergibt
+  38,46 h, die Höchststunden im Monat stehen unter „Stunden treffen“, und gleitend mit 1 bis 6 Wochen wird der
+  Wochenschnitt nie zum Regelverstoß (jetzt beschrieben: mindestens 7 Wochen eintragen). Wochenstunden sind immer
+  größer als 0; der Fall „ohne Wochenstunden“ ist aus Regeln, Hilfe und Änderungen entfernt. Die zwei freien
+  Sonntage sind ein Standardwert, einstellbar. Die Listen der Regelverstöße nennen den Wochenschnitt mit der eigenen
+  Grenze und den freien Tag mitten in einer Abwesenheit; Historie und Monatsabschluss nennen gearbeitete Stunden und
+  Wochenstunden; die Kachel Wochenschnitt zeigt die eigene Grenze; das Ziel gleicht das Stundenkonto standardmäßig
+  bis Ende des Halbjahrs aus. Die Schnittstelle beschreibt das Laden einer Korrekturdatei (`/api/data/corrections/state`,
+  `check`, `loaded`) mit den Codes `corrections.load.*`. Repository und Images sind öffentlich (Betrieb).
+- **Ein Begriff je Sache:** In der Anleitung heißt das Zeichen einer Schicht, eines Bereichs oder einer
+  Abwesenheitsart **Code**, das Namenskürzel einer Person **Kürzel**; dazu **Pseudonymisieren**, **Regeln mit
+  Treffern** und die drei Abschnitte **Erweitert** in den Begriffen.
+- **Demodaten:** Keine Schicht ist mehr „Fair verteilen“ angekreuzt, auch keine Nacht; Nächte haben ihre eigene
+  Fairness-Regel. Die Abwesenheitsart Dienstreise heißt jetzt „REI“ statt „DR“, das auch der Bereich Disposition
+  Rettung trägt. Pläne der Demodaten fallen deshalb etwas anders aus.
+
 ## 0.22.0 (2026-11-23)
 
 - **Zuordnung vorschlagen (Import-Erweiterung):** Auf der Seite Zuordnung schlägt Dispofold aus Gruppen,
@@ -47,7 +66,7 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
 
 - **Wochenschnitt je Person:** Die Regel zum Durchschnitt der Wochenstunden misst jede Person an ihrem eigenen
   Vertrag: Grenze sind die Wochenstunden plus ein Spielraum, neu auf der Seite Regeln (Standard 10 %, 0 erlaubt),
-  höchstens 46,16 h. Eine Person mit 20 h hat so 22 h, mit 40 h 44 h; ohne Wochenstunden bleibt es bei 46,16 h.
+  höchstens 46,16 h. Eine Person mit 20 h hat so 22 h, mit 40 h 44 h.
   Ändern sich die Wochenstunden im Durchrechnungszeitraum, zählt jeder Monat mit seinen eigenen, gewichtet mit
   seinen Wochen; der Monatsabschluss schreibt dafür die Wochenstunden in die Historie (neues, optionales Feld
   `weeklyHours`). Die Personenseite und die Erklärung eines Verstoßes nennen die eigene Grenze. 12 h je Dienst und

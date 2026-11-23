@@ -118,7 +118,7 @@ public class RosterConstraints implements ConstraintProvider {
     }
 
     /**
-     * Each person keeps at least the required number of Sundays of the month free (works agreement, adjustable):
+     * Each person keeps at least the required number of Sundays of the month free (a default value, adjustable):
      * no duty touches the Sunday from 00:00 to 24:00. Sundays with an absence or outside the employment have no
      * duty, so they count as free. Penalty: Sundays worked above the allowed number.
      */

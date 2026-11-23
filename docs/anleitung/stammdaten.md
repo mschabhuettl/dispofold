@@ -26,7 +26,7 @@ Jedes **i** neben einem Feld erklärt es. Die Felder im Einzelnen:
 
 | Feld | Bedeutung |
 |---|---|
-| Code | Kürzel des Bereichs, zugleich seine Id. Wird beim Anlegen eingegeben und lässt sich danach nicht ändern. |
+| Code | kurzer Code des Bereichs, zugleich seine Id. Wird beim Anlegen eingegeben und lässt sich danach nicht ändern. |
 | Name | wie der Bereich in Listen und im Plan heißt |
 | Farbe | Farbe im Plan als `#RRGGBB`, zum Beispiel `#3A7BD5`; leer heißt ohne Farbe |
 
@@ -36,7 +36,7 @@ Ein Bereich lässt sich erst entfernen, wenn seine Schichten entfernt sind.
 
 | Feld | Bedeutung |
 |---|---|
-| Code | Kürzel, wie es im Plan steht, zugleich die Id; lässt sich nach dem Anlegen nicht ändern |
+| Code | wie die Abwesenheit im Plan steht, zugleich die Id; lässt sich nach dem Anlegen nicht ändern |
 | Name | zum Beispiel „Urlaub“ |
 | Senkt das Soll | An Arbeitstagen zählt der Tag mit Wochenstunden durch 5 wie gearbeitet. Ein für Urlaub und Krankenstand, aus für unbezahlte Abwesenheit. |
 | Belastet das Stundenkonto | Die angerechneten Stunden gehen vom Stundenkonto ab, etwa bei Zeitausgleich. |
@@ -60,12 +60,12 @@ Stundenkonto“.
 | Feld | Bedeutung |
 |---|---|
 | Bereich | zu welchem Bereich die Schicht gehört; nur Personen dieses Bereichs bekommen sie |
-| Code | Kürzel, wie es im Plan steht, zum Beispiel „A1“ |
+| Code | wie die Schicht im Plan steht, zum Beispiel „A1“ |
 | Name | zum Beispiel „Annahme früh“ |
 | Beginn, Ende | Liegt das Ende vor dem Beginn, endet die Schicht am nächsten Tag (Nachtdienst). Ein Dienst darf höchstens so lang sein wie unter Regeln eingestellt (Standard 12 Stunden). |
 | Kategorie | die [Schichtart](begriffe.md#schichtart) Früh, Tag, Spät oder Nacht für Vorwärtsrotation, Abwechslung, gewohnte Verteilung und Einschränkungen. Standard **aus den Zeiten**: Nacht, wenn genug Stunden in der Nachtzeit liegen (Standard 2 Stunden zwischen 22 und 6 Uhr), sonst nach Beginn und Ende Früh, Tag oder Spät. |
 | Farbe | Farbe im Plan; leer heißt ohne Farbe |
-| Fair verteilen | Dienste dieser Schicht werden über die Fairness gleichmäßig auf alle verteilt, die sie machen können. die Nachtschichten. |
+| Fair verteilen | Dienste dieser Schicht werden über die Fairness gleichmäßig auf alle verteilt, die sie machen können. Nur ankreuzen, wenn eine Schicht so verteilt werden soll; Nachtschichten brauchen das nicht, sie haben ihre eigene Fairness-Regel. |
 
 Neue Schichten bekommen ihre Id vom Programm; der Code lässt sich ändern.
 
@@ -112,10 +112,10 @@ Wichtig, damit der Bedarf so wirkt wie gedacht:
 Die Feiertage eines neuen Jahres kommen mit dem Datensatz oder werden hier eingetragen, bevor der erste Monat des
 Jahres geplant wird.
 
-## Ids und Kürzel
+## Ids und Codes
 
-Bereiche und Abwesenheitsarten haben als Id ihr Kürzel. Es wird beim Anlegen eingegeben und lässt sich danach
-nicht mehr ändern. Ein entferntes Kürzel bleibt gesperrt und kann nicht neu vergeben werden, damit alte Pläne und
+Bereiche und Abwesenheitsarten haben als Id ihren Code. Er wird beim Anlegen eingegeben und lässt sich danach
+nicht mehr ändern. Ein entfernter Code bleibt gesperrt und kann nicht neu vergeben werden, damit alte Pläne und
 die Historie eindeutig bleiben. Schichten und Personen bekommen ihre Id vom Programm.
 
 ## Entfernen

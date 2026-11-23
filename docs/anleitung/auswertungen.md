@@ -53,7 +53,8 @@ hat ein **i** mit einer Erklärung.
   nicht abwesend ist.
 - **Vom Stundenkonto:** Stunden aus Abwesenheiten, die das Konto belasten (Zeitausgleich).
 - **Wochenschnitt (Durchrechnung):** der Schnitt der Dienststunden je Woche über den Durchrechnungszeitraum, mit
-  diesem Monat. „Historie unvollständig“ heißt: Die Vormonate reichen nicht so weit zurück, der Wert ist dann nur
+  diesem Monat, und die eigene Grenze der Person, etwa „41,2 h von 44,0 h“: ihre Wochenstunden plus Spielraum
+  (Standard 10 %), höchstens 46,16 h. „Historie unvollständig“ heißt: Die Vormonate reichen nicht so weit zurück, der Wert ist dann nur
   ein Hinweis.
 
 **Belastung und Wünsche:** Nächte, Wochenenden im Dienst und frei, Feiertage, fair verteilte Dienste, Einzeldienste

@@ -248,7 +248,7 @@ weitergibt: [betrieb.md](betrieb.md#protokolle-des-desktop-programms).
 | `GET` | `/api/desktop/update?check=true\|false` | `{ "current", "source", "checkOnStart", "available": { "version", "notes", "title", "url" } \| null, "error", "errorCode", "errorParams", "ask", "releases" }` (die drei `error*` sind `null` ohne Fehler; `title` und `url`, die https-Seite des Release, nur von einer Releases-API) |
 | `PUT` | `/api/desktop/update/settings` | Body `{ "source": "...", "checkOnStart": bool }`, Antwort die gespeicherten Einstellungen. `400` bei ungültiger Quelle |
 | `POST` | `/api/desktop/update/install` | lädt das neueste Update der Quelle, prüft es, `202 { "version" }`, dann Neustart (Code 3). `400` mit Grund |
-| `POST` | `/api/desktop/update/file` | Body: die Update-Datei (`application/octet-stream`, bis 1 GB), sonst wie `install` |
+| `POST` | `/api/desktop/update/file` | Body: die Update-Datei (`application/octet-stream`, bis 1 GiB), sonst wie `install` |
 
 `check=false` liest nur die Einstellungen, `check=true` fragt die Quelle. Ist die Quelle nicht erreichbar, steht
 der Grund in `errorCode` und `errorParams` (deutscher Ersatztext in `error`). Fehler von `settings`, `install` und
@@ -315,7 +315,7 @@ Entpacken und vor jedem Start einer installierten Version.
   - Erlaubt sind nur `bundle.json`, `bundle.json.sig` und `app/**`.
   - Pfade mit `..`, `/` am Anfang, `\` oder `:` sind abgelehnt.
   - Kein Name darf doppelt vorkommen.
-  - Höchstens 20 000 Einträge und 1 GB, gezählt an den tatsächlich gelesenen Bytes.
+  - Höchstens 20 000 Einträge und 1 GiB, gezählt an den tatsächlich gelesenen Bytes.
   - Zuerst werden `bundle.json` und die Signatur im Archiv geprüft (mit Größengrenze), bevor irgendetwas
     entpackt wird. Danach werden nur die in `bundle.json` gelisteten Dateien entpackt und dabei gehasht. Eine
     nicht gelistete Datei bricht die Prüfung ab, bevor etwas geschrieben wird. Die entpackten Dateien werden
