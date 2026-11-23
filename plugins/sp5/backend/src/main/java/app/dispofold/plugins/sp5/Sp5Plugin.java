@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -175,12 +176,21 @@ public class Sp5Plugin implements Plugin, ImportSource {
         return mapping(bytes(mapping));
     }
 
+    @SuppressWarnings("unchecked")
     private static Map<String, Object> mapping(byte[] file) {
+        Object mapping;
         try {
-            return Sp5Export.loadMapping(file);
-        } catch (Sp5Export.Sp5Error | PyJson.DecodeError e) {
+            mapping = PyJson.load(file);
+        } catch (PyJson.DecodeError e) {
             throw PluginErrors.error(Status.BAD_REQUEST, "plugin.sp5.mapping", Map.of(), e.getMessage());
         }
+        // the check of Sp5Export.loadMapping, its problems in plain German as on the page Zuordnung
+        List<String> errors = Sp5Export.mappingErrors(mapping);
+        if (!errors.isEmpty()) {
+            throw PluginErrors.error(Status.BAD_REQUEST, "plugin.sp5.mapping", Map.of(),
+                    String.join(" ", Sp5MappingText.plain(errors)));
+        }
+        return (Map<String, Object>) mapping;
     }
 
     /** Dispofold's corrections file as sp5_export.py reads it with --corrections. */

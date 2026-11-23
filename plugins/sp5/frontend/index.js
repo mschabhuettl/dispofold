@@ -1,6 +1,6 @@
-// Front end of the plugin sp5 (import from a Schichtplaner 5 folder): its pages in its own menu group (Übersicht with
-// the run and its import, Bericht, Zuordnung, Vergleich), its settings under Einstellungen → Erweiterungen (folder,
-// mapping, options), its import source on the Daten page, and the result of an export as files for the comparison
+// Front end of the plugin sp5 (import from a Schichtplaner 5 folder): its pages in its own menu group (Lauf und Import
+// with the run and its import, the one place to import from it; Bericht, Zuordnung, Vergleich), its settings under
+// Einstellungen → Erweiterungen (folder, mapping, options), and the result of an export as files for the comparison
 // with sp5_export.py. Only lib/plugin-api.js, its own files and the core's classes.
 import { folderPicker, guarded, h, info, saveBlob, t } from '../../../frontend/src/lib/plugin-api.js';
 import * as compare from './compare.js';
@@ -64,21 +64,14 @@ export default {
       }, (e) => box.append(h('p.alert.alert-error', { role: 'alert' }, e.message)));
     },
   },
-  importSource: {
-    label: 'plugin.sp5.import',
-    render(root, ctx) {
-      const months = monthFields(ctx, 'sp5-import');
-      root.append(months.element);
-      return () => months.value();
-    },
-  },
   help: [
+    { page: 'echte-daten', title: 'Echte Daten aus Schichtplaner 5' },
     { page: 'ablauf', title: 'Ablauf: von Schichtplaner 5 zum Import' },
     { page: 'sp5', title: 'Import aus Schichtplaner 5' },
-    { page: 'uebersicht', title: 'Schichtplaner 5: Übersicht' },
+    { page: 'uebersicht', title: 'Schichtplaner 5: Lauf und Import' },
     { page: 'bericht', title: 'Schichtplaner 5: Bericht' },
     { page: 'zuordnung', title: 'Schichtplaner 5: Zuordnung' },
     { page: 'lauf-vergleich', title: 'Schichtplaner 5: Vergleich' },
-    { page: 'vergleich', title: 'Vergleich mit sp5-export' },
+    { page: 'technik', title: 'Schichtplaner 5: Technik und Vergleich mit sp5-export' },
   ],
 };

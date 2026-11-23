@@ -117,48 +117,63 @@ function matches(pattern, value) {
 }
 const object = (x) => x && typeof x === 'object' && !Array.isArray(x);
 
+/** The lists of the mapping as the editor names them: the section and one of its entries. */
+const NAMES = {
+  areas: ['Bereiche', 'Bereich'], shifts: ['Schichtregeln', 'Schichtregel'], groups: ['Gruppen', 'Gruppenregel'],
+  ignoreShifts: ['Ignorierte Schichten', 'Ignorierte Schicht'], ignoreGroups: ['Ignorierte Gruppen', 'Ignorierte Gruppe'],
+  excludeGroups: ['Ausgeschlossene Gruppen', 'Ausgeschlossene Gruppe'], compensatoryRestAbsences: ['Ersatzruhe', 'Ersatzruhe'],
+  ignoreAbsences: ['Ignorierte Abwesenheiten', 'Ignorierte Abwesenheit'],
+};
+
+/** The problems of a mapping in plain German, as the plugin's routes word those of the port (Sp5MappingText). */
 export function mappingErrors(m) {
-  if (!object(m)) return ['die Zuordnung muss ein JSON-Objekt sein'];
+  if (!object(m)) return ['Die Zuordnung muss ein JSON-Objekt sein, also mit { beginnen und mit } enden.'];
   const errors = [];
   const known = ['areas', 'shifts', 'groups', 'ignoreShiftsAsAbsence', ...LISTS];
-  for (const k of Object.keys(m).filter((x) => !known.includes(x)).sort()) errors.push(`unbekannter Schlüssel '${k}'`);
-  for (const k of ['areas', 'shifts', 'groups']) if (!(k in m)) errors.push(`Pflichtschlüssel '${k}' fehlt`);
-  for (const k of ['areas', 'shifts', 'groups', ...LISTS]) if (k in m && !Array.isArray(m[k])) errors.push(`'${k}' muss eine Liste sein`);
-  if ('ignoreShiftsAsAbsence' in m && typeof m.ignoreShiftsAsAbsence !== 'boolean') errors.push("'ignoreShiftsAsAbsence' muss true oder false sein");
+  for (const k of Object.keys(m).filter((x) => !known.includes(x)).sort()) {
+    errors.push(`Unbekannter Schlüssel „${k}“: Der Import kennt ihn nicht und weist die Zuordnung mit ihm ab.`);
+  }
+  for (const k of ['areas', 'shifts', 'groups']) if (!(k in m)) errors.push(`Der Abschnitt „${NAMES[k][0]}“ fehlt.`);
+  for (const k of ['areas', 'shifts', 'groups', ...LISTS]) if (k in m && !Array.isArray(m[k])) errors.push(`Der Abschnitt „${NAMES[k][0]}“ muss eine Liste sein.`);
+  if ('ignoreShiftsAsAbsence' in m && typeof m.ignoreShiftsAsAbsence !== 'boolean') errors.push('„Dienste auf ignorierten Schichten“ muss ja oder nein sein.');
   const list = (k) => (Array.isArray(m[k]) ? m[k] : []);
-  if (Array.isArray(m.areas) && !m.areas.length) errors.push("'areas' ist leer");
+  if (Array.isArray(m.areas) && !m.areas.length) errors.push('Es ist noch kein Bereich eingetragen.');
   const ids = new Set();
+  const noArea = (a) => `Der Bereich „${a}“ ist unter „Bereiche“ nicht eingetragen.`;
   list('areas').forEach((a, i) => {
-    const where = `areas, Eintrag ${i + 1}`;
-    if (!object(a)) return errors.push(`${where}: muss ein Objekt sein`);
-    if (typeof a.id !== 'string' || !a.id.trim()) errors.push(`${where}: 'id' fehlt oder ist kein Text`);
-    else if (ids.has(a.id)) errors.push(`${where}: Bereich '${a.id}' doppelt`);
+    const where = `Bereich ${i + 1}`;
+    if (!object(a)) return errors.push(`${where}: Muss ein JSON-Objekt mit Feldern sein.`);
+    if (typeof a.id !== 'string' || !a.id.trim()) errors.push(`${where}: Die Id fehlt.`);
+    else if (ids.has(a.id)) errors.push(`${where}: Die Id „${a.id}“ gibt es schon.`);
     else ids.add(a.id);
-    for (const k of ['name', 'color']) if (typeof a[k] !== 'string') errors.push(`${where}: '${k}' fehlt oder ist kein Text`);
+    if (typeof a.name !== 'string') errors.push(`${where}: Der Name fehlt.`);
+    if (typeof a.color !== 'string') errors.push(`${where}: Die Farbe fehlt.`);
     return undefined;
   });
   const pattern = (where, p) => {
-    if (typeof p !== 'string' || !p) return errors.push(`${where} ist kein Text`);
+    if (typeof p !== 'string' || !p) return errors.push(`${where}: Das Muster ist leer oder kein Text.`);
     if (p.startsWith('re:')) {
-      try { regex(p); } catch (e) { errors.push(`${where} ist kein gültiger regulärer Ausdruck (${e.message.split(': ').at(-1)})`); }
+      try { regex(p); } catch (e) { errors.push(`${where}: Das Muster „${p}“ ist kein gültiger regulärer Ausdruck (${e.message.split(': ').at(-1)}).`); }
     }
     return undefined;
   };
   for (const k of ['shifts', 'groups']) {
     list(k).forEach((r, i) => {
-      const where = `${k}, Eintrag ${i + 1}`;
-      if (!object(r)) return errors.push(`${where}: muss ein Objekt sein`);
-      pattern(`${where}: 'match'`, r.match);
+      const where = `${NAMES[k][1]} ${i + 1}`;
+      if (!object(r)) return errors.push(`${where}: Muss ein JSON-Objekt mit Feldern sein.`);
+      if (!('match' in r)) errors.push(`${where}: Das Muster fehlt.`);
+      else pattern(where, r.match);
       if (k === 'shifts') {
-        if (!ids.has(r.areaId)) errors.push(`${where}: 'areaId' '${r.areaId}' ist kein Bereich aus 'areas'`);
-        if ('category' in r && !['EARLY', 'DAY', 'LATE', 'NIGHT'].includes(r.category)) errors.push(`${where}: 'category' muss EARLY, DAY, LATE, NIGHT sein`);
-        if ('unpopular' in r && typeof r.unpopular !== 'boolean') errors.push(`${where}: 'unpopular' muss true oder false sein`);
-      } else if (!Array.isArray(r.areaIds) || !r.areaIds.length) errors.push(`${where}: 'areaIds' muss eine nicht leere Liste sein`);
-      else for (const a of r.areaIds) if (!ids.has(a)) errors.push(`${where}: 'areaIds' enthält '${a}', keinen Bereich aus 'areas'`);
+        if (r.areaId == null) errors.push(`${where}: Es ist kein Bereich gewählt.`);
+        else if (!ids.has(r.areaId)) errors.push(`${where}: ${noArea(r.areaId)}`);
+        if ('category' in r && !['EARLY', 'DAY', 'LATE', 'NIGHT'].includes(r.category)) errors.push(`${where}: Die Kategorie muss Früh, Tag, Spät oder Nacht sein, oder leer (aus den Zeiten).`);
+        if ('unpopular' in r && typeof r.unpopular !== 'boolean') errors.push(`${where}: „Fair verteilen“ muss ja, nein oder keine Angabe sein.`);
+      } else if (!Array.isArray(r.areaIds) || !r.areaIds.length) errors.push(`${where}: Es ist kein Bereich angekreuzt.`);
+      else for (const a of r.areaIds) if (!ids.has(a)) errors.push(`${where}: ${noArea(a)}`);
       return undefined;
     });
   }
-  for (const k of LISTS) list(k).forEach((p, i) => pattern(`${k}, Eintrag ${i + 1}`, p));
+  for (const k of LISTS) list(k).forEach((p, i) => pattern(`${NAMES[k][1]} ${i + 1}`, p));
   return errors;
 }
 
@@ -213,17 +228,21 @@ function proposals(m, discarded) {
 
 const ok = (body) => ({ status: 200, body });
 const error = (status, code, params, text) => ({ status, body: { code, params, error: text } });
+/** The settings as the pages name them (Sp5Settings.LABELS), for the param "label". */
+const LABELS = { options: 'Optionen', historyMonths: 'Monate Historie (0 bis 24)', demand: 'Bedarf', mapping: 'Zuordnung',
+  'proposals.share': 'Anteil für eine Schicht (1 bis 100 %)', key: 'Vorschlag', month: 'Monat' };
+const invalid = (field) => error(400, 'plugin.sp5.setting', { field, label: LABELS[field] ?? field }, `Einstellung ungültig: ${field}`);
 const integer = (v, min) => Number.isInteger(v) && v >= min;
 
 /** The options of a request merged with the settings and checked as the settings are; an error answer or the options. */
 function options(saved, given) {
-  if (given != null && !object(given)) return { refused: error(400, 'plugin.sp5.setting', { field: 'options' }, 'Einstellung ungültig: options') };
+  if (given != null && !object(given)) return { refused: invalid('options') };
   const o = Object.fromEntries(Object.keys(OPTIONS).map((k) => [k, given && k in given ? given[k] : saved[k]]));
   const bad = !integer(o.historyMonths, 0) || o.historyMonths > 24 ? 'historyMonths'
     : ['areasFromHistory', 'shiftsFromHistory'].find((k) => o[k] !== null && !integer(o[k], 1))
       ?? (!['history', 'sp5'].includes(o.demand) ? 'demand' : !integer(o.mixMinDuties, 1) ? 'mixMinDuties'
         : ['hiddenShiftsMonths', 'recentMonths'].find((k) => !integer(o[k], 0)) ?? (typeof o.shiftMix !== 'boolean' ? 'shiftMix' : null));
-  return bad ? { refused: error(400, 'plugin.sp5.setting', { field: bad }, `Einstellung ungültig: ${bad}`) } : { options: o };
+  return bad ? { refused: invalid(bad) } : { options: o };
 }
 
 export function mock() {
@@ -237,7 +256,7 @@ export function mock() {
   function inputs(body) {
     if (!object(settings.mapping)) return { refused: error(400, 'plugin.sp5.noMapping', {}, 'Die Zuordnung fehlt') };
     if (!settings.root) return { refused: error(400, 'plugin.sp5.noFolder', {}, 'Der Ordner fehlt') };
-    if (!/^\d{4}-\d{2}$/.test(body?.month ?? '')) return { refused: error(400, 'plugin.sp5.setting', { field: 'month' }, 'Einstellung ungültig: month') };
+    if (!/^\d{4}-\d{2}$/.test(body?.month ?? '')) return { refused: invalid('month') };
     const o = options(settings.options, body?.options);
     return o.refused ? o : { request: { month: body.month, to: body.to || null, options: o.options } };
   }
@@ -247,17 +266,17 @@ export function mock() {
     const is = (m, p) => method === m && path === p;
     if (is('GET', 'einstellungen')) return ok(settings);
     if (is('PUT', 'einstellungen')) {
-      if (!object(body)) return error(400, 'plugin.sp5.setting', { field: 'options' }, 'Einstellung ungültig: options');
+      if (!object(body)) return invalid('options');
       const o = options(OPTIONS, body.options);
       if (o.refused) return o.refused;
       const mapping = body.mapping ?? null;
-      if (mapping !== null && !object(mapping)) return error(400, 'plugin.sp5.setting', { field: 'mapping' }, 'Einstellung ungültig: mapping');
+      if (mapping !== null && !object(mapping)) return invalid('mapping');
       const problems = mapping ? mappingErrors(mapping) : [];
-      if (problems.length) return error(400, 'plugin.sp5.mapping', {}, problems.join('; '));
+      if (problems.length) return error(400, 'plugin.sp5.mapping', {}, problems.join(' '));
       const p = { ...PROPOSAL_SETTINGS, ...(object(body.proposals) ? body.proposals : {}) };
       const bad = !integer(p.share, 1) || p.share > 100 ? 'share' : !integer(p.minDuties, 0) ? 'minDuties' : !integer(p.months, 0) ? 'months'
         : !Array.isArray(p.restWords) || p.restWords.some((w) => typeof w !== 'string' || !w.trim()) ? 'restWords' : null;
-      if (bad) return error(400, 'plugin.sp5.setting', { field: `proposals.${bad}` }, `Einstellung ungültig: proposals.${bad}`);
+      if (bad) return invalid(`proposals.${bad}`);
       // the discarded proposals change only through their routes
       settings = { root: String(body.root ?? ''), path: String(body.path ?? ''), mapping, options: o.options,
         proposals: { ...p, discarded: settings.proposals.discarded } };
@@ -268,7 +287,7 @@ export function mock() {
       return ok(proposals(body, settings.proposals.discarded));
     }
     if (is('POST', 'zuordnung/vorschlaege/verwerfen')) {
-      if (typeof body?.key !== 'string' || !body.key.trim()) return error(400, 'plugin.sp5.setting', { field: 'key' }, 'Einstellung ungültig: key');
+      if (typeof body?.key !== 'string' || !body.key.trim()) return invalid('key');
       if (!settings.proposals.discarded.includes(body.key)) settings.proposals.discarded.push(body.key);
       return ok(settings);
     }

@@ -179,12 +179,12 @@ public class Sp5Resource {
                 .build();
     }
 
-    /** The problems of a mapping, as the import names them; empty if it is valid. */
+    /** The problems of a mapping the import would refuse, in plain German; empty if it is valid. */
     @POST
     @Path("zuordnung/pruefen")
     @Consumes(MediaType.APPLICATION_JSON)
     public Map<String, Object> check(JsonNode mapping) {
-        return Map.of("errors", Sp5Export.mappingErrors(python(mapping)));
+        return Map.of("errors", Sp5MappingText.plain(Sp5Export.mappingErrors(python(mapping))));
     }
 
     /** Which rule of the mapping each shift, group and absence type of the folder in the settings meets. */
@@ -193,7 +193,7 @@ public class Sp5Resource {
     @Consumes(MediaType.APPLICATION_JSON)
     public Map<String, Object> codes(JsonNode mapping) {
         Object m = python(mapping);
-        List<String> errors = Sp5Export.mappingErrors(m);
+        List<String> errors = Sp5MappingText.plain(Sp5Export.mappingErrors(m));
         return Sp5Codes.codes(plugin.folder(plugin.settings()), m, errors);
     }
 

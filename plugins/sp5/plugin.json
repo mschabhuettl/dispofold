@@ -1,6 +1,6 @@
 {
   "id": "sp5",
   "name": "Schichtplaner 5",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "Importiert Stammdaten, Abwesenheiten, Dienste und Bedarf aus einem Ordner von Schichtplaner 5, nur lesend, mit der Korrekturdatei aus Dispofold. Unabhängiges Projekt ohne Verbindung zum Hersteller."
 }

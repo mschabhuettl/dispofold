@@ -3,7 +3,8 @@
 // search, sorting by mouse and keyboard, person links, the CSV), the mapping editor (an invalid rule, a rule that
 // matches nothing, moving and removing rows with the keyboard, saving, JSON in and out, unknown keys, leaving with
 // unsaved changes), the comparison (no import yet, with and without the corrections, an uploaded file), the import from
-// Übersicht (also keeping changes), readers without the group, and the light and dark theme.
+// Lauf und Import (also keeping changes, a closed month), no import section on Daten, page titles as their tabs, month
+// fields wide enough, readers without the group, and the light and dark theme.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { MAPPING } from './mock.mjs';
@@ -52,8 +53,27 @@ export default async function run({ base, browser, check, shots }) {
   const menu = await page.$$eval('#nav a', (as) => as.map((a) => a.textContent));
   check('own menu group', menu.includes('Schichtplaner 5'), menu.join(', '));
   const tabs = await page.$$eval('.page-tabs a', (as) => as.map((a) => a.textContent));
-  check('four pages as tabs', tabs.join('|') === 'Übersicht|Bericht|Zuordnung|Vergleich', tabs.join('|'));
+  check('four pages as tabs', tabs.join('|') === 'Lauf und Import|Bericht|Zuordnung|Vergleich', tabs.join('|'));
   check('intro with help link', (await page.locator('.page-intro a').count()) === 1);
+  for (const path of ['uebersicht', 'bericht', 'zuordnung', 'lauf-vergleich']) {
+    await open(page, `${P}/${path}`, '#main h1');
+    const [title, tab] = [await text(page, '#main h1'), await text(page, '.page-tabs a[aria-current="page"]')];
+    check(`${path}: the page title is the name of its tab`, title === tab, `${title} / ${tab}`);
+  }
+  await open(page, `${P}/uebersicht`, '#h-sp5-run');
+  const widths = await page.$$eval('#sp5-run-month, #sp5-run-to', (xs) => xs.map((x) => {
+    const free = document.createElement('input');
+    free.type = 'month';
+    document.body.append(free);
+    const w = free.offsetWidth;
+    free.remove();
+    return x.offsetWidth >= w;
+  }));
+  check('the month fields are not cut off (at least as wide as a month field on its own)', widths.length === 2 && widths.every(Boolean));
+  await open(page, '#/import', '#main h1');
+  await page.waitForTimeout(300);
+  check('one import place: no import section of the plugin on Daten', (await page.locator('#h-plugin-sp5').count()) === 0);
+  await open(page, `${P}/uebersicht`, '#h-sp5-run');
 
   // ---- before the first run ----
   check('Übersicht: empty state without a run', (await text(page, '#sp5-no-run'))?.includes('Noch kein Lauf'), await text(page, '#sp5-summary'));
@@ -68,11 +88,15 @@ export default async function run({ base, browser, check, shots }) {
   // ---- missing mapping, bad option ----
   await api(page, 'PUT', '/api/plugins/sp5/einstellungen', { root: '/srv/dispofold/quellen', path: '2027', mapping: null });
   await open(page, `${P}/uebersicht`, '#h-sp5-run');
-  check('a missing mapping shows with a link to the settings', (await text(page, '#main .alert-error'))?.includes('Die Zuordnung fehlt')
-    && (await page.getAttribute('#main .alert-error a', 'href')) === '#/erweiterungen');
+  check('a missing mapping shows with a link to the page Zuordnung', (await text(page, '#main .alert-error'))?.includes('Die Zuordnung fehlt')
+    && (await page.getAttribute('#main .alert-error a', 'href')) === `${P}/zuordnung`);
   await page.click('#sp5-run');
   await page.waitForSelector('#sp5-summary .alert-error');
   check('a run without mapping is refused', (await text(page, '#sp5-summary'))?.includes('Die Zuordnung fehlt'));
+  await page.click('#main .alert-error a');
+  await page.waitForSelector('#sp5-codes-summary, #sp5-propose');
+  check('"Zur Zuordnung" opens the tab Zuordnung', page.url().endsWith(`${P}/zuordnung`)
+    && (await text(page, '.page-tabs a[aria-current="page"]')) === 'Zuordnung', page.url());
   await api(page, 'PUT', '/api/plugins/sp5/einstellungen', { root: '/srv/dispofold/quellen', path: '2027', mapping: MAPPING });
   await open(page, `${P}/uebersicht`, '#h-sp5-run');
   check('options prefilled from the settings', (await page.inputValue('#sp5-run-historyMonths')) === '12');
@@ -80,7 +104,7 @@ export default async function run({ base, browser, check, shots }) {
   await page.fill('#sp5-run-historyMonths', '30');
   await page.click('#sp5-run');
   await page.waitForSelector('#sp5-summary .alert-error');
-  check('a bad option is refused with its field', (await text(page, '#sp5-summary'))?.includes('ungültig (historyMonths)'), await text(page, '#sp5-summary'));
+  check('a bad option is refused with its name on the page', (await text(page, '#sp5-summary'))?.includes('ungültig: Monate Historie (0 bis 24)'), await text(page, '#sp5-summary'));
   await page.fill('#sp5-run-historyMonths', '6');
   await page.click('#sp5-run-default');
   await page.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('als Standard gespeichert'));
@@ -137,6 +161,17 @@ export default async function run({ base, browser, check, shots }) {
   await page.click('#import-preview button.btn-primary');
   await page.waitForFunction(() => document.querySelector('#h-sp5-import ~ div .alert:not(.corrections-hint > .alert)')?.textContent.includes('aus Dispofold übernommen'));
   check('the import keeps the changes', true);
+  // a closed month of the run: the note with the next step before the import
+  await api(page, 'POST', `/api/plans/${MONTH}/finalize`);
+  await open(page, `${P}/uebersicht`, '#sp5-import-request');
+  await page.waitForSelector('#sp5-import-closed .alert');
+  check('a closed month of the run: the note says the next step', (await text(page, '#sp5-import-closed'))?.includes('Abgeschlossen: Jänner 2027')
+    && (await text(page, '#sp5-import-closed'))?.includes('Monat wieder öffnen')
+    && (await page.getAttribute('#sp5-import-closed a', 'href')) === '#/import', await text(page, '#sp5-import-closed'));
+  await api(page, 'POST', `/api/plans/${MONTH}/reopen`);
+  await open(page, `${P}/uebersicht`, '#sp5-import-request');
+  await page.waitForTimeout(300);
+  check('an open month: no note', (await page.locator('#sp5-import-closed .alert').count()) === 0);
 
   // ---- Bericht ----
   await open(page, `${P}/bericht`, '#sp5-report-count');
@@ -211,7 +246,7 @@ export default async function run({ base, browser, check, shots }) {
   check('unsaved changes are marked', await page.isVisible('#sp5-map-dirty'));
   await page.fill('[data-key="shifts.2.match"]', 're:(');
   await page.waitForFunction(() => document.querySelector('#sp5-map-problems')?.textContent.includes('regulärer Ausdruck'));
-  check('an invalid rule shows the message', (await text(page, '#sp5-map-problems'))?.includes('shifts, Eintrag 3'), await text(page, '#sp5-map-problems'));
+  check('an invalid rule shows the message in plain words', (await text(page, '#sp5-map-problems'))?.includes('Schichtregel 3: Das Muster „re:(“ ist kein gültiger regulärer Ausdruck'), await text(page, '#sp5-map-problems'));
   await page.click('#sp5-map-save');
   await page.waitForSelector('#toast:not([hidden])');
   check('the server refuses to save an invalid mapping', (await text(page, '#toast'))?.includes('regulärer Ausdruck'), await text(page, '#toast'));
@@ -247,6 +282,11 @@ export default async function run({ base, browser, check, shots }) {
   await page.focus('[data-key="areas.2.remove"]');
   await page.keyboard.press('Enter');
   check('an entry that is no object can be removed', !(await text(page, '[data-section="areas"]'))?.includes('ungültig'));
+  await page.fill('#sp5-map-json', JSON.stringify({ ...MAPPING, areas: [] }));
+  await page.click('#sp5-map-apply');
+  await page.waitForFunction(() => document.querySelector('#sp5-map-problems')?.textContent.includes('Bereich'));
+  check('no area: said in plain words', (await text(page, '#sp5-map-problems'))?.includes('Es ist noch kein Bereich eingetragen.')
+    && !(await text(page, '#sp5-map-problems'))?.includes("'areas'"), await text(page, '#sp5-map-problems'));
   await page.fill('#sp5-map-json', '{ kaputt');
   await page.click('#sp5-map-apply');
   await page.waitForSelector('#toast:not([hidden])');
@@ -376,7 +416,7 @@ export default async function run({ base, browser, check, shots }) {
   await page.fill('#sp5-propose-share', '0');
   await page.click('#sp5-propose-save');
   await page.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('ungültig'));
-  check('a share of 0 is refused', (await text(page, '#toast'))?.includes('proposals.share'), await text(page, '#toast'));
+  check('a share of 0 is refused, named as on the page', (await text(page, '#toast'))?.includes('Anteil für eine Schicht'), await text(page, '#toast'));
   await page.fill('#sp5-propose-share', '70');
   await page.click('#sp5-propose-save');
   await page.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('Einstellungen der Vorschläge gespeichert'));

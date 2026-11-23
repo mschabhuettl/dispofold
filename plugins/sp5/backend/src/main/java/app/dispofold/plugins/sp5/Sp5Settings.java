@@ -156,8 +156,30 @@ final class Sp5Settings {
         return n.isIntegralNumber() && n.canConvertToInt() && n.asInt() >= min && n.asInt() <= max;
     }
 
+    /** The settings as the pages name them, for the error text (param "label"; "field" stays the key). */
+    private static final Map<String, String> LABELS = Map.ofEntries(
+            Map.entry("options", "Optionen"),
+            Map.entry("proposals", "Einstellungen der Vorschläge"),
+            Map.entry("folder", "Ordner"),
+            Map.entry("historyMonths", "Monate Historie (0 bis " + MAX_HISTORY_MONTHS + ")"),
+            Map.entry("areasFromHistory", "Bereiche aus der Historie ab … Diensten (leer oder ab 1)"),
+            Map.entry("shiftsFromHistory", "Schichten seltener als … Dienste nur auf Anfrage (leer oder ab 1)"),
+            Map.entry("demand", "Bedarf"),
+            Map.entry("mixMinDuties", "Gewohnte Verteilung ab … Diensten (ab 1)"),
+            Map.entry("hiddenShiftsMonths", "Ausgeblendete Schichten mit Diensten in den … Monaten davor (ab 0)"),
+            Map.entry("recentMonths", "Bereiche ohne Dienst in den letzten … Monaten nur auf Anfrage (ab 0)"),
+            Map.entry("shiftMix", "Gewohnte Verteilung übernehmen"),
+            Map.entry("nightsFair", "Nachtschichten automatisch fair verteilen"),
+            Map.entry("proposals.share", "Anteil für eine Schicht (1 bis 100 %)"),
+            Map.entry("proposals.minDuties", "Seltene Schicht: weniger Dienste als (ab 0)"),
+            Map.entry("proposals.months", "Zeitraum in Monaten (0 bis 1200)"),
+            Map.entry("proposals.restWords", "Wörter für die Ersatzruhe (keines leer)"),
+            Map.entry("proposals.discarded", "Verworfene Vorschläge"),
+            Map.entry("mapping", "Zuordnung"),
+            Map.entry("key", "Vorschlag"));
+
     static jakarta.ws.rs.WebApplicationException invalid(String field) {
-        return PluginErrors.error(Status.BAD_REQUEST, "plugin.sp5.setting", Map.of("field", field),
-                "Einstellung ungültig: " + field);
+        return PluginErrors.error(Status.BAD_REQUEST, "plugin.sp5.setting",
+                Map.of("field", field, "label", LABELS.getOrDefault(field, field)), "Einstellung ungültig: " + field);
     }
 }
