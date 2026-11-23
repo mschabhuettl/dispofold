@@ -1,5 +1,5 @@
 // Playwright check of the terms: every page, for planners and viewers, shows none of the old names (Sollstunden,
-// Fixe Dienste, Eingaben geändert, Schichtmix, Familienwunsch, hart/weich, ...) in its text, tooltips or labels; the
+// Fixe Dienste, Eingaben geändert, Schichtmix, Familienwunsch, hart/weich, Strafe, ...) in its text, tooltips or labels; the
 // plan status reads Entwurf or abgeschlossen. Also: the menu has the groups Dienstplan, Prüfen, Eingaben, Personen and Einstellungen, viewers get Dienstplan, Personen and Fairness only, the address of Daten
 // shows viewers the Dienstplan, the month picker shows on month pages only, the people list names the areas, the mix fields have labels, the note on the
 // night fairness is shown in the person form and next to the mix on the person page, the import page shows no paths.
@@ -13,7 +13,7 @@ import { launchBrowser } from './browser.mjs';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const month = '2027-01';
-const OLD = /Sollstunden|Monatssoll|Ziel für diesen Plan|\bfixe[nrs]?\b|Eingaben geändert|Vormonat geändert|Schichtmix|\bMix\b|Familienw[uü]nsch|Blocktage|Wer kann gefragt|\bhart(e[nrs]?)?\b|\bweich(e[nrs]?)?\b|\bStufen?\b/i;
+const OLD = /Sollstunden|Monatssoll|Ziel für diesen Plan|\bfixe[nrs]?\b|Eingaben geändert|Vormonat geändert|Schichtmix|\bMix\b|Familienw[uü]nsch|Blocktage|Wer kann gefragt|\bhart(e[nrs]?)?\b|\bweich(e[nrs]?)?\b|\bStufen?\b|\bStrafen?\b/i;
 const PATHS = /docs\/|dispofold\/dataset|Version 2\b/;
 const port = await new Promise((resolve) => {
   const s = createServer().listen(0, () => { const p = s.address().port; s.close(() => resolve(p)); });

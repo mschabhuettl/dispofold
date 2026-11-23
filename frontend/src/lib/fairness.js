@@ -99,6 +99,40 @@ export function metricSpreads(rows) {
   return Object.fromEntries(METRICS.map((m) => [m.id, spread(rows.map((r) => r.values[m.id]))]));
 }
 
+/**
+ * The figures "Fällt auf" looks at, with the direction that stands out: for planners the loads the fairness rules
+ * compare, single duties, the account after the month and the share of met wishes; for viewers the counts they see.
+ */
+const STANDOUT = {
+  planner: [['nightLoad', 'high'], ['weekendLoad', 'high'], ['holidayLoad', 'high'], ['unpopularLoad', 'high'], ['singleDays', 'high'],
+    ['accountAfter', 'both'], ['wishRate', 'low']],
+  viewer: [['nights', 'high'], ['weekendsWorked', 'high'], ['holidays', 'high'], ['unpopular', 'high'], ['singleDays', 'high']],
+};
+
+/** A value stands out at this many standard deviations from the mean. */
+export const STANDOUT_SD = 2;
+
+/**
+ * "Fällt auf": the people whose value of a figure lies far from the mean of everybody (STANDOUT_SD), the farthest
+ * first, at most limit. Each { person, metric, value, mean, high, distance (in standard deviations) }.
+ */
+export function standouts(rows, canEdit, limit = 5) {
+  const metrics = new Map(METRICS.map((m) => [m.id, m]));
+  const out = [];
+  for (const [id, direction] of STANDOUT[canEdit ? 'planner' : 'viewer']) {
+    const s = spread(rows.map((r) => r.values[id]));
+    if (!s.count || !s.sd) continue;
+    for (const r of rows) {
+      const v = r.values[id];
+      if (v == null) continue;
+      const z = (v - s.mean) / s.sd;
+      if (Math.abs(z) < STANDOUT_SD || (direction === 'high' && z < 0) || (direction === 'low' && z > 0)) continue;
+      out.push({ person: r.person, metric: metrics.get(id), value: v, mean: s.mean, high: z > 0, distance: Math.abs(z) });
+    }
+  }
+  return out.sort((a, b) => b.distance - a.distance).slice(0, limit);
+}
+
 /** Sorts rows by a metric id or 'name'; null values always last. */
 export function sortRows(rows, key, ascending = true) {
   const dir = ascending ? 1 : -1;

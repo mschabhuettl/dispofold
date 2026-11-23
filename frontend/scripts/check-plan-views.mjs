@@ -1,8 +1,9 @@
 // Playwright check of the header and status line of "Dienstplan" (#/plan) and "Plan nach Funktion" (#/funktionen):
 // solver options under a collapsed "Erweitert", Planen, Stopp and Fixierungen lösen in one row, the "Ausgabe" menu
 // (Drucken, exports, Monat abschließen), the legend collapsed and remembered, the coloured headline without the raw
-// score, the rule chips with their list, the sticky gap rows, the checklist before closing the month with its second
-// confirm, and what viewers see. Demo data of the dev server (mock API).
+// score (the score in words only under "Erweitert"), the figures that are no errors said so, the rule chips with their
+// list, the sticky gap rows, the checklist before closing the month with its second confirm and what follows, and
+// what viewers see. Demo data of the dev server (mock API).
 //   npm run build && node scripts/check-plan-views.mjs     (Chromium via `npx playwright install chromium`)
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:net';
@@ -119,7 +120,7 @@ try {
   await page.locator('.roster-wrap table').waitFor();
   check('legend closed after reload', !(await legendOpen(page)));
 
-  // headline: coloured, no raw score in the visible status line (only as tooltip and under "Erweitert")
+  // headline: coloured, no score in the visible status line (only under "Erweitert", in words, the raw score as its tooltip)
   const analysis = await api(page, `/api/plans/${month}/analysis`);
   const state = await api(page, `/api/plans/${month}`);
   const headline = page.locator('.plan-headline');
@@ -134,8 +135,16 @@ try {
   }
   const visible = await page.locator('.statusbar').innerText();
   check('no raw score in the status line', !visible.includes(state.plan.score) && !/\d+hard\//.test(visible), visible.replace(/\n/g, ' | '));
-  check('score as tooltip', (await headline.getAttribute('title')).includes(state.plan.score));
-  check('score under Erweitert', (await advanced.locator('.score').textContent()).includes(state.plan.score));
+  check('no score tooltip on the headline', await headline.getAttribute('title') === null);
+  const words = (await advanced.locator('.score').textContent()) ?? '';
+  check('score under Erweitert in words', words.startsWith(`Bewertung: Regelverstöße ${analysis.hardViolations}, fehlende Besetzung `)
+    && words.includes('Qualität: Abzüge ') && !words.includes(state.plan.score), words);
+  check('the raw score as tooltip under Erweitert', await advanced.locator('.score span[title]').getAttribute('title') === state.plan.score);
+  // figures that are no errors say so: overstaffing and the quality chips
+  check('overstaffing "(kein Fehler)"', !visible.includes('Überbesetzung') || /Überbesetzung: [\d,\u202f\u00a0]+ Personenstunden \(kein Fehler\)/.test(visible),
+    visible.replace(/\n/g, ' | '));
+  check('quality chips labelled as no errors', await page.locator('.chips .chip:not(.chip-hard)').count() === 0
+    || (await page.locator('.chips .chips-label').innerText()) === 'Qualität, kein Fehler:');
   check('gaps shown once', (visible.match(/Lücke/g) ?? []).length <= 1, visible.replace(/\n/g, ' | '));
   // "Einzelne freie Tage" and the block days once: as chip when the rule has one (it lists who and when), else as figure
   const singleDays = async (withChip) => {
@@ -322,6 +331,9 @@ try {
   await closeDialog();
   const list = await page.locator('dialog .checklist li').allInnerTexts();
   check('checklist of three items', list.length === 3, list.join(' | '));
+  const after = await page.locator('#close-month-after').innerText();
+  check('the dialog says what follows: read only, where to reopen', after.includes('nur noch lesbar') && after.includes('„Einstellungen > Daten“')
+    && after.includes('„Monat wieder öffnen“'), after);
   check('plan out of date is open', await page.locator('dialog .checklist li.open').filter({ hasText: 'Plan veraltet' }).count() === 1);
   const confirmButton = page.locator('dialog').getByRole('button', { name: 'Monat abschließen' });
   check('closing needs the second confirm', await confirmButton.isDisabled());

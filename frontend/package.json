@@ -18,6 +18,7 @@
     "check:terms": "node scripts/build.mjs && node scripts/check-terms.mjs",
     "check:night": "node scripts/build.mjs && node scripts/check-night.mjs",
     "check:problems": "node scripts/build.mjs && node scripts/check-problems.mjs",
+    "check:start": "node scripts/build.mjs && node scripts/check-start.mjs",
     "check:people": "node scripts/build.mjs && node scripts/check-people.mjs",
     "check:inputs": "node scripts/build.mjs && node scripts/check-inputs.mjs",
     "check:data": "node scripts/build.mjs && node scripts/check-data.mjs",

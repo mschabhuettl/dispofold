@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { groupHitsByDate, hitEffect, hitSummary } from '../src/lib/explain.js';
+import { goalReasons, groupHitsByDate, hitEffect, hitSummary } from '../src/lib/explain.js';
 
 test('hits are grouped by date with month-level hits first', () => {
   const groups = groupHitsByDate([
@@ -36,4 +36,14 @@ test('the effect of a hit is a word, not its score', () => {
   assert.equal(hitEffect({ level: 'SOFT', score: -1500 }), 'Nachteil');
   assert.equal(hitEffect({ level: 'SOFT', score: 5 }), 'Vorteil');
   assert.equal(hitEffect({ level: 'MEDIUM', score: 0 }), '');
+});
+
+test('the reasons why Ziel and Soll differ: the hours account and the scaling to the demand', () => {
+  assert.deepEqual(goalReasons({ targetHours: 129.2, goalHours: 125, scaledGoalHours: 113 }),
+    ['4,2 h weniger wegen Plusstunden im Stundenkonto',
+      '12,0 h weniger, weil der Bedarf des Monats weniger Stunden braucht, als alle Ziele zusammen ergeben']);
+  assert.deepEqual(goalReasons({ targetHours: 120, goalHours: 126.5, scaledGoalHours: 126.5 }), ['6,5 h mehr wegen Minusstunden im Stundenkonto']);
+  // equal at the one decimal shown, and viewers (no goal): no reason
+  assert.deepEqual(goalReasons({ targetHours: 120, goalHours: 120.04, scaledGoalHours: 120.01 }), []);
+  assert.deepEqual(goalReasons({ targetHours: 120, goalHours: null, scaledGoalHours: null }), []);
 });

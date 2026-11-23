@@ -9,6 +9,7 @@
 // MOCK_FRONTEND=window|browser answers GET /__shell/mode like the desktop shell (unset: 404 like an older shell).
 // MOCK_PLUGINS=1 adds the shipped plugins of ../plugins (not testOnly) with their dev/mock.mjs, all off; MOCK_TEST_PLUGINS=1
 // adds the test-only ones too.
+// MOCK_EMPTY=1 starts without any data, like a new installation ("Demodaten laden" still loads them).
 // Uses tests/fixtures/synthetic/*dataset*.synthetic.json when present, otherwise a generated mini dataset.
 import http from 'node:http';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
@@ -56,7 +57,7 @@ async function mockPlugins() {
 const desktop = process.env.MOCK_DESKTOP === '1';
 const handle = createMockApi({ dataset: fixture, month: process.env.MOCK_MONTH ?? fixture?.periods?.[0]?.month ?? '2027-01', desktop,
   updateSource: process.env.MOCK_UPDATE_SOURCE ?? '', askUpdates: process.env.MOCK_UPDATE_ASK === '1',
-  release: process.env.MOCK_RELEASE ?? '', plugins: await mockPlugins() });
+  release: process.env.MOCK_RELEASE ?? '', plugins: await mockPlugins(), empty: process.env.MOCK_EMPTY === '1' });
 
 function role(req) {
   if (desktop) return 'planner';

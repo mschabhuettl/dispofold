@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { fairnessRows, metricSpreads, nightOutside, nightReasonText, nightStatus, sortRows, spread, wishRate } from '../src/lib/fairness.js';
+import { fairnessRows, metricSpreads, nightOutside, nightReasonText, nightStatus, sortRows, spread, standouts, wishRate } from '../src/lib/fairness.js';
 
 const people = [
   { id: 'P1', firstName: 'A', lastName: 'Alpha', weeklyHours: 40 },
@@ -88,4 +88,21 @@ test('the rest of an account correction as text', async () => {
   const { accountRestShort } = await import('../src/lib/fairness.js');
   assert.equal(accountRestShort({ accountRest: 13.2, accountCap: 184.8 }), '13,2 h fehlen (Obergrenze 184,8 h)');
   assert.equal(accountRestShort({ accountRest: -32, accountCap: 184.8 }), '32,0 h Plus bleiben');
+});
+
+test('"Fällt auf": far from the mean in the direction that matters, farthest first, viewers only their figures', () => {
+  const many = Array.from({ length: 20 }, (_, i) => ({ id: `Q${i}`, firstName: 'X', lastName: `N${i}`, weeklyHours: 40 }));
+  const stats = many.map((p, i) => ({ personId: p.id, nightLoad: i === 0 ? 9 : 4, weekendLoad: i === 1 ? 0 : 3, accountAfter: i === 2 ? -40 : 0,
+    wishes: 4, wishesMet: i === 3 ? 0 : 4, nights: i === 4 ? 12 : 2 }));
+  const rows = fairnessRows(stats, many);
+  const found = standouts(rows, true);
+  // a low weekend load is not a burden: left out; the very low wishes and account stand out
+  assert.deepEqual(found.map((x) => [x.person.id, x.metric.id, x.high]).sort(),
+    [['Q0', 'nightLoad', true], ['Q2', 'accountAfter', false], ['Q3', 'wishRate', false]].sort());
+  assert.ok(found.every((x, i) => i === 0 || found[i - 1].distance >= x.distance));
+  assert.equal(standouts(rows, true, 1).length, 1);
+  // viewers: counts only, no loads, account or wishes
+  assert.deepEqual(standouts(rows, false).map((x) => [x.person.id, x.metric.id]), [['Q4', 'nights']]);
+  // everybody alike: nothing stands out
+  assert.deepEqual(standouts(fairnessRows(many.map((p) => ({ personId: p.id, nightLoad: 3 })), many), true), []);
 });
