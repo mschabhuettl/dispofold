@@ -41,7 +41,14 @@ Ein Bereich lässt sich erst entfernen, wenn seine Schichten entfernt sind.
 | Senkt das Soll | An Arbeitstagen zählt der Tag mit Wochenstunden durch 5 wie gearbeitet. Ein für Urlaub und Krankenstand, aus für unbezahlte Abwesenheit. |
 | Belastet das Stundenkonto | Die angerechneten Stunden gehen vom Stundenkonto ab, etwa bei Zeitausgleich. |
 | Ersatzruhe | Die Abwesenheit ist Ersatzruhe: Sie verringert die offenen Ersatzruhetage der Person. |
+| Gutschrift | Womit ein Tag angerechnet wird, wenn die Art das Soll senkt. **Wochenstunden / 5 an Werktagen** (Standard), oder **Stunden des geplanten Dienstes**: der Dienst, den die Abwesenheit ersetzt hat, an jedem Wochentag, ohne Dienst nichts. Wie in vielen Zeitaufzeichnungen bei Krankenstand oder Urlaub an einem Diensttag. |
 | Farbe | Farbe im Plan; leer heißt ohne Farbe |
+
+**Stunden des geplanten Dienstes:** Dispofold merkt sich den Dienst, wenn eine Abwesenheit in einen Monat
+eingetragen wird, der schon einen Plan hat: die Stunden des Dienstes an diesem Tag, oder 0, wenn an dem Tag kein
+Dienst geplant war. Eine Abwesenheit, die schon vor der Planung da war, ersetzt keinen Dienst; für sie und für
+Abwesenheiten aus einem Import ohne diese Angabe gilt Wochenstunden / 5 an Werktagen, und die Personenseite sagt
+das. Ein neuer Import lässt die hier gewählte Gutschrift stehen.
 
 Im Demodatensatz sind Urlaub und Krankenstand „senkt das Soll“, Zeitausgleich zusätzlich „belastet das
 Stundenkonto“.

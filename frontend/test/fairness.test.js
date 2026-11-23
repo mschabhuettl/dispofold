@@ -80,3 +80,12 @@ test('people outside the night comparison are marked with the reason', () => {
   assert.equal(nightReasonText('MIX'), 'gewohnte Verteilung');
   assert.equal(nightReasonText('NEVER'), 'nie Nacht');
 });
+
+test('the rest of an account correction as text', async () => {
+  const { accountRestText } = await import('../src/lib/fairness.js');
+  assert.equal(accountRestText({ accountRest: 13.2, accountCap: 184.8 }), '13,2 h fehlen, das Ziel ist schon bei der Obergrenze von 184,8 h');
+  assert.equal(accountRestText({ accountRest: -32, accountCap: 184.8 }), '32,0 h Plus bleiben, das Ziel ist schon bei 0 h');
+  const { accountRestShort } = await import('../src/lib/fairness.js');
+  assert.equal(accountRestShort({ accountRest: 13.2, accountCap: 184.8 }), '13,2 h fehlen (Obergrenze 184,8 h)');
+  assert.equal(accountRestShort({ accountRest: -32, accountCap: 184.8 }), '32,0 h Plus bleiben');
+});

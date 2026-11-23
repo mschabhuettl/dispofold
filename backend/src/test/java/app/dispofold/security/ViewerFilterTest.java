@@ -85,7 +85,8 @@ class ViewerFilterTest {
         for (String field : new String[] { "hoursAccount", "compRestBalance", "hoursAccountAfter",
                 "compRestBalanceAfter", "compRestUsed", "compRestEarned", "accountBefore", "accountAfter",
                 "chargedHours", "creditedHours", "goalHours", "scaledGoalHours", "nightPool", "nightReason",
-                "nightLoad", "nightMean", "weekendLoad", "holidayLoad", "unpopularLoad", "shiftMix", "externalId" }) {
+                "nightLoad", "nightMean", "weekendLoad", "holidayLoad", "unpopularLoad", "shiftMix", "externalId",
+                "periodBalance", "accountRest", "accountCap" }) {
             assertThat(json).as(field).doesNotContainPattern("\"" + field + "\":(?!null)");
         }
     }

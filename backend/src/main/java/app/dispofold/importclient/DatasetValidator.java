@@ -284,6 +284,10 @@ public final class DatasetValidator {
             if (known && dated && !absenceDays.add(a.personId() + "/" + a.date())) {
                 warning("import.duplicateAbsence", "personId", a.personId(), "date", iso(a.date()));
             }
+            if (a.replacedHours() != null && !(a.replacedHours() >= 0 && a.replacedHours() <= 24)) {
+                error("import.badReplacedHours", "personId", a.personId(), "date", iso(a.date()), "replacedHours",
+                        a.replacedHours());
+            }
         });
 
         each(p.wishes(), "wish", m, (Wish w, int i) -> {

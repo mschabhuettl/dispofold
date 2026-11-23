@@ -304,7 +304,10 @@ public final class RosterAnalyzer {
         Person person = input.dataset().people().stream().filter(p -> p.id().equals(personId)).findFirst()
                 .orElseThrow();
         List<HistoryEntry> history = input.dataset().history() == null ? List.of() : input.dataset().history();
-        double accountBefore = RosterBuilder.accountBefore(month, person, history);
+        AccountGoal goal = AccountGoal.of(rules, month, person, history,
+                staff.getCreditMinutes() * RosterBuilder.workdays(month, holidays, person));
+        double accountBefore = goal.accountBefore();
+        Double closed = AccountGoal.closedBalance(rules, month, person, history);
 
         List<DutyCell> cells = roster.getCells().stream()
                 .filter(c -> c.isInMonth() && c.getStaff().getId().equals(personId)).toList();
@@ -316,7 +319,7 @@ public final class RosterAnalyzer {
         Map<app.dispofold.model.ShiftCategory, Double> byCategory = new java.util.EnumMap<>(
                 app.dispofold.model.ShiftCategory.class);
         Map<String, Double> byArea = new java.util.TreeMap<>();
-        int compRestPlanned = 0, compRestEarned = 0, singleDays = 0;
+        int compRestPlanned = 0, compRestEarned = 0, singleDays = 0, fallback = 0;
         Set<Long> weekendsWorked = new HashSet<>();
         Set<Long> fullWeekends = new HashSet<>();
         boolean[] worked = new boolean[cells.size()];
@@ -331,6 +334,9 @@ public final class RosterAnalyzer {
             AbsenceType type = c.getAbsenceCode() == null ? null : types.get(c.getAbsenceCode());
             if (type != null && type.chargesAccount() && !c.isWork()) {
                 chargedMinutes += c.getCountedMinutes();
+            }
+            if (c.isCreditFallback()) {
+                fallback++;
             }
             if (c.isWork()) {
                 worked[i] = true;
@@ -396,7 +402,9 @@ public final class RosterAnalyzer {
                 round(staff.getTargetMinutes() / 60.0), round(staff.getScaledTargetMinutes() / 60.0),
                 shares(byCategory, byArea, duties), nightLoad != null, nightReason,
                 nightLoad == null ? null : round(nightLoad), nightMean, load(roster, 1, personId),
-                load(roster, 2, personId), load(roster, 3, personId));
+                load(roster, 2, personId), load(roster, 3, personId), closed == null ? null : round(closed),
+                goal.restMinutes() == 0 ? null : round(goal.restMinutes() / 60.0),
+                goal.restMinutes() == 0 ? null : round(goal.capMinutes() / 60.0), fallback == 0 ? null : fallback);
     }
 
     /** The person's load in one comparison (see {@link #comparisonLoads}), null when not compared. */

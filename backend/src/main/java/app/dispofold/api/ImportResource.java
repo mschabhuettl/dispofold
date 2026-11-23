@@ -35,6 +35,8 @@ import app.dispofold.export.Corrections.Changes;
 import app.dispofold.export.Corrections.Conflict;
 import app.dispofold.importclient.DatasetValidator;
 import app.dispofold.importclient.Issue;
+import app.dispofold.model.AbsenceCredit;
+import app.dispofold.model.AbsenceType;
 import app.dispofold.model.Area;
 import app.dispofold.model.Dataset;
 import app.dispofold.model.HistoryEntry;
@@ -169,7 +171,7 @@ public class ImportResource {
         JsonNode corrections = checkedApplied(applied);
         synchronized (Store.DATASET_LOCK) {
             Dataset checked = validated(dataset).dataset();
-            Dataset raw = withExcluded(checked, corrections);
+            Dataset raw = withCredits(withExcluded(checked, corrections));
             if (raw != checked) {
                 validated(raw);
             }
@@ -254,7 +256,7 @@ public class ImportResource {
 
     private ImportSummary replace(Dataset dataset, JsonNode applied, boolean replace, boolean keep, boolean upload) {
         DatasetValidator.Result checked = validated(dataset);
-        Dataset retained = upload ? withExcluded(checked.dataset(), applied) : checked.dataset();
+        Dataset retained = withCredits(upload ? withExcluded(checked.dataset(), applied) : checked.dataset());
         DatasetValidator.Result result = retained == checked.dataset() ? checked : validated(retained);
         Kept kept = keep ? kept(result.dataset()) : null;
         // Asked only for a valid file: an invalid one is rejected anyway.
@@ -358,6 +360,22 @@ public class ImportResource {
                 || h.month() != null && h.month().compareTo(firstPlanned.toString()) < 0)).forEach(history::add);
         return new Dataset(raw.format(), raw.version(), raw.source(), raw.areas(), raw.shifts(), raw.demand(),
                 raw.holidays(), raw.absenceTypes(), people, restrictions, history, raw.periods());
+    }
+
+    /** The credit of an absence type is set in Dispofold: a type of the import without one keeps it. */
+    private Dataset withCredits(Dataset raw) {
+        Dataset current = store.dataset().orElse(null);
+        if (current == null || raw.absenceTypes() == null) {
+            return raw;
+        }
+        Map<String, AbsenceCredit> credits = new HashMap<>();
+        list(current.absenceTypes()).stream().filter(t -> t.credit() != null)
+                .forEach(t -> credits.put(t.code(), t.credit()));
+        List<AbsenceType> types = raw.absenceTypes().stream().map(t -> t.credit() != null
+                || !credits.containsKey(t.code()) ? t : new AbsenceType(t.code(), t.name(), t.reducesTarget(),
+                        t.chargesAccount(), t.compensatoryRest(), t.color(), credits.get(t.code()))).toList();
+        return new Dataset(raw.format(), raw.version(), raw.source(), raw.areas(), raw.shifts(), raw.demand(),
+                raw.holidays(), types, raw.people(), raw.restrictions(), raw.history(), raw.periods());
     }
 
     /** The master data of a dataset: without periods. */

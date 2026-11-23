@@ -48,7 +48,11 @@ test('new people and shifts are sent without id, areas and absence types with th
   assert.deepEqual(s, { areaId: 'AN', code: 'F1', name: 'Früh', start: '06:30', end: '14:30', category: null, color: null, unpopular: false });
   assert.deepEqual(fromForm('areas', { id: 'AN', name: 'Notrufannahme', color: '#0F766E' }), { id: 'AN', name: 'Notrufannahme', color: '#0F766E' });
   assert.deepEqual(fromForm('absenceTypes', { code: 'U', name: 'Urlaub', reducesTarget: true, chargesAccount: false, compensatoryRest: false, color: '' }),
-    { code: 'U', name: 'Urlaub', reducesTarget: true, chargesAccount: false, compensatoryRest: false, color: null });
+    { code: 'U', name: 'Urlaub', reducesTarget: true, chargesAccount: false, compensatoryRest: false, credit: null, color: null });
+  // the credit of the replaced duty; switching back clears it on the stored type
+  assert.equal(fromForm('absenceTypes', { code: 'K', name: 'Krank', reducesTarget: true, credit: 'PLANNED_DUTY' }).credit, 'PLANNED_DUTY');
+  assert.equal(fromForm('absenceTypes', { code: 'K', name: 'Krank', reducesTarget: true, credit: 'WEEKLY_HOURS' },
+    { code: 'K', credit: 'PLANNED_DUTY' }).credit, null);
   const existing = { id: 'SN1', areaId: 'AN', code: 'F1', name: 'Früh', start: '06:30:00', end: '14:30:00', category: 'EARLY', color: '#fff', unpopular: false };
   assert.equal(fromForm('shifts', toForm('shifts', existing), existing).id, 'SN1');
 });

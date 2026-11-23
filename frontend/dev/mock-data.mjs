@@ -174,4 +174,5 @@ export const DEFAULT_RULES = {
   minBlock: 2, maxBlock: 4, maxWishesPerPerson: 6, holidayWorkEarnsCompRest: true, nightStart: '22:00', nightEnd: '06:00',
   nightMinHours: 2, maxOverTargetPercent: 10, minFreeSundays: 2, accountCarryShare: 0.25, historyMonths: 3, averagingWeeks: 52, weights: {},
   nightDistribution: 'HABIT', averageTolerancePercent: 10, freeInsideAbsence: true, averagingPeriod: 'HALF_YEAR',
+  accountBalancing: 'PERIOD_END', carryMinusRest: false,
 };

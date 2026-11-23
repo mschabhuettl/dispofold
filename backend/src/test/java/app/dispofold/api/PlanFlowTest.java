@@ -11,7 +11,9 @@ import static org.hamcrest.Matchers.not;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.YearMonth;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import jakarta.inject.Inject;
 
@@ -160,6 +162,47 @@ class PlanFlowTest {
     /** The revision of the stored period, for a save based on it. */
     long revision() {
         return given().get("/api/periods/" + MONTH).then().statusCode(200).extract().jsonPath().getLong("revision");
+    }
+
+    @Test
+    void aNewAbsenceInAPlannedMonthKeepsTheDutyItReplaced() throws Exception {
+        String before = "{\"month\":null,\"absences\":[{\"personId\":\"P0004\",\"date\":\"" + MONTH.atDay(3)
+                + "\",\"typeCode\":\"U\"}],\"wishes\":[],\"fixed\":[],\"previousDuties\":[]}";
+        given().contentType(ContentType.JSON).header("If-Match", revision()).body(before)
+                .put("/api/periods/" + MONTH).then().statusCode(200);
+        Object first = given().get("/api/periods/" + MONTH).then().statusCode(200).extract().jsonPath()
+                .get("absences[0].replacedHours");
+        given().contentType(ContentType.JSON).body("{}").post("/api/plans/" + MONTH + "/solve").then()
+                .statusCode(202);
+        await().atMost(Duration.ofSeconds(10)).until(() -> !solving());
+        Plan planned = plan();
+        // after the planning: a new absence on a day with a duty and one on a day without
+        LocalDate duty = planned.assignments().stream().filter(a -> a.personId().equals("P0004") && a.shiftId() != null
+                && !a.date().equals(MONTH.atDay(3))).findFirst().orElseThrow().date();
+        LocalDate free = planned.assignments().stream().filter(a -> a.personId().equals("P0004") && a.shiftId() == null)
+                .map(PlanAssignment::date).findFirst().orElse(null);
+        String shift = planned.assignments().stream().filter(a -> a.personId().equals("P0004") && a.date().equals(duty))
+                .findFirst().orElseThrow().shiftId();
+        StringBuilder absences = new StringBuilder("[{\"personId\":\"P0004\",\"date\":\"" + MONTH.atDay(3)
+                + "\",\"typeCode\":\"U\"},{\"personId\":\"P0004\",\"date\":\"" + duty + "\",\"typeCode\":\"U\"}");
+        if (free != null) {
+            absences.append(",{\"personId\":\"P0004\",\"date\":\"" + free + "\",\"typeCode\":\"U\"}");
+        }
+        absences.append("]");
+        given().contentType(ContentType.JSON).header("If-Match", revision()).body("{\"month\":null,\"absences\":"
+                + absences + ",\"wishes\":[],\"fixed\":[],\"previousDuties\":[]}").put("/api/periods/" + MONTH)
+                .then().statusCode(200);
+        List<Map<String, Object>> stored = given().get("/api/periods/" + MONTH).then().statusCode(200).extract()
+                .jsonPath().getList("absences");
+        Map<LocalDate, Double> replaced = new HashMap<>();
+        stored.forEach(a -> replaced.put(LocalDate.parse((String) a.get("date")),
+                a.get("replacedHours") == null ? null : ((Number) a.get("replacedHours")).doubleValue()));
+        // an absence that was there before keeps what it had (before a planning: nothing)
+        assertThat(replaced.get(MONTH.atDay(3))).isEqualTo(first == null ? null : ((Number) first).doubleValue());
+        assertThat(replaced.get(duty)).isEqualTo(shift.equals("DR-N") || shift.endsWith("-T") ? 12.0 : null);
+        if (free != null) {
+            assertThat(replaced.get(free)).isZero();
+        }
     }
 
     @Test

@@ -13,6 +13,7 @@ export const METRICS = [
   { id: 'unpopularLoad', label: t('fairness.metric.unpopularLoad'), digits: 2, personal: true },
   { id: 'plannedHours', label: t('fairness.metric.plannedHours'), digits: 1 },
   { id: 'accountAfter', label: t('fairness.metric.accountAfter'), digits: 1, personal: true },
+  { id: 'periodBalance', label: t('fairness.metric.periodBalance'), digits: 1, personal: true },
   { id: 'nights', label: t('fairness.metric.nights') },
   { id: 'weekendsWorked', label: t('fairness.metric.weekendsWorked') },
   { id: 'weekendsOff', label: t('fairness.metric.weekendsOff') },
@@ -34,6 +35,26 @@ export const METRICS = [
  */
 export function metricsFor(canEdit) {
   return canEdit ? METRICS : METRICS.filter((m) => !m.personal);
+}
+
+/**
+ * The part of an account correction a month cannot take (PersonStats.accountRest, accountCap) as text: hours
+ * missing at the cap, or plus hours left at a goal of 0.
+ */
+export function accountRestText(s) {
+  const p = restParams(s);
+  return s.accountRest > 0 ? t('check.account.minus', p) : t('check.account.plus', p);
+}
+
+/** The same, short, for the tile on the person page. */
+export function accountRestShort(s) {
+  const p = restParams(s);
+  return s.accountRest > 0 ? t('person.kpi.accountRest.minus', p) : t('person.kpi.accountRest.plus', p);
+}
+
+function restParams(s) {
+  const num = (v) => Number(v).toLocaleString('de-AT', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  return { rest: num(Math.abs(s.accountRest)), cap: num(s.accountCap) };
 }
 
 /** Share of met wishes, or null when no wishes were made. */

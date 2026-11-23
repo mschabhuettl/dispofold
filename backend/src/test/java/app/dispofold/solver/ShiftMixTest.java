@@ -6,10 +6,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import app.dispofold.model.AccountBalancing;
 import app.dispofold.model.Dataset;
 import app.dispofold.model.Person;
 import app.dispofold.model.PersonStats;
 import app.dispofold.model.PlanAnalysis;
+import app.dispofold.model.Rules;
 import app.dispofold.model.ShiftCategory;
 import app.dispofold.model.ShiftMix;
 import app.dispofold.planning.PlanningInput;
@@ -37,7 +39,15 @@ class ShiftMixTest {
         }
         Dataset changed = new Dataset(d.format(), d.version(), d.source(), d.areas(), d.shifts(), d.demand(),
                 d.holidays(), d.absenceTypes(), people, d.restrictions(), d.history(), d.periods());
-        return new PlanningInput(changed, base.period(), base.rules(), List.of());
+        // the fixed share of the hours account, as the plans this test was tuned on (the fixture month is a January)
+        Rules r = base.rules();
+        Rules share = new Rules(r.minDailyRestHours(), r.minWeeklyRestHours(), r.maxDutyHours(), r.maxWeekHours(),
+                r.maxAverageWeekHours(), r.minBlock(), r.maxBlock(), r.maxWishesPerPerson(),
+                r.holidayWorkEarnsCompRest(), r.nightStart(), r.nightEnd(), r.nightMinHours(), r.accountCarryShare(),
+                r.historyMonths(), r.weights(), r.timeZone(), r.averagingWeeks(), r.maxOverTargetPercent(),
+                r.minFreeSundays(), r.nightDistribution(), r.averageTolerancePercent(), r.freeInsideAbsence(),
+                r.averagingPeriod(), AccountBalancing.MONTHLY_SHARE, null);
+        return new PlanningInput(changed, base.period(), share, List.of());
     }
 
     private static PersonStats solve(ShiftMix mix) throws Exception {

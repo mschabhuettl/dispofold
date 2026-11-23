@@ -42,12 +42,32 @@ Darunter die Ziele, jedes mit seinen Werten und einer **Wichtigkeit**:
 | Dienstblöcke | Blöcke von 2 bis 4 Tagen | Dienste in Blöcken dieser Länge, ohne einzelne freie Tage dazwischen |
 | Wünsche | höchstens 6 je Person und Monat | so viele Wünsche je Person zählen, die ersten nach Datum |
 | Faire Verteilung | über die letzten 3 Monate | Wochenenden, Feiertage, fair verteilte Dienste und Nächte gleichmäßig verteilen |
-| Stunden treffen | höchstens 10 % über dem Ziel, Stundenkonto ausgleichen 25 % je Monat | geplante und angerechnete Stunden nahe am Ziel; die Obergrenze ist ein Regelverstoß |
+| Stunden treffen | höchstens 10 % über dem Ziel, Stundenkonto ausgleichen bis Ende des Kalenderhalbjahrs (fester Anteil 25 % je Monat als Alternative), Minus am Halbjahresende verfällt | geplante und angerechnete Stunden nahe am Ziel; die Obergrenze ist ein Regelverstoß |
 | Familienregeln | keine Werte | die persönlichen Regeln der Personen einhalten, wenn es geht |
 
-- **Ausgleich des Stundenkontos:** Mit 25 % zieht das Ziel jeden Monat ein Viertel des Stundenkontos ab
-  (Plusstunden) oder rechnet es dazu (Minusstunden). Höher: Konten gleichen sich schneller aus. 0: Das Konto
-  beeinflusst das Ziel nicht.
+- **Ausgleich des Stundenkontos:** Standard ist **bis Ende des Kalenderhalbjahrs**. Am Ende jedes Halbjahrs soll
+  das Stundenkonto bei 0 stehen, denn über das Halbjahr sind die vereinbarten Stunden geschuldet, bei Teilzeit
+  die Stunden laut Vertrag. Jeder Monat gleicht seinen Teil aus: Ziel = Soll minus Stundenkonto geteilt durch die
+  Monate, die im Halbjahr noch bleiben. Im Jänner und im Juli beginnt das Konto bei 0. Was am Halbjahresende
+  übrig war, wird außerhalb des Plans abgerechnet; die Personenseite zeigt es als **Abgerechnet Ende
+  Vorhalbjahr**. Beispiel, eine Person mit 168 h Soll in jedem Monat:
+
+  | Monat | Konto vorher | Monate übrig | Ziel | geplant | Konto danach |
+  |---|---|---|---|---|---|
+  | Jänner | 0 h | 6 | 168 h | 180 h | +12 h |
+  | Februar | +12 h | 5 | 165,6 h | 165,6 h | +9,6 h |
+  | März | +9,6 h | 4 | 165,6 h | 160 h | +1,6 h |
+  | April | +1,6 h | 3 | 167,5 h | 167,5 h | +1,1 h |
+  | Mai | +1,1 h | 2 | 167,5 h | 172 h | +5,1 h |
+  | Juni | +5,1 h | 1 | 162,9 h | 162,9 h | 0 h |
+
+  Wer den Zielen folgt, kommt am Ende auf 0; im Juni ist der ganze Rest dran. Das Ziel geht dabei höchstens bis Soll plus 10 % (die Obergrenze) und nicht
+  unter 0 h; was nicht hineinpasst, zeigt die Seite **Prüfen** unter **Stundenkonto: Rest passt nicht in den
+  Monat**, kein Regelverstoß. **Minus ins nächste Halbjahr mitnehmen:** aus (Standard), dann verfällt ein Minus
+  am Halbjahresende; ein, dann beginnt das neue Halbjahr damit. Ein Plus kommt nie mit.
+  Die Alternative **mit festem Anteil je Monat** zieht jeden Monat denselben Anteil des Kontos ab (Standard 25 %:
+  ein Viertel), das Konto läuft über das Halbjahr hinaus weiter. Bei gleitender Durchrechnung gilt immer der feste
+  Anteil.
 - **Höchstens über dem Ziel:** Mit 10 % darf eine Person mit Ziel 120 h bis 132 h bekommen. Höher: mehr Spielraum
   für den Bedarf. Niedriger: Stunden bleiben enger am Ziel, eher offener Bedarf.
 

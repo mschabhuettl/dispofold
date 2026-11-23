@@ -44,7 +44,8 @@ public class ViewerFilter implements ContainerResponseFilter {
             "compRestEarned");
     static final Set<String> STATS_BALANCES = Set.of("accountBefore", "accountAfter", "compRestBalanceAfter",
             "compRestEarned", "chargedHours", "creditedHours", "goalHours", "scaledGoalHours", "nightPool",
-            "nightReason", "nightLoad", "nightMean", "weekendLoad", "holidayLoad", "unpopularLoad");
+            "nightReason", "nightLoad", "nightMean", "weekendLoad", "holidayLoad", "unpopularLoad", "periodBalance",
+            "accountRest", "accountCap", "creditFallbackDays");
 
     private static final Pattern PERIOD = Pattern.compile("api/periods/[^/]+");
     private static final Pattern ANALYSIS = Pattern.compile("api/plans/[^/]+/analysis");

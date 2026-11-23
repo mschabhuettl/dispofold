@@ -39,6 +39,10 @@ public class DutyCell {
     private boolean insideAbsence;
     private String missingShiftId;
     private boolean absenceCredits;
+    /** The credit of the absence when it is the replaced duty's (any day); null: weekly hours / 5 on workdays. */
+    private Integer absenceMinutes;
+    /** The type credits the planned duty, but the data does not say which: weekly hours / 5 instead. */
+    private boolean creditFallback;
     private Set<String> onRequest;
     private Set<String> never;
     private List<Wish> wishes;
@@ -207,6 +211,23 @@ public class DutyCell {
         this.absenceCredits = credits;
     }
 
+    public Integer getAbsenceMinutes() {
+        return absenceMinutes;
+    }
+
+    /** Credits the absence with the minutes of the duty it replaced, on any day. */
+    public void setAbsenceMinutes(Integer minutes) {
+        this.absenceMinutes = minutes;
+    }
+
+    public boolean isCreditFallback() {
+        return creditFallback;
+    }
+
+    public void setCreditFallback(boolean fallback) {
+        this.creditFallback = fallback;
+    }
+
     /** The day is before the entry or after the exit of the person. */
     public boolean isOutsideEmployment() {
         return outsideEmployment;
@@ -331,6 +352,9 @@ public class DutyCell {
         }
         if (isCompRest()) {
             return staff.getCreditMinutes();
+        }
+        if (absenceCode != null && absenceCredits && absenceMinutes != null) {
+            return absenceMinutes;
         }
         return absenceCode != null && absenceCredits && workday ? staff.getCreditMinutes() : 0;
     }

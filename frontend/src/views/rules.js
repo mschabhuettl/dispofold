@@ -33,7 +33,10 @@ const PARAMS = [
   ['maxOverTargetPercent', t('rules.param.maxOverTargetPercent.label'), t('rules.param.maxOverTargetPercent.help'), 'number', 'any'],
   ['minFreeSundays', t('rules.param.minFreeSundays.label'), t('rules.param.minFreeSundays.help'), 'number', 1],
   ['freeInsideAbsence', t('rules.param.freeInsideAbsence.label'), t('rules.param.freeInsideAbsence.help'), 'bool'],
+  ['accountBalancing', t('rules.param.accountBalancing.label'), '', 'choice',
+    [['PERIOD_END', t('rules.param.accountBalancing.periodEnd')], ['MONTHLY_SHARE', t('rules.param.accountBalancing.share')]]],
   ['accountCarryShare', t('rules.param.accountCarryShare.label'), t('rules.param.accountCarryShare.help'), 'number', 'any'],
+  ['carryMinusRest', t('rules.param.carryMinusRest.label'), '', 'bool'],
   ['historyMonths', t('rules.param.historyMonths.label'), t('rules.param.historyMonths.help'), 'number', 1],
 ];
 const PARAM = Object.fromEntries(PARAMS.map((p) => [p[0], p]));
@@ -47,7 +50,8 @@ const GOALS = [
   ['blocks', t('rules.goal.blocks.title'), [t('rules.goal.blocks.text')]],
   ['wishes', t('rules.goal.wishes.title'), [t('rules.goal.wishes.text')]],
   ['fairness', t('rules.goal.fairness.title'), [t('rules.goal.fairness.text')]],
-  ['hours', t('rules.goal.hours.title'), [t('rules.goal.hours.over'), t('rules.goal.hours.account')]],
+  ['hours', t('rules.goal.hours.title'), [t('rules.goal.hours.over'), t('rules.goal.hours.balancing'), t('rules.goal.hours.account'),
+    t('rules.goal.hours.minusRest')]],
   ['family', t('rules.goal.family.title'), [t('rules.goal.family.text')]],
 ];
 const IMPORTANCE = [['less', t('rules.importance.less')], ['normal', t('rules.importance.normal')],
@@ -67,6 +71,8 @@ export async function render(root, ctx) {
   params.averageTolerancePercent ??= 10;
   params.freeInsideAbsence ??= true;
   params.averagingPeriod ??= 'HALF_YEAR';
+  params.accountBalancing ??= 'PERIOD_END';
+  params.carryMinusRest ??= false;
 
   root.append(h('h1', {}, t('nav.rules')));
   if (!canEdit) root.append(h('p.alert', {}, t('rules.readonly')));
@@ -158,6 +164,11 @@ export async function render(root, ctx) {
 
   function paramInput(key) {
     const [, , , type, step] = PARAM[key];
+    if (type === 'choice') {
+      return h('select', { id: `param-${key}`, oninput: (e) => { params[key] = e.target.value; } },
+        PARAM[key][4].map(([value, text]) => h('option', { value, selected: params[key] === value }, text)));
+    }
+    if (type === 'bool') return h('input', { id: `param-${key}`, type: 'checkbox', checked: Boolean(params[key]), oninput: (e) => { params[key] = e.target.checked; } });
     // the hours account share is stored as a fraction and shown in percent
     return h('input', { id: `param-${key}`, type, step, min: type === 'number' ? 0 : null, max: key === 'accountCarryShare' ? 100 : null, required: true,
       value: type === 'time' ? String(params[key] ?? '').slice(0, 5) : key === 'accountCarryShare' ? percent(params[key]) : params[key],

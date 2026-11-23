@@ -1,5 +1,7 @@
 package app.dispofold.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 /**
  * Per-person key figures of a plan. History counters are the sums over {@link Rules#historyMonths()} earlier
  * months.
@@ -32,6 +34,15 @@ package app.dispofold.model;
  *        months per 30 available days of a 40 h person); null when not compared and for viewers
  * @param holidayLoad the same for holiday duties ({@code fairHolidays})
  * @param unpopularLoad the same for unpopular duties ({@code fairUnpopular})
+ * @param periodBalance with the balancing by the end of the period: the account at the end of the previous
+ *        half-year (settled outside the plan, or carried when a minus balance carries); null when unknown, with the
+ *        fixed share and for viewers
+ * @param accountRest with the balancing by the end of the period: hours of the correction the goal could not take
+ *        within {@code accountCap} (positive: hours missing, negative: plus hours left); null when everything fits
+ *        and for viewers
+ * @param accountCap the most the goal may be (target plus {@code maxOverTargetPercent}); null with {@code accountRest}
+ * @param creditFallbackDays days of absences whose type credits the replaced duty while the data does not say which
+ *        duty that was: credited with weekly hours / 5 on workdays instead; null when there are none and for viewers
  */
 public record PersonStats(String personId, double targetHours, double creditedHours, double plannedHours,
         double accountBefore, double accountAfter, int duties, int nights, int weekendsWorked, int weekendsOff,
@@ -40,5 +51,9 @@ public record PersonStats(String personId, double targetHours, double creditedHo
         int historyUnpopular, int historyWishes, int historyWishesMet, int availableDays, double chargedHours,
         double averageWeekHours, boolean averageComplete, double averageLimitHours, double goalHours, double scaledGoalHours,
         ShiftMix plannedMix, Boolean nightPool, String nightReason, Double nightLoad, Double nightMean,
-        Double weekendLoad, Double holidayLoad, Double unpopularLoad) {
+        Double weekendLoad, Double holidayLoad, Double unpopularLoad,
+        @JsonInclude(JsonInclude.Include.NON_NULL) Double periodBalance,
+        @JsonInclude(JsonInclude.Include.NON_NULL) Double accountRest,
+        @JsonInclude(JsonInclude.Include.NON_NULL) Double accountCap,
+        @JsonInclude(JsonInclude.Include.NON_NULL) Integer creditFallbackDays) {
 }

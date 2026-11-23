@@ -212,6 +212,10 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
       historyUnpopular: sum('unpopular'), historyWishes: sum('wishes'), historyWishesMet: sum('wishesMet'),
       ...nightComparison(m, p),
       ...fairnessLoads(m, p),
+      // the account at the end of the previous half-year; for the first person a rest that does not fit and a day
+      // credited without the replaced duty
+      periodBalance: p.hoursAccount,
+      ...(p.id === 'P0001' ? { accountRest: 6.5, accountCap: 184.8, creditFallbackDays: 1 } : {}),
     };
   }
 
@@ -422,7 +426,8 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
   /** Personal figures viewers do not get: wishes 0, hours account and compensatory rest null. */
   const redactStats = (s) => ({ ...s, wishes: 0, wishesMet: 0, historyWishes: 0, historyWishesMet: 0, accountBefore: null, goalHours: null, scaledGoalHours: null,
     accountAfter: null, compRestBalanceAfter: null, compRestEarned: null, chargedHours: null, creditedHours: null,
-    nightPool: null, nightReason: null, nightLoad: null, nightMean: null, weekendLoad: null, holidayLoad: null, unpopularLoad: null });
+    nightPool: null, nightReason: null, nightLoad: null, nightMean: null, weekendLoad: null, holidayLoad: null, unpopularLoad: null,
+    periodBalance: undefined, accountRest: undefined, accountCap: undefined, creditFallbackDays: undefined });
 
   // Changes made "in Dispofold" since the last import, person fields only (the backend also has restrictions,
   // removed people and demand), compared like the backend: absent and null are the same.

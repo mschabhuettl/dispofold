@@ -15,6 +15,24 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
   wieder. Anteil, seltene Schichten, Zeitraum und die Wörter für die Ersatzruhe sind Einstellungen. Die Übersicht
   nennt nach einem Lauf die Zahl der neuen Vorschläge. Import und Export rechnen unverändert. Hilfe:
   [Zuordnung](plugins/sp5/docs/zuordnung.md).
+- **Stundenkonto bis Ende des Halbjahrs ausgleichen (neuer Standard):** Das Ziel eines Monats ist das Soll minus
+  Stundenkonto geteilt durch die Monate, die im Kalenderhalbjahr noch bleiben (Jänner ein Sechstel, Juni der
+  ganze Rest), damit das Konto am Halbjahresende bei 0 steht. Im Jänner und Juli beginnt das Konto bei 0: ein Plus
+  wird außerhalb des Plans abgerechnet, ein Minus verfällt oder kommt mit (Einstellung „Minus ins nächste
+  Halbjahr mitnehmen“, Standard aus). Die Personenseite und die Kennzahlen zeigen den Stand am Ende des vorigen
+  Halbjahrs. Das Ziel bleibt zwischen 0 und Soll plus der Toleranz der Obergrenze; ein Rest, der nicht hineinpasst,
+  ist ein Hinweis auf der Seite Prüfen, kein Regelverstoß. Der bisherige feste Anteil je Monat (25 %) bleibt als
+  Alternative und gilt immer bei gleitender Durchrechnung. Erklärt mit einem Beispiel über sechs Monate in
+  [Regeln einstellen](docs/anleitung/einstellungen.md).
+- **Gutschrift einer Abwesenheit:** Je Abwesenheitsart lässt sich wählen, womit ein Tag angerechnet wird:
+  Wochenstunden / 5 an Werktagen (Standard) oder die Stunden des geplanten Dienstes, den die Abwesenheit ersetzt
+  hat, an jedem Wochentag (ohne Dienst nichts). Dispofold merkt sich den Dienst, wenn eine Abwesenheit in einen
+  schon geplanten Monat eingetragen wird (neues, optionales Feld `replacedHours` im Datenformat; `credit` an der
+  Abwesenheitsart). Ohne diese Angabe gilt Wochenstunden / 5, und die Personenseite sagt es. Ein Import lässt die
+  in Dispofold gewählte Gutschrift stehen.
+- **Hinweis zum Update:** Der neue Ausgleich gilt auch für schon gerechnete, offene Pläne, ohne dass sie als
+  veraltet markiert werden; Ziele und Obergrenzen können sich dadurch ändern. Offene Monate nach dem Update prüfen
+  und bei Bedarf neu planen. Abgeschlossene Monate behalten ihren gespeicherten Kontostand.
 - **Mac mit Apple Silicon und Linux auf ARM:** Neu im Release sind das dmg für Macs mit M-Prozessor, die
   Linux-Pakete für arm64 (`Dispofold-<version>-linux-arm64.deb`, `Dispofold-<version>-linux-aarch64.rpm`, mit
   eigener Java-Laufzeit für aarch64) und die Docker-Images für arm64 (in der Registry unter demselben Namen wie

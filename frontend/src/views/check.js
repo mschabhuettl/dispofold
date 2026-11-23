@@ -3,6 +3,7 @@
 import { gapLabel } from '../lib/candidates.js';
 import { constraintLabel, hitText } from '../lib/codes.js';
 import { dataChecks } from '../lib/data-checks.js';
+import { accountRestText } from '../lib/fairness.js';
 import { dayLabel, monthLabel, parseLocalDateTime } from '../lib/dates.js';
 import { append, h } from '../lib/dom.js';
 import { windowOverlapsShift } from '../lib/functions-model.js';
@@ -32,11 +33,27 @@ export async function render(root, ctx) {
   if (!planned) root.append(h('p.alert', {}, t('check.noPlan')));
   else {
     root.append(problemSection(dataset, analysis, problems));
+    const notes = accountSection(dataset, analysis);
+    if (notes) root.append(notes);
     // who could be asked: only where a duty can be set
     const ask = cellsEditable({ canEdit: ctx.canEdit, solving: state.solving, closed: state.plan.status === 'CLOSED' });
     root.append(gapSection(ctx, dataset, analysis, ask));
   }
   root.append(dataSection(dataset, month, rules, period?.absences ?? []));
+}
+
+/**
+ * Hours accounts whose correction does not fit into this month (balancing by the end of the half-year): who, the
+ * rest and the most the goal may be. A note, no rule violation; planners only (viewers get no rest).
+ */
+function accountSection(dataset, analysis) {
+  const byId = new Map(dataset.people.map((p) => [p.id, p]));
+  const rests = (analysis?.people ?? []).filter((s) => s.accountRest != null && byId.has(s.personId));
+  if (!rests.length) return null;
+  return h('section.check-section', { id: 'check-account' }, h('h2', {}, t('check.account.title'), info(t('help.check.account'), t('check.account.title'))),
+    h('p.muted', {}, t('check.account.help')),
+    h('ul.check-list', {}, rests.map((s) => h('li', {}, h('a', { href: `#/person/${encodeURIComponent(s.personId)}` }, personName(byId.get(s.personId))), ': ',
+      accountRestText(s)))));
 }
 
 /** Rule violations, overstaffing and quality, with a grouping and three filters. */

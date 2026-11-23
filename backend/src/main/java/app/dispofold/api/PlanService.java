@@ -40,6 +40,7 @@ import app.dispofold.model.PlanAnalysis;
 import app.dispofold.model.PlanAssignment;
 import app.dispofold.model.PlanStatus;
 import app.dispofold.model.PreviousDuty;
+import app.dispofold.model.ShiftType;
 import app.dispofold.planning.PlanningFacade;
 import app.dispofold.planning.PlanningInput;
 import app.dispofold.planning.SolveOptions;
@@ -389,6 +390,7 @@ public class PlanService {
             if (!before.equals(after)) {
                 requireNotSolving(period.month());
             }
+            period = withReplacedDuties(period);
             long revision;
             try {
                 revision = store.savePeriod(period, expectedRevision);
@@ -509,6 +511,49 @@ public class PlanService {
         if (facades.isResolvable()) {
             saveRescored(month, plan(month));
         }
+    }
+
+    /**
+     * A new absence in a month that has a plan keeps the duty it replaced: the hours of the plan's duty that day, or 0
+     * without one (for types that credit the planned duty). Absences that were there before keep what they had (an
+     * absence known before the planning replaced nothing); without a plan nothing is known yet.
+     */
+    Period withReplacedDuties(Period period) {
+        if (period.absences() == null || period.absences().isEmpty()) {
+            return period;
+        }
+        Map<String, Absence> before = new HashMap<>();
+        Period stored = period(period.month());
+        for (Absence a : stored.absences() == null ? List.<Absence>of() : stored.absences()) {
+            before.put(a.personId() + "|" + a.date(), a);
+        }
+        Plan plan = plan(period.month());
+        if (plan.assignments().isEmpty()) {
+            return period;
+        }
+        Map<String, PlanAssignment> duties = new HashMap<>();
+        plan.assignments().forEach(x -> duties.put(x.personId() + "|" + x.date(), x));
+        Map<String, ShiftType> shifts = new HashMap<>();
+        store.dataset().map(Dataset::shifts).orElse(List.of()).forEach(s -> shifts.put(s.id(), s));
+        List<Absence> absences = new ArrayList<>();
+        for (Absence a : period.absences()) {
+            String key = a.personId() + "|" + a.date();
+            if (a.replacedHours() != null || before.containsKey(key)) {
+                Double kept = a.replacedHours() != null ? a.replacedHours() : before.get(key).replacedHours();
+                absences.add(new Absence(a.personId(), a.date(), a.typeCode(), kept));
+                continue;
+            }
+            PlanAssignment duty = duties.get(key);
+            ShiftType shift = duty == null || duty.compRest() || duty.shiftId() == null ? null : shifts.get(duty.shiftId());
+            absences.add(new Absence(a.personId(), a.date(), a.typeCode(), shift == null ? 0.0 : hours(shift)));
+        }
+        return new Period(period.month(), absences, period.wishes(), period.fixed(), period.previousDuties());
+    }
+
+    /** Length of a shift in hours (over midnight: to the next day; equal times: 24 h). */
+    static double hours(ShiftType s) {
+        int minutes = Math.floorMod(s.end().toSecondOfDay() / 60 - s.start().toSecondOfDay() / 60, 24 * 60);
+        return (minutes == 0 ? 24 * 60 : minutes) / 60.0;
     }
 
     // Month closing

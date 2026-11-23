@@ -17,6 +17,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 import app.dispofold.model.Absence;
+import app.dispofold.model.AbsenceCredit;
 import app.dispofold.model.AveragingPeriod;
 import app.dispofold.model.AbsenceType;
 import app.dispofold.model.Dataset;
@@ -205,12 +206,13 @@ public final class RosterBuilder {
     private Staff staff(Person p, List<HistoryEntry> history, int wishCount, int compRestBalance, int available,
             Map<String, Integer> previousCounts) {
         int credit = (int) Math.round(p.weeklyHours() / 5 * 60);
-        int target = credit * workdays(p) - (int) Math.round(rules.accountCarryShare() * accountBefore(p, history) * 60);
+        AccountGoal goal = AccountGoal.of(rules, month, p, history, credit * workdays(p));
+        int target = goal.goalMinutes();
         Staff.Limits limits = new Staff.Limits(
                 (int) Math.round(Math.max(Rules.MIN_DAILY_REST_HOURS, rules.minDailyRestHours()) * 60),
                 (int) Math.round(rules.minWeeklyRestHours() * 60), (int) Math.round(rules.maxDutyHours() * 60),
                 (int) Math.round(rules.maxWeekHours() * 60), rules.minBlock(), rules.maxBlock(),
-                (int) Math.max(0, Math.round(target * (1 + rules.overTargetPercent() / 100))),
+                goal.limitMinutes(),
                 rules.freeSundays() == 0 ? Integer.MAX_VALUE : Math.max(0, sundays() - rules.freeSundays()));
         Staff.History h = history(history, month, rules.historyMonths());
         boolean nights = false;
@@ -301,10 +303,6 @@ public final class RosterBuilder {
      * Hours account at the start of the month: the account after the previous month from the history (an imported
      * actual value wins over a closed plan, see the store), else the person's account of the import.
      */
-    double accountBefore(Person p, List<HistoryEntry> history) {
-        return accountBefore(month, p, history);
-    }
-
     static double accountBefore(YearMonth month, Person p, List<HistoryEntry> history) {
         String previous = month.minusMonths(1).toString();
         return history.stream().filter(e -> p.id().equals(e.personId()) && previous.equals(e.month())
@@ -504,6 +502,14 @@ public final class RosterBuilder {
             if (absence != null) {
                 AbsenceType type = absenceTypes.get(absence.typeCode());
                 c.setAbsence(absence.typeCode(), type != null && type.reducesTarget());
+                // the planned duty's hours where the data has the duty the absence replaced, else weekly hours / 5
+                if (type != null && type.reducesTarget() && type.creditKind() == AbsenceCredit.PLANNED_DUTY) {
+                    if (absence.replacedHours() != null) {
+                        c.setAbsenceMinutes((int) Math.round(absence.replacedHours() * 60));
+                    } else {
+                        c.setCreditFallback(true);
+                    }
+                }
             }
             c.setInsideAbsence(insideAbsence(p, d, around, absenceTypes));
             FixedAssignment fix = fixed.get(key(p.id(), d));

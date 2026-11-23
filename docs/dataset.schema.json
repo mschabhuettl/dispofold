@@ -98,7 +98,8 @@
         "reducesTarget": { "type": "boolean" },
         "chargesAccount": { "type": "boolean" },
         "compensatoryRest": { "type": "boolean" },
-        "color": { "$ref": "#/$defs/stringOrNull" }
+        "color": { "$ref": "#/$defs/stringOrNull" },
+        "credit": { "enum": ["WEEKLY_HOURS", "PLANNED_DUTY", null] }
       }
     },
     "familyRule": {
@@ -239,7 +240,8 @@
       "properties": {
         "personId": { "$ref": "#/$defs/id" },
         "date": { "$ref": "#/$defs/date" },
-        "typeCode": { "$ref": "#/$defs/id" }
+        "typeCode": { "$ref": "#/$defs/id" },
+        "replacedHours": { "type": ["number", "null"], "minimum": 0, "maximum": 24 }
       }
     },
     "wish": {

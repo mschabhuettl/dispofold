@@ -30,6 +30,20 @@ class ImportTest {
     }
 
     @Test
+    void theCreditOfAnAbsenceTypeSetInDispofoldSurvivesTheNextImport() {
+        given().post("/api/import/demo?replace=true").then().statusCode(200);
+        long revision = given().get("/api/dataset").then().extract().jsonPath().getLong("revision");
+        String sick = "{\"code\":\"K\",\"name\":\"Krankenstand\",\"reducesTarget\":true,\"chargesAccount\":false,"
+                + "\"compensatoryRest\":false,\"color\":\"#E39B8F\",\"credit\":\"PLANNED_DUTY\"}";
+        given().contentType(ContentType.JSON).header("If-Match", revision).body(sick).put("/api/dataset/absenceTypes/K")
+                .then().statusCode(200);
+        given().get("/api/dataset").then().body("absenceTypes.find { it.code == 'K' }.credit", equalTo("PLANNED_DUTY"));
+        given().post("/api/import/demo?replace=true").then().statusCode(200);
+        given().get("/api/dataset").then().body("absenceTypes.find { it.code == 'K' }.credit", equalTo("PLANNED_DUTY"))
+                .body("absenceTypes.find { it.code == 'U' }.credit", equalTo(null));
+    }
+
+    @Test
     void brokenUploadsAnswerWithoutContent() {
         // not JSON at all, and a type error inside: the answer names the position, never the content
         given().contentType(ContentType.JSON).body("{\"format\": Muster").post("/api/import/dataset").then()

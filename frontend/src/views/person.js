@@ -10,7 +10,7 @@ import { personName } from '../lib/grid-model.js';
 import { constraintLabel, hitText } from '../lib/codes.js';
 import { CATEGORIES, conflictDecision, fromForm, inUseQuestion, itemLabel, restrictionFromForm, restrictionText, toForm } from '../lib/masterdata-edit.js';
 import { areaRestriction, setAreaRestriction } from '../lib/restrictions.js';
-import { nightStatus } from '../lib/fairness.js';
+import { accountRestShort, nightStatus } from '../lib/fairness.js';
 import { info } from '../lib/info.js';
 import { effectiveMix, MIX_CATEGORIES, mixFromForm, mixNightNote, mixRows, mixText, nightNote, sharePercent } from '../lib/shift-mix.js';
 import { neverNightShifts } from '../lib/data-checks.js';
@@ -149,10 +149,13 @@ function figures(explanation, person, areaNames, constraintLabels, nightDistribu
       : t('person.kpi.hoursOfTarget', { planned: fmt.num(s.plannedHours, 1), target: fmt.num(s.targetHours, 1) })));
   return [
     h('section.section', { 'aria-labelledby': 'h-hours' }, h('h2', { id: 'h-hours' }, t('person.section.hours')),
+      canEdit && s.creditFallbackDays != null && h('p.muted', { id: 'person-credit-fallback' }, t('person.creditFallback', { count: s.creditFallbackDays })),
       h('div.kpis', {},
         hoursTile,
         // the hours account is personal: planners only (viewers get null from the server)
         canEdit && kpi(t('person.kpi.accountBefore'), hours(s.accountBefore), t('help.figure.accountBefore')), canEdit && kpi(t('person.kpi.accountAfter'), hours(s.accountAfter), t('help.figure.accountAfter')),
+        canEdit && s.periodBalance != null && kpi(t('person.kpi.periodBalance'), hours(s.periodBalance), t('help.figure.periodBalance')),
+        canEdit && s.accountRest != null && kpi(t('person.kpi.accountRest'), accountRestShort(s), t('help.figure.accountRest')),
         kpi(t('person.kpi.duties'), fmt.num(s.duties), t('help.figure.duties')),
         s.availableDays != null && kpi(t('person.kpi.availableDays'), fmt.num(s.availableDays), t('help.figure.availableDays')),
         canEdit && s.chargedHours != null && kpi(t('person.kpi.charged'), hours(s.chargedHours), t('help.figure.chargedHours')),

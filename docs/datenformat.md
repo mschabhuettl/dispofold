@@ -108,6 +108,7 @@ leer sein. Felder, die im Beispiel `null` sind, dürfen fehlen.
 | absenceType | `reducesTarget` | „senkt das Soll": an Werktagen (Montag bis Freitag, kein Feiertag) sinkt das Soll um Wochenstunden / 5 |
 | absenceType | `chargesAccount` | „belastet das Stundenkonto": die Stunden, um die das Soll sinkt, gehen vom Stundenkonto ab |
 | absenceType | `compensatoryRest` | die Art ist Ersatzruhe und senkt die offenen Ersatzruhetage |
+| absenceType | `credit` | optional: womit ein Tag angerechnet wird, wenn die Art das Soll senkt. `WEEKLY_HOURS` (Standard, auch wenn es fehlt): Wochenstunden / 5 an Werktagen. `PLANNED_DUTY`: die Stunden des Dienstes, den die Abwesenheit ersetzt hat (`replacedHours`), an jedem Wochentag; ohne diese Angabe Wochenstunden / 5. Ein Import ohne `credit` lässt die in Dispofold gewählte Gutschrift stehen |
 | person | `weeklyHours` | Wochenstunden laut Vertrag, größer als 0 |
 | person | `areaIds` | Bereiche, in denen die Person eingesetzt werden darf |
 | person | `hoursAccount` | Stundenkonto aus Vormonaten (positiv: Plusstunden) |
@@ -129,6 +130,7 @@ leer sein. Felder, die im Beispiel `null` sind, dürfen fehlen.
 | history | `compRestUsed`, `compRestEarned` | im Monat genommene und (durch Feiertagsarbeit) erworbene Ersatzruhetage |
 | history | `weeklyHours` | optional: Wochenstunden laut Vertrag in diesem Monat, für die eigene Grenze des Wochenschnitts; fehlt sie, gilt der Wert aus dem abgeschlossenen Plan desselben Monats, sonst die heutigen Wochenstunden der Person. Der Monatsabschluss schreibt sie |
 | period | `absences` | Abwesenheiten mit Abwesenheitsart |
+| absence | `replacedHours` | optional, 0 bis 24: Stunden des Dienstes, den der Plan an diesem Tag hatte, als die Abwesenheit eingetragen wurde (0: der Monat war geplant, ohne Dienst an dem Tag). Dispofold schreibt es selbst für jede neue Abwesenheit in einem geplanten Monat; fehlt es, ist der ersetzte Dienst unbekannt |
 | period | `wishes` | `OFF` (frei), `DUTY` (Dienst), `SHIFT` (diese Schicht), `NOT_SHIFT` (diese Schicht nicht); bei `SHIFT` und `NOT_SHIFT` ist `shiftId` Pflicht |
 | period | `fixed` | Vorgaben; `shiftId: null` gibt einen freien Tag vor |
 | period | `previousDuties` | Dienste der letzten Tage des Vormonats (Ruhezeit und Blöcke am Monatsanfang) |
@@ -272,6 +274,7 @@ der Monat des Eintrags.
 | `import.badMonth` | `personId`, `month` | Monat eines Historieneintrags ist nicht `YYYY-MM` |
 | `import.badHistorySource` | `personId`, `month` | `source` eines Historieneintrags ist weder `import` noch `plan` |
 | `import.badWeeklyHours` | `personId`, `weeklyHours` | Wochenstunden einer Person oder eines Historieneintrags kleiner oder gleich 0 |
+| `import.badReplacedHours` | `personId`, `date`, `replacedHours` | Stunden des ersetzten Dienstes einer Abwesenheit nicht zwischen 0 und 24 |
 | `import.badEmployment` | `personId` | `exitDate` liegt vor `entryDate` |
 | `import.badShiftMix` | `personId` | gewohnte Verteilung ungültig: Anteil außerhalb von 0 bis 1, Summe ungleich 1 oder Bereich, der nicht zur Person gehört |
 | `import.badDemandDay` | `areaId`, `index`, `day` | unbekannter Tagestyp im Bedarf (erlaubt `MON`..`SUN`, `HOL`) |

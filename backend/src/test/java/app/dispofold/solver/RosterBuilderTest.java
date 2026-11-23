@@ -94,8 +94,8 @@ class RosterBuilderTest {
                 d.holidays(), d.absenceTypes(), d.people(), d.restrictions(), history, d.periods());
         Roster r = build(changed, d.periods().get(0), List.of());
 
-        // 20 h on the account, a quarter of it is evened out this month.
-        assertThat(staff(r, "P0004").getTargetMinutes()).isEqualTo(22 * 480 - 5 * 60);
+        // 20 h on the account, evened out by the end of the half-year: February is one of five months left.
+        assertThat(staff(r, "P0004").getTargetMinutes()).isEqualTo(22 * 480 - 4 * 60);
         assertThat(staff(r, "P0004").getCompRestBalance()).isEqualTo(3);
     }
 

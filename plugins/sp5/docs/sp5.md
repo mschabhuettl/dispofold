@@ -57,6 +57,15 @@ Den Lauf vor dem Import ansehen, seinen Bericht und seine Warnungen lesen, die Z
 letzten Import vergleichen geht auf den Seiten der Erweiterung im Menü **Schichtplaner 5** (siehe
 [Ablauf](plugin-sp5-ablauf.md)). Von dort lässt sich auch genau der angesehene Lauf importieren.
 
+## Abwesenheiten auf Diensttagen
+
+In Schichtplaner 5 bleibt ein geplanter Dienst stehen, wenn an seinem Tag eine ganztägige Abwesenheit
+eingetragen wird. Der Import übernimmt solche Dienste nicht (der Bericht nennt sie, mit einer Warnung) und gibt
+an der Abwesenheit auch keine Stunden mit, damit das Ergebnis Byte für Byte dem von `sp5_export.py` gleicht. Die
+Gutschrift „Stunden des geplanten Dienstes“ einer Abwesenheitsart (Seite Stammdaten) gilt deshalb nur für
+Abwesenheiten, die nach der Planung in Dispofold eingetragen werden; importierte Abwesenheiten zählen mit
+Wochenstunden / 5, und die Personenseite sagt das. Die Erweiterung lässt die Gutschrift aller Arten beim Standard.
+
 ## Zyklen
 
 Eine Zyklus-Zuordnung (`5CYASS`) ohne Ende oder ohne Beginn ergibt keine Dienste, wie in Schichtplaner 5 (so

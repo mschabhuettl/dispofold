@@ -79,7 +79,7 @@ const TO_FORM = {
     from: hhmm(d.from), to: hhmm(d.to), min: String(d.min ?? ''), max: d.max == null ? '' : String(d.max) }),
   holidays: (x) => ({ date: x.date ?? '', name: x.name ?? '' }),
   absenceTypes: (a) => ({ code: a.code ?? '', name: a.name ?? '', reducesTarget: Boolean(a.reducesTarget),
-    chargesAccount: Boolean(a.chargesAccount), compensatoryRest: Boolean(a.compensatoryRest), color: a.color ?? '' }),
+    chargesAccount: Boolean(a.chargesAccount), compensatoryRest: Boolean(a.compensatoryRest), credit: a.credit ?? 'WEEKLY_HOURS', color: a.color ?? '' }),
 };
 
 /** Form values of an object; null gives the values of a new, empty object. */
@@ -121,7 +121,8 @@ const FROM_FORM = {
   },
   holidays: (v, base) => ({ ...base, date: required(v.date, t('masterdata.col.date')), name: required(v.name, t('masterdata.col.name')) }),
   absenceTypes: (v, base) => ({ ...base, code: required(v.code, t('masterdata.col.code')), name: required(v.name, t('masterdata.col.name')),
-    reducesTarget: Boolean(v.reducesTarget), chargesAccount: Boolean(v.chargesAccount), compensatoryRest: Boolean(v.compensatoryRest), color: orNull(v.color) }),
+    reducesTarget: Boolean(v.reducesTarget), chargesAccount: Boolean(v.chargesAccount), compensatoryRest: Boolean(v.compensatoryRest),
+    credit: v.credit === 'PLANNED_DUTY' ? 'PLANNED_DUTY' : null, color: orNull(v.color) }),
 };
 
 /**

@@ -259,6 +259,30 @@ try {
   await page.waitForURL((u) => u.hash === '#/eingaben');
   check('no question after saving', dialogs.length === 2, dialogs.join(' | '));
 
+  // The account: balanced by the end of the half-year by default, the minus rest dropped; the fixed share is the other choice
+  await openRules();
+  check('account balancing by the end of the half-year by default', await page.inputValue('#param-accountBalancing') === 'PERIOD_END'
+    && !(await page.isChecked('#param-carryMinusRest')));
+  await page.selectOption('#param-accountBalancing', 'MONTHLY_SHARE');
+  await page.check('#param-carryMinusRest');
+  const [balancingPut] = await Promise.all([page.waitForResponse(isPut), save()]);
+  const sent = balancingPut.request().postDataJSON();
+  check('the balancing and the minus rest are saved', sent.accountBalancing === 'MONTHLY_SHARE' && sent.carryMinusRest === true, JSON.stringify(sent));
+  await page.selectOption('#param-accountBalancing', 'PERIOD_END');
+  await page.uncheck('#param-carryMinusRest');
+  await Promise.all([page.waitForResponse(isPut), save()]);
+  // the closed balance, the rest and a day without the replaced duty on the person page; the rest on Prüfen
+  await page.goto(`${base}/#/person/P0001`);
+  await page.locator('#h-why').waitFor();
+  const labels = await page.locator('.kpi .label').allTextContents();
+  check('the closed balance of the previous half-year and the rest are shown', labels.some((l) => l.startsWith('Abgerechnet Ende Vorhalbjahr'))
+    && labels.some((l) => l.startsWith('Rest im Monat')), labels.join(' | '));
+  check('a day credited without the replaced duty is named', (await page.textContent('#person-credit-fallback'))?.includes('1 Abwesenheitstag ohne Angabe zum ersetzten Dienst'));
+  await page.goto(`${base}/#/pruefen`);
+  await page.locator('#check-account').waitFor();
+  check('Prüfen lists the account rest with the cap', (await page.textContent('#check-account'))?.includes('6,5 h fehlen, das Ziel ist schon bei der Obergrenze von 184,8 h'),
+    await page.textContent('#check-account'));
+
   // Person page: one hour tile, no scores in "Warum dieser Dienst?".
   await page.goto(`${base}/#/person/${encodeURIComponent(personId)}`);
   await page.locator('#h-why').waitFor();

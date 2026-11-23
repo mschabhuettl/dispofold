@@ -101,7 +101,7 @@ Einzelheiten:
   Halbjahrs vor dem geplanten Monat und der geplante Monat, geteilt durch die Wochen vom Beginn des Halbjahrs bis
   zum Monatsende (Tage / 7). Vollständig ist die Historie, wenn alle Monate des Halbjahrs vor dem geplanten Monat
   darin stehen; im Jänner und im Juli zählt nur der geplante Monat, und die Regel gilt sofort. Im Juli zählen
-  die Monate davor nicht mehr. Das Stundenkonto wird am Halbjahresende nicht zurückgesetzt. Gleitend
+  die Monate davor nicht mehr. Zum Stundenkonto am Halbjahresende siehe Stunden treffen. Gleitend
   (`ROLLING`): die letzten `averagingWeeks` Wochen (Standard 52) bis zum Monatsende, jeder Historienmonat mit
   365,25 / 12 / 7 Wochen.
 - **Eigene Grenze des Durchschnitts.** Jede Person wird an ihrem eigenen Vertrag gemessen: Grenze = Wochenstunden
@@ -276,13 +276,34 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
   Zeitausgleich), werden diese Stunden vom Stundenkonto abgebucht. Urlaub: senkt das Soll, belastet das Konto
   nicht. Krankenstand: ebenso. Zeitausgleich: beides. Geplante Ersatzruhetage senken das Soll ebenfalls um
   Wochenstunden / 5.
-- Das Ziel des Monats wird um einen Teil des Stundenkontos korrigiert: Ziel = Soll - `accountCarryShare`
-  × Stundenkonto (Standard 0,25; die Oberfläche fragt „Ausgleich Stundenkonto je Monat (%)“ und nimmt 25 %). Plusstunden senken also das Ziel, Minusstunden erhöhen es. Das Stundenkonto
-  am Monatsbeginn ist das Konto nach dem Vormonat aus der Historie, sonst der Wert der Person im Import.
+- Gutschrift einer Abwesenheitsart (`credit`): `WEEKLY_HOURS` (Standard) wie oben. `PLANNED_DUTY`: angerechnet
+  werden die Stunden des Dienstes, den die Abwesenheit ersetzt hat, an jedem Wochentag (auch Samstag, Sonntag,
+  Feiertag), ohne Dienst 0, wie Zeitaufzeichnungen Krankenstand oder Urlaub an einem Diensttag gutschreiben. Den
+  ersetzten Dienst schreibt Dispofold an die Abwesenheit (`replacedHours`), wenn sie in einen Monat mit Plan
+  eingetragen wird. Ein Monat, der noch geplant wird, hat keinen Dienst, den eine Abwesenheit ersetzt: Ohne
+  `replacedHours` gilt Wochenstunden / 5 an Werktagen, und die Personenseite nennt die Tage.
+- Ausgleich des Stundenkontos (`accountBalancing`). Standard `PERIOD_END`, bis Ende des Kalenderhalbjahrs: Am Ende
+  des Durchrechnungszeitraums soll das Konto bei 0 stehen, denn über den Zeitraum sind die vereinbarten Stunden
+  geschuldet, bei Teilzeit die Stunden laut Vertrag (die Normalarbeitszeit der Teilzeitkraft). Ziel = Soll -
+  Stundenkonto / verbleibende Monate des Halbjahrs einschließlich des geplanten (Jänner und Juli 6, April 3, Juni
+  1: der ganze Rest). Im Jänner und im Juli beginnt das Konto bei 0: Plusstunden vom Halbjahresende werden
+  außerhalb des Plans abgerechnet (zum Beispiel als Überstunden) und nie mitgenommen; ein Minus verfällt
+  (`carryMinusRest` aus, Standard) oder kommt mit (`carryMinusRest` ein). Das Konto am Ende des vorigen Halbjahrs
+  zeigt die Personenseite als „Abgerechnet Ende Vorhalbjahr“, auch unter den Kennzahlen der Fairness. Das Ziel
+  bleibt zwischen 0 und Soll plus `maxOverTargetPercent` Prozent; was darüber hinaus ausgeglichen werden müsste,
+  ist der Rest: ein Hinweis auf der Seite Prüfen und auf der Personenseite (Person, Rest, Obergrenze), kein
+  Regelverstoß. Alternative `MONTHLY_SHARE`: Ziel = Soll - `accountCarryShare` × Stundenkonto (Standard 0,25; die
+  Oberfläche fragt „Ausgleich Stundenkonto je Monat (%)“ und nimmt 25 %), das Konto läuft über das Halbjahr
+  weiter. Mit gleitender Durchrechnung (`averagingPeriod` = `ROLLING`) gilt immer der feste Anteil. Plusstunden
+  senken also das Ziel, Minusstunden erhöhen es. Das Stundenkonto am Monatsbeginn ist das Konto nach dem
+  Vormonat aus der Historie, sonst der Wert der Person im Import (bis Ende des Halbjahrs im Jänner und Juli 0,
+  siehe oben). Schon geschlossene Monate behalten ihren gespeicherten Kontostand.
 - Stundenkonto nach dem Monat = vorher + geplant + Soll-Senkung - Soll - abgebuchte Stunden.
 - Obergrenze (`maxMonthHours`, Gruppe Regelverstoß): Die angerechneten Stunden des Monats (Dienste, angerechnete
   Abwesenheiten und Ersatzruhe) dürfen das Ziel um höchstens `maxOverTargetPercent` Prozent des Ziels
-  überschreiten (Standard 10 %, auf der Seite Regeln einstellbar, 0 erlaubt). Abwesenheiten zählen mit, senken
+  überschreiten (Standard 10 %, auf der Seite Regeln einstellbar, 0 erlaubt). Beim Ausgleich bis Ende des
+  Halbjahrs liegt sie bei höchstens Soll plus diesem Anteil: Liegt das Ziel über dem Soll (Minusstunden), ist die
+  Grenze Soll plus Anteil. Abwesenheiten zählen mit, senken
   also, was für Dienste bleibt. Strafe: Minuten darüber. Warum Regelverstoß: Ungedeckter Bedarf (Gruppe Bedarf) wiegt
   immer schwerer als das Ziel (Qualität); ohne Obergrenze füllt der Solver Lücken mit Teilzeitkräften bis
   zur gesetzlichen Wochengrenze auf. Die gesetzlichen Grenzen gelten weiter. Ein von Hand gesetzter oder fixer
@@ -585,11 +606,12 @@ ist ein Parameter, entscheidet die Betriebsvereinbarung.
    Historie und dem Monat gerechnet, je Person gegen ihre eigene Grenze (Punkt 1), und gehört zur Gruppe
    Regelverstoß, wo die Historie den Zeitraum abdeckt. Der KV erlaubt bis zu 52 Wochen und überlässt die
    Einzelheiten einer Betriebsvereinbarung; der Standard folgt der üblichen Abrechnung je Kalenderhalbjahr
-   (`averagingPeriod`). Ob Abwesenheiten als Arbeitszeit zählen, ist festzulegen. Parameter `accountCarryShare`
-   steuert, wie viel des Kontos ein Monat ausgleichen soll.
+   (`averagingPeriod`). Ob Abwesenheiten als Arbeitszeit zählen, ist festzulegen. Das Stundenkonto gleicht sich
+   standardmäßig bis Ende des Halbjahrs aus (`accountBalancing`); `accountCarryShare` ist der feste Anteil der
+   Alternative.
 9. **Abwesenheitsarten.** Welche Abwesenheiten das Soll senken und welche das Stundenkonto belasten
    (`reducesTarget`, `chargesAccount`), legt der Import je Art fest; die Zuordnung ist mit der
-   Personalverrechnung abzustimmen.
+   Personalverrechnung abzustimmen. Ebenso die Gutschrift (`credit`): Wochenstunden / 5 oder der ersetzte Dienst.
 10. **Zeitumstellung.** Ein 12-Stunden-Nachtdienst dauert in der Herbstnacht 13 echte Stunden. Das Programm
     zählt diese Stunden, misst die Höchstdauer aber an der Dauer laut Schichtkatalog; ob das so gelten soll,
     entscheidet die Betriebsvereinbarung.

@@ -135,7 +135,7 @@ public class FakePlanningFacade implements PlanningFacade {
                 .mapToInt(h -> h.nights()).sum();
         return new PersonStats(personId, 170, 0, duties * 12.0, 0, 0, duties, nights, 2, 2, 1, nights, 1, 1, 0, 0,
                 0, 0, historyNights, 0, 0, 0, 0, 0, 31, 0, 40, false, 44, 170, 170, null, true, null, 2.0, 1.5, 1.0, 0.5,
-                2.0);
+                2.0, null, null, null, null);
     }
 
     @Override

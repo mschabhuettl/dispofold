@@ -40,6 +40,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  *        before it existed means on
  * @param averagingPeriod the period of the average weekly hours; null in rules saved before it existed means
  *        {@link AveragingPeriod#HALF_YEAR}
+ * @param accountBalancing how the goal evens out the hours account; null in rules saved before it existed means
+ *        {@link AccountBalancing#PERIOD_END}
+ * @param carryMinusRest with {@link AccountBalancing#PERIOD_END}: a minus balance at the end of a period carries
+ *        into the next one (a plus balance never does); null in rules saved before it existed means no (dropped)
  */
 public record Rules(double minDailyRestHours, double minWeeklyRestHours, double maxDutyHours, double maxWeekHours,
         double maxAverageWeekHours, int minBlock, int maxBlock, int maxWishesPerPerson,
@@ -48,7 +52,9 @@ public record Rules(double minDailyRestHours, double minWeeklyRestHours, double 
         int averagingWeeks, Double maxOverTargetPercent, Integer minFreeSundays,
         NightDistribution nightDistribution, @JsonInclude(JsonInclude.Include.NON_NULL) Double averageTolerancePercent,
         @JsonInclude(JsonInclude.Include.NON_NULL) Boolean freeInsideAbsence,
-        @JsonInclude(JsonInclude.Include.NON_NULL) AveragingPeriod averagingPeriod) {
+        @JsonInclude(JsonInclude.Include.NON_NULL) AveragingPeriod averagingPeriod,
+        @JsonInclude(JsonInclude.Include.NON_NULL) AccountBalancing accountBalancing,
+        @JsonInclude(JsonInclude.Include.NON_NULL) Boolean carryMinusRest) {
 
     public static final String DEFAULT_TIME_ZONE = "Europe/Vienna";
     /** Planning never goes below this daily rest; a shortened rest is for operations only. */
@@ -68,6 +74,36 @@ public record Rules(double minDailyRestHours, double minWeeklyRestHours, double 
                 maxBlock, maxWishesPerPerson, holidayWorkEarnsCompRest, nightStart, nightEnd, nightMinHours,
                 accountCarryShare, historyMonths, weights, timeZone, averagingWeeks, maxOverTargetPercent,
                 minFreeSundays, nightDistribution, null, null, null);
+    }
+
+    /** Rules without the account balancing parameters (null): their accessors give the defaults. */
+    public Rules(double minDailyRestHours, double minWeeklyRestHours, double maxDutyHours, double maxWeekHours,
+            double maxAverageWeekHours, int minBlock, int maxBlock, int maxWishesPerPerson,
+            boolean holidayWorkEarnsCompRest, LocalTime nightStart, LocalTime nightEnd, double nightMinHours,
+            double accountCarryShare, int historyMonths, Map<String, Long> weights, String timeZone,
+            int averagingWeeks, Double maxOverTargetPercent, Integer minFreeSundays,
+            NightDistribution nightDistribution, Double averageTolerancePercent, Boolean freeInsideAbsence,
+            AveragingPeriod averagingPeriod) {
+        this(minDailyRestHours, minWeeklyRestHours, maxDutyHours, maxWeekHours, maxAverageWeekHours, minBlock,
+                maxBlock, maxWishesPerPerson, holidayWorkEarnsCompRest, nightStart, nightEnd, nightMinHours,
+                accountCarryShare, historyMonths, weights, timeZone, averagingWeeks, maxOverTargetPercent,
+                minFreeSundays, nightDistribution, averageTolerancePercent, freeInsideAbsence, averagingPeriod, null,
+                null);
+    }
+
+    /** {@link #accountBalancing()} with the default for rules saved without it. */
+    public AccountBalancing balancing() {
+        return accountBalancing != null ? accountBalancing : AccountBalancing.PERIOD_END;
+    }
+
+    /** The account evens out by the end of the calendar half-year (the default); else by the fixed share. */
+    public boolean balancesByPeriodEnd() {
+        return balancing() == AccountBalancing.PERIOD_END && averaging() == AveragingPeriod.HALF_YEAR;
+    }
+
+    /** {@link #carryMinusRest()} with the default for rules saved without it. */
+    public boolean carriesMinusRest() {
+        return carryMinusRest != null && carryMinusRest;
     }
 
     /** {@link #averageTolerancePercent()} with the default for rules saved without it. */
