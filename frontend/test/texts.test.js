@@ -42,8 +42,9 @@ test('every text key is used', () => {
   assert.deepEqual(dead, []);
 });
 
-// One term each (docs/anleitung/begriffe.md): the old names of levels, rules, inputs and badges are gone from every text.
-const OLD_TERMS = /Sollstunden|Monatssoll|Ziel für diesen Plan|\bfixe[nrs]?\b|Fixe Dienste|Eingaben geändert|Vormonat geändert|Schichtmix|\bMix\b|Familienw[uü]nsch|Blocktage|Wer kann gefragt|\bhart(e[nrs]?)?\b|\bweich(e[nrs]?)?\b|\bStufen?\b|dispofold\/dataset|docs\/|Version 2\b/i;
+// One term each (docs/anleitung/begriffe.md): the old names of levels, rules, inputs and badges are gone from every text
+// ("Strafe" is a deduction of the plan quality: "Abzug").
+const OLD_TERMS = /Sollstunden|Monatssoll|Ziel für diesen Plan|\bfixe[nrs]?\b|Fixe Dienste|Eingaben geändert|Vormonat geändert|Schichtmix|\bMix\b|Familienw[uü]nsch|Blocktage|Wer kann gefragt|\bhart(e[nrs]?)?\b|\bweich(e[nrs]?)?\b|\bStufen?\b|\bStrafen?\b|dispofold\/dataset|docs\/|Version 2\b/i;
 
 test('no text uses an old term', () => {
   assert.deepEqual(Object.entries(TEXTS).filter(([, v]) => OLD_TERMS.test(v)).map(([k]) => k), []);
@@ -91,7 +92,7 @@ test('errors, constraints and hits are rendered from codes', async () => {
   const { errorMessage } = await import('../src/lib/api.js');
   assert.equal(constraintLabel({ id: 'dailyRest', label: 'old' }), TEXTS['constraint.dailyRest.label']);
   assert.equal(constraintDescription({ id: 'dailyRest' }, { minDailyRestHours: 11.5 }),
-    'Zwischen zwei Diensten liegen mindestens 11,5 Stunden Ruhe (KV, Ruhezeit). Strafe in fehlenden Minuten.');
+    'Zwischen zwei Diensten liegen mindestens 11,5 Stunden Ruhe (KV, Ruhezeit). Abzug in fehlenden Minuten.');
   assert.equal(constraintLabel({ id: 'unknownRule', label: 'Server label' }), 'Server label');
   assert.equal(constraintLabel({ id: 'unknownRule' }), 'unknownRule');
   assert.equal(messageText({ code: 'plan.closed', params: { month: '2027-01' } }), 'Der Monat Jänner 2027 ist abgeschlossen und kann nicht geändert werden.');

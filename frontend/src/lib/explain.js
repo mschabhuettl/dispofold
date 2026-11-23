@@ -52,3 +52,21 @@ export function hitEffect(hit) {
   if (hit.score < 0) return hit.level === 'HARD' ? t('person.effect.violation') : t('person.effect.drawback');
   return hit.score > 0 ? t('person.effect.benefit') : '';
 }
+
+/**
+ * Why the Ziel of a person differs from the Soll (PersonStats), at the one decimal the page shows: the hours account
+ * (goalHours against targetHours) and the scaling to the work the demand needs (scaledGoalHours below goalHours).
+ * Texts; empty when Ziel and Soll are equal or the goal is not given (viewers).
+ */
+export function goalReasons(s) {
+  if (s?.goalHours == null) return [];
+  const tenths = (v) => Math.round(v * 10);
+  const text = (v) => (v / 10).toLocaleString('de-AT', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  const account = tenths(s.goalHours) - tenths(s.targetHours);
+  const scaled = tenths(s.goalHours) - tenths(s.scaledGoalHours ?? s.goalHours);
+  const out = [];
+  if (account < 0) out.push(t('person.goal.accountLower', { hours: text(-account) }));
+  if (account > 0) out.push(t('person.goal.accountHigher', { hours: text(account) }));
+  if (scaled > 0) out.push(t('person.goal.scaled', { hours: text(scaled) }));
+  return out;
+}

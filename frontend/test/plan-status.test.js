@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chipCount, closeChecklist, planHeadline, problemConstraints } from '../src/lib/plan-status.js';
+import { chipCount, closeChecklist, planHeadline, problemConstraints, scoreWords } from '../src/lib/plan-status.js';
 
 test('headline: usable plan, gaps, rule violations, both', () => {
   assert.deepEqual(planHeadline({ hard: 0, gaps: 0, uncoveredHours: 0 }),
@@ -42,4 +42,12 @@ test('close checklist: violations, gaps, plan out of date; no analysis counts as
   assert.deepEqual(open.map((i) => i.ok), [false, false, false]);
   assert.deepEqual(open.map((i) => i.text), ['2 Regelverstöße', '3 Lücken (16 Personenstunden)', 'Plan veraltet: neu planen']);
   assert.deepEqual(closeChecklist({ hardViolations: 0, previousMonthChanged: true }, null).map((i) => i.ok), [true, false, false]);
+});
+
+test('score in words: violations counted, staff in person hours, the quality deductions without sign', () => {
+  assert.equal(scoreWords({ score: '0hard/-5430medium/-6185375soft', hard: 0, uncovered: 0, overstaffed: 90.5 }),
+    `Regelverstöße 0, fehlende Besetzung 0 Personenstunden, Überbesetzung 90,5 Personenstunden, Qualität: Abzüge ${(6185375).toLocaleString('de-AT')}`);
+  assert.equal(scoreWords({ score: '-120hard/-2000000060medium/-5soft', hard: 2, uncovered: 2 / 60, overstaffed: 1 }),
+    'Regelverstöße 2, fehlende Besetzung 0 Personenstunden, Überbesetzung 1 Personenstunden, Qualität: Abzüge 5');
+  assert.equal(scoreWords({ score: null }), '–');
 });

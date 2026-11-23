@@ -1,5 +1,5 @@
 // Output of a plan: the "Ausgabe" menu of the plan views (print, export) and closing the month with a checklist.
-import { monthLabel } from '../lib/dates.js';
+import { addMonths, monthLabel } from '../lib/dates.js';
 import { guarded, h, saveBlob, toast } from '../lib/dom.js';
 import { closeChecklist } from '../lib/plan-status.js';
 import { t } from '../lib/texts.js';
@@ -72,7 +72,7 @@ export function exportItems(api, month, solving) {
 
 /**
  * "Monat abschließen": a dialog with the checklist (rule violations, open gaps, plan out of date) from the current
- * plan state and analysis. With open items, closing needs the extra tick "Trotzdem abschließen". After closing,
+ * plan state and analysis and what closing means (read only, reopened under Daten). With open items, closing needs the extra tick "Trotzdem abschließen". After closing,
  * the view is drawn again.
  */
 export async function closeMonth(ctx) {
@@ -96,6 +96,8 @@ function confirmClose(month, items) {
     h('ul.checklist', {}, items.map((i) => h('li', { class: i.ok ? 'ok' : 'open' },
       h('span.mark', { 'aria-hidden': 'true' }, i.ok ? '✓' : '!'),
       h('span.visually-hidden', {}, i.ok ? t('closeMonth.ok') : t('closeMonth.open')), ' ', i.text))),
+    // what follows: read only, the figures carried on, where to open it again
+    h('p', { id: 'close-month-after' }, t('closeMonth.after', { month: monthLabel(month), next: monthLabel(addMonths(month, 1)) })),
     pending && h('p', {}, t('closeMonth.openItems')),
     pending && h('label.check-inline', {},
       h('input', { type: 'checkbox', id: 'close-anyway', onchange: (e) => { confirmButton.disabled = !e.target.checked; } }),

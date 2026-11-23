@@ -223,6 +223,13 @@ table.data th button { font: inherit; font-weight: 600; background: none; border
 .headline-warn, .headline-solving { color: var(--accent); }
 .headline-bad { color: var(--danger); }
 .chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+.chips-label { font-size: .82rem; align-self: center; }
+.empty-start {
+  display: flex; flex-direction: column; gap: .4rem; padding: .5rem .8rem; background: var(--surface);
+  border: 1px solid var(--border); border-left: 4px solid var(--info); border-radius: 0 6px 6px 0; margin-bottom: 1rem;
+}
+.empty-start h2 { margin: 0; font-size: 1.05rem; }
+.empty-start p { margin: 0; }
 .chip {
   font: inherit; font-size: .82rem; padding: .1rem .6rem; border: 1px solid var(--border-strong); border-radius: 999px;
   background: var(--surface); color: var(--text); cursor: pointer;
@@ -516,6 +523,8 @@ details.rules-advanced section { margin-top: 1.2rem; }
 .check-list .hit-text { flex-basis: 100%; color: var(--text-muted); }
 .check-list .candidates { flex-basis: 100%; }
 .check-headline { font-weight: 600; }
+.check-quality > summary { font-weight: 600; cursor: pointer; }
+.check-verdict p { margin: 0; }
 .fairness-measure { max-width: 60rem; }
 /* Personen: the search field of the list */
 #person-search { min-width: 18rem; }

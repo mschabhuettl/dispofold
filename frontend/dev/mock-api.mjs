@@ -5,7 +5,8 @@ import { addDays, dayCode, epochMinutes, formatLocalDateTime, isWeekend, monthDa
 import { CONSTRAINTS, DEFAULT_RULES, TEMPLATE, makeDataset } from './mock-data.mjs';
 
 export function createMockApi({ dataset: initial = null, month = '2026-12', desktop = false, updateSource = '', askUpdates = false,
-  release = '', plugins = [] } = {}) {
+  release = '', plugins = [], empty = false } = {}) {
+  // empty: start without any data, like a new installation (the demo data still load the dataset or the generated one)
   // plugins: [{ manifest, route(method, path, body, role, query) → { status, body } | null }], all off at the start;
   // route.load(request, preview) → an error answer or null: the plugin's import source checks the request (without it:
   // a JSON file in an allowed folder, { root, file })
@@ -13,7 +14,9 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
   // folders plugins may read: one on the "server" while plugins are there, the desktop user's picks
   const roots = plugins.length && !desktop ? ['/srv/dispofold/quellen'] : [];
   const folders = { '': [{ name: '2027', dir: true }], 2027: [{ name: 'daten.json', dir: false }] };
-  let dataset = initial ? structuredClone(initial) : makeDataset(month);
+  let dataset = empty ? { format: 'dispofold/dataset', version: 1, source: '', areas: [], shifts: [], demand: [], holidays: [],
+    absenceTypes: [], people: [], restrictions: [], history: [], periods: [] }
+    : initial ? structuredClone(initial) : makeDataset(month);
   let rules = structuredClone(DEFAULT_RULES);
   const periods = new Map(dataset.periods.map((p) => [p.month, p]));
   // Daten page: the master data of the last import (baseline) and whether they were changed since (PUT people)
@@ -201,7 +204,8 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
     return {
       plannedMix: duties.length ? { categories: share((a) => shifts.get(a.shiftId).category), areas: share((a) => shifts.get(a.shiftId).areaId) } : null,
       personId: p.id, targetHours: round(targetHours), creditedHours: round(creditedHours), plannedHours: round(plannedHours),
-      goalHours: round(targetHours + p.hoursAccount * 0.5), scaledGoalHours: round((targetHours + p.hoursAccount * 0.5) * 0.92),
+      // like the backend: plus hours lower the goal, minus hours raise it
+      goalHours: round(targetHours - p.hoursAccount * 0.5), scaledGoalHours: round((targetHours - p.hoursAccount * 0.5) * 0.92),
       accountBefore: p.hoursAccount, accountAfter: round(p.hoursAccount + plannedHours + creditedHours - targetHours),
       duties: duties.length, nights: duties.filter((a) => shifts.get(a.shiftId).category === 'NIGHT').length,
       weekendsWorked, weekendsOff: saturdays.length - weekendsWorked,

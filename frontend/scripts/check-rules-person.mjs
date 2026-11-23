@@ -4,8 +4,9 @@
 // set by hand shows "angepasst"; the law fields are locked until "Ändern"; fields the page does not know are saved
 // unchanged. The save bar stays in view while scrolling, an edit marks the page unsaved and leaving it asks (dismiss
 // stays, accept leaves), weights are number fields with their default and a reset to it, and a rule text takes its
-// number from the parameter field. Person: one hour tile "x h von Ziel y h (Soll z h)" (viewers without Ziel) and
-// "Warum dieser Dienst?" in words, without scores.
+// number from the parameter field. Person: before a plan "Noch kein Plan für <Monat>" without the figures of a plan,
+// the hour tile "Ziel y h (Soll z h)" with the reason why they differ; then one hour tile "x h von Ziel y h (Soll z h)"
+// (viewers without Ziel) and "Warum dieser Dienst?" in words, without scores.
 // Demo data of the dev server (mock API, with the constraint catalogue of the backend). With an output folder as argument, it also saves screenshots of both pages.
 //   npm run build && node scripts/check-rules-person.mjs [output folder]     (Chromium via `npx playwright install chromium`)
 import { spawn } from 'node:child_process';
@@ -47,12 +48,27 @@ try {
     return page;
   };
   const page = await login('planung');
-  const personId = await page.evaluate(async (m) => {
+  const personId = await page.evaluate(async () => {
     await fetch('/api/import/demo', { method: 'POST' });
-    await fetch(`/api/plans/${m}/solve`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: '{"seed":1,"timeLimitSeconds":1}' });
     return (await (await fetch('/api/dataset')).json()).people[0].id;
-  }, month);
+  });
+
+  // Person page before the month is planned: no figures of a plan, "Noch kein Plan für <Monat>", Ziel and Soll with
+  // the reason why they differ
+  await page.goto(`${base}/#/person/${encodeURIComponent(personId)}`);
+  await page.locator('#h-hours').waitFor();
+  check('before a plan: "Noch kein Plan für Jänner 2027"', (await page.textContent('#person-no-plan'))?.startsWith('Noch kein Plan für Jänner 2027'));
+  const unplannedLabels = await page.locator('section[aria-labelledby="h-hours"] .kpi .label').allTextContents();
+  check('before a plan: no account after, duties, load, wishes (history only) or "Warum"', await page.locator('#h-load, #h-why, #h-mix').count() === 0
+    && !unplannedLabels.some((l) => /^(Stundenkonto danach|Dienste|Wünsche|Wochenschnitt)/.test(l)) && unplannedLabels.some((l) => l.startsWith('Stundenkonto vorher')),
+  unplannedLabels.join(' | '));
+  const unplannedTile = (await page.locator('.kpi-hours .value').textContent()).trim();
+  check('before a plan: the hour tile shows Ziel and Soll only', /^Ziel \d+(,\d)? h \(Soll \d+(,\d)? h\)$/.test(unplannedTile), unplannedTile);
+  const reason = (await page.textContent('#person-goal-reason')) ?? '';
+  check('the reason next to a Ziel below the Soll', reason.startsWith('Ziel und Soll unterscheiden sich: ') && reason.includes('weil der Bedarf des Monats weniger Stunden braucht'), reason);
+
+  await page.evaluate((m) => fetch(`/api/plans/${m}/solve`, { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: '{"seed":1,"timeLimitSeconds":1}' }), month);
   await page.waitForTimeout(1500);
 
   const isPut = (r) => r.request().method() === 'PUT' && r.url().endsWith('/api/rules');

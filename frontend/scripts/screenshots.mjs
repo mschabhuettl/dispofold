@@ -283,9 +283,7 @@ async function serverPhase() {
 
   // 7. Prüfen
   await open(page, base, 'pruefen', '#check-problems');
-  await page.locator('#check-problems details.check-group[open] > summary').evaluateAll((s) => s.forEach((x) => x.click()));
-  await mark(page, [['#check-problems h2', 1], ['#check-problems .toolbar', 2], ['#check-problems details.check-group > summary', 3],
-    ['#check-gaps h2', 4], ['#check-data h2', 5]]);
+  await mark(page, [['#check-verdict', 1], ['#check-problems h2', 2], ['#check-gaps h2', 3], ['#check-quality h2', 4], ['#check-data h2', 5]]);
   await shot(page, 'beispiel-pruefen');
 
   // 8. a sick note after planning: someone of the small area with duties there on two working days in a row

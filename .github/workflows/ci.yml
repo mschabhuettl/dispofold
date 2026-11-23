@@ -215,6 +215,9 @@ jobs:
       - name: Prüfen page and fairness measure (browser)
         working-directory: frontend
         run: node scripts/check-problems.mjs
+      - name: First start without data, demo data from the empty state (browser)
+        working-directory: frontend
+        run: node scripts/check-start.mjs
       - name: Personen pages, one person form, area switch, viewers without form (browser)
         working-directory: frontend
         run: node scripts/check-people.mjs

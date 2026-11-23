@@ -1,5 +1,6 @@
-// Prüfen: what is wrong with the plan of the month (rule violations, overstaffing, quality; open demand) and with
-// the master data. Planners only.
+// Prüfen: what is wrong with the plan of the month and with the master data, in the order to work on it: a verdict,
+// the rule violations, the open demand, then the notes on quality and overstaffing (no errors, collapsed), the hours
+// accounts and the master data. Every group of a list starts collapsed. Planners only.
 import { gapLabel } from '../lib/candidates.js';
 import { constraintLabel, hitText } from '../lib/codes.js';
 import { dataChecks } from '../lib/data-checks.js';
@@ -16,11 +17,8 @@ import { candidateList } from './candidate-list.js';
 
 const LEVEL = { HARD: t('person.level.hard'), MEDIUM: t('person.level.medium'), SOFT: t('person.level.soft') };
 const BY = { rule: t('check.by.rule'), person: t('check.by.person'), day: t('check.by.day') };
-/** A list longer than this shows only its first group open. */
-const FOLD = 20;
-
-/** A group that folds: the heading opens and closes its list. */
-const fold = (open, heading, list) => h('details.check-group', { open }, h('summary', {}, heading), list);
+/** A group that folds, collapsed: the heading opens and closes its list. */
+const fold = (heading, list) => h('details.check-group', {}, h('summary', {}, heading), list);
 
 export async function render(root, ctx) {
   const { api, month } = ctx;
@@ -32,12 +30,11 @@ export async function render(root, ctx) {
   root.append(h('h1', {}, t('check.title', { month: monthLabel(month) })));
   if (!planned) root.append(h('p.alert', {}, t('check.noPlan')));
   else {
-    root.append(problemSection(dataset, analysis, problems));
-    const notes = accountSection(dataset, analysis);
-    if (notes) root.append(notes);
+    const entries = problems && analysis ? problemEntries(problems, analysis.constraints, dataset.people) : null;
     // who could be asked: only where a duty can be set
     const ask = cellsEditable({ canEdit: ctx.canEdit, solving: state.solving, closed: state.plan.status === 'CLOSED' });
-    root.append(gapSection(ctx, dataset, analysis, ask));
+    append(root, [verdict(state, analysis), problemSection(dataset, entries), gapSection(ctx, dataset, analysis, ask),
+      qualitySection(dataset, entries), accountSection(dataset, analysis)]);
   }
   root.append(dataSection(dataset, month, rules, period?.absences ?? []));
 }
@@ -56,14 +53,45 @@ function accountSection(dataset, analysis) {
       accountRestText(s)))));
 }
 
-/** Rule violations, overstaffing and quality, with a grouping and three filters. */
-function problemSection(dataset, analysis, problems) {
+/**
+ * What to do first, from the same figures as the headline of the Dienstplan: plan again when the plan is out of date,
+ * the rule violations, then the gaps; or nothing to do. Nothing without an analysis.
+ */
+function verdict(state, analysis) {
+  if (!analysis) return null;
+  const hard = analysis.hardViolations ?? 0;
+  const gaps = analysis.gaps?.length ?? 0;
+  const stale = Boolean(state.stale || state.previousMonthChanged || analysis.previousMonthChanged);
+  const todo = [stale && t('check.verdict.stale'), hard > 0 && t('check.verdict.hard', { count: hard }),
+    gaps > 0 && t('check.verdict.gaps', { count: gaps, hours: Number(analysis.uncoveredHours ?? 0).toLocaleString('de-AT', { maximumFractionDigits: 1 }) })].filter(Boolean);
+  const level = hard > 0 ? 'bad' : todo.length ? 'warn' : 'good';
+  return h('div.statusbar.check-verdict', { id: 'check-verdict', class: `status-${level}` },
+    h('p.plan-headline', { class: `headline-${level}` }, todo.length ? t('check.verdict.first', { todo: todo.join(t('check.verdict.then')) }) : t('check.verdict.none')),
+    h('p.muted', {}, t('check.verdict.notes')));
+}
+
+/** The rule violations by rule. */
+function problemSection(dataset, entries) {
   const areaName = new Map(dataset.areas.map((a) => [a.id, a.name]));
   const section = h('section.check-section', { id: 'check-problems' }, h('h2', {}, t('check.problems.title'), info(t('help.check.problems'), t('check.problems.title'))),
     h('p.muted', {}, t('check.problems.help')));
-  if (!problems || !analysis) return append(section, [h('p.alert.alert-error', {}, t('check.problems.failed'))]);
-  const entries = problemEntries(problems, analysis.constraints, dataset.people);
-  if (!entries.length) return append(section, [h('p', {}, t('check.problems.none'))]);
+  if (!entries) return append(section, [h('p.alert.alert-error', {}, t('check.problems.failed'))]);
+  const hard = entries.filter((e) => e.hit.level === 'HARD');
+  if (!hard.length) return append(section, [h('p', {}, t('check.problems.none'))]);
+  return append(section, [h('p.muted', {}, t('check.problems.count', { count: hard.length })), groupProblems(hard, 'rule').map((g) => fold(
+    [groupLabel('rule', g), ' ', h('span.muted', {}, `(${g.entries.length})`)], h('ul.check-list', {}, g.entries.map((e) => entryItem(e, 'rule', areaName)))))]);
+}
+
+/** Overstaffing and the quality rules the Dienstplan points at: no errors, collapsed, with a grouping and three filters. */
+function qualitySection(dataset, all) {
+  const areaName = new Map(dataset.areas.map((a) => [a.id, a.name]));
+  const entries = all?.filter((e) => e.hit.level !== 'HARD');
+  if (!entries) return null; // the rule violations say that the list failed
+  const section = h('section.check-section', { id: 'check-quality' }, h('h2', {}, t('check.quality.title'), info(t('help.check.quality'), t('check.quality.title'))),
+    h('p.muted', {}, t('check.quality.help')));
+  if (!entries.length) return append(section, [h('p', {}, t('check.quality.none'))]);
+  const body = h('div', {});
+  section.append(h('details.check-quality', {}, h('summary', {}, t('check.quality.show', { count: entries.length })), body));
 
   let by = 'rule';
   const filter = { rule: null, person: null, day: null };
@@ -72,7 +100,7 @@ function problemSection(dataset, analysis, problems) {
     h('select', { id, onchange: (e) => onchange(e.target.value) }, options.map(([value, text]) => h('option', { value }, text))));
   const keys = (kind) => groupProblems(entries, kind).map((g) => [g.key, groupLabel(kind, g)]);
   const any = ['*', t('check.all')];
-  section.append(h('div.toolbar', {},
+  body.append(h('div.toolbar', {},
     select('check-group', t('check.groupBy'), Object.entries(BY), (v) => { by = v; draw(); }),
     ['rule', 'person', 'day'].map((kind) => select(`check-filter-${kind}`, BY[kind], [any, ...keys(kind)],
       (v) => { filter[kind] = v === '*' ? null : v; draw(); }))), list);
@@ -80,8 +108,7 @@ function problemSection(dataset, analysis, problems) {
   function draw() {
     const shown = filterProblems(entries, filter);
     list.replaceChildren(h('p.muted', {}, t('check.problems.count', { count: shown.length })),
-      ...groupProblems(shown, by).map((g, i) => fold(shown.length <= FOLD || i === 0,
-        [groupLabel(by, g), ' ', h('span.muted', {}, `(${g.entries.length})`)],
+      ...groupProblems(shown, by).map((g) => fold([groupLabel(by, g), ' ', h('span.muted', {}, `(${g.entries.length})`)],
         h('ul.check-list', {}, g.entries.map((e) => entryItem(e, by, areaName))))));
   }
   draw();
@@ -127,8 +154,7 @@ function gapSection(ctx, dataset, analysis, ask) {
     if (!days.has(day)) days.set(day, []);
     days.get(day).push(g);
   }
-  [...days].forEach(([day, list], i) => section.append(fold(gaps.length <= FOLD || i === 0,
-    [dayLabel(day), ' ', h('span.muted', {}, `(${list.length})`)], h('ul.check-list', {}, list.map((g) => gapItem(ctx, dataset, areaName, g, ask))))));
+  [...days].forEach(([day, list]) => section.append(fold([dayLabel(day), ' ', h('span.muted', {}, `(${list.length})`)], h('ul.check-list', {}, list.map((g) => gapItem(ctx, dataset, areaName, g, ask))))));
   return section;
 }
 

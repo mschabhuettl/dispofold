@@ -2,7 +2,7 @@
 // the loads the fairness rules compare first; the mean line of a load is the mean the rule compares against.
 import { monthLabel } from '../lib/dates.js';
 import { fmt, h, svg } from '../lib/dom.js';
-import { fairnessRows, metricSpreads, metricsFor, nightOutside, nightReasonText, sortRows } from '../lib/fairness.js';
+import { fairnessRows, metricSpreads, metricsFor, nightOutside, nightReasonText, sortRows, standouts } from '../lib/fairness.js';
 import { personName } from '../lib/grid-model.js';
 import { info } from '../lib/info.js';
 import { nightShareIgnored } from '../lib/shift-mix.js';
@@ -24,6 +24,7 @@ export async function render(root, ctx) {
 
   root.append(
     ctx.canEdit ? h('p.fairness-measure', {}, t('fairness.measure')) : '',
+    standoutSection(fairnessRows(analysis.people, dataset.people), ctx.canEdit),
     h('h2', {}, t('fairness.spreadHeading')),
     h('p.muted', {}, t('fairness.spreadHelp')),
     charts,
@@ -48,6 +49,18 @@ export async function render(root, ctx) {
         metrics.map((m) => h('td.num', {}, format(m, r.values[m.id]), m.id === 'nightLoad' && nightMark(r.stats, r.person.shiftMix))))))));
   }
   draw();
+}
+
+/** "Fällt auf": the few people far from the mean of a figure, above the charts; or that nobody is. */
+function standoutSection(rows, canEdit) {
+  const list = standouts(rows, canEdit);
+  return h('section.section', { id: 'fairness-standouts', 'aria-labelledby': 'h-standouts' },
+    h('h2', { id: 'h-standouts' }, t('fairness.standout.title'), info(t('help.fairness.standout'), t('fairness.standout.title'))),
+    list.length ? h('ul', {}, list.map((x) => {
+      const values = { metric: x.metric.label, value: format(x.metric, x.value), mean: format(x.metric, x.mean) };
+      return h('li', {}, h('a', { href: `#/person/${encodeURIComponent(x.person.id)}` }, personName(x.person)), ': ',
+        x.high ? t('fairness.standout.high', values) : t('fairness.standout.low', values));
+    })) : h('p', {}, t('fairness.standout.none')));
 }
 
 /** Marks a person outside the night comparison, with the reason (planners only: viewers get no reason). usual: the stored mix. */

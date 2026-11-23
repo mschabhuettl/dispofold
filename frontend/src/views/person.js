@@ -5,7 +5,7 @@
 // #/person/neu creates a person.
 import { dayLabel, monthLabel, WEEKDAY_SHORT } from '../lib/dates.js';
 import { fmt, h, toast } from '../lib/dom.js';
-import { groupHitsByDate, hitEffect, hitSummary } from '../lib/explain.js';
+import { goalReasons, groupHitsByDate, hitEffect, hitSummary } from '../lib/explain.js';
 import { personName } from '../lib/grid-model.js';
 import { constraintLabel, hitText } from '../lib/codes.js';
 import { CATEGORIES, conflictDecision, fromForm, inUseQuestion, itemLabel, restrictionFromForm, restrictionText, toForm } from '../lib/masterdata-edit.js';
@@ -47,7 +47,10 @@ export async function render(root, ctx, [personId]) {
 
   const areaNames = new Map(dataset.areas.map((a) => [a.id, a.name]));
   const constraintLabels = new Map((await api.constraints().catch(() => [])).map((c) => [c.id, constraintLabel(c)]));
-  const explanation = await api.person(month, person.id).catch((e) => ({ error: e.message }));
+  const [explanation, state] = await Promise.all([api.person(month, person.id).catch((e) => ({ error: e.message })),
+    api.planState(month).catch(() => null)]);
+  // before the month is planned the figures of a plan are left out (without the plan state they show as before)
+  const planned = state ? state.plan.assignments.length > 0 : true;
   const employment = employmentText(person);
   root.append(h('h1', {}, `${personName(person)}`),
     h('p.muted', {}, t('person.meta', { short: person.shortName ?? '', hours: fmt.num(person.weeklyHours, 1), areas: person.areaIds.map((a) => areaNames.get(a) ?? a).join(', '), month: monthLabel(month) }),
@@ -59,7 +62,10 @@ export async function render(root, ctx, [personId]) {
       } }, t('masterdata.edit'))));
   if (person.excludedFrom) root.append(h('p.alert', {}, t('people.excluded.note', { date: de(person.excludedFrom) })));
   if (explanation.error) root.append(h('p.alert', {}, t('person.noStats', { message: explanation.error })));
-  else root.append(...figures(explanation, person, areaNames, constraintLabels, nightDistribution, ctx.canEdit));
+  else {
+    if (!planned) root.append(h('p.alert', { id: 'person-no-plan' }, t('person.noPlan', { month: monthLabel(month) })));
+    root.append(...figures(explanation, person, areaNames, constraintLabels, nightDistribution, ctx.canEdit, planned));
+  }
   // the switch and the form are for planners only (viewers get no restrictions, family rules or balances anyway)
   if (ctx.canEdit) root.append(sourceSection(root, ctx, dataset, person), editor(root, ctx, dataset, person.id, rules));
   return undefined;
@@ -134,34 +140,42 @@ async function renderList(root, ctx) {
       h('tbody', {}, rows.map((r) => r.tr)))), none);
 }
 
-/** The figures of the month and "Warum dieser Dienst?"; personal ones (hours account, wishes, balances) for planners only. */
-function figures(explanation, person, areaNames, constraintLabels, nightDistribution, canEdit) {
+/**
+ * The figures of the month and "Warum dieser Dienst?"; personal ones (hours account, wishes, balances) for planners only.
+ * Not planned yet: only what does not depend on a plan (Soll and Ziel, account before, available days, history).
+ */
+function figures(explanation, person, areaNames, constraintLabels, nightDistribution, canEdit, planned) {
   const s = explanation.stats;
   // every tile with its help: what the number counts
   const kpi = (label, value, help) => h('div.kpi', {}, h('div.label', {}, label, info(help, label)), h('div.value', {}, value));
   const hours = (v) => `${fmt.num(v, 1)} h`;
   // Ziel: the goal the soft rule aims at in this plan; personal (hours account), so null for viewers. Soll: the contract target.
   const goal = s.scaledGoalHours ?? s.goalHours;
+  const reasons = goalReasons(s);
   // planners: planned plus credited hours, what the rule compares with the Ziel; viewers get neither credited nor Ziel
   const hoursTile = h('div.kpi.kpi-hours', {}, h('div.label', {}, t('person.kpi.hours'), info(canEdit ? t('help.figure.hours') : t('help.figure.hoursViewer'), t('person.kpi.hoursInfo'), 'hours-help')),
-    h('div.value', {}, goal != null
-      ? t('person.kpi.hoursOfGoal', { hours: fmt.num(s.plannedHours + s.creditedHours, 1), credited: fmt.num(s.creditedHours, 1), goal: fmt.num(goal, 1), target: fmt.num(s.targetHours, 1) })
-      : t('person.kpi.hoursOfTarget', { planned: fmt.num(s.plannedHours, 1), target: fmt.num(s.targetHours, 1) })));
+    h('div.value', {}, !planned
+      ? (goal != null ? t('person.kpi.goalOnly', { goal: fmt.num(goal, 1), target: fmt.num(s.targetHours, 1) }) : t('person.kpi.targetOnly', { target: fmt.num(s.targetHours, 1) }))
+      : goal != null
+        ? t('person.kpi.hoursOfGoal', { hours: fmt.num(s.plannedHours + s.creditedHours, 1), credited: fmt.num(s.creditedHours, 1), goal: fmt.num(goal, 1), target: fmt.num(s.targetHours, 1) })
+        : t('person.kpi.hoursOfTarget', { planned: fmt.num(s.plannedHours, 1), target: fmt.num(s.targetHours, 1) })),
+    // next to Ziel and Soll: why they differ (planners only, viewers get no goal)
+    reasons.length > 0 && h('p.kpi-help', { id: 'person-goal-reason' }, t('person.goal.why', { reasons: reasons.join('; ') })));
   return [
     h('section.section', { 'aria-labelledby': 'h-hours' }, h('h2', { id: 'h-hours' }, t('person.section.hours')),
       canEdit && s.creditFallbackDays != null && h('p.muted', { id: 'person-credit-fallback' }, t('person.creditFallback', { count: s.creditFallbackDays })),
       h('div.kpis', {},
         hoursTile,
         // the hours account is personal: planners only (viewers get null from the server)
-        canEdit && kpi(t('person.kpi.accountBefore'), hours(s.accountBefore), t('help.figure.accountBefore')), canEdit && kpi(t('person.kpi.accountAfter'), hours(s.accountAfter), t('help.figure.accountAfter')),
+        canEdit && kpi(t('person.kpi.accountBefore'), hours(s.accountBefore), t('help.figure.accountBefore')), canEdit && planned && kpi(t('person.kpi.accountAfter'), hours(s.accountAfter), t('help.figure.accountAfter')),
         canEdit && s.periodBalance != null && kpi(t('person.kpi.periodBalance'), hours(s.periodBalance), t('help.figure.periodBalance')),
         canEdit && s.accountRest != null && kpi(t('person.kpi.accountRest'), accountRestShort(s), t('help.figure.accountRest')),
-        kpi(t('person.kpi.duties'), fmt.num(s.duties), t('help.figure.duties')),
+        planned && kpi(t('person.kpi.duties'), fmt.num(s.duties), t('help.figure.duties')),
         s.availableDays != null && kpi(t('person.kpi.availableDays'), fmt.num(s.availableDays), t('help.figure.availableDays')),
         canEdit && s.chargedHours != null && kpi(t('person.kpi.charged'), hours(s.chargedHours), t('help.figure.chargedHours')),
         // the 52-week average is only binding when the history covers the whole period
-        s.averageWeekHours != null && kpi(s.averageComplete ? t('person.kpi.averageWeek') : t('person.kpi.averageWeekPartial'), s.averageLimitHours != null ? t('person.kpi.averageWeekOf', { value: hours(s.averageWeekHours), limit: hours(s.averageLimitHours) }) : hours(s.averageWeekHours), t('help.figure.averageWeekHours')))),
-    h('section.section', { 'aria-labelledby': 'h-load' }, h('h2', { id: 'h-load' }, t('person.section.load')),
+        planned && s.averageWeekHours != null && kpi(s.averageComplete ? t('person.kpi.averageWeek') : t('person.kpi.averageWeekPartial'), s.averageLimitHours != null ? t('person.kpi.averageWeekOf', { value: hours(s.averageWeekHours), limit: hours(s.averageLimitHours) }) : hours(s.averageWeekHours), t('help.figure.averageWeekHours')))),
+    planned && h('section.section', { 'aria-labelledby': 'h-load' }, h('h2', { id: 'h-load' }, t('person.section.load')),
       h('div.kpis', {},
         nightsTile(s, person.shiftMix), kpi(t('person.kpi.weekendsWorked'), fmt.num(s.weekendsWorked), t('help.figure.weekendsWorked')), kpi(t('person.kpi.weekendsOff'), fmt.num(s.weekendsOff), t('help.figure.weekendsOff')),
         kpi(t('person.kpi.holidays'), fmt.num(s.holidays), t('help.figure.holidays')), kpi(t('person.kpi.unpopular'), fmt.num(s.unpopular), t('help.figure.unpopular')), kpi(t('person.kpi.singleDays'), fmt.num(s.singleDays), t('help.figure.singleDays')),
@@ -171,12 +185,12 @@ function figures(explanation, person, areaNames, constraintLabels, nightDistribu
         // compensatory-rest balance and the hours account are personal: planners only (viewers get null)
         canEdit && kpi(t('person.kpi.compRestEarned'), fmt.num(s.compRestEarned), t('help.figure.compRestEarned')),
         canEdit && kpi(t('person.kpi.compRestOpenAfter'), fmt.num(s.compRestBalanceAfter), t('help.figure.compRestBalanceAfter')))),
-    mixSection(s, person.shiftMix, areaNames, nightDistribution),
+    planned && mixSection(s, person.shiftMix, areaNames, nightDistribution),
     h('section.section', { 'aria-labelledby': 'h-hist' }, h('h2', { id: 'h-hist' }, t('person.section.history')),
       h('div.kpis', {},
         kpi(t('person.kpi.nights'), fmt.num(s.historyNights), t('help.figure.historyNights')), kpi(t('person.kpi.weekends'), fmt.num(s.historyWeekends), t('help.figure.historyWeekends')), kpi(t('person.kpi.holidays'), fmt.num(s.historyHolidays), t('help.figure.historyHolidays')),
         kpi(t('person.kpi.unpopular'), fmt.num(s.historyUnpopular), t('help.figure.historyUnpopular')), canEdit && kpi(t('person.kpi.wishesMet'), t('common.outOf', { value: s.historyWishesMet, total: s.historyWishes }), t('help.figure.historyWishesMet')))),
-    h('section.section', { 'aria-labelledby': 'h-why' }, h('h2', { id: 'h-why' }, t('person.section.why'),
+    planned && h('section.section', { 'aria-labelledby': 'h-why' }, h('h2', { id: 'h-why' }, t('person.section.why'),
       info(t('help.person.why'), t('person.section.why'))),
       explanation.hits.length ? groupHitsByDate(explanation.hits).map((g) => h('div.hits-day', {},
         h('h3', {}, g.date ? dayLabel(g.date) : t('person.wholeMonth'), ' ', h('span.muted', {}, `(${hitSummary(g.hits).join(', ')})`)),

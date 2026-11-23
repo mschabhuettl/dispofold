@@ -22,6 +22,17 @@ export function planHeadline({ solving = false, seconds = 0, planned = true, har
   return gaps === 0 ? { level: 'good', text: t('roster.headline.good') } : { level: 'none', text: t('roster.headline.unknown') };
 }
 
+/**
+ * The score in words for "Erweitert": rule violations (their count, not the hard score), missing and surplus staff
+ * in person hours, and the deductions of the plan quality (the soft score, without its sign); '–' without a score.
+ */
+export function scoreWords({ score, hard = 0, uncovered = null, overstaffed = null }) {
+  const soft = /(-?\d+)soft/.exec(String(score ?? ''));
+  if (!soft) return '–';
+  return t('roster.scoreWords', { hard: hard ?? 0, uncovered: hours(uncovered ?? 0), overstaffed: hours(overstaffed ?? 0),
+    soft: Math.abs(Number(soft[1])).toLocaleString('de-AT') });
+}
+
 /** A soft rule gets a chip when it has at least this share of the plan's soft penalty ... */
 export const SOFT_SHARE = 0.1;
 /** ... and is among the largest this many. */
