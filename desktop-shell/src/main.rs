@@ -771,15 +771,19 @@ fn main() {
                     ok
                 });
             let dl = core.clone();
+            // where each download goes, by its URL: macOS (WKDownload) reports no path when it finishes
+            let pending: Arc<Mutex<std::collections::HashMap<String, PathBuf>>> = Arc::default();
             b = b.on_download(move |w, ev| {
                 match ev {
-                    DownloadEvent::Requested { destination, .. } => {
+                    DownloadEvent::Requested { url, destination } => {
                         let name = rules::download_name(Some(destination.as_path()));
                         let _ = std::fs::create_dir_all(&dl.downloads);
                         *destination = rules::unique_path(&dl.downloads, &name, |p| p.exists());
+                        pending.lock().unwrap().insert(url.to_string(), destination.clone());
                     }
-                    DownloadEvent::Finished { path, success, .. } => {
-                        if let (true, Some(p)) = (success, path) {
+                    DownloadEvent::Finished { url, path, success } => {
+                        let chosen = pending.lock().unwrap().remove(url.as_str());
+                        if let (true, Some(p)) = (success, path.or(chosen)) {
                             let name = p.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
                             let folder = dl.downloads.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
                             if let Some(st) = &dl.selftest {
