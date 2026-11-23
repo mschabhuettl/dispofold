@@ -163,7 +163,8 @@ frühestens oder keine Nacht. Die Planung hält sie ein, wenn es geht. Siehe
 ## Fixiert
 
 Eine Zelle im Plan, die die nächste Planung beibehält. Jede von Hand gesetzte Zelle ist fixiert; im Plan ist sie
-eingerahmt. **Plan fixieren** fixiert alle Dienste des Monats, **Fixierungen lösen** gibt alle frei. Anders als eine [Vorgabe](#vorgabe) gehört eine Fixierung zum
+eingerahmt. **Plan fixieren** fixiert alle Dienste und Ersatzruhetage des Monats (freie Tage bleiben offen), **Fixierungen
+lösen** gibt alle frei. Anders als eine [Vorgabe](#vorgabe) gehört eine Fixierung zum
 Plan, nicht zu den Eingaben. Siehe [Plan bearbeiten](plan-bearbeiten.md#von-hand-ändern-und-fixieren).
 
 ## Funktion

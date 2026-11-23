@@ -11,7 +11,9 @@ Monat ist danach nur noch lesbar.
 2. Im **Dienstplan** **Ausgabe**, **Monat abschließen** wählen, oder unter **Einstellungen**, **Daten** ganz unten
    **Monat abschließen**.
 3. Ein Fenster prüft den Plan in einer Liste: Regelverstöße, offene Lücken, Plan aktuell oder veraltet. Ein Haken
-   heißt erfüllt, ein Ausrufezeichen offen.
+   heißt erfüllt, ein Ausrufezeichen offen. Darunter steht, was danach gilt: Der Monat ist nur noch lesbar,
+   Kennzahlen, Stundenkonto und Ersatzruhe zählen ab dem nächsten Monat weiter, und wieder öffnen lässt er sich
+   unter „Einstellungen > Daten“ mit „Monat wieder öffnen“.
 4. **Monat abschließen** im Fenster schließt ab. **Abbrechen** lässt alles, wie es ist.
 
 ![Das Fenster vor dem Abschluss, alle Punkte erfüllt](../screenshots/beispiel-abschluss.png)
