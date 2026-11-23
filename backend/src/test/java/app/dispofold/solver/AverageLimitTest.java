@@ -106,6 +106,16 @@ class AverageLimitTest {
         assertThat(autumn.complete()).isTrue();
         assertThat(autumn.maxWeekMinutes() / 60).isCloseTo((31 * 44 + 31 * 22 + 30 * 44 + 31 * 44) / 123.0,
                 within(1e-9));
+        // July: a new half-year, June and earlier do not count, and the history is complete.
+        YearMonth july = YearMonth.of(2027, 7);
+        PlanningInput october2 = input(Fixtures.SMALL_OCTOBER, 40, history(october, 6, 100, null), null, null,
+                List.of());
+        Staff.Average first = new RosterBuilder(new PlanningInput(october2.dataset(), new app.dispofold.model.Period(
+                july, List.of(), List.of(), List.of(), List.of()), october2.rules(), List.of())).build().getStaff()
+                .stream().filter(s -> s.getId().equals("P0001")).findFirst().orElseThrow().getAverage();
+        assertThat(first.minutes()).isZero();
+        assertThat(first.weeks()).isCloseTo(31 / 7.0, within(1e-9));
+        assertThat(first.complete()).isTrue();
         // Rolling over 52 weeks, the same person counts all six months, with incomplete history.
         Staff.Average rolling = average(input(Fixtures.SMALL_OCTOBER, 40, history, null, AveragingPeriod.ROLLING,
                 List.of()));

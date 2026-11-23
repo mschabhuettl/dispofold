@@ -95,7 +95,9 @@ function badSum(map) {
  * Holidays, Saturdays and Sundays without an absence whose nearest workday before and after (Monday to Friday, no
  * holiday) both have an absence that lowers the target, and holidays whose other workdays of the week all have one,
  * as the solver keeps them free (RosterBuilder.insideAbsence).
- * Only the month's absences are known here, so days next to the month boundary are not free. Keys personId|date.
+ * Only the month's absences are known here, so days next to the month boundary are not free; a week counts as
+ * covered only with an absence on each of its other workdays (the solver leaves out days outside the employment, so
+ * this check may miss such a day, never warn wrongly). Keys personId|date.
  */
 function freeInsideAbsence(dataset, dates, holidays, absences, absent) {
   const lowers = new Set((dataset.absenceTypes ?? []).filter((t) => t.reducesTarget).map((t) => t.code));

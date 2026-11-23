@@ -3,6 +3,34 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.21.0 (unveröffentlicht)
+
+- **Wochenschnitt je Person:** Die Regel zum Durchschnitt der Wochenstunden misst jede Person an ihrem eigenen
+  Vertrag: Grenze sind die Wochenstunden plus ein Spielraum, neu auf der Seite Regeln (Standard 10 %, 0 erlaubt),
+  höchstens 46,16 h. Eine Person mit 20 h hat so 22 h, mit 40 h 44 h; ohne Wochenstunden bleibt es bei 46,16 h.
+  Ändern sich die Wochenstunden im Durchrechnungszeitraum, zählt jeder Monat mit seinen eigenen, gewichtet mit
+  seinen Wochen; der Monatsabschluss schreibt dafür die Wochenstunden in die Historie (neues, optionales Feld
+  `weeklyHours`). Die Personenseite und die Erklärung eines Verstoßes nennen die eigene Grenze. 12 h je Dienst und
+  60 h je Woche gelten weiter für alle gleich.
+- **Durchrechnung je Kalenderhalbjahr:** Der Wochenschnitt zählt standardmäßig die Monate des Kalenderhalbjahrs
+  (Jänner bis Juni, Juli bis Dezember) bis zum geplanten Monat, wie bei der üblichen Abrechnung je Halbjahr; die
+  gleitende Durchrechnung über eine Zahl Wochen (Standard 52) lässt sich auf der Seite Regeln wählen.
+- **Frei mitten in einer Abwesenheit:** Ein Feiertag, Samstag oder Sonntag, an dem der nächste Werktag davor und
+  danach eine Abwesenheit hat, die das Soll senkt (Urlaub, Krankenstand, Zeitausgleich usw.), bekommt keinen Dienst
+  mehr, etwa der Feiertag am Mittwoch in einer Urlaubswoche oder das Wochenende zwischen zwei Urlaubswochen; ebenso
+  ein Feiertag, wenn alle anderen Werktage seiner Woche so eine Abwesenheit haben (Pfingstmontag, Urlaub Dienstag
+  bis Freitag). Am Monatsrand zählen die eingetragenen Abwesenheiten des Nachbarmonats. Eine Vorgabe an so einem
+  Tag bleibt und wird als Regelverstoß gemeldet; Soll und Stundenkonto ändern sich nicht. Abschaltbar auf der Seite
+  Regeln.
+- **Hinweis zum Update:** Die neuen Standards (eigene Grenze, Kalenderhalbjahr, freie Tage mitten in einer
+  Abwesenheit) gelten auch für schon gerechnete Pläne, ohne dass diese als veraltet markiert werden. Eine Vorgabe
+  an einem jetzt freien Tag oder ein Schnitt über der eigenen Grenze erscheint in der Analyse als Regelverstoß;
+  nach dem Update offene Monate prüfen und bei Bedarf neu planen.
+- **Prüfen → Stammdaten:** Die Meldung zu Bedarf, für den niemand eingeplant werden kann, kennt die freien Tage
+  mitten in einer Abwesenheit.
+- **Planungsregeln:** Die Doku nennt, was der KV zur Durchrechnung, zu Teilzeit und zum Ersatzruhetag für
+  Feiertagsarbeit sagt, und korrigiert die offenen Punkte dazu. Hilfe: [Planungsregeln](docs/regeln.md).
+
 ## 0.20.0 (2026-11-23)
 
 - **Seiten der Import-Erweiterung:** Die Erweiterung für das bisherige Planungssystem hat eine eigene Menügruppe

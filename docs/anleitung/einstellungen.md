@@ -77,10 +77,25 @@ die Vereinbarung ändert.
 | Wöchentliche Ruhezeit (h) | 36 | Ruhe am Stück je Kalenderwoche |
 | Höchstdauer eines Dienstes (h) | 12 | kein Dienst länger |
 | Höchstarbeitszeit je Woche (h) | 60 | Stunden je Kalenderwoche |
-| Durchschnittliche Wochenarbeitszeit (h) | 46,16 | im Schnitt über den Durchrechnungszeitraum; ein Regelverstoß, sobald die Historie ihn abdeckt |
-| Durchrechnungszeitraum (Wochen) | 52 | für den Schnitt |
+| Durchschnittliche Wochenarbeitszeit bei Vollzeit (h) | 46,16 | Obergrenze des Wochenschnitts für alle |
+| Durchrechnung | je Kalenderhalbjahr | Zeitraum des Wochenschnitts: je Kalenderhalbjahr (Jänner bis Juni, Juli bis Dezember) oder gleitend über den Durchrechnungszeitraum |
+| Durchrechnungszeitraum (Wochen) | 52 | nur bei gleitender Durchrechnung |
+| Spielraum über den eigenen Wochenstunden (%) | 10 | eigene Grenze des Wochenschnitts: Wochenstunden plus dieser Anteil, höchstens der Vollzeitschnitt; 0 = genau die Wochenstunden |
 | Freie Sonntage je Monat | 2 | Sonntage ohne Dienst je Person und Kalendermonat; 0 schaltet die Regel aus |
+| Frei mitten in einer Abwesenheit | ja | ein Feiertag, Samstag oder Sonntag zwischen zwei Werktagen mit Urlaub, Krankenstand oder Zeitausgleich bekommt keinen Dienst |
 | Feiertagsdienst ergibt Ersatzruhe | ja | ein Dienst an einem Feiertag bringt einen Ersatzruhetag |
+
+**Wochenschnitt:** Jede Person wird an ihrem eigenen Vertrag gemessen. Mit 10 % Spielraum darf eine Person mit
+20 Wochenstunden im Schnitt des Durchrechnungszeitraums 22 Stunden arbeiten, mit 40 Wochenstunden 44, nie mehr
+als 46,16. Standard ist die Durchrechnung je Kalenderhalbjahr: Im März zählen Jänner, Februar und März, im Juli
+nur der Juli. Ein Regelverstoß ist der Schnitt erst, wenn die Historie alle Vormonate des Zeitraums enthält; die
+Personenseite zeigt den Schnitt und die eigene Grenze.
+
+**Frei mitten in einer Abwesenheit:** Ist der Mittwoch ein Feiertag und hat die Person Montag, Dienstag, Donnerstag
+und Freitag Urlaub, bleibt der Mittwoch frei. Ebenso das Wochenende zwischen zwei Urlaubswochen; nach einer
+einzelnen Urlaubswoche bleibt das Wochenende planbar. Ein Feiertag ist auch frei, wenn die Person an allen
+anderen Werktagen seiner Woche abwesend ist, etwa am Pfingstmontag bei Urlaub von Dienstag bis Freitag. Soll und Stundenkonto ändern sich dadurch nicht. Einzelheiten
+in den [Planungsregeln](../regeln.md).
 
 Die Höchststunden im Monat stehen hier als Text („Im Monat höchstens 10 % über dem Ziel“), eingestellt werden sie
 beim Ziel **Stunden treffen**.

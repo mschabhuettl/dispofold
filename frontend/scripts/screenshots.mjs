@@ -545,6 +545,8 @@ async function serverPhase() {
   await shot(page, 'regeln-teile');
   await page.locator('#h-law').evaluate((e) => e.scrollIntoView());
   await page.locator('section[aria-labelledby="h-law"]').getByRole('button', { name: 'Ändern', exact: true }).click();
+  // at the end of the page the sticky save bar stands below the section instead of over its last fields
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await clip(page, 'regeln-gesetz', ['section[aria-labelledby="h-law"]']);
   await open(page, base, 'regeln', '#h-goals');
   await page.locator('details.rules-advanced > summary').click();

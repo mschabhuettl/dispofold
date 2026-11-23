@@ -76,9 +76,10 @@ die Parameter (Seite Regeln, „Gesetz und Betriebsvereinbarung“).
 | `maxWeekHours` | Höchstens 60 h Dienst je Kalenderwoche | KV, Durchrechnung | `maxWeekHours` (60) |
 | `maxMonthHours` | Im Monat höchstens das Ziel plus eine Toleranz (Dienste, angerechnete Abwesenheiten und Ersatzruhe) | Betrieb | `maxOverTargetPercent` (10 % des Ziels) |
 | `freeSundays` | Mindestens N Sonntage je Kalendermonat ohne Dienst | Betriebsvereinbarung, anpassbar | `minFreeSundays` (2, 0 = aus) |
-| `averageWeekHours` | Höchstens 46,16 h je Woche im Durchschnitt des Durchrechnungszeitraums | KV, Durchrechnung | `maxAverageWeekHours` (46,16), `averagingWeeks` (52) |
+| `averageWeekHours` | Im Durchschnitt des Durchrechnungszeitraums höchstens die eigenen Wochenstunden plus Spielraum, nie mehr als 46,16 h je Woche | KV, Durchrechnung; Teilzeit siehe unten | `maxAverageWeekHours` (46,16), `averageTolerancePercent` (10 %), `averagingPeriod` (Kalenderhalbjahr), `averagingWeeks` (52, nur gleitend) |
 | `qualification` | Nur Personen, die für den Bereich eingeteilt werden dürfen | Stammdaten | `areaIds` der Person |
 | `absence` | Kein Dienst und keine Ersatzruhe an Abwesenheitstagen | Abwesenheiten | |
+| `freeInsideAbsence` | Kein Dienst an einem Feiertag, Samstag oder Sonntag mitten in einer Abwesenheit, und an einem Feiertag in einer sonst ganz abwesenden Woche | Planungsregel des Betriebs | `freeInsideAbsence` (ein) |
 | `employment` | Kein Dienst vor dem Eintritt oder nach dem Austritt | Stammdaten | `entryDate`, `exitDate`, `excludedFrom` |
 | `neverRestriction` | Sperren der Art "nie" (Person, Dienst oder Kategorie, Wochentag, Gültigkeit) | Stammdaten | |
 | `compRestBalance` | Nicht mehr Ersatzruhetage planen als offen sind | Guthaben | `compRestBalance` |
@@ -94,6 +95,38 @@ Einzelheiten:
   Durchrechnungszeitraum) und die geplanten Dienststunden dieses Monats, geteilt durch die Wochen. Abwesenheiten
   zählen nicht als gearbeitet. Die Regel gehört dann zur Gruppe Regelverstoß, wenn die Historie den ganzen Zeitraum vor diesem Monat
   abdeckt; sonst wird der Durchschnitt nur angezeigt (Kennzahl `averageWeekHours`, `averageComplete` falsch).
+- **Durchrechnungszeitraum.** Der KV erlaubt eine Durchrechnung über bis zu 52 Wochen und überlässt die
+  Einzelheiten einer Betriebsvereinbarung. Standard (`averagingPeriod` = `HALF_YEAR`) ist das Kalenderhalbjahr,
+  wie bei der üblichen Abrechnung je Halbjahr: Jänner bis Juni und Juli bis Dezember. Gezählt werden die Monate des
+  Halbjahrs vor dem geplanten Monat und der geplante Monat, geteilt durch die Wochen vom Beginn des Halbjahrs bis
+  zum Monatsende (Tage / 7). Vollständig ist die Historie, wenn alle Monate des Halbjahrs vor dem geplanten Monat
+  darin stehen; im Jänner und im Juli zählt nur der geplante Monat, und die Regel gilt sofort. Im Juli zählen
+  die Monate davor nicht mehr. Das Stundenkonto wird am Halbjahresende nicht zurückgesetzt. Gleitend
+  (`ROLLING`): die letzten `averagingWeeks` Wochen (Standard 52) bis zum Monatsende, jeder Historienmonat mit
+  365,25 / 12 / 7 Wochen.
+- **Eigene Grenze des Durchschnitts.** Jede Person wird an ihrem eigenen Vertrag gemessen: Grenze = Wochenstunden
+  plus `averageTolerancePercent` Prozent davon (Standard 10 %, 0 erlaubt), höchstens `maxAverageWeekHours`
+  (46,16 h). Bei 10 % sind das für 40 h 44 h, für 20 h 22 h; für 42 h wären es 46,2 h, es gilt also 46,16 h. Eine
+  Person ohne Wochenstunden hat die Grenze 46,16 h. Kennzahl `averageLimitHours`; die Erklärung eines Verstoßes
+  nennt diese Grenze.
+- **Wochenstunden geändert.** Jeder Monat des Zeitraums zählt mit seinen eigenen Wochenstunden, gewichtet mit
+  seinen Wochen: Ein Historienmonat zählt 365,25 / 12 / 7 Wochen, dieser Monat seine Tage / 7. Die Wochenstunden
+  eines Historienmonats stehen im Feld `weeklyHours` des Historieneintrags; der Monatsabschluss schreibt sie.
+  Fehlt das Feld in einem importierten Eintrag, gilt der Wert aus dem abgeschlossenen Plan desselben Monats; gibt
+  es keinen, zählen die heutigen Wochenstunden der Person.
+  Beispiel (Kalenderhalbjahr): Juli mit 40 h, August mit 20 h, September und der geplante Oktober mit 40 h,
+  Spielraum 10 %: die Grenze liegt bei (31 × 44 + 31 × 22 + 30 × 44 + 31 × 44) / 123 = 39,0 h je Woche.
+- **Frei mitten in einer Abwesenheit.** Ein Feiertag, Samstag oder Sonntag, an dem die Person keine Abwesenheit
+  hat, ist frei, wenn der nächste Werktag davor und der nächste Werktag danach (Montag bis Freitag, kein Feiertag)
+  beide eine Abwesenheit haben, die das Soll senkt (`reducesTarget`: Urlaub, Krankenstand, Zeitausgleich usw.;
+  die Arten dürfen verschieden sein). Ein Feiertag von Montag bis Freitag ist außerdem frei, wenn alle anderen
+  Werktage seiner Kalenderwoche (im Beschäftigungszeitraum, mindestens einer) so eine Abwesenheit haben; das
+  Wochenende dieser Woche wird dadurch nicht frei. Der Solver plant dort keinen Dienst. Eine Vorgabe oder ein von Hand fixierter
+  Dienst an so einem Tag bleibt stehen und wird als Regelverstoß gemeldet. Der Tag ist keine Abwesenheit: Er
+  ändert weder Soll noch Stundenkonto noch die Abwesenheitslisten. Am Monatsrand zählen die Abwesenheiten des
+  Vor- bzw. Folgemonats, die eingetragen sind (Eingaben des Nachbarmonats); ist dort nichts eingetragen, ist der
+  Tag nicht frei. Eine neue Abwesenheit im Nachbarmonat kann deshalb einen gerechneten Plan veralten lassen.
+  Ausschalten mit `freeInsideAbsence` (Seite Regeln, „Gesetz und Betriebsvereinbarung“).
 - **Fehlende Schicht.** Ist eine fixierte Zelle mit einer Schicht belegt, die es nicht mehr gibt, wird sie
   nicht stillschweigend zu einem freien Tag, sondern als Regelverstoß gemeldet.
 - **Wöchentliche Ruhezeit.** Geprüft wird je Kalenderwoche von Montag 00:00 bis Sonntag 24:00. Gesucht ist
@@ -123,11 +156,19 @@ Beispiele, was jede Regel verhindert (Personen und Schichten erfunden, Standardw
   höchstens 88 h, auch wenn der Bereich jemanden für eine Lücke sucht.
 - **Beispiel `freeSundays`:** Emil hätte im Monat mit vier Sonntagen an drei Sonntagen Dienst. Mit dem Standard 2
   darf er an höchstens zwei arbeiten; auch eine Nacht 19-07 von Samstag auf Sonntag nimmt den Sonntag.
-- **Beispiel `averageWeekHours`:** Frida hat im Durchrechnungszeitraum schon fast 46,16 h je Woche gearbeitet. In
-  diesem Monat bekommt sie nur so viele Stunden, dass der Durchschnitt nicht darüber steigt.
+- **Beispiel `averageWeekHours`:** Frida hat 20 Wochenstunden, ihre Grenze ist mit 10 % Spielraum 22 h. Sie hat im
+  Durchrechnungszeitraum schon fast 22 h je Woche gearbeitet. In diesem Monat bekommt sie nur so viele Stunden,
+  dass der Durchschnitt nicht darüber steigt, auch wenn ihre Monatsgrenze mehr zuließe. Bei Vollzeit gilt
+  dasselbe mit 44 h (40 h plus 10 %), höchstens 46,16 h.
 - **Beispiel `qualification`:** Gustav ist nur für Bereich A eingeteilt. In Bereich B bekommt er keinen Dienst,
   auch wenn dort jemand fehlt.
 - **Beispiel `absence`:** Hanna hat am 10. Urlaub. An diesem Tag gibt es für sie weder Dienst noch Ersatzruhe.
+- **Beispiel `freeInsideAbsence`:** Der Mittwoch ist ein Feiertag, Hanna hat Montag, Dienstag, Donnerstag und
+  Freitag Urlaub: Der Mittwoch bleibt frei. Hat sie zwei Wochen hintereinander Urlaub (Montag bis Freitag), bleibt
+  das Wochenende dazwischen frei. Hat sie nur eine Woche Urlaub, Montag bis Freitag, bleibt das Wochenende danach
+  planbar. Urlaub am Freitag und Krankenstand am Montag machen das Wochenende dazwischen ebenfalls frei. Ist der
+  Pfingstmontag ein Feiertag und hat Hanna Dienstag bis Freitag Urlaub, bleibt der Montag frei, obwohl davor kein
+  Urlaubstag liegt; fehlt der Urlaub an einem dieser Tage, ist der Montag planbar.
 - **Beispiel `employment`:** Ida tritt am 15. ein. Vorher bekommt sie keinen Dienst, ebenso nach einem Austritt
   und ab dem Tag, ab dem sie nicht mehr aus dem Quellsystem übernommen wird.
 - **Beispiel `neverRestriction`:** Jonas hat die Sperre „nie Nacht am Freitag“. Freitags plant der Solver ihm
@@ -518,17 +559,34 @@ Eine Einstellung der Regeln, `nightDistribution`:
 Diese Punkte legt der KV-Text nicht eindeutig fest. Das Programm verwendet die genannten Standardwerte; jeder
 ist ein Parameter, entscheidet die Betriebsvereinbarung.
 
-1. **Geltung der Durchrechnungsregel für die Disposition.** Ob 12 h je Dienst, 60 h je Woche und 46,16 h im
-   Durchschnitt für Disponentinnen und Disponenten gelten, ist im KV nicht ausdrücklich gesagt. Parameter `maxDutyHours`, `maxWeekHours`, `maxAverageWeekHours`.
-2. **Reichweite des Ersatzruhetags für Feiertagsarbeit.** Der KV-Text lässt offen, für welche Gruppen er gilt. Parameter `holidayWorkEarnsCompRest`.
+1. **Teilzeit im Durchschnitt.** Die Durchrechnungsregel gilt für die Disposition: Der regionale Anhang des KV
+   nennt Leitstellendisponentinnen und Leitstellendisponenten ausdrücklich (Punkt 6.1) und erlaubt im Rettungs- und
+   Krankentransportdienst eine Durchrechnung über 52 Wochen mit bis zu 12 h am Tag und einzelnen Wochen bis 60 h,
+   wenn die Wochenarbeitszeit im Schnitt 46,16 h nicht übersteigt (Punkt 6.1.1). 46,16 h ist also der
+   Vollzeitschnitt dieser Regelung; die allgemeine Vollzeit sind 40 h je Woche (§ 15). Teilzeit ist ein Vertrag
+   unter der Vollzeit (§ 38); wie 46,16 h für Teilzeit gilt, sagen weder KV noch Anhang. Nach dem
+   Arbeitszeitgesetz (§ 19d) ist die vereinbarte Stundenzahl die Normalarbeitszeit einer Teilzeitkraft, was darüber
+   liegt, ist Mehrarbeit; § 38 KV gibt einen Anspruch auf mehr Vertragsstunden, wenn der Schnitt über sechs Monate
+   die vereinbarten Stunden um zwei oder mehr übersteigt. Das Programm misst deshalb jede Person an ihren eigenen
+   Wochenstunden plus einem Spielraum (`averageTolerancePercent`, Standard 10 %), höchstens 46,16 h. Wie groß der
+   Spielraum sein darf, entscheidet die Betriebsvereinbarung. 12 h je Dienst und 60 h je Woche sind Obergrenzen
+   des KV und gelten für alle gleich. Parameter `maxDutyHours`, `maxWeekHours`, `maxAverageWeekHours`,
+   `averageTolerancePercent`.
+2. **Ersatzruhetag für Feiertagsarbeit.** Der regionale Anhang des KV (Punkt 4.1) ist für die Gruppe geschrieben,
+   zu der die Disponentinnen und Disponenten gehören: Arbeit an einem Feiertag, der kein Sonntag ist, bringt einen
+   zusätzlichen Ersatzruhetag. Der Parameter bleibt, damit eine andere Regelung abgebildet werden kann. Parameter
+   `holidayWorkEarnsCompRest`. Eine Regel gegen Dienste an einem Feiertag mitten im Urlaub enthält der KV nicht;
+   `freeInsideAbsence` ist eine Planungsregel des Betriebs.
 3. **Nachtzeit.** Der für die Leitstelle maßgebliche KV-Teil definiert keine Nacht. 22:00 bis 06:00 ist nur ein
    Standardwert. Parameter `nightStart`, `nightEnd`, `nightMinHours`.
 4. **Woche.** Wochenruhe und Wochenstunden werden je Kalenderwoche (Montag bis Sonntag) geprüft, nicht über
    ein gleitendes 7-Tage-Fenster.
-5. **Durchschnitt 46,16 h.** Er wird über `averagingWeeks` Wochen (Standard 52) aus der Historie und dem Monat
-   gerechnet und gehört zur Gruppe Regelverstoß, wo die Historie den Zeitraum abdeckt. Ob die Durchrechnung rollierend oder je
-   Kalenderjahr gilt und ob Abwesenheiten als Arbeitszeit zählen, ist festzulegen. Parameter
-   `accountCarryShare` steuert, wie viel des Kontos ein Monat ausgleichen soll.
+5. **Durchschnitt.** Er wird je Kalenderhalbjahr (Standard) oder gleitend über `averagingWeeks` Wochen aus der
+   Historie und dem Monat gerechnet, je Person gegen ihre eigene Grenze (Punkt 1), und gehört zur Gruppe
+   Regelverstoß, wo die Historie den Zeitraum abdeckt. Der KV erlaubt bis zu 52 Wochen und überlässt die
+   Einzelheiten einer Betriebsvereinbarung; der Standard folgt der üblichen Abrechnung je Kalenderhalbjahr
+   (`averagingPeriod`). Ob Abwesenheiten als Arbeitszeit zählen, ist festzulegen. Parameter `accountCarryShare`
+   steuert, wie viel des Kontos ein Monat ausgleichen soll.
 9. **Abwesenheitsarten.** Welche Abwesenheiten das Soll senken und welche das Stundenkonto belasten
    (`reducesTarget`, `chargesAccount`), legt der Import je Art fest; die Zuordnung ist mit der
    Personalverrechnung abzustimmen.

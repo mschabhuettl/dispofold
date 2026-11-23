@@ -123,6 +123,12 @@ Nachtanteil und ist nicht im Nachtausgleich) oder `"EVEN"` (der Nachtanteil zäh
 Nachtausgleich); fehlt das Feld oder ist es `null` (Regeln aus älteren Versionen), gilt `"HABIT"`. Ein anderer
 Wert ist ein Formatfehler (`400`). Siehe [regeln.md](regeln.md), Nachtverteilung.
 
+`Rules.averageTolerancePercent` (Spielraum der eigenen Grenze des Wochenschnitts in Prozent der Wochenstunden,
+mindestens 0, Standard 10), `Rules.freeInsideAbsence` (freie Tage mitten in einer Abwesenheit, Standard `true`)
+und `Rules.averagingPeriod` (`"HALF_YEAR"`, Standard, oder `"ROLLING"` über `averagingWeeks`): fehlen sie oder sind
+sie `null` (Regeln aus älteren Versionen), gilt der Standard, und sie werden dann auch nicht geschrieben. Siehe
+[regeln.md](regeln.md), Regelverstoß.
+
 ## Planungsmonate
 
 | Methode | Pfad | Antwort |
