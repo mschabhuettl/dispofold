@@ -175,6 +175,15 @@ try {
   }
   await open(viewer, 'fairness');
   check('viewer: Fairness intro links to its section', await viewer.locator('#main h1 + p.page-intro a').getAttribute('href') === '#/anleitung/auswertungen/fairness');
+  // a core page links to a plugin's help page (to read before switching it on): shown although the plugin is off
+  await open(page, 'anleitung/erste-schritte');
+  const pluginLink = await page.locator('#main .guide a[href^="#/anleitung/plugin-"]').first().getAttribute('href');
+  await page.goto(`${base}/${pluginLink}`);
+  await page.waitForFunction(() => document.querySelector('#main .guide-pages'));
+  const pluginPage = await page.evaluate(() => ({ title: document.querySelector('#main h1').textContent,
+    links: [...document.querySelectorAll('#main .guide-pages a')].map((a) => a.getAttribute('href')) }));
+  check('a plugin help page opens while the plugin is off', Boolean(pluginLink) && !PAGES.some(([, title]) => title === pluginPage.title)
+    && JSON.stringify(pluginPage.links) === '["#/anleitung"]', JSON.stringify({ pluginLink, ...pluginPage }));
   check('the guide asks nothing outside the server', outside.length === 0, outside.join(', '));
   // a web server answers a missing guide page with the program's page (status 200): a clear message instead
   await page.route('**/anleitung/eingaben.html', async (r) => r.fulfill({ status: 200, contentType: 'text/html',

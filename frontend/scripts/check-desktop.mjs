@@ -133,12 +133,14 @@ try {
     // the overview links to every page; each page has its title, the address of the same page on the site and the
     // links to the overview and the neighbouring pages
     const pageLinks = await g.locator('.guide a[href^="#/anleitung/"]').evaluateAll((as) => [...new Set(as.map((a) => a.getAttribute('href')))]);
-    check(`${mode}: the overview links to every page`, PAGES.slice(1).every(([id]) => pageLinks.includes(`#/anleitung/${id}`)), pageLinks.join(' '));
+    check(`${mode}: the overview links to every page`, PAGES.filter(([id]) => id !== 'index').every(([id]) => pageLinks.includes(`#/anleitung/${id}`)), pageLinks.join(' '));
+    const overview = PAGES.findIndex(([id]) => id === 'index');
     for (const [i, [id, title]] of PAGES.entries()) {
       await g.goto(`${guideBase}/${guideHref(true, id)}`);
       await g.waitForFunction((t) => document.querySelector('#main h1')?.textContent === t && document.querySelector('#main .guide-pages'), title);
       const nav = await g.locator('#main .guide-pages a').evaluateAll((as) => as.map((a) => a.getAttribute('href')));
-      const expected = [i > 0 && '#/anleitung', i > 1 && guideHref(true, PAGES[i - 1][0]), i + 1 < PAGES.length && guideHref(true, PAGES[i + 1][0])].filter(Boolean);
+      const expected = [id !== 'index' && '#/anleitung', i > 0 && i - 1 !== overview && guideHref(true, PAGES[i - 1][0]),
+        i + 1 < PAGES.length && i + 1 !== overview && guideHref(true, PAGES[i + 1][0])].filter(Boolean);
       const address = (await online.innerText()) === guideHref(false, id);
       check(`${mode}: page ${id} with title, site address and page links`, address && JSON.stringify(nav) === JSON.stringify(expected), nav.join(' '));
     }

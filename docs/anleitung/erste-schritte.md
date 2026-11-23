@@ -1,17 +1,27 @@
 # Erste Schritte
 
-Dispofold gibt es in zwei Formen. Bedienung und Planung sind gleich, nur Anmeldung und Updates unterscheiden sich:
+Diese Seite beginnt dort, wo Dispofold läuft: welche Form man vor sich hat, Anmelden oder Starten, und wie die
+ersten Daten hineinkommen. Wer nur schnell ausprobieren will, nimmt den [Schnellstart in 10
+Schritten](schnellstart.md). Installieren, sichern und aktualisieren beschreibt [betrieb.md](../betrieb.md) für die
+IT.
 
-- **Server (Docker):** Die IT betreibt Dispofold auf einem Server, alle arbeiten im Browser. Mehrere Personen
+## Welche Form habe ich?
+
+Dispofold gibt es in zwei Formen. Bedienung und Planung sind gleich, nur Anmeldung und Updates unterscheiden sich.
+Am einfachsten erkennt man die Form oben rechts: Steht dort **Abmelden**, ist es der Server; steht dort **Beenden**,
+ist es das Programm am eigenen Rechner.
+
+- **Server (Docker):** Die IT betreibt Dispofold auf einem Server, alle arbeiten im Browser. Man meldet sich mit
+  Benutzername und Passwort an; oben rechts stehen der Benutzername, die Rolle und **Abmelden**. Mehrere Personen
   können zugleich planen; daneben gibt es die Rolle „nur lesen“.
 - **Programm am eigenen Rechner (Desktop):** Dispofold läuft auf einem einzelnen Rechner unter Windows, macOS (Mac
-  mit M-Prozessor) oder Linux (auch auf ARM-Rechnern), ohne Server. Die Daten liegen verschlüsselt auf diesem
-  Rechner. Die Programme sind nicht signiert: Beim ersten Start warnt das System. Unter macOS dann mit gedrückter
-  Ctrl-Taste auf Dispofold klicken und **Öffnen** wählen, unter Windows **Weitere Informationen** und **Trotzdem
-  ausführen** (Einzelheiten in [betrieb.md](../betrieb.md#unsignierte-programme)).
+  mit M-Prozessor) oder Linux (auch auf ARM-Rechnern), ohne Server. Man startet es wie jedes Programm und gibt
+  nur das Passwort für die Daten ein; oben rechts stehen „lokal“ und **Beenden**. Die Daten liegen verschlüsselt
+  auf diesem Rechner. Die Programme sind nicht signiert: Beim ersten Start warnt das System. Unter macOS dann mit
+  gedrückter Ctrl-Taste auf Dispofold klicken und **Öffnen** wählen, unter Windows **Weitere Informationen** und
+  **Trotzdem ausführen** (Einzelheiten in [betrieb.md](../betrieb.md#unsignierte-programme)).
 
-Installieren, sichern und aktualisieren beschreibt [betrieb.md](../betrieb.md) für die IT. Diese Seite beginnt dort,
-wo das Programm läuft.
+In beiden Formen ist diese Anleitung eingebaut und geht ohne Internet: im Menü **Anleitung**.
 
 ## Am Server anmelden
 
@@ -70,22 +80,28 @@ jeder neuen Version legt das Programm selbst eine Sicherung an; eine regelmäßi
 
 ## Die ersten Daten
 
-Nach der Installation ist Dispofold leer. Es gibt zwei Wege zu Daten:
+Nach der Installation ist Dispofold leer: Der **Dienstplan** zeigt **Noch keine Daten**, und **Planen** ist grau.
+Es gibt drei Wege zu Daten:
 
-- **Zum Ausprobieren:** die Demodaten. Unter **Einstellungen**, **Daten**, **Erweitert** lädt **Demodaten laden
-  (Jänner 2027)** 150 erfundene Personen in fünf Bereichen mit Abwesenheiten und Wünschen für Jänner 2027.
-  [Ein Monat Schritt für Schritt](beispiel.md) beginnt genau so. Die Demodaten ersetzen alle Stammdaten, also nie
-  in einer Installation laden, in der schon echte Daten stehen.
-- **Für den Betrieb:** einen Datensatz aus dem Quellsystem importieren. Die Datei liefert das Exportprogramm,
-  das die IT einrichtet; das Format beschreibt [datenformat.md](../datenformat.md). Siehe
+- **Zum Ausprobieren:** die Demodaten. Auf dem leeren Start **Demodaten zum Ausprobieren laden** klicken (oder
+  unter **Einstellungen**, **Daten**, **Erweitert** **Demodaten laden (Jänner 2027)**). Das lädt 150 erfundene
+  Personen in fünf Bereichen mit Abwesenheiten und Wünschen für Jänner 2027. Der
+  [Schnellstart](schnellstart.md) und [Ein Monat Schritt für Schritt](beispiel.md) beginnen genau so. Die
+  Demodaten ersetzen alle Stammdaten, also nie in einer Installation laden, in der schon echte Daten stehen.
+- **Aus dem bisherigen Planungsprogramm:** Die mitgelieferte Erweiterung liest dessen Datenordner und übernimmt
+  Personen, Bereiche, Schichten, Bedarf, Abwesenheiten und Dienste. Schritt für Schritt mit Bildern:
+  [Echte Daten aus dem bisherigen Planungsprogramm übernehmen](plugin-sp5-echte-daten.md).
+- **Als Datensatz:** eine Datei aus dem Quellsystem importieren (auf dem leeren Start **Datensatz importieren**
+  oder unter **Einstellungen**, **Daten**). Die Datei liefert das Exportprogramm, das die IT einrichtet. Siehe
   [Daten und Korrekturdatei](daten.md#import).
 
 Danach den **Planungsmonat** oben auf den Monat der Daten stellen. Nach einem Import bietet die Seite dafür einen
-Knopf an, wenn der gewählte Monat nicht in der Datei steht.
+Knopf an, etwa **Zu Jänner 2027 wechseln**, wenn der gewählte Monat nicht in der Datei steht.
 
 ## Wie es weitergeht
 
-1. Die Oberfläche kennenlernen: [Die Oberfläche](index.md#die-oberfläche).
-2. Einen Monat mit den Demodaten durchspielen: [Ein Monat Schritt für Schritt](beispiel.md).
-3. Die Regeln an die eigene Betriebsvereinbarung anpassen: [Regeln einstellen](einstellungen.md).
+1. Einen Probemonat mit den Demodaten: [Schnellstart in 10 Schritten](schnellstart.md), ausführlicher
+   [Ein Monat Schritt für Schritt](beispiel.md).
+2. Die Oberfläche kennenlernen: [Die Oberfläche](index.md#die-oberfläche).
+3. Die Regeln an den eigenen Betrieb anpassen: [Regeln einstellen](einstellungen.md).
 4. Bei einer Meldung, die man nicht versteht: [Häufige Fragen und Fehlerbehebung](fragen.md).

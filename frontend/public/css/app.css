@@ -552,6 +552,8 @@ details.rules-advanced section { margin-top: 1.2rem; }
 .guide img { display: block; max-width: 100%; height: auto; border: 1px solid var(--border); border-radius: 6px; }
 .guide table { border-collapse: collapse; margin: .5rem 0; }
 .guide th, .guide td { padding: .32rem .55rem; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+/* "Mehr Hintergrund" and "Für den Anfang überspringen": a box, as on the site */
+.guide blockquote { margin: 1rem 0; padding: .4rem 1rem; border-left: 4px solid var(--primary); background: var(--surface-2); border-radius: 0 6px 6px 0; }
 .guide-online code { user-select: all; }
 @media print { .info-btn, .info-text, .page-intro { display: none !important; } }
 .guide-pages { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; max-width: 60rem; margin-top: 2rem; padding-top: .8rem; border-top: 1px solid var(--border); }

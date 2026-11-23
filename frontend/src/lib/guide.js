@@ -8,9 +8,12 @@ export const GUIDE_URL = `${SITE}anleitung/`;
 
 /** The pages of the guide in the order of the site navigation (mkdocs.yml): file name without .md and title (its h1). */
 export const PAGES = [
+  ['schnellstart', 'Schnellstart in 10 Schritten'],
   ['index', 'Anleitung für die Dienstplanung'],
   ['erste-schritte', 'Erste Schritte'],
   ['beispiel', 'Ein Monat Schritt für Schritt'],
+  ['zahlen', 'Was die Zahlen bedeuten'],
+  ['wie-plant', 'Wie das Programm plant'],
   ['personen', 'Personen'],
   ['stammdaten', 'Bereiche, Schichten und Bedarf'],
   ['eingaben', 'Abwesenheiten, Wünsche und Vorgaben'],

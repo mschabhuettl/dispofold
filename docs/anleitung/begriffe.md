@@ -16,6 +16,26 @@ Programm keinen Dienst. Die **Abwesenheitsart** legt fest, ob die Tage das [Soll
 [Stundenkonto](#stundenkonto) belasten oder [Ersatzruhe](#ersatzruhe) sind. Siehe
 [Abwesenheiten, Wünsche und Vorgaben](eingaben.md#abwesenheiten).
 
+Im Plan steht eine Abwesenheit mit dem [Code](#code) ihrer Art, kursiv. Die Demodaten haben diese Arten; echte Daten
+bringen ihre eigenen mit, die Liste steht unter **Einstellungen**, **Stammdaten**, **Abwesenheitsarten**:
+
+| Code | Abwesenheit | Code | Abwesenheit |
+|---|---|---|---|
+| U | Urlaub | KA | Karenz |
+| K | Krankenstand | PF | Pflegefreistellung |
+| ER | Ersatzruhe | SU | Sonderurlaub |
+| ZA | Zeitausgleich | FB | Fortbildung |
+| KUR | Kur und Rehabilitation | REI | Dienstreise |
+| AU | Arbeitsunfall | PM | Papamonat |
+
+Steht in einer Zelle ein Code mit Schrägstrich, etwa „K/S1“, ist das ein Konflikt: ein Dienst trotz Abwesenheit.
+
+## Abzüge der Planqualität
+
+Die Zahl der Gruppe [Qualität](#qualität) in der [Bewertung](#bewertung): Jede Qualitätsregel zieht für jede
+Abweichung etwas ab, mal ihrem [Gewicht](#gewicht). Die Zahl ist nie 0 und hat für sich keine Bedeutung; sie hilft
+nur, zwei Pläne desselben Monats zu vergleichen. Kein Fehler.
+
 ## Angerechnet
 
 Stunden, die zählen, als wäre gearbeitet worden: Abwesenheitstage, die das Soll senken, und Ersatzruhetage, je
@@ -30,8 +50,11 @@ an dem Tag frei, und der Dienst ergibt keinen Regelverstoß. Siehe
 
 ## Bedarf
 
-Wie viele Personen ein [Bereich](#bereich) zu welcher Uhrzeit braucht: eine **Mindestbesetzung** und auf Wunsch
-eine **Höchstbesetzung**, an bestimmten Wochentagen, an Feiertagen oder an einem Datum. Der Bedarf ist neben den
+Wie viele Personen ein [Bereich](#bereich) zu welcher Uhrzeit braucht: eine **Mindestbesetzung** (Spalte
+**Mindestens**) und auf Wunsch eine **Höchstbesetzung** (Spalte **Höchstens**; „= Mindestens“ heißt, es ist keine
+eigene gesetzt, dann gilt die Mindestbesetzung auch als Höchstbesetzung), an bestimmten Wochentagen, an Feiertagen
+oder an einem Datum. Fehlt jemand, ist das eine [Lücke](#lücke); sind mehr Personen da, ist das
+[Überbesetzung](#überbesetzung). Der Bedarf ist neben den
 Regeln die wichtigste Vorgabe für die Planung. Siehe [Bereiche, Schichten und Bedarf](stammdaten.md#bedarf).
 
 ## Belastung
@@ -45,6 +68,15 @@ vergleichbar. Die [Fairness](#fairness) vergleicht die Belastung. Siehe [Auswert
 Ein Arbeitsplatz oder Aufgabengebiet mit eigenen Schichten und eigenem Bedarf, im Demodatensatz zum Beispiel
 „Notrufannahme“. Eine Person wird nur in ihren Bereichen eingeplant. Siehe
 [Bereiche, Schichten und Bedarf](stammdaten.md).
+
+## Bewertung
+
+Wie gut ein Plan ist, in den drei Gruppen [Regelverstoß](#regelverstoß), Bedarf und [Qualität](#qualität), die
+streng nacheinander zählen. Sie steht im Dienstplan unter **Erweitert** neben **Planen** in Worten, etwa
+„Regelverstöße 0, fehlende Besetzung 0 Personenstunden, Überbesetzung 90 Personenstunden, Qualität: Abzüge
+5 952 198“. Je kleiner jede Zahl, desto besser; nur Regelverstöße und fehlende Besetzung sind Fehler. Die Rohzahl
+(technisch der Score, etwa `0hard/-5400medium/-5952198soft`) steht im Tooltip. Für den Alltag reicht die Farbe der
+Überschrift über dem Plan. Siehe [Wie das Programm plant](wie-plant.md).
 
 ## Code
 
@@ -63,6 +95,19 @@ Eine JSON-Datei mit allen [Stammdaten](#stammdaten) und den Eingaben von Planung
 Mehrere Diensttage hintereinander. Die Planung bevorzugt Blöcke in der eingestellten Länge (Standard 2 bis 4 Tage);
 kürzere und längere Blöcke kosten in der [Qualität](#qualität). Siehe [Regeln einstellen](einstellungen.md).
 
+## Durchrechnung
+
+Der Zeitraum, über den der Wochenschnitt einer Person zählt, Standard das Kalenderhalbjahr (Jänner bis Juni, Juli
+bis Dezember). Im Schnitt dieses Zeitraums darf eine Person höchstens ihre eigenen Wochenstunden plus einen
+Spielraum arbeiten (Standard 10 %, nie mehr als 46,16 h je Woche); einzelne Wochen dürfen darüber liegen. Die
+Vormonate kommen aus der [Historie](#historie). Siehe [Regeln einstellen](einstellungen.md).
+
+## Eingaben
+
+Was in einem Monat dazukommt: Abwesenheiten, Wünsche und Vorgaben, unter dem Menüpunkt **Eingaben**. Sie gelten
+nur für ihren Monat. Gegenstück: die [Stammdaten](#stammdaten), die für alle Monate gelten. Siehe
+[Abwesenheiten, Wünsche und Vorgaben](eingaben.md).
+
 ## Einschränkung
 
 Was eine Person nicht macht: eine Schicht oder alle Schichten einer [Schichtart](#schichtart), an jedem Tag oder an
@@ -78,7 +123,8 @@ Güte des Plans.
 
 ## Entwurf
 
-Status eines Plans, der noch geändert und neu geplant werden kann. Gegenstück: [abgeschlossen](#abgeschlossen).
+Status eines Plans, der noch geändert und neu geplant werden kann. Vor der ersten Planung steht als Status „noch
+kein Plan“. Gegenstück: [abgeschlossen](#abgeschlossen).
 
 ## Ersatzruhe
 
@@ -88,7 +134,7 @@ erwirbt einen Ersatzruhetag; offene Ersatzruhetage plant das Programm in den Fol
 ## Erweitert
 
 Ein zugeklappter Abschnitt mit Einstellungen, die man für den Anfang nicht braucht. Es gibt ihn dreimal: im
-**Dienstplan** neben **Planen** (Startwert, Zeitlimit, Schrittzahl, **Neu beginnen** und der [Score](#score)), unter
+**Dienstplan** neben **Planen** (Startwert, Zeitlimit, Schrittzahl, **Neu beginnen** und die [Bewertung](#bewertung)), unter
 **Regeln** (Nachtzeit, die [Gewichte](#gewicht) und alle Regeln mit Beschreibung) und unter **Daten** (die
 Demodaten).
 
@@ -184,6 +230,13 @@ Eine Person, die keine Nachtdienste macht, in einem dieser drei Fälle:
 
 Siehe [regeln.md](../regeln.md#nachtverteilung).
 
+## Personenstunden
+
+Fehlende oder überzählige Personen mal Stunden. „Lücke (8,5 Personenstunden)“ heißt zum Beispiel: Eine Person
+fehlt 8,5 Stunden lang, oder zwei Personen fehlen je 4 Stunden und 15 Minuten. „Überbesetzung 90 Personenstunden“
+im ganzen Monat heißt: Zusammengezählt waren 90 Stunden lang eine Person mehr da als nötig, verteilt auf viele
+Tage. Siehe [Lücke](#lücke) und [Überbesetzung](#überbesetzung).
+
 ## Plan veraltet
 
 Hinweis über dem Dienstplan: Seit der letzten Planung haben sich Eingaben, Stammdaten, Regeln, die Historie oder
@@ -202,9 +255,14 @@ Siehe [Pseudonymisieren](daten.md#pseudonymisieren).
 
 ## Qualität
 
-Die dritte Gruppe der Bewertung eines Plans: wie gut der Plan ist, wenn er keine Regel verletzt und den Bedarf
-deckt (Stunden, Fairness, Wünsche, Blöcke, Familienregeln, gewohnte Verteilung). Siehe
-[So funktioniert es](index.md#so-funktioniert-es).
+Die dritte Gruppe der [Bewertung](#bewertung) eines Plans: wie gut der Plan ist, wenn er keine Regel verletzt und
+den Bedarf deckt. Die Qualitätsregeln heißen im Programm so, auch auf den Knöpfen über dem Dienstplan
+([Regeln mit Treffern](#regeln-mit-treffern)): **Stunden treffen**, **Fairness Nachtdienste**, **Fairness
+Wochenenden**, **Fairness Feiertage**, **Fairness fair verteilte Dienste**, **Wünsche**, **Dienstblöcke**,
+**Einzelne freie Tage**, **Vorwärtsrotation**, **Ganze Wochenenden frei**, **Ersatzruhe abbauen**, **Abwechslung
+Dienste**, **Abwechslung Bereiche**, **Gewohnte Verteilung**, **Familienregel**, **Dienst nur auf Anfrage**.
+Treffer dieser Regeln sind keine Fehler: Der Plan ist trotzdem verwendbar. Siehe
+[Wie das Programm plant](wie-plant.md).
 
 ## Quellsystem
 
@@ -234,12 +292,6 @@ Ein Dienst mit Beginn und Ende in einem Bereich, im Plan mit seinem [Code](#code
 Früh, Tag, Spät oder Nacht. Einschränkungen, die gewohnte Verteilung und die Abwechslung der Dienste beziehen sich
 auf die Schichtart, nicht auf die einzelne Schicht.
 
-## Score
-
-Die Bewertung des Plans in den drei Gruppen, etwa `0hard/-1680medium/-5952198soft`: Regelverstöße, Bedarf,
-Qualität. Je näher an 0, desto besser; die Gruppen zählen streng nacheinander. Er steht im Dienstplan unter
-**Erweitert** neben **Planen**.
-
 ## Soll
 
 Die vertraglichen Stunden des Monats: Wochenstunden durch 5 je Arbeitstag (Montag bis Freitag ohne Feiertage),
@@ -268,7 +320,10 @@ Monatsabschluss steht der neue Stand in der Historie.
 ## Überbesetzung
 
 Mehr Personen eingeplant, als die Höchstbesetzung erlaubt (wo keine gesetzt ist, als die Mindestbesetzung
-verlangt), oder Dienste, die gar keinen Bedarf abdecken. Gehört zur Gruppe Bedarf.
+verlangt), oder Dienste, die gar keinen Bedarf abdecken. Gehört zur Gruppe Bedarf und steht in
+[Personenstunden](#personenstunden). Kein Fehler: Sie entsteht vor allem, wo eine Schicht über mehrere Abschnitte
+des Bedarfs reicht und der nächste Abschnitt weniger Personen braucht. Siehe
+[Was die Zahlen bedeuten](zahlen.md#überbesetzung).
 
 ## Vorgabe
 

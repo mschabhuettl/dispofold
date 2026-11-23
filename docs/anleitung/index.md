@@ -1,103 +1,41 @@
 # Anleitung für die Dienstplanung
 
-Diese Anleitung beschreibt die Arbeit mit Dispofold für alle, die Dienstpläne machen: wie das Programm plant, wie
-ein Monat abläuft und was auf jeder Seite steht. Wer neu ist, beginnt mit [Erste Schritte](erste-schritte.md) und
-spielt dann [Ein Monat Schritt für Schritt](beispiel.md) mit den Demodaten durch. Die anderen Seiten schlägt man
-nach, wenn man sie braucht. Wörter wie Soll, Ziel oder Vorgabe erklärt [Begriffe](begriffe.md).
+Diese Anleitung beschreibt die Arbeit mit Dispofold für alle, die Dienstpläne machen. Wer neu ist, beginnt mit dem
+[Schnellstart in 10 Schritten](schnellstart.md): ein Probemonat mit Demodaten, ein Bild je Schritt. Danach helfen
+[Erste Schritte](erste-schritte.md) beim Start mit echten Daten und [Ein Monat Schritt für
+Schritt](beispiel.md) mit allen Einzelheiten. Die anderen Seiten schlägt man nach, wenn man sie braucht. Wörter wie
+Soll, Ziel oder Vorgabe erklärt [Begriffe](begriffe.md).
 
-Die Regeln, nach denen das Programm plant, stehen im Einzelnen in [regeln.md](../regeln.md), das Format der
-Datensätze in [datenformat.md](../datenformat.md). Installation und Sicherung sind Sache der IT:
-[betrieb.md](../betrieb.md).
+Die Anleitung ist in jede Form von Dispofold eingebaut, am Server wie im Programm am eigenen Rechner, und geht auch
+ohne Internet.
 
-## Was ist Dispofold?
+## Typischer Ablauf
 
-Dispofold plant den Monatsdienstplan. Das Rechnen übernimmt **Timefold Solver**, eine freie Planungs-Engine. Sie
-probiert sehr viele mögliche Pläne aus, bewertet jeden nach Regeln und behält einen guten. Von Dienstplänen weiß
-sie von sich aus nichts. Alles andere ist Dispofold: die Regeln aus dem Kollektivvertrag und die Planungsregeln
-mit ihren Gewichten, die Daten (Personen, Bereiche, Schichten, Bedarf, Abwesenheiten, Wünsche, Historie,
-Stundenkonto), Import und Export, die Seiten zum Planen, Prüfen, Ändern und Abschließen, die Auswertungen und
-„Warum dieser Dienst?“. Kurz gesagt: Timefold rechnet, Dispofold sagt, was zu rechnen ist, und zeigt das Ergebnis.
+Ein Monat, von den Daten bis zum Abschluss. [Ein Monat Schritt für Schritt](beispiel.md) zeigt denselben Ablauf mit
+Bildern.
 
-Dispofold arbeitet ganz ohne Internet. Timefold läuft in Dispofold, auf dem eigenen Rechner oder dem eigenen
-Server, und keine Daten verlassen ihn. Was ins Netz gehen kann, steht unter
-[Häufige Fragen](fragen.md#häufige-fragen) unter „Braucht Dispofold Internet?“.
-
-## Seiten dieser Anleitung
-
-| Seite | Inhalt |
-|---|---|
-| [Erste Schritte](erste-schritte.md) | Anmelden am Server, das Programm am eigenen Rechner, die ersten Daten |
-| [Ein Monat Schritt für Schritt](beispiel.md) | ein ganzer Monat mit den Demodaten, vom Import bis zur Korrekturdatei |
-| [Personen](personen.md) | Liste, Person anlegen und bearbeiten, Einschränkungen, nicht mehr aus dem Quellsystem übernehmen |
-| [Bereiche, Schichten und Bedarf](stammdaten.md) | die Stammdaten: Bereiche, Abwesenheitsarten, Schichten, Bedarf, Feiertage |
-| [Abwesenheiten, Wünsche und Vorgaben](eingaben.md) | die Eingaben eines Monats |
-| [Planen und Prüfen](planen.md) | planen, das Ergebnis lesen, [Probleme](planen.md#probleme) und offener Bedarf |
-| [Plan bearbeiten](plan-bearbeiten.md) | Dienstplan, Funktionen, Zeitachse, Zellen von Hand ändern, Dienste auf Anfrage, drucken |
-| [Auswertungen](auswertungen.md) | Fairness, die Zahlen einer Person, „Warum dieser Dienst?“ |
-| [Monat abschließen](monatsabschluss.md) | Abschluss, Historie, wieder öffnen |
-| [Daten und Korrekturdatei](daten.md) | Import, Änderungen behalten, Export, Korrekturdatei, Pseudonymisieren |
-| [Regeln einstellen](einstellungen.md) | Planungsziele, Gesetz und Betriebsvereinbarung, Gewichte, mit allen Standardwerten |
-| [Updates](updates.md) | Hinweis auf neue Versionen, Update am Server und am eigenen Rechner |
-| [Erweiterungen](erweiterungen.md) | Erweiterungen ein- und ausschalten, was sie zeigen |
-| [Rolle „nur lesen“](nur-lesen.md) | was die Ansicht sieht und was nicht |
-| [Häufige Fragen und Fehlerbehebung](fragen.md) | Meldungen des Programms, ihre Ursache und was zu tun ist |
-| [Begriffe](begriffe.md) | die Wörter des Programms von A bis Z |
-
-## So funktioniert es
-
-**Was hineingeht:**
-
-- **Stammdaten:** Personen (mit Wochenstunden, Bereichen, Stundenkonto, Einschränkungen, Familienregeln und
-  gewohnter Verteilung), Bereiche, Schichten, Bedarf je Bereich und Tageszeit, Abwesenheitsarten und Feiertage.
-  Sie ändern sich selten und kommen meist als Datensatz aus dem Quellsystem.
-- **Eingaben des Monats:** Abwesenheiten, Wünsche und Vorgaben.
-- **Regeln:** feste Grenzen (Ruhezeiten, Höchstarbeitszeiten und Wochenschnitt nach dem Kollektivvertrag, freie
-  Sonntage als einstellbarer Standardwert) und die Planungsziele mit ihren Gewichten.
-- **Historie:** die Zahlen der abgeschlossenen Vormonate (gearbeitete Stunden, Wochenstunden, Nächte, Wochenenden,
-  Feiertage, fair verteilte Dienste, erfüllte Wünsche, Stundenkonto, Ersatzruhe).
-
-**Was herauskommt:** ein Dienstplan für den Monat, eine Zelle je Person und Tag: frei, ein Dienst aus den
-Schichten ihrer Bereiche oder ein Ersatzruhetag.
-
-**Wie der Solver abwägt.** Der [Solver](begriffe.md#solver) ist der Teil des Programms, der plant. Er bewertet
-jeden Plan in drei Gruppen, die streng nacheinander zählen:
-
-1. **Regelverstoß:** Ruhezeiten, Höchstarbeitszeiten, Höchststunden im Monat, der Wochenschnitt über die
-   Durchrechnung (je Person die eigenen Wochenstunden plus Spielraum), freie Sonntage, frei mitten in einer
-   Abwesenheit, Qualifikation, Abwesenheiten, Sperren. Muss 0 sein. Ein Plan mit Regelverstößen darf so nicht verwendet werden.
-2. **Bedarf:** fehlende Besetzung (Lücken) und Besetzung über dem Bedarf, in Personenminuten. Eine fehlende
-   Minute wiegt schwerer als jeder ganze Dienst über dem Bedarf.
-3. **Qualität:** Stunden treffen, faire Verteilung, Wünsche, Dienstblöcke, Familienregeln, gewohnte Verteilung
-   und weitere Regeln, jede mit einem einstellbaren Gewicht.
-
-Ein Plan mit weniger Regelverstößen ist immer besser, egal wie es um Bedarf und Qualität steht; bei gleich vielen
-Regelverstößen entscheidet der Bedarf, erst dann die Qualität. Reicht das Personal nicht, bleibt deshalb eine
-Lücke sichtbar, statt dass ein Regelverstoß entsteht. Und wer unter seinem Soll liegt, bleibt darunter, statt dass
-Stellen doppelt besetzt werden.
-
-**Soll und Ziel.** Das [Soll](begriffe.md#soll) sind die vertraglichen Stunden des Monats (Wochenstunden durch 5
-je Arbeitstag). Das [Ziel](begriffe.md#ziel) ist das Soll, korrigiert um einen Teil des Stundenkontos (ein Plus
-senkt es, ein Minus erhöht es). Braucht der Bedarf weniger Arbeit, als alle Ziele zusammen ergeben, plant das
-Programm gegen ein verkleinertes Ziel: Jedes Ziel schrumpft um denselben Anteil, so muss niemand Stunden über den
-Bedarf hinaus sammeln.
-
-**Was fest ist und was nur gewünscht.**
-
-- **Vorgaben** (unter **Eingaben**) sind Dienste oder freie Tage, die fest gelten. Der Solver ändert sie nicht.
-- **Fixiert** ist eine Zelle im Plan, die die nächste Planung beibehält. Jede von Hand gesetzte Zelle ist
-  fixiert. Fixierungen lassen sich lösen, Vorgaben nicht (sie werden nur unter **Eingaben** entfernt).
-- **Abwesenheiten** sind ebenfalls fest: An diesen Tagen gibt es keinen Dienst.
-- **Wünsche** erfüllt der Solver, so gut es geht, und verteilt die Erfüllung gleichmäßig auf alle.
-- **Familienregeln** (persönliche Regeln je Wochentag) und die **gewohnte Verteilung** sind Qualitätsregeln: Sie
-  werden eingehalten, wenn es geht.
-- **Nur auf Anfrage:** Eine Schicht mit dieser Einschränkung plant das Programm für die Person nie selbst ein.
-  Siehe [Dienste nur auf Anfrage](plan-bearbeiten.md#dienste-nur-auf-anfrage).
-
-**Monate und Historie.** Jeder Monat hat seine Eingaben und seinen Plan. Ein Plan ist zuerst **Entwurf**: Er kann
-geändert und neu geplant werden. Ist der Monat fertig, wird er **abgeschlossen**: Seine Zahlen kommen in die
-Historie, er ist danach nur lesbar. Die Historie zählt für die Fairness, die Wünsche und den Wochenschnitt der
-Folgemonate, das Stundenkonto und die Ersatzruhe nach dem Monat für den nächsten. Die letzten Dienste des Vormonats zählen für die
-Ruhezeiten am Monatsanfang. Monate werden der Reihe nach abgeschlossen.
+1. **Daten laden** (einmal und nach jedem neuen Export aus dem Quellsystem): unter **Einstellungen**, **Daten**
+   den Datensatz importieren, oder über die Erweiterung für das bisherige Planungsprogramm (siehe
+   [Echte Daten übernehmen](plugin-sp5-echte-daten.md)). Was sich selten ändert (Schichten, Bedarf, Feiertage),
+   pflegt man unter **Einstellungen**, **Stammdaten**, die Personen unter **Personen**. Siehe
+   [Daten](daten.md#import).
+2. **Eingaben erfassen:** unter **Eingaben** die Abwesenheiten (Urlaub, Krankenstand), die Wünsche und die
+   Vorgaben des Monats eintragen und **Speichern**. Siehe [Eingaben](eingaben.md).
+3. **Planen:** im **Dienstplan** auf **Planen** klicken. Der Solver rechnet im Hintergrund, mit den Demodaten ein
+   bis zwei Minuten. Siehe [Planen](planen.md#planen).
+4. **Prüfen:** Die Überschrift über dem Plan sagt in Farbe, ob er verwendbar ist. **Prüfen** sagt oben, was zuerst
+   zu tun ist, und listet darunter die Regelverstöße, den offenen Bedarf mit den Personen, die man fragen kann,
+   die Hinweise zur Qualität und Auffälligkeiten in den Stammdaten. Siehe [Prüfen](planen.md#probleme) und
+   [Was die Zahlen bedeuten](zahlen.md).
+5. **Von Hand nachbessern:** Zellen im Dienstplan ändern, Lücken mit Diensten auf Anfrage füllen, bei Bedarf
+   noch einmal **Planen** (die von Hand gesetzten Zellen bleiben dabei fixiert). Ist der Plan schon ausgehängt,
+   vorher **Plan fixieren**. Siehe [Von Hand ändern und fixieren](plan-bearbeiten.md#von-hand-ändern-und-fixieren).
+6. **Drucken und exportieren:** im **Dienstplan** das Menü **Ausgabe**: **Drucken** oder Export als XLSX, CSV
+   oder JSON. Siehe [Drucken](plan-bearbeiten.md#drucken) und [Exportieren](daten.md#exportieren).
+7. **Monat abschließen:** im Menü **Ausgabe** oder unter **Einstellungen**, **Daten**. Die Zahlen des Monats
+   kommen in die Historie, der nächste Monat baut darauf auf. Siehe [Monat abschließen](monatsabschluss.md).
+8. **Änderungen zurückgeben:** Wurden Personen oder Bedarf in Dispofold geändert, die Korrekturdatei für das
+   Exportprogramm speichern. Siehe [Korrekturdatei](daten.md#korrekturdatei).
 
 ## Die Oberfläche
 
@@ -105,7 +43,8 @@ Ruhezeiten am Monatsanfang. Monate werden der Reihe nach abgeschlossen.
 
 1. **Menü:** **Dienstplan**, **Prüfen**, **Eingaben**, **Personen**, **Einstellungen** und **Anleitung**. Die
    Rolle „nur lesen“ sieht weniger, siehe [Rolle „nur lesen“](nur-lesen.md). Darunter führt **Quellcode
-   (AGPL-3.0)** zum Quellcode des Programms.
+   (AGPL-3.0)** zum Quellcode des Programms. Auf einem schmalen Bildschirm, etwa am Telefon, steckt das Menü
+   hinter dem Knopf **Menü** oben links und klappt nach der Wahl wieder zu.
 2. **Planungsmonat:** Auf den Seiten eines Monats steht oben der Monat, um den es geht. Die Pfeile daneben wechseln
    einen Monat zurück oder vor, die Auswahl reicht ein Jahr zurück und eines voraus. Beim ersten Öffnen ist der
    nächste Monat gewählt, wenn es für ihn Daten gibt, sonst der letzte Monat mit Daten; danach merkt sich der
@@ -135,27 +74,37 @@ eingebauten Anleitung genau dieser Version, die auch ohne Internet geht: am Serv
 Rechner. Unter jeder Seite führen Links zur Übersicht und zur vorigen und nächsten Seite; darunter steht die
 Adresse derselben Seite auf der Website (mit Suche, Stand des neuesten Releases).
 
-## Typischer Ablauf
+## Seiten dieser Anleitung
 
-Ein Monat, von den Daten bis zum Abschluss. [Ein Monat Schritt für Schritt](beispiel.md) zeigt denselben Ablauf mit
-Bildern.
+| Seite | Inhalt |
+|---|---|
+| [Schnellstart in 10 Schritten](schnellstart.md) | ein Probemonat mit Demodaten, ein Bild je Schritt |
+| [Erste Schritte](erste-schritte.md) | welche Form man hat, Anmelden am Server, das Programm am eigenen Rechner, die ersten Daten |
+| [Ein Monat Schritt für Schritt](beispiel.md) | ein ganzer Monat mit den Demodaten, vom Import bis zur Korrekturdatei |
+| [Was die Zahlen bedeuten](zahlen.md) | die Zeile über dem Plan, Prüfen, Fairness und die Seite einer Person: was ein Fehler ist und was nicht |
+| [Wie das Programm plant](wie-plant.md) | was hineingeht, was herauskommt, wie der Solver abwägt, was fest ist und was nur gewünscht |
+| [Personen](personen.md) | Liste, Person anlegen und bearbeiten, Einschränkungen, nicht mehr aus dem Quellsystem übernehmen |
+| [Bereiche, Schichten und Bedarf](stammdaten.md) | die Stammdaten: Bereiche, Abwesenheitsarten, Schichten, Bedarf, Feiertage |
+| [Abwesenheiten, Wünsche und Vorgaben](eingaben.md) | die Eingaben eines Monats |
+| [Planen und Prüfen](planen.md) | planen, das Ergebnis lesen, [Probleme](planen.md#probleme) und offener Bedarf |
+| [Plan bearbeiten](plan-bearbeiten.md) | Dienstplan, Funktionen, Zeitachse, Zellen von Hand ändern, Dienste auf Anfrage, drucken |
+| [Auswertungen](auswertungen.md) | Fairness, die Zahlen einer Person, „Warum dieser Dienst?“ |
+| [Monat abschließen](monatsabschluss.md) | Abschluss, Historie, wieder öffnen |
+| [Daten und Korrekturdatei](daten.md) | Import, Änderungen behalten, Export, Korrekturdatei, Pseudonymisieren |
+| [Regeln einstellen](einstellungen.md) | Planungsziele, Gesetz und Betriebsvereinbarung, Gewichte, mit allen Standardwerten |
+| [Updates](updates.md) | Hinweis auf neue Versionen, Update am Server und am eigenen Rechner |
+| [Erweiterungen](erweiterungen.md) | Erweiterungen ein- und ausschalten, was sie zeigen |
+| [Rolle „nur lesen“](nur-lesen.md) | was die Ansicht sieht und was nicht |
+| [Häufige Fragen und Fehlerbehebung](fragen.md) | Meldungen des Programms, ihre Ursache und was zu tun ist |
+| [Begriffe](begriffe.md) | die Wörter des Programms von A bis Z |
 
-1. **Daten laden** (einmal und nach jedem neuen Export aus dem Quellsystem): unter **Einstellungen**, **Daten**
-   den Datensatz importieren. Was sich selten ändert (Schichten, Bedarf, Feiertage), pflegt man unter
-   **Einstellungen**, **Stammdaten**, die Personen unter **Personen**. Siehe [Daten](daten.md#import).
-2. **Eingaben erfassen:** unter **Eingaben** die Abwesenheiten (Urlaub, Krankenstand), die Wünsche und die
-   Vorgaben des Monats eintragen und **Speichern**. Siehe [Eingaben](eingaben.md).
-3. **Planen:** im **Dienstplan** auf **Planen** klicken. Der Solver rechnet einige Minuten im Hintergrund. Siehe
-   [Planen](planen.md#planen).
-4. **Prüfen:** Die Zeile über dem Plan sagt, ob er verwendbar ist. Unter **Prüfen** stehen alle Regelverstöße,
-   der offene Bedarf mit den Personen, die man fragen kann, und Auffälligkeiten in den Stammdaten. Siehe
-   [Prüfen](planen.md#probleme).
-5. **Von Hand nachbessern:** Zellen im Dienstplan ändern, Lücken mit Diensten auf Anfrage füllen, bei Bedarf
-   noch einmal **Planen** (die von Hand gesetzten Zellen bleiben dabei fixiert). Siehe
-   [Von Hand ändern und fixieren](plan-bearbeiten.md#von-hand-ändern-und-fixieren).
-6. **Drucken und exportieren:** im **Dienstplan** das Menü **Ausgabe**: **Drucken** oder Export als XLSX, CSV
-   oder JSON. Siehe [Drucken](plan-bearbeiten.md#drucken) und [Exportieren](daten.md#exportieren).
-7. **Monat abschließen:** im Menü **Ausgabe** oder unter **Einstellungen**, **Daten**. Die Zahlen des Monats
-   kommen in die Historie, der nächste Monat baut darauf auf. Siehe [Monat abschließen](monatsabschluss.md).
-8. **Änderungen zurückgeben:** Wurden Personen oder Bedarf in Dispofold geändert, die Korrekturdatei für das
-   Exportprogramm speichern. Siehe [Korrekturdatei](daten.md#korrekturdatei).
+## Was ist Dispofold?
+
+Dispofold plant den Monatsdienstplan: Es verteilt die Dienste so, dass die Regeln eingehalten und der Bedarf
+gedeckt ist, und berücksichtigt dabei Stunden, Wünsche und eine faire Verteilung. Das Rechnen übernimmt die freie
+Planungs-Engine Timefold, auf dem eigenen Rechner oder dem eigenen Server; keine Daten verlassen ihn. Was in eine
+Planung hineingeht und wie das Programm abwägt, erklärt [Wie das Programm plant](wie-plant.md).
+
+> **Mehr Hintergrund:** Die Regeln, nach denen das Programm plant, stehen im Einzelnen in
+> [regeln.md](../regeln.md), das Format der Datensätze in [datenformat.md](../datenformat.md). Installation und
+> Sicherung sind Sache der IT: [betrieb.md](../betrieb.md).

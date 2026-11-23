@@ -14,9 +14,12 @@ hooks:
 nav:
   - Start: index.md
   - Anleitung:
+      - Schnellstart in 10 Schritten: anleitung/schnellstart.md
       - Überblick: anleitung/index.md
       - Erste Schritte: anleitung/erste-schritte.md
       - Ein Monat Schritt für Schritt: anleitung/beispiel.md
+      - Was die Zahlen bedeuten: anleitung/zahlen.md
+      - Wie das Programm plant: anleitung/wie-plant.md
       - Personen: anleitung/personen.md
       - Bereiche, Schichten und Bedarf: anleitung/stammdaten.md
       - Abwesenheiten, Wünsche und Vorgaben: anleitung/eingaben.md

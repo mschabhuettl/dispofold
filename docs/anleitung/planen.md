@@ -49,7 +49,9 @@ Unter **Erweitert** (zugeklappt) steuert man einen einzelnen Lauf. Alle Felder s
    Vorgaben bleiben. Hilft, wenn der Plan in einer schlechten Lösung festsitzt, etwa nach großen Änderungen am
    Bedarf. Eine Wiederholung mit demselben Ergebnis gelingt nur mit diesem Häkchen.
 
-Daneben steht der **Score**, die Bewertung des Plans in den drei Gruppen (siehe [Begriffe](begriffe.md#score)).
+Darunter steht die **Bewertung** des Plans in Worten: Regelverstöße, fehlende Besetzung und Überbesetzung in
+Personenstunden und die Abzüge der Planqualität; die Rohzahl zeigt der Tooltip (siehe
+[Begriffe](begriffe.md#bewertung)).
 
 ## Das Ergebnis lesen
 
