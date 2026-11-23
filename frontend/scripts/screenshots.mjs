@@ -2,17 +2,21 @@
 // `npx playwright install chromium`), synthetic demo data only:
 //   npm run build && SEED_DEMO=1 BASE_URL=http://localhost:8080 APP_USER=planer APP_PASSWORD=... \
 //     VIEWER_USER=leser VIEWER_PASSWORD=... node scripts/screenshots.mjs ../docs/screenshots
-// 1. Server phase against BASE_URL, a fresh instance of the Docker build (no plan for MONTH yet; SEED_DEMO=1 confirms
-//    that its master data may be replaced, so never use it against production): the worked example of the guide
-//    (beispiel-*.png) done through the interface as a planner would (demo data, a person, demand, inputs, planning, a
-//    sick note after planning, the fixes, planning again, closing the month, the corrections file and the summary of
-//    one to load), then the month
-//    is opened again and the screens and dialogs of every page are taken, a few with numbered marks (the guide refers
-//    to the numbers). A release notice is answered in the browser (GET /api/release), the instance checks nothing.
+// 1. Server phase against BASE_URL, a fresh instance of the Docker build (no data at all: the first pictures show the
+//    empty start; SEED_DEMO=1 confirms that its master data may be replaced, so never use it against production): the
+//    quick start (schnellstart-*.png, full window, at most three marks) and the worked example of the guide
+//    (beispiel-*.png, the full window first, then the detail) done through the interface as a planner would (login,
+//    the empty start, demo data from there and again from Daten, a person, demand, inputs, planning, a sick note after
+//    planning, the fixes, planning again, closing the month, the corrections file and the summary of one to load),
+//    then the month is opened again and the screens and dialogs of every page are taken, a few with numbered marks
+//    (the guide refers to the numbers). A release notice is answered in the browser (GET /api/release), the instance
+//    checks nothing. The person and days of the sick note are SICK below if that person has duties on both days, else
+//    the first two working days in a row someone has; the choice is logged ("sick note: ...") and the guide names it
+//    (beispiel.md step 8).
 // 2. Desktop phase: the pages of the program window (password on the first start, the small window "Dispofold läuft")
 //    from desktop-shell/pages, and the desktop-only screens of the interface (update question, Updates page, update
 //    notice with "Jetzt installieren") from the dev server in desktop mode (MOCK_DESKTOP=1), which this script starts
-//    itself on a free port; then Einstellungen → Erweiterungen from the dev server as a server.
+//    itself on a free port.
 //    PHASE=server or PHASE=desktop runs one phase only.
 // The window frame pictures fenster*.png come from the real program window and are not made here.
 // Every request to another host is blocked and makes the script fail. At the end scripts/optimize-png.py shrinks the
@@ -33,6 +37,11 @@ const password = process.env.APP_PASSWORD ?? '';
 const viewerUser = process.env.VIEWER_USER ?? 'leser';
 const viewerPassword = process.env.VIEWER_PASSWORD ?? '';
 const month = process.env.MONTH ?? '2027-01';
+// the month a fresh instance shows first: the next one (main.js, defaultMonth)
+const now = new Date();
+const startMonth = new Date(Date.UTC(now.getFullYear(), now.getMonth() + 1, 1)).toISOString().slice(0, 7);
+// the sick note of the worked example as the guide names it (beispiel.md step 8), if the plan allows
+const SICK = { firstName: 'Rosa', lastName: 'Erleneder', from: `${month}-19`, to: `${month}-20` };
 const outDir = resolve(process.argv[2] ?? 'screenshots-out');
 if (process.env.SEED_DEMO !== '1') throw new Error('SEED_DEMO=1 is required: the script replaces the master data with demo data');
 mkdirSync(outDir, { recursive: true });
@@ -43,8 +52,9 @@ const work = mkdtempSync(join(process.env.TMPDIR ?? tmpdir(), 'shots-'));
 
 const browser = await launchBrowser();
 
-/** A context that blocks requests to other hosts, accepts every confirm() and starts in the given month. */
-async function newPage(origin) {
+/** A context that blocks requests to other hosts, accepts every confirm() and starts in the given month (null: as a
+ * fresh browser does). */
+async function newPage(origin, startIn = month) {
   const context = await browser.newContext({ viewport: VIEWPORT, locale: 'de-DE', colorScheme: 'light' });
   await context.route('**/*', (route) => {
     const url = route.request().url();
@@ -52,7 +62,7 @@ async function newPage(origin) {
     external.push(url);
     return route.abort();
   });
-  await context.addInitScript((m) => sessionStorage.setItem('month', m), month);
+  if (startIn) await context.addInitScript((m) => sessionStorage.setItem('month', m), startIn);
   const page = await context.newPage();
   page.on('pageerror', (e) => console.error('page error:', e.message));
   page.on('dialog', (d) => d.accept());
@@ -143,6 +153,14 @@ async function clip(page, name, targets, pad = 14) {
   await unmark(page);
 }
 
+/** The full window with the marks, then the detail with the same marks: the guide shows both, in this order. */
+async function both(page, full, detail, marks, targets) {
+  await mark(page, marks);
+  await shot(page, full);
+  await mark(page, marks);
+  await clip(page, detail, targets);
+}
+
 async function open(page, origin, hash, ready) {
   const target = `${origin}/#/${hash}`;
   // the same address again would not draw the page anew
@@ -186,27 +204,52 @@ const select = async (page, selector, value) => {
 
 async function serverPhase() {
   const origin = new URL(base).origin;
-  const page = await newPage(origin);
+  // a browser as on the first visit: no month chosen, so the next month with no data
+  const fresh = await newPage(origin, null);
 
-  // Erste Schritte: the login page, then with the message after a wrong password
-  await page.goto(`${base}/login.html`);
-  await clip(page, 'anmelden', ['main.center-box']);
-  await page.goto(`${base}/login.html?error=1`);
-  await clip(page, 'anmelden-fehler', ['main.center-box']);
-  await login(page, base, user, password);
+  // Erste Schritte and Schnellstart 1: the login page, then with the message after a wrong password
+  await fresh.goto(`${base}/login.html`);
+  await clip(fresh, 'anmelden', ['main.center-box']);
+  await mark(fresh, [['#j_username', 1], ['#j_password', 2], ['button[type=submit]', 3]]);
+  await shot(fresh, 'schnellstart-01-anmelden');
+  await fresh.goto(`${base}/login.html?error=1`);
+  await clip(fresh, 'anmelden-fehler', ['main.center-box']);
+  await login(fresh, base, user, password);
 
-  const first = await api(page, 'GET', `/api/plans/${month}`).catch(() => null);
+  const first = await api(fresh, 'GET', `/api/plans/${month}`).catch(() => null);
   if (first?.plan?.assignments?.length) throw new Error(`${month} has a plan already: the script needs a fresh instance`);
 
-  // ---- the worked example ----
-  // 1. demo data
-  await open(page, base, 'import', '#h-import');
-  await page.locator('section[aria-labelledby="h-import"] details.advanced summary').click();
-  await page.getByRole('button', { name: 'Demodaten laden (Jänner 2027)', exact: true }).click();
-  await page.locator('#main div[aria-live] .alert').first().waitFor({ timeout: 60000 });
-  await mark(page, [[page.getByRole('button', { name: 'Demodaten laden (Jänner 2027)', exact: true }), 1], ['#main div[aria-live] .alert', 2]]);
-  await clip(page, 'beispiel-demodaten', ['#main h1', '#main div[aria-live] .alert', 'section[aria-labelledby="h-import"]']);
+  // ---- the quick start, then the worked example ----
+  // Schnellstart 2: the empty start
+  await open(fresh, base, 'plan', '#empty-start');
+  const solveButton = (p) => p.getByRole('button', { name: 'Planen', exact: true });
+  await mark(fresh, [['#nav a[data-group="plan"]', 1, 'end'], ['#empty-start h2', 2], [solveButton(fresh), 3, 'bottom']]);
+  await shot(fresh, 'schnellstart-02-leerer-start');
+  // Schnellstart 3: demo data from the empty start, which changes to their month by itself
+  await fresh.getByRole('button', { name: 'Demodaten zum Ausprobieren laden', exact: true }).click();
+  await fresh.locator('.roster-wrap table.roster').waitFor({ timeout: 60000 });
+  await fresh.waitForTimeout(1000);
+  await mark(fresh, [['.month-picker', 1], ['.roster-wrap table.roster tbody tr[data-row="1"] th.person', 2], [solveButton(fresh), 3, 'bottom']]);
+  await shot(fresh, 'schnellstart-03-demodaten');
+  // Schnellstart 4: menu, link to the guide, the line above the plan
+  await mark(fresh, [['#nav a[data-group="plan"]', 1, 'end'], ['#main h1 + p.page-intro a', 2, 'right'], ['.statusbar', 3]]);
+  await shot(fresh, 'schnellstart-04-rundgang');
+  // 1. demo data from Daten, Erweitert, in a month without data: the summary offers to change to their month
+  await fresh.evaluate((m) => sessionStorage.setItem('month', m), startMonth);
+  await fresh.reload();
+  await open(fresh, base, 'import', '#h-import');
+  await fresh.locator('section[aria-labelledby="h-import"] details.advanced summary').click();
+  await fresh.getByRole('button', { name: 'Demodaten laden (Jänner 2027)', exact: true }).click();
+  const switchMonth = fresh.locator('#main div[aria-live] .alert').getByRole('button', { name: /^Zu .* wechseln$/ });
+  await switchMonth.waitFor({ timeout: 60000 });
+  await mark(fresh, [[fresh.getByRole('button', { name: 'Demodaten laden (Jänner 2027)', exact: true }), 1], ['#main div[aria-live] .alert', 2],
+    [switchMonth, 3, 'right']]);
+  await shot(fresh, 'beispiel-demodaten');
+  await switchMonth.click();
+  await fresh.context().close();
 
+  const page = await newPage(origin);
+  await login(page, base, user, password);
   const dataset = await api(page, 'GET', '/api/dataset');
   const areaName = (id) => dataset.areas.find((a) => a.id === id)?.name ?? id;
   // the area with the fewest people (there a sick note leaves a gap) and the one with the most (more demand there is
@@ -217,21 +260,24 @@ async function serverPhase() {
   const large = bySize.at(-1).id;
   const smallPeople = dataset.people.filter((p) => p.areaIds.includes(small));
 
-  // 2. Prüfen without a plan: only the check of the master data
+  // 2. Prüfen without a plan: only the check of the master data (Schnellstart 5: the whole window)
   await open(page, base, 'pruefen', '#check-data');
+  await mark(page, [['#nav a[data-group="check"]', 1, 'end'], ['#main p.alert', 2], ['#check-data h2', 3]]);
+  await shot(page, 'schnellstart-05-pruefen');
   await mark(page, [['#check-data h2', 1]]);
   await clip(page, 'beispiel-stammdaten-pruefen', ['#main h1', '#check-data']);
 
-  // 3. a person works fewer hours from this month on
+  // 3. a person works fewer hours from this month on; her page before the plan first
   const parttime = smallPeople.find((p) => p.weeklyHours >= 30) ?? smallPeople[0];
+  console.log('person of step 3:', parttime.firstName, parttime.lastName);
   await open(page, base, `person/${encodeURIComponent(parttime.id)}`, '#person-form');
+  await shot(page, 'person-ohne-plan');
   await page.locator('#h-edit').evaluate((e) => { e.scrollIntoView(); scrollBy(0, -20); });
   await page.locator('#person-form #f-weeklyHours').fill(String(parttime.weeklyHours - 4));
-  await mark(page, [['#person-form #f-weeklyHours', 1, 'left', true],
-    [page.locator('#person-form button[type=submit], #person-form .btn-primary').first(), 2]]);
-  await clip(page, 'beispiel-person', ['#h-edit', '#person-form #f-firstName', '#person-form #f-weeklyHours',
-    page.locator('#person-form button[type=submit], #person-form .btn-primary').first()]);
-  await page.locator('#person-form button[type=submit], #person-form .btn-primary').first().click();
+  const personSave = page.locator('#person-form button[type=submit], #person-form .btn-primary').first();
+  await both(page, 'beispiel-person-ganz', 'beispiel-person', [['#person-form #f-weeklyHours', 1, 'left', true], [personSave, 2]],
+    ['#h-edit', '#person-form #f-firstName', '#person-form #f-weeklyHours', personSave]);
+  await personSave.click();
   await page.waitForTimeout(1500);
 
   // 4. demand: one more person on working days in the late afternoon in the large area
@@ -244,40 +290,56 @@ async function serverPhase() {
   const form = page.locator('tr.edit-row');
   const min = form.locator("#f-min");
   await min.fill(String(Number(await min.inputValue()) + 1));
-  await mark(page, [[min, 1, 'left', true], [form.getByRole('button', { name: 'Speichern', exact: true }), 2, 'right']]);
-  await clip(page, 'beispiel-bedarf', ['section:has([data-table="demand"]) h2', '[data-table="demand"] thead', 'tr:has(+ tr.edit-row)', 'tr.edit-row']);
+  await form.evaluate((e) => e.scrollIntoView({ block: 'center' }));
+  await both(page, 'beispiel-bedarf-ganz', 'beispiel-bedarf', [[min, 1, 'left', true], [form.getByRole('button', { name: 'Speichern', exact: true }), 2, 'right']],
+    ['section:has([data-table="demand"]) h2', '[data-table="demand"] thead', 'tr:has(+ tr.edit-row)', 'tr.edit-row']);
   await form.getByRole('button', { name: 'Speichern', exact: true }).click();
   await page.waitForTimeout(1500);
 
-  // 5. inputs: a holiday and a wish
+  // 5. inputs: a holiday (Schnellstart 6), then a wish and a Vorgabe "frei" for another person (Schnellstart 7), each
+  // through the person filter, which also chooses the person in the forms
   const holidayPerson = dataset.people.find((p) => p.areaIds.includes(small) && p.id !== parttime.id) ?? dataset.people[1];
   const wishPerson = dataset.people.find((p) => p.areaIds.length === 1 && p.id !== holidayPerson.id) ?? dataset.people[2];
+  console.log('inputs of step 5:', holidayPerson.firstName, holidayPerson.lastName, '/', wishPerson.firstName, wishPerson.lastName);
+  const saveInputs = page.locator('.save-bar').getByRole('button', { name: 'Speichern', exact: true });
   await open(page, base, 'eingaben', '#inputs-filter');
-  await select(page, '#abs-person', holidayPerson.id);
+  await select(page, '#inputs-filter', holidayPerson.id);
   await select(page, '#abs-from', `${month}-25`);
   await select(page, '#abs-to', `${month}-29`);
   await select(page, '#abs-type', dataset.absenceTypes.find((a) => /urlaub/i.test(a.name))?.code ?? dataset.absenceTypes[0].code);
   await page.locator('section[aria-labelledby="h-absences"] .toolbar button', { hasText: 'Hinzufügen' }).click();
-  await select(page, '#wish-person', wishPerson.id);
+  await page.evaluate(() => scrollTo(0, 0));
+  await mark(page, [['section[aria-labelledby="h-absences"] .toolbar', 1], ['section[aria-labelledby="h-absences"] .added-note', 2, 'left'], [saveInputs, 3]]);
+  await shot(page, 'schnellstart-06-urlaub');
+  await mark(page, [[saveInputs, 1], ['#dirty-note', 2, 'right'], ['section[aria-labelledby="h-absences"] .toolbar', 3]]);
+  await clip(page, 'beispiel-eingaben', ['#h-absences', 'section[aria-labelledby="h-absences"] .toolbar', 'section[aria-labelledby="h-absences"] tr.row-added', '.save-bar']);
+  await saveInputs.click();
+  await page.waitForTimeout(1500);
+  await select(page, '#inputs-filter', wishPerson.id);
   await select(page, '#wish-date', `${month}-15`);
   await select(page, '#wish-kind', 'OFF');
   await page.locator('section[aria-labelledby="h-wishes"] .toolbar button', { hasText: 'Hinzufügen' }).click();
-  await page.evaluate(() => scrollTo(0, 0));
-  await mark(page, [[page.getByRole('button', { name: 'Speichern', exact: true }), 1], ['#dirty-note', 2, 'right'],
-    ['section[aria-labelledby="h-absences"] .toolbar', 3]]);
-  await clip(page, 'beispiel-eingaben', ['#main h1', 'section[aria-labelledby="h-absences"] .toolbar']);
-  await page.getByRole('button', { name: 'Speichern', exact: true }).click();
+  await select(page, '#fix-date', `${month}-22`);
+  // the duty of a Vorgabe: its first choice is "frei (freier Tag)"
+  await page.locator('section[aria-labelledby="h-fixed"] .toolbar button', { hasText: 'Hinzufügen' }).click();
+  await page.locator('#h-wishes').evaluate((e) => { e.scrollIntoView(); scrollBy(0, -20); });
+  await mark(page, [['section[aria-labelledby="h-wishes"] tr.row-added', 1], ['section[aria-labelledby="h-fixed"] tr.row-added', 2], [saveInputs, 3]]);
+  await shot(page, 'schnellstart-07-wunsch-vorgabe');
+  await saveInputs.click();
   await page.waitForTimeout(1500);
 
-  // 6. plan
+  // 6. plan (Schnellstart 8: the whole window afterwards)
   await open(page, base, 'plan', 'table.roster, #main .btn-primary');
-  await page.getByRole('button', { name: 'Planen', exact: true }).click();
+  await solveButton(page).click();
   await page.locator('.statusbar', { hasText: 'Planung läuft' }).waitFor({ timeout: 30000 });
   await page.waitForTimeout(3000);
   await mark(page, [[page.getByRole('button', { name: 'Stopp', exact: true }), 1, 'top'], ['.statusbar .plan-headline', 2]]);
   await clip(page, 'beispiel-planen', ['.plan-actions', '.statusbar']);
-  await solved(page);
+  const planned = await solved(page);
+  console.log('planned in', Math.round(planned.elapsedMillis / 1000), 's');
   await open(page, base, 'plan', 'table.roster');
+  await mark(page, [[solveButton(page), 1, 'top'], ['.statusbar .plan-headline', 2], ['.statusbar .chips', 3]]);
+  await shot(page, 'schnellstart-08-planen');
   await mark(page, [['.statusbar .plan-headline', 1], ['.statusbar .chips', 2], ['.statusbar .status-details', 3]]);
   await clip(page, 'beispiel-plan', ['.plan-actions', '.statusbar', 'details.legend-box']);
 
@@ -286,7 +348,8 @@ async function serverPhase() {
   await mark(page, [['#check-verdict', 1], ['#check-problems h2', 2], ['#check-gaps h2', 3], ['#check-quality h2', 4], ['#check-data h2', 5]]);
   await shot(page, 'beispiel-pruefen');
 
-  // 8. a sick note after planning: someone of the small area with duties there on two working days in a row
+  // 8. a sick note after planning: SICK if that person works in the small area on both days, else someone of the
+  // small area with duties there on two working days in a row
   let state = await api(page, 'GET', `/api/plans/${month}`);
   const shiftArea = new Map(dataset.shifts.map((s) => [s.id, s.areaId]));
   const duty = (pid, date) => state.plan.assignments.find((a) => a.personId === pid && a.date === date)?.shiftId;
@@ -294,7 +357,8 @@ async function serverPhase() {
   const working = (d) => ![0, 6].includes(new Date(`${d}T12:00:00Z`).getUTCDay());
   // preferably on days where nobody else works there, so that the sick note leaves a gap
   const there = (d) => smallPeople.filter((x) => shiftArea.get(duty(x.id, d)) === small);
-  let sick = null;
+  const named = smallPeople.find((p) => p.firstName === SICK.firstName && p.lastName === SICK.lastName);
+  let sick = named && there(SICK.from).includes(named) && there(SICK.to).includes(named) ? { person: named, from: SICK.from, to: SICK.to } : null;
   for (const alone of [true, false]) {
     for (let i = 0; i + 1 < dates.length && !sick; i++) {
       const [d1, d2] = [dates[i], dates[i + 1]];
@@ -304,21 +368,28 @@ async function serverPhase() {
     }
   }
   if (!sick) throw new Error(`nobody of ${small} works there on two working days in a row`);
+  console.log(`sick note: ${sick.person.firstName} ${sick.person.lastName} ${sick.from} to ${sick.to}`
+    + (sick.person === named && sick.from === SICK.from ? ' (as in the guide)' : ' (NOT as in the guide: change beispiel.md step 8 and SICK)'));
   await open(page, base, 'eingaben', '#inputs-filter');
-  await select(page, '#abs-person', sick.person.id);
+  await select(page, '#inputs-filter', sick.person.id);
   await select(page, '#abs-from', sick.from);
   await select(page, '#abs-to', sick.to);
   await select(page, '#abs-type', dataset.absenceTypes.find((a) => /krank/i.test(a.name))?.code ?? dataset.absenceTypes[0].code);
   await page.locator('section[aria-labelledby="h-absences"] .toolbar button', { hasText: 'Hinzufügen' }).click();
-  await page.getByRole('button', { name: 'Speichern', exact: true }).click();
+  await saveInputs.click();
   await page.waitForTimeout(1500);
 
   await page.evaluate((a) => sessionStorage.setItem('roster-area', a), small);
   await open(page, base, 'plan', 'table.roster');
   const cell = (d) => page.locator(`button.cell-btn[data-cell="${sick.person.id}|${d}"]`);
-  await mark(page, [['.statusbar .plan-headline', 1], ['.statusbar .badge-warn', 2, 'right'], [cell(sick.from), 3, 'top', true],
-    [cell(sick.to), 3, 'right', true]]);
+  const jump = page.locator('.jump-first button');
+  await jump.click();
+  await page.waitForTimeout(600);
+  await mark(page, [['.statusbar .plan-headline', 1], ['.statusbar .badge-warn', 2, 'right'], [jump, 3, 'right'], [cell(sick.from), 4, 'top', true],
+    [cell(sick.to), 4, 'right', true]]);
   await shot(page, 'beispiel-konflikt');
+  await mark(page, [['.statusbar .plan-headline', 1], [jump, 2, 'right'], [cell(sick.from), 3, 'top', true]]);
+  await shot(page, 'schnellstart-09-krankmeldung');
   await cell(sick.from).click();
   await page.locator('.popover').waitFor();
   await mark(page, [[page.locator('.popover .btn-primary'), 1]]);
@@ -329,29 +400,52 @@ async function serverPhase() {
   await page.locator('.popover .btn-primary').click();
   await page.waitForTimeout(1500);
   await open(page, base, 'plan', 'table.roster');
-  const gap = page.locator(`button.gap-btn[data-cell="gaps|${sick.to}"]`);
-  await mark(page, [['.statusbar .plan-headline', 1], [gap, 2, 'top', true]]);
-  await clip(page, 'beispiel-luecke', ['.statusbar', 'tr.sticky-gaps', gap]);
-  await gap.click();
-  await page.locator('.popover .candidates[data-loaded]').first().waitFor({ timeout: 30000 });
-  await clip(page, 'beispiel-anfrage', ['.popover', gap]);
-  const candidate = page.locator('.popover .candidates li button').first();
-  if (await candidate.count()) {
-    await candidate.click();
-    await page.waitForTimeout(1500);
-  } else await page.keyboard.press('Escape');
+  const gap = (d) => page.locator(`button.gap-btn[data-cell="gaps|${d}"]`);
+  await gap(sick.to).scrollIntoViewIfNeeded();
+  await mark(page, [['.statusbar .plan-headline', 1], [gap(sick.to), 2, 'top', true]]);
+  await clip(page, 'beispiel-luecke', ['.statusbar', 'tr.sticky-gaps', gap(sick.to)]);
+  // who could be asked on each day: an empty list ("Niemand passt.") and one with names, as the days give them
+  let nobody = false;
+  let asked = false;
+  for (const d of [sick.from, sick.to]) {
+    await gap(d).click();
+    await page.locator('.popover .candidates[data-loaded]').first().waitFor({ timeout: 30000 });
+    const candidate = page.locator('.popover .candidates li button').first();
+    if (await candidate.count()) {
+      if (asked) { await page.keyboard.press('Escape'); continue; }
+      await clip(page, 'beispiel-anfrage', ['.popover', gap(d)]);
+      await candidate.click();
+      await page.waitForTimeout(1500);
+      asked = true;
+    } else {
+      if (!nobody) await clip(page, 'niemand-passt', ['.popover', gap(d)]);
+      nobody = true;
+      await page.keyboard.press('Escape');
+    }
+  }
+  if (!asked) {
+    // nobody on either day: the empty list stands for both pictures
+    await gap(sick.to).click();
+    await page.locator('.popover .candidates[data-loaded]').first().waitFor({ timeout: 30000 });
+    await clip(page, 'beispiel-anfrage', ['.popover', gap(sick.to)]);
+    await page.keyboard.press('Escape');
+  }
 
   // 9. plan again: the cells set by hand stay
   await open(page, base, 'plan', 'table.roster');
-  await page.getByRole('button', { name: 'Planen', exact: true }).click();
+  await solveButton(page).click();
   await page.locator('.statusbar', { hasText: 'Planung läuft' }).waitFor({ timeout: 30000 });
   await solved(page);
   await open(page, base, 'plan', 'table.roster');
-  await mark(page, [['.statusbar .plan-headline', 1], [cell(sick.from), 2, 'top', true]]);
-  await clip(page, 'beispiel-neu-geplant', ['.statusbar', cell(sick.from), cell(sick.to)]);
+  await cell(sick.to).scrollIntoViewIfNeeded();
+  await both(page, 'beispiel-neu-geplant-ganz', 'beispiel-neu-geplant', [['.statusbar .plan-headline', 1], [cell(sick.from), 2, 'top', true]],
+    ['.statusbar', cell(sick.from), cell(sick.to)]);
 
-  // 10. close the month
+  // 10. print and close the month (Schnellstart 10: the menu Ausgabe)
   await page.locator('[aria-controls="output-menu"]').click();
+  await mark(page, [['[aria-controls="output-menu"]', 1], [page.locator('#output-menu').getByRole('button', { name: 'Drucken', exact: true }), 2, 'left'],
+    [page.locator('#output-menu').getByRole('button', { name: 'Monat abschließen', exact: true }), 3, 'left']]);
+  await shot(page, 'schnellstart-10-abschliessen');
   await page.locator('#output-menu').getByRole('button', { name: 'Monat abschließen', exact: true }).click();
   await page.locator('dialog.dialog').waitFor();
   await clip(page, 'beispiel-abschluss', ['dialog.dialog']);
@@ -366,13 +460,14 @@ async function serverPhase() {
   await page.getByRole('button', { name: 'Änderungen als Korrekturdatei exportieren', exact: true }).click();
   await page.locator('section[aria-labelledby="h-corrections"] .alert').waitFor();
   await page.locator('#h-corrections').evaluate((e) => e.scrollIntoView());
+  await shot(page, 'beispiel-korrekturdatei-ganz');
   await clip(page, 'beispiel-korrekturdatei', ['#h-corrections', 'section[aria-labelledby="h-corrections"] > p.muted',
     'section[aria-labelledby="h-corrections"] > .toolbar', 'section[aria-labelledby="h-corrections"] > div[aria-live] .alert']);
   // loading a corrections file: the summary before it is saved (cancelled, nothing loaded)
-  const named = (await api(page, 'GET', '/api/dataset')).people.slice(0, 2).map((p) => p.id);
+  const twoPeople = (await api(page, 'GET', '/api/dataset')).people.slice(0, 2).map((p) => p.id);
   await page.setInputFiles('#corrections-file', { name: 'korrekturen.json', mimeType: 'application/json',
     buffer: Buffer.from(JSON.stringify({ format: 'dispofold/corrections', version: 2, people: {
-      [named[0]]: { weeklyHours: 30, hoursAccount: 12.5 }, [named[1]]: { weeklyHours: 'viel' }, E999999: { exclude: true } }, demand: {} })) });
+      [twoPeople[0]]: { weeklyHours: 30, hoursAccount: 12.5 }, [twoPeople[1]]: { weeklyHours: 'viel' }, E999999: { exclude: true } }, demand: {} })) });
   await page.getByRole('button', { name: 'Korrekturdatei laden', exact: true }).click();
   await page.locator('#corrections-confirm').waitFor();
   await clip(page, 'korrekturdatei-laden', ['#corrections-confirm']);
@@ -384,6 +479,24 @@ async function serverPhase() {
   await clip(page, 'monat-oeffnen', ['section[aria-labelledby="h-final"]']);
   await page.locator('section[aria-labelledby="h-final"] button.btn').click();
   await page.waitForTimeout(2000);
+
+  // "Niemand passt." if the sick note did not show it: the duty of the small area on the 19th freed (where the only
+  // person of the demo data who does it on request has compensatory rest), then put back
+  state = await solved(page);
+  if (!nobody) {
+    const day = `${month}-19`;
+    const held = state.plan.assignments.find((a) => a.date === day && shiftArea.get(a.shiftId) === small);
+    if (held) await api(page, 'PUT', `/api/plans/${month}/cells`, { ...held, shiftId: null, compRest: false, pinned: true });
+    await page.evaluate((a) => sessionStorage.setItem('roster-area', a), small);
+    await open(page, base, 'plan', 'table.roster');
+    await gap(day).scrollIntoViewIfNeeded();
+    await gap(day).click();
+    await page.locator('.popover .candidates[data-loaded]').first().waitFor({ timeout: 30000 });
+    if (await page.locator('.popover .candidates li button').count()) throw new Error(`someone fits the gap of ${day}: no picture of "Niemand passt."`);
+    await clip(page, 'niemand-passt', ['.popover', gap(day)]);
+    await page.keyboard.press('Escape');
+    if (held) await api(page, 'PUT', `/api/plans/${month}/cells`, held);
+  }
 
   // ---- the screens of every page ----
   // a few gaps on the 12th (duties pinned free) for the views of open demand
@@ -473,11 +586,11 @@ async function serverPhase() {
   }
   await page.emulateMedia({ colorScheme: 'light' });
 
-  // Prüfen
+  // Prüfen: the notes on quality opened, with their grouping and filters
   await open(page, base, 'pruefen', '#check-data');
-  await page.locator('#check-problems details.check-group[open] > summary').evaluateAll((s) => s.forEach((x) => x.click()));
-  await mark(page, [['#check-group', 1], ['#check-filter-rule', 2, 'top'], ['#check-problems details.check-group > summary', 3],
-    ['#check-gaps h2', 4]]);
+  await page.locator('#check-quality details.check-quality > summary').click();
+  await page.locator('#check-quality').evaluate((e) => { e.scrollIntoView(); scrollBy(0, -20); });
+  await mark(page, [['#check-group', 1], ['#check-filter-rule', 2, 'top'], ['#check-quality details.check-group > summary', 3]]);
   await shot(page, 'pruefen');
   const ask = page.locator('#check-gaps .gap-item button').first();
   if (await ask.count()) {
@@ -501,6 +614,11 @@ async function serverPhase() {
 
   await open(page, base, 'fairness', '.spread svg');
   await shot(page, 'fairness');
+
+  // Einstellungen → Erweiterungen as the release has it: the import extension, off
+  await open(page, base, 'erweiterungen', 'section.extension');
+  await mark(page, [['.page-tabs a[aria-current="page"]', 1, 'bottom'], ['section.extension input[type=checkbox]', 2, 'left']]);
+  await shot(page, 'erweiterungen');
 
   // Eingaben
   await open(page, base, 'eingaben', '#inputs-filter');
@@ -719,16 +837,6 @@ async function desktopPhase() {
     await shot(page, 'updates', true);
     await page.context().close();
   } finally { offer.server.kill(); }
-  // Einstellungen → Erweiterungen as a planner on the server sees it in this version: no plugin built in yet
-  const plain = await startDevServer({});
-  try {
-    const page = await newPage(plain.origin);
-    await login(page, plain.origin, 'planung', 'x');
-    await open(page, plain.origin, 'erweiterungen', '#extensions-none');
-    await mark(page, [['.page-tabs a[aria-current="page"]', 1, 'bottom'], ['#extensions-none', 2, 'left']]);
-    await shot(page, 'erweiterungen');
-    await page.context().close();
-  } finally { plain.server.kill(); }
 }
 
 try {

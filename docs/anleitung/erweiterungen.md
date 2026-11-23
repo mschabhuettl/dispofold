@@ -14,7 +14,7 @@ sieht nur die Planung.
 
 ![Einstellungen → Erweiterungen mit der mitgelieferten Import-Erweiterung](../screenshots/erweiterungen.png)
 
-1. Bei der Erweiterung **Eingeschaltet** anhaken.
+1. Bei der Erweiterung **Eingeschaltet** (2) anhaken.
 2. Die Rückfrage bestätigen. Eine eingeschaltete Erweiterung sieht alle Planungsdaten, wie die Planung selbst.
 3. Das Programm zeigt sich neu, mit den Seiten der Erweiterung im Menü. Hat sie Einstellungen, stehen sie darunter
    auf derselben Seite.

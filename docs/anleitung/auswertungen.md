@@ -11,6 +11,10 @@ Dienst?“. Beide gelten für den gewählten Monat und rechnen die Vormonate aus
 Die Fairness-Übersicht zeigt, wie gleichmäßig Nächte, Wochenenden, Feiertage und fair verteilte Dienste verteilt
 sind, je Person und mit den Vormonaten.
 
+- **Fällt auf:** oben höchstens fünf Personen, deren Wert weit vom Mittel aller liegt (mehr als zwei
+  Standardabweichungen), die auffälligsten zuerst, etwa „Belastung Nächte 4,10, deutlich über dem Mittel 1,52“. Ein
+  Klick auf den Namen öffnet die Seite der Person. Liegt niemand weit vom Mittel, steht dort „Niemand liegt weit vom
+  Mittel entfernt.“
 - **Streuung je Kennzahl:** Jeder Punkt ist eine Person, der Strich der Mittelwert, der Rahmen reicht vom Minimum
   bis zum Maximum. Über jedem Streifen stehen Minimum, Mittel und Maximum. Ein Punkt weit rechts ist eine Person,
   die deutlich mehr hat als die anderen.
@@ -40,7 +44,9 @@ Wunscherfüllung, Stundenkonto und Ersatzruhe.
 ![Die Seite einer Person](../screenshots/person.png)
 
 Die Seite einer Person (Menü **Personen**, Klick auf den Namen) zeigt ihre Zahlen im gewählten Monat. Jede Kachel
-hat ein **i** mit einer Erklärung.
+hat ein **i** mit einer Erklärung. Vor dem Planen sagt sie „Noch kein Plan für …“ und zeigt nur, was ohne Plan
+feststeht: Ziel und Soll (mit dem Grund, wenn beide sich unterscheiden), das Stundenkonto vorher, die verfügbaren
+Tage und die Historie (siehe [Was die Zahlen bedeuten](zahlen.md#die-seite-einer-person)).
 
 **Stunden:**
 
