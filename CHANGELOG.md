@@ -3,7 +3,7 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
-## 0.23.0 (unveröffentlicht)
+## 0.23.0 (2026-11-23)
 
 - **Anleitung für Einsteiger:** Neu vorn in der Anleitung und oben auf der Startseite der
   [Schnellstart in 10 Schritten](docs/anleitung/schnellstart.md): ein Probemonat mit den Demodaten, eine Handlung
