@@ -14,7 +14,7 @@ Daten pseudonymisiert weitergeben und einen Monat abschließen. Die Seite gehör
 4. **Korrekturdatei**, siehe [Korrekturdatei](#korrekturdatei) und
    [Korrekturdatei laden](#korrekturdatei-laden).
 
-Weiter unten folgen [Anonymisieren](#anonymisieren), [Plan importieren](#plan-importieren) und **Monat
+Weiter unten folgen [Pseudonymisieren](#pseudonymisieren), [Plan importieren](#plan-importieren) und **Monat
 abschließen** oder **Monat wieder öffnen** (siehe [Monat abschließen](monatsabschluss.md)).
 
 ## Import
@@ -177,13 +177,13 @@ Gibt es gar keine Korrekturen (keine geladene Datei, keine Änderung in Dispofol
 Import), steht über jedem Import einer Importquelle ein Hinweis mit dem Weg hierher, auf dieser Seite und auf den
 Seiten einer Erweiterung, die importiert.
 
-## Anonymisieren
+## Pseudonymisieren
 
 ![Pseudonymisieren mit den drei Dateien](../screenshots/daten-pseudonym.png)
 
 **Pseudonymisieren** erstellt den Datensatz und den Plan des gewählten Monats mit Pseudonymen
 (P001, P002, ...) statt Namen, zum Weitergeben, etwa für eine Fehlersuche. Namen, Kürzel und Ids der Personen
-werden ersetzt, die Namen von Bereichen, Schichten und Abwesenheitsarten durch ihr Kürzel, Notizen der
+werden ersetzt, die Namen von Bereichen, Schichten und Abwesenheitsarten durch ihren Code, Notizen der
 Familienregeln geleert. Danach speichern **Datensatz speichern** und **Plan speichern** die beiden Dateien zum
 Weitergeben. **Schlüssel speichern** speichert die Zuordnung der Pseudonyme zu den Personen: Sie bleibt in der
 Planung und wird nie weitergegeben. Steht nach dem Pseudonymisieren noch ein Name in den Dateien, exportiert das

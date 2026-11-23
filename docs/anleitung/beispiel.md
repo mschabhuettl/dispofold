@@ -128,7 +128,7 @@ Befunde nacheinander: einen Regelverstoß und danach eine Lücke.
 
 1. Die Überschrift ist rot: „2 Regelverstöße“. Der Knopf **Abwesenheit 2** darunter listet sie.
 2. **Plan veraltet: neu planen**: Die Eingaben haben sich nach der Planung geändert.
-3. Die beiden Zellen sind rot und tragen beide Kürzel, etwa „K/S1“: Dienst trotz Abwesenheit.
+3. Die beiden Zellen sind rot und tragen beide Codes, etwa „K/S1“: Dienst trotz Abwesenheit.
 
 Behoben wird der Regelverstoß in der Zelle:
 

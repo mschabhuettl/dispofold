@@ -27,11 +27,11 @@ beschreibt [Planen und Prüfen](planen.md).
 
 ![Die Legende](../screenshots/legende.png)
 
-- **Kürzel der Schicht**, zum Beispiel „A1“, in der Farbe der Schicht; **·** heißt frei.
-- **Abwesenheiten** mit ihrem Kürzel (kursiv, in ihrer Farbe), Ersatzruhe als „ER“.
+- **Code der Schicht**, zum Beispiel „A1“, in der Farbe der Schicht; **·** heißt frei.
+- **Abwesenheiten** mit ihrem Code (kursiv, in ihrer Farbe), Ersatzruhe als „ER“.
 - **Wochenenden** und **Feiertage** sind hinterlegt, der Kopf eines Feiertags trägt „Fei“.
 - **Fixierte Zellen** sind eingerahmt, eine geplante Ersatzruhe ist gestrichelt eingerahmt.
-- **Konflikt:** ein Dienst trotz Abwesenheit, rot, mit beiden Kürzeln („K/A1“). Das ist ein Regelverstoß.
+- **Konflikt:** ein Dienst trotz Abwesenheit, rot, mit beiden Codes („K/A1“). Das ist ein Regelverstoß.
 - **Nur auf Anfrage:** ein von Hand gesetzter Dienst, den die Person nur auf Anfrage macht, hat unten links eine
   kleine Ecke.
 - Neben dem Namen stehen Kürzel und Wochenstunden; der Name führt zur Seite der Person.
@@ -150,8 +150,8 @@ Desktop-Programm den Druckdialog des Systems) mit einer eigenen Druckansicht; di
 - **Ohne Bedienelemente:** Menü, Kopfleiste, Schaltflächen und Statuszeile werden nicht gedruckt; gedruckt wird
   immer hell auf weißem Papier, auch im dunklen Design.
 - **Dienstplan:** dieselben Personen in derselben Reihenfolge und Gruppierung wie am Bildschirm (also auch mit
-  gewähltem **Bereich** oder einer **Suche**). In den Zellen stehen die Kürzel der Schichten, Abwesenheiten mit
-  ihrem Kürzel, Ersatzruhe als „ER“; Wochenenden und Feiertage sind hinterlegt, fixierte Dienste eingerahmt,
+  gewähltem **Bereich** oder einer **Suche**). In den Zellen stehen die Codes der Schichten, Abwesenheiten mit
+  ihrem Code, Ersatzruhe als „ER“; Wochenenden und Feiertage sind hinterlegt, fixierte Dienste eingerahmt,
   Konflikte rot. Neben dem Namen stehen die Wochenstunden, rechts die geplanten Stunden des Monats (**Std.**),
   unten die Zeile **Bedarfslücken** mit der Zahl der Lücken je Tag.
 - **Plan nach Funktion:** die Funktionen nach Bereichen wie am Bildschirm, die Zeile „offen“ mit den Lücken

@@ -39,7 +39,7 @@ Unter **Person bearbeiten** steht alles zu einer Person in einem Formular. Geän
 |---|---|---|
 | Vorname, Nachname | Pflichtfelder | bei einer Namensänderung (kommt nicht in die Korrekturdatei, siehe unten) |
 | Kürzel | Namenskürzel für die Anzeige „Kürzel“ in den Plänen, zum Beispiel „WER“ | wenn zwei Personen gleiche Kürzel hätten |
-| Wochenstunden | vertragliche Wochenstunden (Pflichtfeld, ab 0); daraus kommen Soll und angerechnete Stunden | bei einer Vertragsänderung |
+| Wochenstunden | vertragliche Wochenstunden (Pflichtfeld, mehr als 0); daraus kommen Soll und angerechnete Stunden | bei einer Vertragsänderung |
 | Stundenkonto | Plus- oder Minusstunden (Pflichtfeld, darf negativ sein). Gilt für einen Monat nur, solange der Vormonat nicht abgeschlossen ist; sonst zählt der Stand nach dem Vormonat aus der Historie. | beim Start mit Dispofold oder wenn das Quellsystem einen anderen Stand kennt |
 | Ersatzruhe offen | offene Ersatzruhetage (Pflichtfeld, ganze Zahl ab 0); gilt wie das Stundenkonto nur ohne abgeschlossenen Vormonat | wie beim Stundenkonto |
 | Externe Id | die Kennung im Quellsystem, zum Beispiel die Personalnummer | selten; das Exportprogramm braucht sie |

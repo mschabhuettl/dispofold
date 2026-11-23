@@ -21,7 +21,8 @@ Cloud-Dienst, und keine Daten verlassen ihn. Ins Netz gehen kann Dispofold nur f
 
 **Warum ist eine Lücke geblieben, obwohl noch Leute frei sind?** Frei heißt nicht, dass jemand den Dienst machen
 darf. Meist verhindert es eine Regel: die tägliche Ruhezeit nach einem Dienst am Vortag, die Höchststunden im
-Monat, die freien Sonntage, eine Einschränkung „Nie“ oder ein anderer Bereich. Wer die Schicht nur auf Anfrage
+Monat, der Wochenschnitt (die eigene Grenze der Person), die freien Sonntage, ein freier Tag mitten in einer
+Abwesenheit, eine Einschränkung „Nie“ oder ein anderer Bereich. Wer die Schicht nur auf Anfrage
 macht, steht in der Liste **Auf Anfrage verfügbar** an der Lücke. Ist die Liste leer, kann man jemanden von Hand
 einteilen und in der Zeile über dem Plan sehen, ob das eine Regel verletzt. Siehe
 [Offener Bedarf](planen.md#offener-bedarf).
@@ -115,7 +116,7 @@ Ein abgelehnter Import nennt alle Fehler auf einmal, nur mit Ids, ohne Namen. Ni
 | … wird noch …-mal verwendet (in …). Mit allen Verweisen entfernen? | der Eintrag steht noch in offenen Monaten oder anderen Stammdaten | **OK** entfernt ihn mit allen Verweisen, sonst abbrechen |
 | Der Eintrag kommt in abgeschlossenen Monaten vor (…) und kann nicht entfernt werden. | der Eintrag gehört zur Historie | stehen lassen; bei Personen den Austritt eintragen oder nicht mehr übernehmen |
 | Der Bereich … hat noch … Schichten. Bitte zuerst diese Schichten entfernen. | ein Bereich mit Schichten | zuerst die Schichten entfernen |
-| Das Kürzel … ist vergeben oder war schon vergeben und bleibt gesperrt. | Kürzel von Bereichen und Abwesenheitsarten sind eindeutig, auch nach dem Entfernen | ein anderes Kürzel wählen |
+| Der Code … ist vergeben oder war schon vergeben und bleibt gesperrt. | Codes von Bereichen und Abwesenheitsarten sind eindeutig, auch nach dem Entfernen | einen anderen Code wählen |
 | Es gibt ungespeicherte Änderungen. Trotzdem verlassen? | die Seite hat Änderungen, die noch nicht gespeichert sind | **Abbrechen** und speichern, oder **OK**, um sie zu verwerfen |
 
 ## Planen

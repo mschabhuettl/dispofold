@@ -2,14 +2,15 @@
 
 Erweiterungen bringen zusätzliche Seiten und Funktionen ins Programm, zum Beispiel einen Import aus einem anderen
 Planungssystem. Sie kommen mit Dispofold mit; nachgeladen wird nichts. Jede Erweiterung ist aus, bis die Planung
-sie einschaltet. Welche Erweiterungen es gibt, steht in den Notizen der Version.
+sie einschaltet. Die veröffentlichten Versionen enthalten eine Erweiterung für den Import aus dem bisherigen
+Planungssystem; was sie tut und wie man sie einstellt, steht auf ihrer [Hilfeseite](plugin-sp5-sp5.md).
 
 ## Einschalten und ausschalten
 
 Unter **Einstellungen → Erweiterungen** (1) steht jede Erweiterung mit Name, Version und Beschreibung. Die Seite
 sieht nur die Planung.
 
-![Einstellungen → Erweiterungen in einer Version ohne Erweiterungen](../screenshots/erweiterungen.png)
+![Einstellungen → Erweiterungen mit der mitgelieferten Import-Erweiterung](../screenshots/erweiterungen.png)
 
 1. Bei der Erweiterung **Eingeschaltet** anhaken.
 2. Die Rückfrage bestätigen. Eine eingeschaltete Erweiterung sieht alle Planungsdaten, wie die Planung selbst.
@@ -19,7 +20,7 @@ sieht nur die Planung.
 Ausschalten geht genauso. Die Seiten der Erweiterung verschwinden dann aus dem Menü; ihre Einstellungen bleiben
 gespeichert und gelten wieder, sobald man sie einschaltet.
 
-Enthält das Programm keine Erweiterung, steht dort **Dieses Programm enthält keine Erweiterungen.** (2). Am Server
+Enthält das Programm keine Erweiterung, steht dort **Dieses Programm enthält keine Erweiterungen.** Am Server
 kann die IT eine Erweiterung ganz ausblenden; sie erscheint dann auch hier nicht (siehe
 [Betrieb](../betrieb.md#erweiterungen)).
 

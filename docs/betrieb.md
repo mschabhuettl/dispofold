@@ -4,8 +4,8 @@ Dieses Dokument beschreibt Installation, Update, Sicherung, Wiederherstellung, U
 Deinstallation jeder Auslieferung. Alle Dateien kommen aus dem Release einer Version auf GitHub
 (<https://github.com/mschabhuettl/dispofold/releases>), zusammen mit SHA-256-Prüfsummen
 (`dispofold-<version>-SHA256SUMS.txt` für die Images, `dispofold-<version>-linux-SHA256SUMS.txt`,
-`-windows-SHA256SUMS.txt` und, falls gebaut, `-macos-SHA256SUMS.txt`). Solange das Repository privat ist, braucht
-der Download ein GitHub-Konto mit Lesezugriff, den der Eigentümer einrichtet.
+`-windows-SHA256SUMS.txt` und, falls gebaut, `-macos-SHA256SUMS.txt`). Repository und Releases sind öffentlich;
+der Download braucht kein GitHub-Konto.
 
 | Auslieferung | Dateien im Release | Für | Daten |
 |---|---|---|---|
@@ -112,12 +112,10 @@ Docker muss dann nichts nachladen.
 
 ### Erstinstallation aus der Registry
 
-Die Images liegen in der GitHub Container Registry unter `ghcr.io/mschabhuettl`. Solange die Pakete privat
-sind, braucht die Anmeldung ein GitHub-Konto mit Zugriff und einen Token (classic) mit dem Recht
-`read:packages`; beides stellt der Eigentümer aus. Ohne Zugang bleibt die Installation mit dem Archiv.
+Die Images liegen öffentlich in der GitHub Container Registry unter `ghcr.io/mschabhuettl`; `docker compose pull`
+braucht keine Anmeldung. Ohne Zugang zum Internet bleibt die Installation mit dem Archiv.
 
 ```bash
-docker login ghcr.io -u <github-konto>   # Passwort: der Token
 cd /srv/dispofold
 # docker-compose.yml und env.example aus dem Release holen, .env anlegen wie oben,
 # dazu REGISTRY=ghcr.io/mschabhuettl; POSTGRES_IMAGE weglassen (dann kommt PostgreSQL von Docker Hub)
@@ -304,7 +302,7 @@ geprüft ist.
 
 1. **Neuen Server vorbereiten:** Docker installieren (siehe [Voraussetzungen](#voraussetzungen)), den Ordner
    anlegen (`mkdir -p /srv/dispofold`) und die Images derselben Version bereitstellen: Archiv prüfen und
-   `docker load -i dispofold-<version>-images.tar.gz`, oder bei der Registry `docker login ghcr.io`. Die Version
+   `docker load -i dispofold-<version>-images.tar.gz`; aus der Registry holt sie später `docker compose pull`. Die Version
    steht in `.env` des alten Servers unter `TAG`. Noch nichts starten.
 2. **Alten Server anhalten und sichern:** Ab hier keine Eingaben mehr. Im Ordner mit `docker-compose.yml`:
 
