@@ -101,7 +101,12 @@ bedeuten, steht unter [Bericht](plugin-sp5-bericht.md).
 ## 12. Die Daten übernehmen
 
 Den Reiter **Lauf und Import** anklicken, unter **Diesen Lauf importieren** **Importieren** anklicken und die
-Rückfrage mit **OK** bestätigen. Beim allerersten Import bleibt **Änderungen aus Dispofold behalten** leer.
+Rückfrage „Der Datensatz ersetzt die Stammdaten. Fortfahren?“ mit **OK** bestätigen.
+
+**Änderungen aus Dispofold behalten** bleibt dabei leer: Beim ersten Import aus Schichtplaner 5 gibt es in Dispofold
+nichts zu behalten. Ist das Häkchen schon gesetzt, weil vorher etwa die Demodaten geändert wurden, es vor dem Klick
+entfernen. Erscheint statt der Rückfrage „Stammdaten wurden geändert.“, **Trotzdem importieren** wählen; die
+Stammdaten zum Ausprobieren werden dann durch die echten ersetzt.
 
 So sieht es aus, wenn es geklappt hat: Unter dem Knopf steht „Import aus …“ mit der Zahl der Personen, Bereiche und
 Schichten und den Monaten.
@@ -119,7 +124,9 @@ Schichtplaner 5. Geplant wird wie unter [Planen](planen.md) beschrieben.
 - **„Der Ordner von Schichtplaner 5 fehlt oder ist nicht lesbar“:** Schritt 2 und 3 wiederholen; am Server die IT
   fragen, ob der Ordner freigegeben ist.
 - **„Die Zuordnung fehlt“:** Schritt 5 bis 8.
-- **Ein Monat ist abgeschlossen:** Über dem Import steht ein Hinweis mit dem nächsten Schritt (siehe
+- **Ein Monat ist abgeschlossen** (etwa der Monat, der vorher mit den Demodaten ausprobiert und abgeschlossen
+  wurde): Über dem Import steht ein Hinweis mit dem nächsten Schritt. Am einfachsten einen späteren ersten Monat
+  wählen und Schritt 10 wiederholen (siehe auch
   [Lauf und Import](plugin-sp5-uebersicht.md#diesen-lauf-importieren)).
 - **Weitere Runden** (Korrekturen in Dispofold, neue Monate, der Vergleich mit dem letzten Import) beschreibt
   [Ablauf](plugin-sp5-ablauf.md).

@@ -41,6 +41,8 @@ wurde, dann **Importieren**; die Vorschau zeigt, was übernommen wird, Konflikte
 Ist ein Monat des Laufs schon abgeschlossen, steht über dem Import ein Hinweis mit dem nächsten Schritt: Ändert der
 Import einen abgeschlossenen Monat, lehnt Dispofold ihn ab. Dann einen späteren ersten Monat wählen und noch einmal
 ausführen, oder den Monat unter **Einstellungen → Daten** mit **Monat wieder öffnen** öffnen und dann importieren.
+Der Link im Hinweis führt dorthin und wählt den Monat schon; sind mehrere abgeschlossen, wird der neueste zuerst
+wieder geöffnet.
 
 Gibt es noch gar keine Korrekturen (keine geladene Korrekturdatei, keine Änderung in Dispofold), steht über dem
 Import ein Hinweis mit dem Weg zu [Korrekturdatei laden](daten.md#korrekturdatei-laden). Wer bisher mit

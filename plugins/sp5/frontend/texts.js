@@ -82,8 +82,8 @@ export const TEXTS = {
   'plugin.sp5.import.noRun': 'Erst ausführen: importiert wird immer der letzte Lauf.',
   'plugin.sp5.import.request': 'Importiert wird der Lauf vom {time} für {months}, mit seinen Optionen.',
   'plugin.sp5.import.range': '{from} bis {to}',
-  'plugin.sp5.import.closed': 'Abgeschlossen: {months}. Ändert der Import einen abgeschlossenen Monat, lehnt Dispofold ihn ab. Nächster Schritt: einen späteren ersten Monat wählen und noch einmal ausführen, oder den Monat unter Einstellungen → Daten mit „Monat wieder öffnen“ öffnen und dann importieren.',
-  'plugin.sp5.import.toData': 'Zu Einstellungen → Daten',
+  'plugin.sp5.import.closed': 'Abgeschlossen: {months}. Ändert der Import einen abgeschlossenen Monat, lehnt Dispofold ihn ab. Nächster Schritt: einen späteren ersten Monat wählen und noch einmal ausführen, oder den Monat unter Einstellungen → Daten mit „Monat wieder öffnen“ öffnen (mehrere: den neuesten zuerst) und dann importieren.',
+  'plugin.sp5.import.toData': '{month} unter Einstellungen → Daten wieder öffnen',
 
   // Bericht
   'plugin.sp5.report.title': 'Bericht',

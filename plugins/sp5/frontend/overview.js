@@ -108,7 +108,9 @@ export async function render(root, ctx) {
         const shut = months.filter(Boolean);
         if (shut.length) {
           closed.replaceChildren(h('div.alert', { role: 'note' }, h('p', {}, t('plugin.sp5.import.closed', { months: shut.map(monthLabel).join(', ') })),
-            h('p', {}, h('a', { href: '#/import' }, t('plugin.sp5.import.toData')))));
+            // reopened newest first, on Daten for the chosen month: that month is chosen on the way
+            h('p', {}, h('a', { href: '#/import', onclick: () => ctx.setMonth(shut.at(-1)) },
+              t('plugin.sp5.import.toData', { month: monthLabel(shut.at(-1)) })))));
         }
       });
   }

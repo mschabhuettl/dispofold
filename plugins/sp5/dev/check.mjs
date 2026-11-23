@@ -168,6 +168,10 @@ export default async function run({ base, browser, check, shots }) {
   check('a closed month of the run: the note says the next step', (await text(page, '#sp5-import-closed'))?.includes('Abgeschlossen: Jänner 2027')
     && (await text(page, '#sp5-import-closed'))?.includes('Monat wieder öffnen')
     && (await page.getAttribute('#sp5-import-closed a', 'href')) === '#/import', await text(page, '#sp5-import-closed'));
+  await page.click('#sp5-import-closed a');
+  await page.waitForSelector('#h-final');
+  check('its link leads to "Monat wieder öffnen" for that month', (await text(page, '#h-final'))?.includes('Monat wieder öffnen')
+    && (await text(page, '#h-final + p'))?.includes('Jänner 2027'), await text(page, '#h-final + p'));
   await api(page, 'POST', `/api/plans/${MONTH}/reopen`);
   await open(page, `${P}/uebersicht`, '#sp5-import-request');
   await page.waitForTimeout(300);
