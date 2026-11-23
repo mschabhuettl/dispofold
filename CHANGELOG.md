@@ -5,6 +5,58 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
 
 ## 0.23.0 (unveröffentlicht)
 
+- **Anleitung für Einsteiger:** Neu vorn in der Anleitung und oben auf der Startseite der
+  [Schnellstart in 10 Schritten](docs/anleitung/schnellstart.md): ein Probemonat mit den Demodaten, eine Handlung
+  und ein ganzes Bild je Schritt, „So sieht es aus, wenn es geklappt hat“. Neu sind auch [Was die Zahlen
+  bedeuten](docs/anleitung/zahlen.md) (Zeile über dem Plan, Prüfen, Fairness, Seite einer Person: was ein Fehler ist
+  und was nicht) und [Wie das Programm plant](docs/anleitung/wie-plant.md) (bisher „So funktioniert es“ im
+  Überblick). Der Überblick beginnt mit dem typischen Monat, Erste Schritte mit „Welche Form habe ich?“ (Abmelden am
+  Server, Beenden am eigenen Rechner) und nennt den Weg aus dem bisherigen Planungsprogramm. Ein Monat Schritt für
+  Schritt nennt Person und Tage der Krankmeldung, das seitliche Scrollen, „Zum ersten Konflikt springen“, einen Weg,
+  wenn niemand passt, und ein bis zwei Minuten Planung; vor jedem Ausschnitt steht die ganze Seite. Die häufigen
+  Fragen erklären Timefold, Hunderte Hinweise unter Prüfen bei einem grünen Plan, Überbesetzung in Personenstunden
+  und Dienste, die neu planen verschoben hat (vorher „Plan fixieren“). Die Begriffe erklären Bewertung, Abzüge der
+  Planqualität, Durchrechnung, Eingaben, Personenstunden, die Namen der Qualitätsregeln und die Abwesenheitscodes im
+  Plan. Nachschlageseiten markieren, was man für den Anfang überspringen kann. Die eingebaute Anleitung zeigt die
+  Hilfe einer Erweiterung auch, solange sie ausgeschaltet ist.
+- **Der erste Start:** Ohne Daten zeigt der Dienstplan „Noch keine Daten“ mit **Demodaten zum Ausprobieren laden**
+  (wechselt gleich zum Monat der Demodaten), **Datensatz importieren** und dem Weg zu den Erweiterungen statt einer
+  leeren Tabelle; **Planen** ist bis dahin grau, der Status heißt „noch kein Plan“. Die Seite einer Person zeigt
+  vor dem Planen nur, was ohne Plan feststeht, sagt „Noch kein Plan für …“ und nennt neben Ziel und Soll den Grund,
+  wenn beide sich unterscheiden.
+- **Prüfen in der Reihenfolge der Arbeit:** Oben steht ein Urteil („Nichts zu tun: 0 Regelverstöße, 0 Lücken“ oder
+  „Zuerst: …“, auch „neu planen“ bei einem veralteten Plan), dann die Regelverstöße, der offene Bedarf, die
+  **Hinweise zur Qualität (keine Fehler)** zugeklappt und die Stammdaten; jede Gruppe ist zugeklappt.
+- **Klare Worte:** Statt „Score“ steht die **Bewertung** in Worten unter **Erweitert** („Regelverstöße 0, fehlende
+  Besetzung 0 Personenstunden, …“, die Rohzahl im Tooltip), statt „Strafe“ überall „Abzug“. Die Zeile über dem Plan
+  vermerkt bei Überbesetzung, einzelnen freien Tagen und den Knöpfen der Qualitätsregeln „kein Fehler“; die
+  Fairness nennt über den Streifen, wer auffällt („Fällt auf“); das Fenster vor dem Monatsabschluss sagt, was danach
+  gilt und wo man wieder öffnet.
+- **Eingaben:** Links zu Abwesenheiten, Wünschen und Vorgaben unter dem Titel, **Speichern** in einer Leiste, die
+  unten stehen bleibt, eine neue Zeile markiert („Hinzugefügt, noch nicht gespeichert“) und ins Bild gerückt, die
+  Zahl der Wünsche mit der echten Grenze, das Feld Schicht nur bei Wunscharten, die eine brauchen.
+- **Krankmeldung nach dem Planen:** **Plan fixieren** neben **Fixierungen lösen** fixiert alle Dienste und
+  Ersatzruhetage des Monats (freie Tage bleiben offen, neu planen füllt Lücken dann nur dort); **Zum ersten Konflikt
+  springen** oder **Zur ersten Lücke springen** führt auch seitlich zur Zelle; über **Auf Anfrage verfügbar** steht,
+  was ein Klick tut, und die Stunden heißen „geplant … h von Ziel … h“.
+- **Anleitung überall offline:** **Anleitung** und „Mehr dazu in der Anleitung“ öffnen in jeder Form die
+  eingebaute Anleitung dieser Version, auch am Server und für die Rolle „nur lesen“; die Website steht nur noch als
+  Link unter jeder Seite. Fehlt eine Seite, sagt das Programm es deutlich.
+- **Kleinere Änderungen der Oberfläche:** sichtbares Feld „Planungsmonat“, Dateifelder ganz zu sehen, die Seite
+  einer Person mit eigenem Seitentext, „= Mindestens“ bei Bedarf ohne Höchstbesetzung, jedes Filterfeld der
+  Stammdaten nach seiner Tabelle benannt, auf der Zeitachse die Besetzung über den Diensten, die Rolle „nur lesen“
+  ohne Knöpfe der Qualitätsregeln. Auf Telefonbreite klappt das Menü hinter **Menü**, und die Seite scrollt nicht
+  seitlich. Oberfläche und Anleitung sagen **Code** bei Bereichen, Schichten und Abwesenheitsarten; der Knopf unter
+  **Pseudonymisieren** heißt **Pseudonymisierte Kopie erstellen**; die Obergrenze der Monatsstunden steht als
+  Prozent über dem Soll (beim festen Anteil über dem Ziel); gleitende Durchrechnung nennt mindestens 7 Wochen; ein Import in einen abgeschlossenen Monat nennt den
+  nächsten Schritt.
+- **Import-Erweiterung 1.3.0:** Probleme der Zuordnung und ungültige Einstellungen in deutschen Worten („Es ist
+  noch kein Bereich eingetragen.“), „Die Zuordnung fehlt“ führt mit **Zur Zuordnung** gleich dorthin,
+  Seitentitel wie ihre Reiter, ein Ort für den Import (**Lauf und Import**, nicht mehr auch unter Daten),
+  Monatsfelder nicht mehr abgeschnitten, ein abgeschlossener Monat mit dem nächsten Schritt. Neue Hilfeseite für den
+  Anfang, Schritt für Schritt: [Echte Daten übernehmen](plugins/sp5/docs/echte-daten.md); Vergleich und Hinweise
+  für Entwickler auf einer Seite [Technik](plugins/sp5/docs/technik.md), die beide gewollten Unterschiede nennt
+  (Zyklen, und Nachtschichten standardmäßig nicht als fair zu verteilen markiert).
 - **Anleitung und Dokumentation an den Code angeglichen:** Die Planungsregeln rechnen einen Historienmonat beim
   Kalenderhalbjahr mit seinen Tagen / 7 (365,25 / 12 / 7 Wochen nur gleitend), das Beispiel zur eigenen Grenze ergibt
   38,46 h, die Höchststunden im Monat stehen unter „Stunden treffen“, und gleitend mit 1 bis 6 Wochen wird der
@@ -17,7 +69,9 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
   `check`, `loaded`) mit den Codes `corrections.load.*`. Repository und Images sind öffentlich (Betrieb).
 - **Ein Begriff je Sache:** In der Anleitung heißt das Zeichen einer Schicht, eines Bereichs oder einer
   Abwesenheitsart **Code**, das Namenskürzel einer Person **Kürzel**; dazu **Pseudonymisieren**, **Regeln mit
-  Treffern** und die drei Abschnitte **Erweitert** in den Begriffen.
+  Treffern** und die drei Abschnitte **Erweitert** in den Begriffen. Regeln, Schnittstelle und Datenformat sagen
+  „Bewertung“ und „Abzug“ wie die Oberfläche; Messungen in den Regeln, die noch mit den früheren Demodaten
+  entstanden, sind als solche vermerkt.
 - **Demodaten:** Keine Schicht ist mehr „Fair verteilen“ angekreuzt, auch keine Nacht; Nächte haben ihre eigene
   Fairness-Regel. Die Abwesenheitsart Dienstreise heißt jetzt „REI“ statt „DR“, das auch der Bereich Disposition
   Rettung trägt. Pläne der Demodaten fallen deshalb etwas anders aus.
@@ -60,7 +114,7 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
   Windows; wie man es beim ersten Start öffnet, steht in [docs/betrieb.md](docs/betrieb.md#unsignierte-programme).
 - **Vorschläge gegen die eigene Zuordnung prüfen:** Das Vergleichsskript der Erweiterung zeigt mit `--vorschlag`
   und der ZIP-Datei aus „Ergebnis speichern“, wie nah der Vorschlag an die eigene Zuordnung kommt, nur als Anzahlen
-  ([Vergleich](plugins/sp5/docs/vergleich.md)).
+  ([Technik und Vergleich](plugins/sp5/docs/technik.md#vorschläge-gegen-die-eigene-zuordnung)).
 
 ## 0.21.0 (2026-11-23)
 
@@ -141,7 +195,7 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
   und liefert dieselben Dateien Byte für Byte; die CI vergleicht das bei jeder Änderung. Die Korrekturdatei kommt
   aus Dispofold selbst. Einstellungen (Ordner, Zuordnung, Optionen) unter **Einstellungen → Erweiterungen**.
   Hilfe: [plugins/sp5/docs/sp5.md](plugins/sp5/docs/sp5.md); Vergleich mit echten Daten:
-  [plugins/sp5/docs/vergleich.md](plugins/sp5/docs/vergleich.md).
+  [plugins/sp5/docs/technik.md](plugins/sp5/docs/technik.md#vergleich-mit-echten-daten).
 - **Betrieb:** Der Datenordner wird am Server wie andere Ordner schreibgeschützt eingebunden und freigegeben
   ([docs/betrieb.md](docs/betrieb.md#erweiterungen)).
 - **Erweiterungen:** Eine Erweiterung ohne eigene Seite (nur Einstellungen, Import oder Hilfe) ließ sich nicht

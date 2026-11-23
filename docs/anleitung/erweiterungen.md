@@ -4,7 +4,8 @@ Erweiterungen bringen zusätzliche Seiten und Funktionen ins Programm, zum Beisp
 Planungssystem. Sie kommen mit Dispofold mit; nachgeladen wird nichts. Jede Erweiterung ist aus, bis die Planung
 sie einschaltet. Die veröffentlichten Versionen enthalten eine Erweiterung für den Import aus dem bisherigen
 Planungssystem. Was sie tut und wie man sie einstellt, steht auf ihren Hilfeseiten, die nach dem Einschalten in
-dieser Anleitung hinter den Begriffen erscheinen.
+dieser Anleitung hinter den Begriffen erscheinen. Der Einstieg, Schritt für Schritt mit Bildern:
+[Echte Daten aus dem bisherigen Planungsprogramm übernehmen](plugin-sp5-echte-daten.md).
 
 ## Einschalten und ausschalten
 
@@ -29,9 +30,11 @@ kann die IT eine Erweiterung ganz ausblenden; sie erscheint dann auch hier nicht
 
 - **Seiten:** im Menü, als eigener Eintrag oder als weiterer Reiter einer Gruppe. Seiten für die Rolle **nur lesen**
   sieht diese Rolle auch; alles andere nur die Planung.
-- **Import:** Eine Erweiterung, die Daten liefert, hat auf der Seite **Daten** einen eigenen Abschnitt. Der Import
-  läuft wie beim Hochladen eines Datensatzes: mit der Wahl, die Änderungen aus Dispofold zu behalten, und mit
-  derselben Vorschau (siehe [Daten und Korrekturdatei](daten.md)).
+- **Import:** Eine Erweiterung, die Daten liefert, importiert auf einer eigenen Seite; die mitgelieferte
+  Erweiterung für das bisherige Planungsprogramm auf ihrer Seite **Lauf und Import**. Eine Erweiterung kann statt
+  dessen auch einen eigenen Abschnitt auf der Seite **Daten** haben. Der Import läuft in beiden Fällen wie beim
+  Hochladen eines Datensatzes: mit der Wahl, die Änderungen aus Dispofold zu behalten, und mit derselben Vorschau
+  (siehe [Daten und Korrekturdatei](daten.md)).
 - **Ordner:** Liest eine Erweiterung Dateien, wählt man den Ordner im Programm. Am Server sind nur die Ordner
   wählbar, die die IT freigegeben hat. Am eigenen Rechner öffnet **Ordner wählen …** den Ordnerdialog; der gewählte
   Ordner bleibt danach freigegeben.
