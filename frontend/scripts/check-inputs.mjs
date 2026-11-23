@@ -161,6 +161,7 @@ try {
     && shown[0].text.includes('Hinzugefügt, noch nicht gespeichert'), JSON.stringify(shown));
   check('unsaved note next to the button', await page.locator('.save-bar #dirty-note').textContent() === 'Ungespeicherte Änderungen');
   await save();
+  await page.waitForFunction(() => document.querySelector('#dirty-note').textContent === '');
   check('after saving no row is marked', await added.count() === 0 && await page.locator('#dirty-note').textContent() === '');
 
   // Wishes: the count with the real limit in its heading; the shift only for the kinds that need one

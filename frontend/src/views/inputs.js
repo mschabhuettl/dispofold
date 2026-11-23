@@ -153,6 +153,7 @@ export async function render(root, ctx) {
 
   function remove(key, item) {
     period[key] = period[key].filter((x) => x !== item);
+    added[key].delete(`${item.personId}|${item.date}`);
     changed();
   }
 
@@ -228,6 +229,7 @@ export async function render(root, ctx) {
         canEdit && h('td', {}, addedNote('absences', r.entries), h('button.btn-link', { type: 'button', 'aria-label': t('inputs.removeRangeLabel', { range: label(r), name: name(r.personId) }),
           onclick: () => {
             period.absences = period.absences.filter((x) => !r.entries.includes(x));
+            for (const x of r.entries) added.absences.delete(`${x.personId}|${x.date}`);
             changed();
           } }, t('inputs.remove')))))));
   }

@@ -87,8 +87,8 @@ try {
   await open(planner, s.base, 'plugin/beispiel/start');
   check('its page shows the setting', (await text(planner, '#beispiel-gruss')) === 'Servus');
   check('its page has its intro', (await text(planner, '.page-intro'))?.includes('Beispiel-Erweiterung zeigt den Gruß'));
-  const help = await planner.$eval('.page-intro a', (a) => a.href).catch(() => '');
-  check('its help link goes to its page on the site', help.endsWith('/anleitung/plugin-beispiel-beispiel/'), help);
+  const help = await planner.$eval('.page-intro a', (a) => a.getAttribute('href')).catch(() => '');
+  check('its help link opens its page of the built-in guide', help === '#/anleitung/plugin-beispiel-beispiel', help);
   if (shots) await planner.screenshot({ path: join(shots, 'beispiel-seite.png'), fullPage: true });
   // the import source: folder picker below the allowed folder, then the same steps as a dataset file
   await open(planner, s.base, 'import');

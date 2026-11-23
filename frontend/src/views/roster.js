@@ -118,7 +118,7 @@ export async function render(root, ctx) {
       (state.previousMonthChanged || analysis?.previousMonthChanged) && t('roster.previousChangedHelp')].filter(Boolean);
     status.className = `statusbar status-${headline.level}`;
     // "Einzelne freie Tage" and the block days once: their chips (with who and when) replace the figures
-    const chipFor = (id) => !state.solving && problemConstraints(analysis?.constraints).some((c) => c.id === id);
+    const chipFor = (id) => canEdit && !state.solving && problemConstraints(analysis?.constraints).some((c) => c.id === id);
     const singleDaysChip = chipFor('isolatedDayOff');
     const blockDaysChip = chipFor('blockLength');
     const focused = status.contains(document.activeElement) ? document.activeElement : null;
@@ -270,7 +270,7 @@ export async function render(root, ctx) {
     if (!key) return;
     jump.append(h('button.btn-link', { type: 'button', onclick: () => {
       const cell = table.querySelector(`[data-cell="${CSS.escape(key)}"]`);
-      cell?.scrollIntoView({ block: 'nearest', inline: 'center' });
+      cell?.scrollIntoView({ block: 'center', inline: 'center' });
       cell?.focus({ preventScroll: true });
     } }, gapDay ? t('roster.jumpGap') : t('roster.jumpConflict')));
   }

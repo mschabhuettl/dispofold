@@ -21,7 +21,9 @@ Zellen (von Hand gesetzt) und Vorgaben bleiben, wie sie sind. **Fixierungen lös
 Monats, damit die nächste Planung auch diese Zellen ändern darf; Vorgaben aus den **Eingaben** bleiben dabei
 erhalten. **Plan fixieren** macht das Gegenteil: Es fixiert alle geplanten Dienste und Ersatzruhetage des Monats,
 etwa wenn der Plan schon ausgehängt ist. Neu planen ändert sie dann nicht mehr und füllt Lücken nur noch an freien
-Tagen; freie Tage bleiben offen, damit sich für eine Lücke noch jemand findet.
+Tagen; freie Tage bleiben offen, damit sich für eine Lücke noch jemand findet. Eine danach eingetragene
+Abwesenheit auf einem fixierten Dienst bleibt ein Konflikt, bis man den Dienst in der Zelle entfernt (siehe
+[Plan bearbeiten](plan-bearbeiten.md#von-hand-ändern-und-fixieren)).
 
 **Wann neu planen:** nach jeder Änderung, die den Hinweis
 [„Plan veraltet: neu planen“](#hinweis-plan-veraltet-neu-planen) bringt, und wenn der Plan Regelverstöße oder Lücken

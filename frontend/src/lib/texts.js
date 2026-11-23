@@ -695,7 +695,7 @@ export const TEXTS = {
   'candidates.hint': 'Klick auf einen Namen setzt den Dienst und fixiert ihn.',
   'roster.pinAll': 'Plan fixieren',
   'roster.pinnedAll': 'Alle Dienste und Ersatzruhetage fixiert; freie Tage bleiben offen',
-  'help.plan.pinAll': '„Plan fixieren“ fixiert alle geplanten Dienste und Ersatzruhetage des Monats, etwa wenn der Plan schon ausgehängt ist. Neu planen ändert sie dann nicht mehr und füllt Lücken nur an freien Tagen. „Fixierungen lösen“ hebt das wieder auf.',
+  'help.plan.pinAll': '„Plan fixieren“ fixiert alle geplanten Dienste und Ersatzruhetage des Monats, etwa wenn der Plan schon ausgehängt ist. Neu planen ändert sie dann nicht mehr und füllt Lücken nur an freien Tagen. Eine später eingetragene Abwesenheit auf einem fixierten Dienst bleibt ein Konflikt, bis man den Dienst in der Zelle entfernt. „Fixierungen lösen“ löst alle Fixierungen des Monats, auch die einzeln gesetzten.',
   'roster.jumpConflict': 'Zum ersten Konflikt springen',
   'roster.jumpGap': 'Zur ersten Lücke springen',
   'inputs.jumpLabel': 'Abschnitte der Seite',
