@@ -88,7 +88,7 @@ erwirbt einen Ersatzruhetag; offene Ersatzruhetage plant das Programm in den Fol
 ## Erweitert
 
 Ein zugeklappter Abschnitt mit Einstellungen, die man für den Anfang nicht braucht. Es gibt ihn dreimal: im
-**Dienstplan** neben **Planen** (Planungszeit, Schrittzahl, **Neu beginnen** und der [Score](#score)), unter
+**Dienstplan** neben **Planen** (Startwert, Zeitlimit, Schrittzahl, **Neu beginnen** und der [Score](#score)), unter
 **Regeln** (Nachtzeit, die [Gewichte](#gewicht) und alle Regeln mit Beschreibung) und unter **Daten** (die
 Demodaten).
 

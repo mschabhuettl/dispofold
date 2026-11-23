@@ -3,7 +3,8 @@
 Erweiterungen bringen zusätzliche Seiten und Funktionen ins Programm, zum Beispiel einen Import aus einem anderen
 Planungssystem. Sie kommen mit Dispofold mit; nachgeladen wird nichts. Jede Erweiterung ist aus, bis die Planung
 sie einschaltet. Die veröffentlichten Versionen enthalten eine Erweiterung für den Import aus dem bisherigen
-Planungssystem; was sie tut und wie man sie einstellt, steht auf ihrer [Hilfeseite](plugin-sp5-sp5.md).
+Planungssystem. Was sie tut und wie man sie einstellt, steht auf ihren Hilfeseiten, die nach dem Einschalten in
+dieser Anleitung hinter den Begriffen erscheinen.
 
 ## Einschalten und ausschalten
 
