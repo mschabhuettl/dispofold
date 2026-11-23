@@ -43,7 +43,7 @@ Darunter die Ziele, jedes mit seinen Werten und einer **Wichtigkeit**:
 | Dienstblöcke | Blöcke von 2 bis 4 Tagen | Dienste in Blöcken dieser Länge, ohne einzelne freie Tage dazwischen |
 | Wünsche | höchstens 6 je Person und Monat | so viele Wünsche je Person zählen, die ersten nach Datum |
 | Faire Verteilung | über die letzten 3 Monate | Wochenenden, Feiertage, fair verteilte Dienste und Nächte gleichmäßig verteilen |
-| Stunden treffen | höchstens 10 % über dem Ziel, Stundenkonto ausgleichen bis Ende des Kalenderhalbjahrs (fester Anteil 25 % je Monat als Alternative), Minus am Halbjahresende verfällt | geplante und angerechnete Stunden nahe am Ziel; die Obergrenze ist ein Regelverstoß |
+| Stunden treffen | höchstens 10 % über dem Soll (beim festen Anteil über dem Ziel), Stundenkonto ausgleichen bis Ende des Kalenderhalbjahrs (fester Anteil 25 % je Monat als Alternative), Minus am Halbjahresende verfällt | geplante und angerechnete Stunden nahe am Ziel; die Obergrenze ist ein Regelverstoß |
 | Familienregeln | keine Werte | die persönlichen Regeln der Personen einhalten, wenn es geht |
 
 - **Ausgleich des Stundenkontos:** Standard ist **bis Ende des Kalenderhalbjahrs**. Am Ende jedes Halbjahrs soll
@@ -69,7 +69,7 @@ Darunter die Ziele, jedes mit seinen Werten und einer **Wichtigkeit**:
   Die Alternative **mit festem Anteil je Monat** zieht jeden Monat denselben Anteil des Kontos ab (Standard 25 %:
   ein Viertel), das Konto läuft über das Halbjahr hinaus weiter. Bei gleitender Durchrechnung gilt immer der feste
   Anteil.
-- **Höchstens über dem Ziel:** Mit 10 % darf eine Person mit Ziel 120 h bis 132 h bekommen. Höher: mehr Spielraum
+- **Höchstens über dem Soll:** Mit 10 % darf eine Person mit Soll 120 h bis 132 h bekommen (beim festen Anteil des Stundenkontos gilt das Ziel statt des Solls). Höher: mehr Spielraum
   für den Bedarf. Niedriger: Stunden bleiben enger am Ziel, eher offener Bedarf.
 
 **Wichtigkeit:** **weniger**, **normal** oder **mehr** setzt die Gewichte der Regeln dieses Ziels auf das 0,5-, 1-
@@ -118,7 +118,7 @@ einzelnen Urlaubswoche bleibt das Wochenende planbar. Ein Feiertag ist auch frei
 anderen Werktagen seiner Woche abwesend ist, etwa am Pfingstmontag bei Urlaub von Dienstag bis Freitag. Soll und Stundenkonto ändern sich dadurch nicht. Einzelheiten
 in den [Planungsregeln](../regeln.md).
 
-Die Höchststunden im Monat stehen hier als Text („Im Monat höchstens 10 % über dem Ziel“), eingestellt werden sie
+Die Höchststunden im Monat stehen hier als Text („Im Monat höchstens 10 % über dem Soll, beim festen Anteil über dem Ziel“), eingestellt werden sie
 beim Ziel **Stunden treffen**.
 
 ## Erweitert

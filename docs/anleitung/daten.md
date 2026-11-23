@@ -181,7 +181,7 @@ Seiten einer Erweiterung, die importiert.
 
 ![Pseudonymisieren mit den drei Dateien](../screenshots/daten-pseudonym.png)
 
-**Pseudonymisieren** erstellt den Datensatz und den Plan des gewählten Monats mit Pseudonymen
+**Pseudonymisierte Kopie erstellen** erstellt den Datensatz und den Plan des gewählten Monats mit Pseudonymen
 (P001, P002, ...) statt Namen, zum Weitergeben, etwa für eine Fehlersuche. Namen, Kürzel und Ids der Personen
 werden ersetzt, die Namen von Bereichen, Schichten und Abwesenheitsarten durch ihren Code, Notizen der
 Familienregeln geleert. Danach speichern **Datensatz speichern** und **Plan speichern** die beiden Dateien zum

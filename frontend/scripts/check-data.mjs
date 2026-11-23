@@ -62,7 +62,7 @@ try {
 
   // sections, each with a short intro; demo data under Erweitert
   const headings = await main.locator('h2').allInnerTexts();
-  check('sections Import, Export, Korrekturdatei, Anonymisieren', ['Import', 'Export', 'Korrekturdatei', 'Anonymisieren'].every((x) => headings.includes(x)), headings.join(' | '));
+  check('sections Import, Export, Korrekturdatei, Pseudonymisieren', ['Import', 'Export', 'Korrekturdatei', 'Pseudonymisieren'].every((x) => headings.includes(x)), headings.join(' | '));
   for (const id of ['h-import', 'h-export', 'h-corrections', 'h-anonymize']) {
     check(`intro in ${id}`, await page.locator(`section[aria-labelledby=${id}] > p.muted`).count() >= 1);
   }
@@ -147,7 +147,7 @@ try {
   await preview.getByRole('button', { name: 'Abbrechen' }).click();
 
   // pseudonymised export: dataset and plan to share, the key separately
-  await main.getByRole('button', { name: 'Pseudonymisieren' }).click();
+  await main.getByRole('button', { name: 'Pseudonymisierte Kopie erstellen' }).click();
   await main.getByText('pseudonymisiert. Datensatz und Plan').waitFor();
   const shared = await download(page, () => main.getByRole('button', { name: 'Datensatz speichern' }).click());
   const plan = await download(page, () => main.getByRole('button', { name: 'Plan speichern' }).click());

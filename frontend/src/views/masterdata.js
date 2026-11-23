@@ -30,7 +30,7 @@ export async function render(root, ctx, params = []) {
     const areaName = new Map(dataset.areas.map((a) => [a.id, a.name]));
     const chip = (color, label) => h('span.cell-code.strong.tinted', { style: tintStyle(color) }, label);
     return {
-      areas: [[t('masterdata.col.shortName'), (a) => chip(a.color, a.id)], [t('masterdata.col.name'), (a) => a.name]],
+      areas: [[t('masterdata.col.code'), (a) => chip(a.color, a.id)], [t('masterdata.col.name'), (a) => a.name]],
       absenceTypes: [[t('masterdata.col.code'), (a) => a.code], [t('masterdata.col.name'), (a) => a.name], [t('masterdata.col.reducesTarget'), (a) => yesNo(a.reducesTarget)],
         [t('masterdata.col.chargesAccount'), (a) => yesNo(a.chargesAccount)], [t('masterdata.col.compRest'), (a) => yesNo(a.compensatoryRest)],
         [t('masterdata.col.credit'), (a) => t(a.credit === 'PLANNED_DUTY' ? 'masterdata.credit.plannedDuty' : 'masterdata.credit.weeklyHours')]],
@@ -49,7 +49,7 @@ export async function render(root, ctx, params = []) {
     const editing = key != null;
     const areas = dataset.areas.map((a) => [a.id, `${a.id} ${a.name}`]);
     return {
-      areas: [{ name: 'id', label: t('masterdata.col.shortName'), help: t('help.field.areas.id'), required: true, readOnly: editing }, { name: 'name', label: t('masterdata.col.name'), help: t('help.field.areas.name'), required: true },
+      areas: [{ name: 'id', label: t('masterdata.col.code'), help: t('help.field.areas.id'), required: true, readOnly: editing }, { name: 'name', label: t('masterdata.col.name'), help: t('help.field.areas.name'), required: true },
         { name: 'color', label: t('masterdata.col.color'), help: t('help.field.areas.color'), placeholder: '#RRGGBB' }],
       absenceTypes: [{ name: 'code', label: t('masterdata.col.code'), help: t('help.field.absenceTypes.code'), required: true, readOnly: editing }, { name: 'name', label: t('masterdata.col.name'), help: t('help.field.absenceTypes.name'), required: true },
         { name: 'reducesTarget', label: t('masterdata.col.reducesTarget'), help: t('help.field.absenceTypes.reducesTarget'), type: 'checkbox' }, { name: 'chargesAccount', label: t('masterdata.col.chargesAccount'), help: t('help.field.absenceTypes.chargesAccount'), type: 'checkbox' },
