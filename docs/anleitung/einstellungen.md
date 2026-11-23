@@ -123,6 +123,9 @@ beim Ziel **Stunden treffen**.
 
 ## Erweitert
 
+> **Für den Anfang überspringen:** Die Planungsziele oben reichen fast immer; die einzelnen Gewichte sind für
+> Fortgeschrittene.
+
 ![Erweitert: Nachtzeit und Gewichte](../screenshots/regeln-erweitert.png)
 
 Zugeklappt. Darin:

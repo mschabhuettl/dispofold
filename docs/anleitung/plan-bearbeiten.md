@@ -7,8 +7,6 @@ mit Diensten auf Anfrage und druckt den Plan. Planen und das Ergebnis lesen: [Pl
 
 ## Dienstplan
 
-![Der Dienstplan](../screenshots/dienstplan.png)
-
 ![Die Bedienelemente des Dienstplans, nummeriert](../screenshots/dienstplan-teile.png)
 
 1. **Bereich:** zeigt nur die Personen eines Bereichs (Standard: **Alle Bereiche**). Die Wahl gilt, bis der
@@ -23,7 +21,8 @@ mit Diensten auf Anfrage und druckt den Plan. Planen und das Ergebnis lesen: [Pl
 Darüber stehen **Planen**, **Stopp**, **Plan fixieren**, **Fixierungen lösen** und **Erweitert** und die Zeile mit
 dem Ergebnis; beides beschreibt [Planen und Prüfen](planen.md). Hat der Plan einen Konflikt oder eine Lücke, führt
 **Zum ersten Konflikt springen** (oder **Zur ersten Lücke springen**) unter dieser Zeile zur ersten solchen Zelle,
-auch wenn der Plan dafür seitlich scrollen muss.
+auch wenn der Plan dafür seitlich scrollen muss. Sonst erreicht man die Tage am Monatsende, indem man den Plan
+seitlich scrollt (Wischen, Umschalt und Mausrad oder die Bildlaufleiste unten).
 
 ### Was in den Zellen steht
 
@@ -77,8 +76,10 @@ Dienst dann von Hand.
   Lückenliste der **Zeitachse** und unter **Prüfen**, **Offener Bedarf**. Sie nennt die Personen, für die eine
   Schicht des Bereichs in dieser Lücke an diesem Tag nur auf Anfrage geht, die an dem Tag frei sind (kein Dienst,
   keine Abwesenheit, nicht fixiert) und für die der Dienst keinen Regelverstoß ergibt (auch nicht die
-  Höchststunden im Monat). Je Person stehen Schicht, Datum und Stunden (geplant von Soll); wer am wenigsten
-  Stunden hat, steht oben. Passt niemand, sagt die Liste das: „Niemand passt.“
+  Höchststunden im Monat). Je Person stehen Schicht, Datum und Stunden, etwa „geplant 96,0 h von Ziel 101,1 h“;
+  wer am wenigsten Stunden hat, steht oben. Darüber steht „Klick auf einen Namen setzt den Dienst und fixiert
+  ihn.“ Passt niemand, sagt die Liste das: „Niemand passt.“ Dann jemanden von Hand einteilen, der den Dienst
+  normal machen darf (die leere Zelle der Person anklicken und die Schicht wählen), oder neu planen.
 - **Ein Klick auf einen Namen** setzt den Dienst für diese Person und fixiert ihn. Die nächste Planung behält
   ihn bei.
 - Im Plan ist ein solcher Dienst unten links mit einer kleinen Ecke markiert (**nur auf Anfrage**). Er zählt

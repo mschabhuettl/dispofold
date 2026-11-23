@@ -114,6 +114,8 @@ Jahres geplant wird.
 
 ## Ids und Codes
 
+> **Für den Anfang überspringen:** Wichtig erst, wenn man selbst Bereiche oder Abwesenheitsarten anlegt.
+
 Bereiche und Abwesenheitsarten haben als Id ihren Code. Er wird beim Anlegen eingegeben und lässt sich danach
 nicht mehr ändern. Ein entfernter Code bleibt gesperrt und kann nicht neu vergeben werden, damit alte Pläne und
 die Historie eindeutig bleiben. Schichten und Personen bekommen ihre Id vom Programm.

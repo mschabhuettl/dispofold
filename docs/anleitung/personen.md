@@ -50,6 +50,9 @@ Unter **Person bearbeiten** steht alles zu einer Person in einem Formular. Geän
 
 ### Gewohnte Verteilung
 
+> **Für den Anfang überspringen:** Gewohnte Verteilung, Einschränkungen und Familienregeln kommen meist mit dem
+> Datensatz; ändern muss man sie selten.
+
 Wie sich die Dienste der Person üblicherweise verteilen, in Prozent je Schichtart (Früh, Tag, Spät, Nacht) und je
 Bereich, zum Beispiel Tag 90 % und Nacht 10 %. Die Werte kommen meist aus dem Datensatz (Feld `shiftMix`), ein
 Feld je Schichtart und je Bereich der Person.
@@ -129,6 +132,8 @@ Kommt sie in einem abgeschlossenen Monat oder in der Historie vor, lässt sie si
 den Austritt ein oder schaltet **Aus dem Quellsystem nicht mehr übernehmen** ein.
 
 ## Nicht mehr aus dem Quellsystem übernehmen
+
+> **Für den Anfang überspringen:** Nur nötig, wenn das Quellsystem eine ausgeschiedene Person weiter liefert.
 
 Für Personen, die nicht mehr geplant werden sollen, im Quellsystem aber noch geführt werden (etwa nach einem
 Austritt, der dort fehlt), und die sich nicht entfernen lassen, weil sie in abgeschlossenen Monaten oder in der

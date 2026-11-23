@@ -12,8 +12,8 @@ verwendbar ist, und **Prüfen** listet alles auf, was nicht stimmt. Wie man einz
 2. Während der Planung ist der Plan gesperrt: Zellen, Export, Monatsabschluss und Änderungen an den Daten dieses
    Monats gehen erst danach.
 3. Die Planung endet von selbst nach der **Schrittzahl** (Standard 250 000 Schritte), spätestens nach dem
-   **Zeitlimit** (Standard 300 Sekunden). Mit den Demodaten dauert das auf einem üblichen Rechner etwa eine halbe
-   Minute. **Stopp** beendet sie früher; der beste Stand bis dahin bleibt erhalten. Am Ende meldet das Programm
+   **Zeitlimit** (Standard 300 Sekunden). Mit den Demodaten dauert das auf einem üblichen Rechner ein bis zwei
+   Minuten. **Stopp** beendet sie früher; der beste Stand bis dahin bleibt erhalten. Am Ende meldet das Programm
    „Planung beendet“.
 
 Eine neue Planung baut auf dem gespeicherten Plan auf: Sie verbessert ihn, statt von vorn zu beginnen. Fixierte
@@ -30,6 +30,9 @@ Abwesenheit auf einem fixierten Dienst bleibt ein Konflikt, bis man den Dienst i
 hat, die ein neuer Lauf beheben kann. Von Hand gesetzte Zellen bleiben dabei.
 
 ### Erweitert
+
+> **Für den Anfang überspringen:** Die Standardwerte passen; diese Felder braucht man nur für eine zweite Variante
+> oder einen schnellen Entwurf.
 
 ![Die Felder unter Erweitert, nummeriert](../screenshots/planen-erweitert.png)
 
@@ -59,17 +62,18 @@ Personenstunden und die Abzüge der Planqualität; die Rohzahl zeigt der Tooltip
 
 1. **Überschrift** in Farbe: grün „Plan verwendbar: keine Regelverstöße, keine Lücken“, gelb die Zahl der Lücken
    mit den fehlenden Personenstunden (fehlende Personen mal Stunden), rot die Zahl der Regelverstöße.
-2. **Regeln mit Treffern:** je Regel mit Regelverstößen (rot) und je Qualitätsregel mit großem Anteil an der
-   Bewertung (höchstens die fünf größten) ein Knopf mit der Zahl der Treffer. Ein Klick listet Person und Tag mit
+2. **Regeln mit Treffern:** je Regel mit Regelverstößen (rot) und, nach „Qualität, kein Fehler:“, je
+   Qualitätsregel mit großem Anteil an der Bewertung (höchstens die fünf größten) ein Knopf mit der Zahl der
+   Treffer. Ein Klick listet Person und Tag mit
    einer kurzen Erklärung; ein Klick auf einen Eintrag öffnet die Seite der Person. Die ganze Liste steht unter
    [Probleme](#probleme).
-3. **Status:** **Entwurf** oder **abgeschlossen**. Daneben:
-   - **Überbesetzung:** Personenstunden über der Höchstbesetzung (wo keine gesetzt ist, über der
-     Mindestbesetzung) und Dienste, die keinen Bedarf abdecken.
+3. **Status:** **noch kein Plan**, **Entwurf** oder **abgeschlossen**. Daneben:
+   - **Überbesetzung**, mit dem Vermerk „(kein Fehler)“: Personenstunden über der Höchstbesetzung (wo keine
+     gesetzt ist, über der Mindestbesetzung) und Dienste, die keinen Bedarf abdecken.
    - **Einzelne freie Tage** und **Tage außerhalb der Blocklänge**, wenn ihre Regel oben keinen Knopf hat: freie
      Tage zwischen zwei Diensten und um wie viele Tage die Dienstblöcke kürzer oder länger sind als unter
-     **Regeln** eingestellt. Beide sollen klein sein; sie sind keine Fehler, sondern ein Maß für die Güte des
-     Plans.
+     **Regeln** eingestellt, mit dem Vermerk „(Qualität, kein Fehler)“. Beide sollen klein sein; sie sind keine
+     Fehler, sondern ein Maß für die Güte des Plans.
    - **Plan veraltet: neu planen**, siehe [unten](#hinweis-plan-veraltet-neu-planen).
    - **Letzte Planung fehlgeschlagen**, wenn ein Lauf mit einem Fehler abgebrochen ist; dann noch einmal
      planen, bei Wiederholung mit **Neu beginnen**.
@@ -122,24 +126,36 @@ Rolle „nur lesen“ hat statt **Prüfen** den Menüpunkt **Fairness**.
 
 ![Prüfen, Probleme, nummeriert](../screenshots/pruefen.png)
 
-Die Seite listet alles, was am Plan des gewählten Monats nicht stimmt, in drei Abschnitten. Der erste:
-**Regelverstöße und Qualität**: jeder Regelverstoß, jede Überbesetzung und die Qualitätsregeln mit großem Anteil an
-der Bewertung (dieselben wie die Knöpfe über dem Dienstplan), ein Eintrag je Treffer.
+Die Seite steht in der Reihenfolge, in der man arbeitet: oben das Urteil, dann die Regelverstöße, der offene
+Bedarf, die Hinweise zur Qualität und die Stammdaten. Jede Gruppe einer Liste ist zugeklappt; ein Klick auf ihre
+Überschrift öffnet sie. Was die Zahlen bedeuten, steht auch unter [Was die Zahlen bedeuten](zahlen.md#prüfen).
 
-1. **Gruppieren nach** ordnet die Liste nach **Regel** (Standard), **Person** oder **Tag**.
-2. Die drei Auswahlen daneben zeigen nur eine **Regel**, eine **Person** oder einen **Tag** (Standard: alle).
-   Darunter steht die Zahl der Einträge.
-3. Jede Gruppe klappt mit einem Klick auf ihre Überschrift auf und zu; bei langen Listen ist nur die erste offen.
-   Die Überschrift nennt die Regel, ihre Gruppe und die Zahl der Treffer.
-4. **Offener Bedarf**, siehe unten.
+- **Das Urteil** oben: „Nichts zu tun: 0 Regelverstöße, 0 Lücken“ oder „Zuerst: …“ mit dem, was zuerst zu tun ist:
+  neu planen, wenn der Plan veraltet ist, dann die Regelverstöße beheben, dann die Lücken schließen. Darunter
+  steht, dass die Hinweise zur Qualität und die Stammdaten keine Fehler im Plan sind.
+- **Regelverstöße:** jeder Verstoß gegen eine Regel, die der Plan einhalten muss, nach Regel gruppiert, mit der
+  Zahl der Einträge in Klammern.
+- **Offener Bedarf**, siehe [unten](#offener-bedarf).
+- **Hinweise zur Qualität (keine Fehler):** jede Überbesetzung, jeder Dienst ohne Bedarf und die Qualitätsregeln
+  mit großem Anteil an den Abzügen der Planqualität (dieselben wie die Knöpfe über dem Dienstplan), ein Eintrag je
+  Treffer. Zugeklappt hinter „… Hinweise anzeigen“, denn auch ein guter Plan hat hier viele Einträge. Aufgeklappt:
+
+  1. **Gruppieren nach** ordnet die Liste nach **Regel** (Standard), **Person** oder **Tag**.
+  2. Die drei Auswahlen daneben zeigen nur eine **Regel**, eine **Person** oder einen **Tag** (Standard: alle).
+     Darunter steht die Zahl der Einträge.
+  3. Jede Gruppe klappt mit einem Klick auf ihre Überschrift auf und zu. Die Überschrift nennt die Regel, ihre
+     Gruppe und die Zahl der Treffer.
+- **Stundenkonto: Rest passt nicht in den Monat**, wenn es Personen betrifft: kein Regelverstoß, siehe
+  [Stunden treffen](einstellungen.md#planungsziele).
+- **Stammdaten**, siehe [unten](#stammdaten).
 
 Ein Eintrag nennt die Gruppe (**Regelverstoß**, **Bedarf**, **Qualität**), die Person (ein Klick öffnet ihre Seite)
 oder bei Bedarfseinträgen die **Zeitachse** (sie öffnet sich auf Bereich und Tag des Eintrags), den Tag und eine
 kurze Erklärung, etwa bei der täglichen Ruhezeit „Nur … h Ruhe nach Dienst … am …“.
 
-**Wie man die Liste abarbeitet:** zuerst alle Einträge der Gruppe **Regelverstoß**, denn ein Plan mit
-Regelverstößen darf so nicht verwendet werden; dann den offenen Bedarf; die Qualität zuletzt und nur, wo eine
-Zahl auffällt (eine Person mit vielen Treffern). Typische Regelverstöße und was zu tun ist:
+**Wie man die Liste abarbeitet:** wie das Urteil sagt: zuerst die **Regelverstöße**, denn ein Plan mit
+Regelverstößen darf so nicht verwendet werden; dann den offenen Bedarf; die Hinweise zur Qualität zuletzt und nur,
+wo eine Zahl auffällt (eine Person mit vielen Treffern). Typische Regelverstöße und was zu tun ist:
 
 | Eintrag | Ursache | Was tun |
 |---|---|---|

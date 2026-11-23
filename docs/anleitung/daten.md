@@ -54,6 +54,9 @@ Die Demodaten ersetzen alle Stammdaten; nie in einer Installation mit echten Dat
 
 ## Neuer Datensatz, Änderungen aus Dispofold behalten
 
+> **Für den Anfang überspringen:** Wichtig erst, wenn nach Änderungen in Dispofold ein neuer Datensatz aus dem
+> Quellsystem kommt.
+
 Wer Personen, Einschränkungen oder Bedarf in Dispofold ändert und später einen neuen Datensatz aus dem
 Quellsystem importiert, würde diese Änderungen überschreiben. Dafür gibt es zwei Wege, die man auch zusammen
 verwenden kann:
@@ -179,6 +182,8 @@ Seiten einer Erweiterung, die importiert.
 
 ## Pseudonymisieren
 
+> **Für den Anfang überspringen:** Nur nötig, wenn Daten für eine Fehlersuche weitergegeben werden.
+
 ![Pseudonymisieren mit den drei Dateien](../screenshots/daten-pseudonym.png)
 
 **Pseudonymisierte Kopie erstellen** erstellt den Datensatz und den Plan des gewählten Monats mit Pseudonymen
@@ -190,6 +195,8 @@ Planung und wird nie weitergegeben. Steht nach dem Pseudonymisieren noch ein Nam
 Programm nichts und nennt die Stelle.
 
 ## Plan importieren
+
+> **Für den Anfang überspringen:** Nur nötig, um einen früher exportierten Plan zurückzuholen.
 
 **Plan importieren** ersetzt den Plan des gewählten Monats durch einen früher exportierten Plan desselben Monats
 im JSON-Format, nach einer Rückfrage. Gehört die Datei zu einem anderen Monat, meldet das Programm „Die Datei
