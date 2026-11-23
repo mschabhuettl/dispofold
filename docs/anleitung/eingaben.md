@@ -11,12 +11,16 @@ hier ergänzt und ändert man sie, zum Beispiel bei einer Krankmeldung nach dem 
 2. [Abwesenheiten](#abwesenheiten)
 3. [Wünsche](#wünsche)
 4. [Vorgaben](#vorgaben)
-5. **Speichern** übernimmt alle Änderungen der Seite auf einmal.
+5. **Speichern** übernimmt alle Änderungen der Seite auf einmal. Der Knopf steht in einer Leiste, die beim
+   Scrollen unten im Fenster bleibt.
 
-So trägt man etwas ein: in der Zeile über einer Liste die Felder wählen, **Hinzufügen**, dann **Speichern**.
-**Entfernen** am Ende einer Zeile nimmt einen Eintrag heraus. Solange etwas nicht gespeichert ist, steht
-**Ungespeicherte Änderungen** neben dem Knopf; wer die Seite oder den Monat dann wechselt oder den Browser schließt,
-wird gefragt, ob die Änderungen verloren gehen sollen.
+Die Links **Abwesenheiten**, **Wünsche** und **Vorgaben** unter dem Titel springen zur jeweiligen Liste.
+
+So trägt man etwas ein: in der Zeile über einer Liste die Felder wählen, **Hinzufügen**, dann **Speichern**. Die
+neue Zeile ist hervorgehoben, das Programm scrollt zu ihr, und sie trägt bis zum Speichern den Hinweis
+„Hinzugefügt, noch nicht gespeichert“. **Entfernen** am Ende einer Zeile nimmt einen Eintrag heraus. Solange etwas
+nicht gespeichert ist, steht **Ungespeicherte Änderungen** neben dem Knopf; wer die Seite oder den Monat dann
+wechselt oder den Browser schließt, wird gefragt, ob die Änderungen verloren gehen sollen.
 
 Nach dem Speichern zeigt ein schon geplanter Monat „Plan veraltet: neu planen“: Der Plan kennt die neuen Eingaben
 noch nicht. In einem abgeschlossenen Monat sind die Eingaben nur lesbar; zum Ändern den Monat zuerst wieder öffnen
@@ -38,7 +42,8 @@ mehrere Tage steht als ein Eintrag mit Zeitraum und Zahl der Tage in der Liste.
 
 ## Wünsche
 
-Felder: **Person**, **Datum**, **Art** und **Schicht (bei Schichtwunsch)**. Die Arten:
+Felder: **Person**, **Datum**, **Art** und **Schicht (bei Schichtwunsch)**; die Schicht lässt sich nur bei
+„diese Schicht“ und „diese Schicht nicht“ wählen. Die Arten:
 
 | Art | Bedeutung |
 |---|---|
@@ -51,7 +56,8 @@ Felder: **Person**, **Datum**, **Art** und **Schicht (bei Schichtwunsch)**. Die 
 - Die Planung erfüllt Wünsche, so gut es geht, und verteilt die Erfüllung gleichmäßig: Wem in den Vormonaten
   weniger Wünsche erfüllt wurden, der kommt eher zum Zug.
 - Je Person zählen höchstens so viele Wünsche, wie unter [Regeln](einstellungen.md#planungsziele) eingestellt ist
-  (Standard 6), und zwar die ersten nach Datum. Die Spalte **Wünsche der Person** zeigt, wie viele es sind, und
+  (Standard 6), und zwar die ersten nach Datum. Die Spalte **Wünsche dieser Person (max. 6)** zeigt, wie viele es
+  sind (in der Überschrift steht die eingestellte Zahl), und
   „(zu viele)“, wenn es mehr sind; die späteren zählen dann nicht.
 - Ein Wunsch ist keine Zusage. Was fest gelten muss, ist eine Vorgabe.
 

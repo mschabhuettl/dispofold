@@ -3,7 +3,9 @@
 // click elsewhere; a tap opens and closes it on a touch screen, where the text stays inside the window; one help is
 // open at a time; the text is not in the page while closed; an open help survives the redraws of the status line while
 // solving; every page has its intro under the title, also after a view draws itself anew. Planners and viewers have the
-// menu entry Anleitung and a link in each intro, both to the documentation site in a new tab.
+// menu entry Anleitung and a link in each intro, both to the guide built into the program, also on the server: its
+// pages show their own content (not the program's page a web server falls back to) with their images, and the
+// documentation site only as a link at the bottom.
 // Demo data of the dev server (mock API), month 2027-01 planned.
 //   npm run build && node scripts/check-help.mjs     (Chromium via `npx playwright install chromium`)
 import { spawn } from 'node:child_process';
@@ -11,6 +13,7 @@ import { createServer } from 'node:net';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { launchBrowser } from './browser.mjs';
+import { PAGES } from '../src/lib/guide.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const month = '2027-01';
@@ -124,29 +127,63 @@ try {
       }
     }
   }
-  // The guide on the documentation site: menu entry and the link in the intro, for planners and viewers, each page to
-  // its page and section of the guide (written out here, so a change of lib/guide.js cannot slip through unnoticed)
+  // The guide built into the program on the server: menu entry and the link in the intro, for planners and viewers,
+  // each page to its page and section of the guide (written out here, so a change of lib/guide.js cannot slip through
+  // unnoticed); the guide shows its own pages, the site only as a link at the bottom
   const site = 'https://mschabhuettl.github.io/dispofold/anleitung/';
+  const outside = [];
+  for (const p of [page, viewer]) p.on('request', (r) => { if (new URL(r.url()).hostname !== 'localhost') outside.push(r.url()); });
   for (const [who, p] of [['planner', page], ['viewer', viewer]]) {
     await open(p, 'plan');
     const entry = p.locator('#nav a', { hasText: 'Anleitung' });
-    check(`${who}: menu entry Anleitung to the site in a new tab`, await entry.count() === 1
-      && await entry.getAttribute('href') === site && await entry.getAttribute('target') === '_blank'
-      && await entry.getAttribute('rel') === 'noopener');
+    check(`${who}: menu entry Anleitung to the built-in guide`, await entry.count() === 1
+      && await entry.getAttribute('href') === '#/anleitung' && await entry.getAttribute('target') === null);
     const link = p.locator('#main h1 + p.page-intro a');
     check(`${who}: intro links to its page of the guide`, await link.innerText() === 'Mehr dazu in der Anleitung'
-      && await link.getAttribute('href') === `${site}plan-bearbeiten/` && await link.getAttribute('target') === '_blank');
+      && await link.getAttribute('href') === '#/anleitung/plan-bearbeiten' && await link.getAttribute('target') === null);
+    await link.click();
+    await p.waitForFunction(() => location.hash === '#/anleitung/plan-bearbeiten' && document.querySelector('#main .guide'));
+    // the content of the guide page, not the program's page: its title, its text, its images loaded
+    const shown = await p.evaluate(async () => {
+      const imgs = [...document.querySelectorAll('#main .guide img')];
+      await Promise.all(imgs.map((i) => (i.complete ? null : new Promise((r) => { i.onload = r; i.onerror = r; }))));
+      return { title: document.querySelector('#main h1').textContent, text: document.querySelector('#main .guide').textContent.length,
+        images: imgs.map((i) => i.naturalWidth), app: Boolean(document.querySelector('#main .guide .layout, #main .guide #nav')) };
+    });
+    check(`${who}: the guide page shows its content`, shown.title === 'Plan bearbeiten' && shown.text > 2000 && !shown.app
+      && shown.images.length >= 5 && shown.images.every((w) => w > 0), JSON.stringify(shown));
+    check(`${who}: menu entry Anleitung marked`, await entry.getAttribute('aria-current') === 'page');
+    const fallback = p.locator('#main .guide-online a');
+    check(`${who}: the site only as a link at the bottom`, await fallback.getAttribute('href') === `${site}plan-bearbeiten/`
+      && await fallback.getAttribute('target') === '_blank'
+      && await p.evaluate(() => document.querySelector('#main .guide-online').previousElementSibling?.matches('.guide-pages')));
+    // every page of the guide: its own title
+    for (const [id, title] of PAGES) {
+      await open(p, `anleitung/${id}`);
+      const h1 = await p.locator('#main h1').textContent();
+      if (h1 !== title) check(`${who}: guide page ${id} with its title`, false, h1);
+    }
+    check(`${who}: every guide page with its title`, true);
   }
-  const sections = { funktionen: 'plan-bearbeiten/#plan-nach-funktion', zeitachse: 'plan-bearbeiten/#bereichs-zeitachse',
-    pruefen: 'planen/#probleme', fairness: 'auswertungen/#fairness', eingaben: 'eingaben/', person: 'personen/',
-    regeln: 'einstellungen/', stammdaten: 'stammdaten/', import: 'daten/' };
+  const sections = { funktionen: 'plan-bearbeiten/plan-nach-funktion', zeitachse: 'plan-bearbeiten/bereichs-zeitachse',
+    pruefen: 'planen/probleme', fairness: 'auswertungen/fairness', eingaben: 'eingaben', person: 'personen',
+    regeln: 'einstellungen', stammdaten: 'stammdaten', import: 'daten' };
   for (const [path, target] of Object.entries(sections)) {
     await open(page, path);
     const href = await page.locator('#main h1 + p.page-intro a').getAttribute('href');
-    check(`planner ${path}: intro links to ${target}`, href === `${site}${target}`, href);
+    check(`planner ${path}: intro links to ${target}`, href === `#/anleitung/${target}`, href);
   }
   await open(viewer, 'fairness');
-  check('viewer: Fairness intro links to its section', await viewer.locator('#main h1 + p.page-intro a').getAttribute('href') === `${site}auswertungen/#fairness`);
+  check('viewer: Fairness intro links to its section', await viewer.locator('#main h1 + p.page-intro a').getAttribute('href') === '#/anleitung/auswertungen/fairness');
+  check('the guide asks nothing outside the server', outside.length === 0, outside.join(', '));
+  // a web server answers a missing guide page with the program's page (status 200): a clear message instead
+  await page.route('**/anleitung/eingaben.html', async (r) => r.fulfill({ status: 200, contentType: 'text/html',
+    body: await (await fetch(`${base}/login.html`)).text() }));
+  await page.goto(`${base}/#/anleitung/eingaben`);
+  await page.locator('#main .alert-error').waitFor({ timeout: 10000 }).catch(() => {});
+  check('a guide page the server does not have: clear message', (await page.locator('#main .alert-error').count()) === 1
+    && (await page.locator('#main .alert-error').innerText()).includes(site), await page.locator('#main').innerText());
+  await page.unroute('**/anleitung/eingaben.html');
 
   await open(page, 'stammdaten');
   await page.locator('[data-new="areas"]').click();

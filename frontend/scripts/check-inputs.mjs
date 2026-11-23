@@ -1,7 +1,9 @@
 // Playwright check of the Eingaben page: absences are shown as date ranges (one row per range of consecutive days of
 // a person and type) and entered as a range, which is saved as one record per day; a range inside another one splits
 // it; removing a row removes all its days; the person filter shows only that person in absences, wishes and Vorgaben.
-// Demo data of the dev server (mock API), month 2027-01.
+// For beginners: links to the three sections, the save button in a bar at the bottom of the window, a new row marked
+// "Hinzugefügt, noch nicht gespeichert" and scrolled to until saved, the wish count with the real limit in its
+// heading, the shift of a wish only for the kinds that need one. Demo data of the dev server (mock API), month 2027-01.
 //   npm run build && node scripts/check-inputs.mjs     (Chromium via `npx playwright install chromium`)
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:net';
@@ -39,7 +41,7 @@ function ranges(absences) {
 
 const browser = await launchBrowser();
 try {
-  const context = await browser.newContext({ locale: 'de-DE', viewport: { width: 1600, height: 1000 } });
+  const context = await browser.newContext({ locale: 'de-DE', viewport: { width: 1600, height: 900 } });
   await context.addInitScript((m) => sessionStorage.setItem('month', m), month);
   const page = await context.newPage();
   page.on('pageerror', (e) => check('no page error', false, e.message));
@@ -48,9 +50,10 @@ try {
   await page.fill('#j_username', 'planung');
   await page.fill('#j_password', 'x');
   await Promise.all([page.waitForURL((u) => !u.pathname.endsWith('login.html')), page.click('button[type=submit]')]);
-  const { dataset, period } = await page.evaluate(async (m) => {
+  const { dataset, period, rules } = await page.evaluate(async (m) => {
     await fetch('/api/import/demo', { method: 'POST' });
-    return { dataset: await (await fetch('/api/dataset')).json(), period: await (await fetch(`/api/periods/${m}`)).json() };
+    return { dataset: await (await fetch('/api/dataset')).json(), period: await (await fetch(`/api/periods/${m}`)).json(),
+      rules: await (await fetch('/api/rules')).json() };
   }, month);
   const name = (p) => `${p.lastName} ${p.firstName}`;
   // a person with wishes and without absences this month
@@ -118,6 +121,67 @@ try {
   check('filter does not change what is saved', sent.absences.length === period.absences.length + 3 && sent.wishes.length === period.wishes.length);
   await page.selectOption('#inputs-filter', '');
   check('filter off: every range again', await absenceRows.count() === expected.length + 2, String(await absenceRows.count()));
+
+  // Links to the three sections: each brings its heading to the top of the window
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const jumps = await page.locator('nav.jump-links button').allTextContents();
+  check('links to the sections', jumps.join() === 'Abwesenheiten,Wünsche,Vorgaben', jumps.join());
+  for (const [label, id] of [['Vorgaben', 'h-fixed'], ['Wünsche', 'h-wishes'], ['Abwesenheiten', 'h-absences']]) {
+    await page.locator('nav.jump-links').getByRole('button', { name: label }).click();
+    // at the top of the window, or in view with the page scrolled to its end (the last section)
+    const { top, end } = await page.locator(`#${id}`).evaluate((e) => ({ top: e.getBoundingClientRect().top,
+      end: window.scrollY + window.innerHeight >= document.scrollingElement.scrollHeight - 1 }));
+    check(`link ${label} shows its section`, top >= 0 && (top < 60 || (end && top < 700)) && page.url().endsWith('#/eingaben'),
+      `${top} ${end} ${page.url()}`);
+  }
+
+  // The save bar stays at the bottom of the window, at the top of the page and at the wishes
+  const bar = page.locator('.save-bar');
+  const barBottom = () => bar.evaluate((b) => Math.round(b.getBoundingClientRect().bottom));
+  await page.evaluate(() => window.scrollTo(0, 0));
+  check('save bar with Speichern at the bottom of the window', await bar.getByRole('button', { name: 'Speichern' }).isVisible()
+    && Math.abs(await barBottom() - 900) <= 1, String(await barBottom()));
+  await page.locator('#h-wishes').scrollIntoViewIfNeeded();
+  check('save bar still at the bottom further down', Math.abs(await barBottom() - 900) <= 1, String(await barBottom()));
+
+  // A new row: marked and scrolled to, the note gone after saving
+  const added = page.locator('tr.row-added');
+  check('no row marked at first', await added.count() === 0);
+  await page.evaluate(() => window.scrollTo(0, 0));
+  const other = dataset.people.find((p) => p.id !== person.id && !period.absences.some((a) => a.personId === p.id && a.date === `${month}-28`));
+  await page.selectOption('#abs-person', other.id);
+  await page.selectOption('#abs-from', `${month}-28`);
+  await page.selectOption('#abs-to', `${month}-28`);
+  await absences.getByRole('button', { name: 'Hinzufügen' }).click();
+  const shown = await added.evaluateAll((trs) => trs.map((tr) => {
+    const r = tr.getBoundingClientRect();
+    return { text: tr.textContent, inView: r.top >= 0 && r.bottom <= window.innerHeight };
+  }));
+  check('the new row is marked and in view', shown.length === 1 && shown[0].inView && shown[0].text.includes(name(other))
+    && shown[0].text.includes('Hinzugefügt, noch nicht gespeichert'), JSON.stringify(shown));
+  check('unsaved note next to the button', await page.locator('.save-bar #dirty-note').textContent() === 'Ungespeicherte Änderungen');
+  await save();
+  check('after saving no row is marked', await added.count() === 0 && await page.locator('#dirty-note').textContent() === '');
+
+  // Wishes: the count with the real limit in its heading; the shift only for the kinds that need one
+  const heading = await page.locator('section[aria-labelledby="h-wishes"] thead th').nth(3).textContent();
+  check('wish count heading with the limit', heading === `Wünsche dieser Person (max. ${rules.maxWishesPerPerson})`, heading);
+  const shiftField = page.locator('#wish-shift');
+  for (const [kind, needed] of [['OFF', false], ['DUTY', false], ['SHIFT', true], ['NOT_SHIFT', true]]) {
+    await page.selectOption('#wish-kind', kind);
+    check(`wish ${kind}: shift ${needed ? 'to choose' : 'disabled'}`, await shiftField.isEnabled() === needed);
+  }
+  await page.selectOption('#wish-kind', 'OFF');
+  await page.selectOption('#wish-person', other.id);
+  await page.selectOption('#wish-date', `${month}-20`);
+  await page.locator('section[aria-labelledby="h-wishes"]').getByRole('button', { name: 'Hinzufügen' }).click();
+  const wish = await added.evaluateAll((trs) => trs.map((tr) => {
+    const r = tr.getBoundingClientRect();
+    return { text: tr.textContent, inView: r.top >= 0 && r.bottom <= window.innerHeight };
+  }));
+  check('a new wish is marked and in view', wish.length === 1 && wish[0].inView && wish[0].text.startsWith('Mi 20.01.'), JSON.stringify(wish));
+  sent = await save();
+  check('the wish without a shift is saved', sent.wishes.some((w) => w.personId === other.id && w.date === `${month}-20` && w.kind === 'OFF' && w.shiftId === null));
 } finally {
   await browser.close();
   server.kill();

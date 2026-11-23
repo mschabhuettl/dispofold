@@ -20,8 +20,10 @@ mit Diensten auf Anfrage und druckt den Plan. Planen und das Ergebnis lesen: [Pl
 6. **Bedarfslücken:** die Zahl der Lücken je Tag. Die Zeile bleibt beim Scrollen unter den Tagen stehen; ein Klick
    auf eine Zahl listet die Lücken des Tages mit **Auf Anfrage verfügbar**.
 
-Darüber stehen **Planen**, **Stopp**, **Fixierungen lösen** und **Erweitert** und die Zeile mit dem Ergebnis; beides
-beschreibt [Planen und Prüfen](planen.md).
+Darüber stehen **Planen**, **Stopp**, **Plan fixieren**, **Fixierungen lösen** und **Erweitert** und die Zeile mit
+dem Ergebnis; beides beschreibt [Planen und Prüfen](planen.md). Hat der Plan einen Konflikt oder eine Lücke, führt
+**Zum ersten Konflikt springen** (oder **Zur ersten Lücke springen**) unter dieser Zeile zur ersten solchen Zelle,
+auch wenn der Plan dafür seitlich scrollen muss.
 
 ### Was in den Zellen steht
 
@@ -113,8 +115,8 @@ Ansicht beantwortet die Frage „Wer macht am 12. die Frühschicht in der Notruf
 
 ![Bereichs-Zeitachse, nummeriert](../screenshots/zeitachse-teile.png)
 
-Der Reiter **Zeitachse** zeigt die Dienste eines Bereichs als Balken auf einer Zeitachse, darunter die Besetzung
-gegen den Bedarf. Sie beantwortet die Frage „Wann genau fehlt jemand, und wie lange?“.
+Der Reiter **Zeitachse** zeigt die Besetzung gegen den Bedarf eines Bereichs und darunter seine Dienste als Balken
+auf einer Zeitachse. Sie beantwortet die Frage „Wann genau fehlt jemand, und wie lange?“.
 
 1. **Bereich:** welcher Bereich (Standard: der erste, danach der zuletzt gewählte).
 2. **Ansicht:** **Tag** (Standard) oder **Woche**.

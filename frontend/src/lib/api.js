@@ -172,6 +172,7 @@ export function createApi({ fetchImpl = (...a) => globalThis.fetch(...a), onUnau
     solve: (month, options) => request('POST', `/api/plans/${m(month)}/solve`, options),
     stop: (month) => request('POST', `/api/plans/${m(month)}/stop`),
     setCell: (month, assignment) => request('PUT', `/api/plans/${m(month)}/cells`, assignment),
+    pin: (month) => request('POST', `/api/plans/${m(month)}/pin`),
     unpin: (month) => request('POST', `/api/plans/${m(month)}/unpin`),
     analysis: (month) => request('GET', `/api/plans/${m(month)}/analysis`),
     person: (month, id) => request('GET', `/api/plans/${m(month)}/people/${encodeURIComponent(id)}`),

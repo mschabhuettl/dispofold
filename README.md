@@ -32,15 +32,13 @@ Regeln bewertet. Von Dienstplänen weiß sie von sich aus nichts.
 Kurz gesagt: Timefold rechnet, Dispofold sagt, was zu rechnen ist, und zeigt das Ergebnis.
 
 **Offline:** Timefold läuft in Dispofold, auf dem eigenen Rechner oder dem eigenen Server. Dispofold nutzt keinen
-Cloud-Dienst und nicht die kommerzielle Plattform von Timefold, und keine Daten verlassen den Rechner. Ins
-Internet gehen nur:
+Cloud-Dienst und nicht die kommerzielle Plattform von Timefold, und keine Daten verlassen den Rechner. Die
+Anleitung ist eingebaut, am Server wie im Programm am eigenen Rechner. Ins Internet gehen nur:
 
 - die Suche nach einer neuen Version: am Server einmal beim Start und einmal am Tag eine anonyme Anfrage an GitHub,
   abschaltbar mit `DISPOFOLD_UPDATE_CHECK=false`; das Programm am eigenen Rechner fragt beim ersten Start, ob es
   suchen soll, und geht nach „Nein“ nie ins Netz;
 - unter Windows das Setup, wenn die WebView2-Runtime von Microsoft fehlt: Dann lädt es sie herunter.
-- die Hilfelinks der Oberfläche am Server: Sie öffnen diese Anleitung auf der Website des Projekts. Das Programm am
-  eigenen Rechner hat die Anleitung eingebaut.
 
 ## Auslieferungen
 

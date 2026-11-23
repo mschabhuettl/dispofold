@@ -207,7 +207,7 @@ table.data tbody th { background: var(--surface); }
 table.data td.num, table.data th.num { text-align: right; font-variant-numeric: tabular-nums; }
 table.data th button { font: inherit; font-weight: 600; background: none; border: 0; padding: 0; color: inherit; cursor: pointer; text-align: inherit; }
 .section { margin-bottom: 2rem; }
-.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 1.5rem; }
+.grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 1.5rem; }
 
 /* Status line of the Dienstplan: a coloured headline, chips of the rules to look at, quiet details */
 .statusbar {
@@ -547,3 +547,34 @@ details.rules-advanced section { margin-top: 1.2rem; }
 @media print { .info-btn, .info-text, .page-intro { display: none !important; } }
 .guide-pages { display: flex; flex-wrap: wrap; gap: .5rem 1.5rem; max-width: 60rem; margin-top: 2rem; padding-top: .8rem; border-top: 1px solid var(--border); }
 .guide-pages a:last-child:not(:first-child) { margin-left: auto; }
+
+/* Beginner UI: the visible label of the month picker, file fields at their own width, the links to the sections and
+   the marked new rows of Eingaben, the link to the first conflict, the hint above who could be asked */
+.month-label { font-size: .85rem; color: var(--text-muted); margin-right: .2rem; }
+.toolbar .field input[type=file] { width: auto; max-width: 100%; }
+.jump-links { display: flex; flex-wrap: wrap; gap: .3rem 1.2rem; margin: 0 0 1rem; }
+.jump-first { margin: -.5rem 0 .5rem; }
+.jump-first:empty { display: none; }
+tr.row-added > td { background: var(--primary-tint); }
+.added-note { font-size: .8rem; font-weight: 600; color: var(--primary); margin-right: .6rem; }
+.candidates-hint { font-size: .85rem; margin: 0 0 .3rem; }
+.nav-toggle { display: none; margin-left: auto; }
+/* Phone width: the menu folds into a bar at the top, wide tables and charts scroll in their own box, never the page */
+@media (max-width: 720px) {
+  .layout { flex-direction: column; }
+  .sidebar { width: auto; border-right: 0; border-bottom: 1px solid var(--border); padding: 0; }
+  .brand { padding: .5rem 1rem; }
+  .nav-toggle { display: inline-flex; }
+  .sidebar:not(.open) #nav, .sidebar:not(.open) .source-link { display: none; }
+  .sidebar.open { padding-bottom: .6rem; }
+  .sidebar a.source-link { margin-top: .6rem; }
+  .topbar { flex-wrap: wrap; padding: .5rem 1rem; gap: .5rem; }
+  main { padding: 1rem 1rem 3rem; }
+  table.data, .guide table { display: block; max-width: 100%; overflow-x: auto; }
+  .coverage, .guide pre { max-width: 100%; overflow-x: auto; }
+  .btn-row { flex-wrap: wrap; white-space: normal; }
+  .rule-row, .goal { grid-template-columns: 1fr; }
+  .importance { flex-wrap: wrap; }
+  .spread svg { max-width: 100%; height: auto; }
+  .guide, .guide-online { overflow-wrap: anywhere; }
+}

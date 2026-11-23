@@ -776,7 +776,7 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
       const busy = solving.has(m) && planState(m).solving;
       if (!c) return json(planState(m));
       const closed = plans.get(m)?.status === 'CLOSED';
-      const writes = ['solve', 'cells', 'unpin', 'import', 'finalize'];
+      const writes = ['solve', 'cells', 'pin', 'unpin', 'import', 'finalize'];
       if (closed && writes.includes(c)) return err(409, 'Monat abgeschlossen', 'plan.closed', { month: m });
       if (c === 'reopen') {
         if (closed) plans.get(m).status = 'SOLVED';
@@ -803,6 +803,11 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
         plan.assignments.push(body);
         plan.score = scoreFor(m);
         return json(plan);
+      }
+      if (c === 'pin') {
+        if (busy) return err(409, 'Planung läuft', 'plan.solving');
+        for (const x of plans.get(m)?.assignments ?? []) if (x.shiftId || x.compRest) x.pinned = true;
+        return json(plans.get(m) ?? emptyPlan(m));
       }
       if (c === 'unpin') {
         const fixed = new Set((periods.get(m)?.fixed ?? []).map((f) => `${f.personId}|${f.date}`));

@@ -1,4 +1,4 @@
-// Bereichs-Zeitachse: duties of one area on a timeline (Bryntum via the adapter) with coverage vs demand below.
+// Bereichs-Zeitachse: duties of one area on a timeline (Bryntum via the adapter) with coverage vs demand above.
 import { createTimeline } from '../lib/bryntum-adapter.js';
 import { tint } from '../lib/colors.js';
 import { areaDuties, coverageModel } from '../lib/coverage.js';
@@ -50,11 +50,11 @@ export async function render(root, ctx, [linkArea, linkDate] = []) {
       h('button.btn-icon', { type: 'button', 'aria-label': t('timeline.back'), onclick: () => move(-1) }, '‹'),
       h('div.field', {}, h('label', { for: 'tl-date' }, t('timeline.date')), dateInput),
       h('button.btn-icon', { type: 'button', 'aria-label': t('timeline.forward'), onclick: () => move(1) }, '›')),
-    host,
-    h('h2', { style: { marginTop: '1rem' } }, t('timeline.coverageHeading')),
+    h('h2', {}, t('timeline.coverageHeading')),
     coverageLegend(),
     chartHost,
     gapList,
+    host,
   );
 
   function range() {

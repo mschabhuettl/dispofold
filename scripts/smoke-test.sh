@@ -23,6 +23,12 @@ echo "login redirects to: $location"
 api() { curl -fsS -b "$JAR" -H 'Content-Type: application/json' "$@"; }
 
 echo "me: $(api "$BASE/api/me")"
+# the guide built into the image: its first page, not the program's index.html the web server falls back to
+guide=$(curl -fsS -b "$JAR" "$BASE/anleitung/index.html")
+if ! echo "$guide" | grep -q '<h1 id="anleitung-für-die-dienstplanung">' || echo "$guide" | grep -qi '<!doctype'; then
+  echo "FAILED: the built-in guide is missing: $(echo "$guide" | head -c 200)"; exit 1
+fi
+echo "guide: built in"
 # every shipped plugin (plugins/*/plugin.json without testOnly) is in the image and listed
 extensions=$(api "$BASE/api/extensions")
 for manifest in "$(dirname "$0")"/../plugins/*/plugin.json; do

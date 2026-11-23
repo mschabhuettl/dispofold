@@ -55,6 +55,9 @@ export async function render(root, ctx) {
   const btnSolve = h('button.btn.btn-primary', { type: 'button', onclick: solve }, t('roster.solve'));
   const btnStop = h('button.btn.btn-secondary', { type: 'button', onclick: stop }, t('roster.stop'));
   const btnUnpin = h('button.btn.btn-secondary', { type: 'button', onclick: unpin }, t('roster.unpinAll'));
+  const btnPin = h('button.btn.btn-secondary', { type: 'button', onclick: pinAll }, t('roster.pinAll'));
+  // a link to the first conflict cell, else the first gap of the shown rows: the grid may have to scroll sideways
+  const jump = h('div.jump-first', {});
   const scoreText = h('span', {});
   const sticky = stickyHeights();
   // help buttons of the status line, made once: it is drawn again every few seconds while solving, an open help
@@ -84,7 +87,7 @@ export async function render(root, ctx) {
         // planners close the month here as well as under Import/Export
         canEdit && !closed() && h('button', { type: 'button', disabled: state.solving, onclick: () => closeMonth(ctx) }, t('import.finalize'))])),
     canEdit && h('div.toolbar.plan-actions', {},
-      h('div.btn-row', {}, btnSolve, btnStop, btnUnpin),
+      h('div.btn-row', {}, btnSolve, btnStop, btnPin, btnUnpin, info(t('help.plan.pinAll'), t('roster.pinAll'))),
       // solver options and the raw score: rarely needed, collapsed
       h('details.advanced', {}, h('summary', {}, t('roster.advanced')),
         h('div.advanced-body', {},
@@ -95,6 +98,7 @@ export async function render(root, ctx) {
           h('span.score', {}, t('roster.score'), ' ', scoreText, info(t('help.solve.score'), t('roster.score')))))),
     !dataset.people.length && h('p.alert', {}, canEdit ? t('common.noMasterdata') : t('common.noMasterdataReadonly')),
     status,
+    jump,
     legendBox(legend(dataset, canEdit)),
     table,
     print,
@@ -143,12 +147,15 @@ export async function render(root, ctx) {
       btnSolve.disabled = state.solving || closed();
       btnStop.disabled = !state.solving;
       btnUnpin.disabled = state.solving || closed() || !plan.assignments.length;
+      btnPin.disabled = btnUnpin.disabled;
     }
     print.querySelector('.print-header')?.replaceChildren(printHeader(title, plan.status));
   }
 
   /** Chips of the rules to look at (hard rules with matches, soft rules with a high share); a click lists who and when. */
   function chips() {
+    // viewers get no list behind a chip, so no chips
+    if (!canEdit) return null;
     const list = problemConstraints(analysis?.constraints);
     if (!list.length) return null;
     return h('div.chips', { role: 'group', 'aria-label': t('roster.problems') }, list.map((c) => {
@@ -241,12 +248,31 @@ export async function render(root, ctx) {
       h('thead', {}, head), h('tbody', {}, body));
     table.replaceChildren(tableEl);
     sticky.watch(tableEl);
+    drawJump(grid, gapDays);
     print.replaceChildren(h('p.print-header', {}, printHeader(title, state.plan.status)), legend(dataset, canEdit),
       ...printParts(grid.days).map((days) => printTable(grid, days, gapDays)));
     // one tab stop: the last used cell, else the first; keep keyboard focus on the same cell after a redraw
     const key = focusKey ?? active;
     focusKey = null;
     nav.restore(key);
+  }
+
+  /** The link to the first conflict cell of the shown rows, else to the first day with a gap; none without either. */
+  function drawJump(grid, gapDays) {
+    let key = null;
+    for (const row of grid.rows) {
+      const i = row.cells.findIndex((c) => c.conflict);
+      if (i >= 0 && (!key || grid.days[i].date < key.split('|')[1])) key = `${row.person.id}|${grid.days[i].date}`;
+    }
+    const gapDay = !key && grid.days.find((d) => gapDays.get(d.date));
+    if (gapDay) key = `gaps|${gapDay.date}`;
+    jump.replaceChildren();
+    if (!key) return;
+    jump.append(h('button.btn-link', { type: 'button', onclick: () => {
+      const cell = table.querySelector(`[data-cell="${CSS.escape(key)}"]`);
+      cell?.scrollIntoView({ block: 'nearest', inline: 'center' });
+      cell?.focus({ preventScroll: true });
+    } }, gapDay ? t('roster.jumpGap') : t('roster.jumpConflict')));
   }
 
   /** Meta text after the name: with the full name the short name, then the weekly hours. */
@@ -398,6 +424,14 @@ export async function render(root, ctx) {
     await guarded(() => api.stop(month), t('roster.stopping'));
     clearTimeout(timer);
     timer = setTimeout(poll, 0);
+  }
+
+  async function pinAll() {
+    const plan = await guarded(() => api.pin(month), t('roster.pinnedAll'));
+    if (plan) {
+      state = { ...state, plan };
+      drawTable();
+    }
   }
 
   async function unpin() {

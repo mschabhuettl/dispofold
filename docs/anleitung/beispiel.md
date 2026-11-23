@@ -51,7 +51,7 @@ Das Soll und das Ziel der Person sind ab jetzt kleiner. Die Änderung merkt sich
 Angenommen, die Notrufannahme braucht an Werktagen von 14:30 bis 19:00 eine Person mehr.
 
 1. **Einstellungen**, Reiter **Stammdaten**, Tabelle **Bedarf**.
-2. Unter **Filtern** „Notrufannahme“ eingeben.
+2. Unter **Bedarf filtern** „Notrufannahme“ eingeben.
 3. In der Zeile „Mo, Di, Mi, Do, Fr, 14:30 bis 19:00“ **Bearbeiten** klicken.
 4. **Mindestens** (1) um eins erhöhen und **Speichern** (2).
 
@@ -167,7 +167,8 @@ frei ist und den Dienst machen darf:
 2. An den Krankentagen steht „K“; die Dienste haben andere übernommen, am zweiten Tag die Person auf Anfrage.
 
 Neu planen ändert auch andere Zellen, die nicht fixiert sind. Soll ein Teil des Plans sicher bleiben (etwa weil er
-schon ausgehängt ist), vorher diese Zellen fixieren (Zelle anklicken, **Fixieren**).
+schon ausgehängt ist), vorher diese Zellen fixieren (Zelle anklicken, **Fixieren**) oder mit **Plan fixieren** alle
+Dienste des Monats auf einmal.
 
 ## 10. Den Monat abschließen
 

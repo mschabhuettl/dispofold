@@ -1,8 +1,10 @@
 // Playwright check of the header and status line of "Dienstplan" (#/plan) and "Plan nach Funktion" (#/funktionen):
-// solver options under a collapsed "Erweitert", Planen, Stopp and Fixierungen lösen in one row, the "Ausgabe" menu
-// (Drucken, exports, Monat abschließen), the legend collapsed and remembered, the coloured headline without the raw
-// score, the rule chips with their list, the sticky gap rows, the checklist before closing the month with its second
-// confirm, and what viewers see. Demo data of the dev server (mock API).
+// solver options under a collapsed "Erweitert", Planen, Stopp, Plan fixieren and Fixierungen lösen in one row, the
+// "Ausgabe" menu (Drucken, exports, Monat abschließen), the legend collapsed and remembered, the coloured headline
+// without the raw score, the rule chips with their list, the sticky gap rows, the checklist before closing the month
+// with its second confirm, and what viewers see (no chips). For the sick note: "Plan fixieren" pins every duty and
+// compensatory rest day but no free day, the link to the first conflict or gap scrolls the grid to it, and the list of
+// who could be asked says what a click does and the hours with their meaning. Demo data of the dev server (mock API).
 //   npm run build && node scripts/check-plan-views.mjs     (Chromium via `npx playwright install chromium`)
 import { spawn } from 'node:child_process';
 import { createServer } from 'node:net';
@@ -84,9 +86,9 @@ try {
   check('Erweitert collapsed', !(await advanced.evaluate((d) => d.open)));
   check('Erweitert holds the solver options', await advanced.locator('#seed, #limit, #move-limit, #cold-start').count() === 4);
   check('solver options hidden', await page.locator('#seed').isHidden());
-  const tops = await Promise.all(['Planen', 'Stopp', 'Fixierungen lösen']
+  const tops = await Promise.all(['Planen', 'Stopp', 'Plan fixieren', 'Fixierungen lösen']
     .map(async (name) => (await page.getByRole('button', { name, exact: true }).boundingBox()).y));
-  check('Planen, Stopp, Fixierungen lösen in one row', tops.every((y) => y === tops[0]), tops.join(', '));
+  check('Planen, Stopp, Plan fixieren, Fixierungen lösen in one row', tops.every((y) => y === tops[0]), tops.join(', '));
 
   // the "Ausgabe" menu: aria-expanded, items, arrow keys, Escape back to the button
   const toggle = page.getByRole('button', { name: 'Ausgabe' });
@@ -226,6 +228,67 @@ try {
   await page.reload();
   await page.locator('.roster-wrap table').waitFor();
 
+  // "Plan fixieren": every duty and compensatory rest day pinned, free days stay open; "Fixierungen lösen" undoes it
+  const fixed = new Set((await api(page, `/api/periods/${month}`)).fixed.map((f) => `${f.personId}|${f.date}`));
+  await page.getByRole('button', { name: 'Plan fixieren', exact: true }).click();
+  await page.locator('#toast').filter({ hasText: 'fixiert' }).waitFor({ timeout: 10000 }).catch(() => {});
+  let cellsNow = (await api(page, `/api/plans/${month}`)).plan.assignments;
+  check('Plan fixieren pins every duty and compensatory rest day', cellsNow.filter((a) => a.shiftId || a.compRest).every((a) => a.pinned)
+    && cellsNow.some((a) => !a.shiftId && !a.compRest && !a.pinned), String(cellsNow.filter((a) => a.pinned).length));
+  check('Plan fixieren: every duty in the grid framed', await page.locator('.roster-wrap .cell-shift').count() > 0
+    && await page.locator('.roster-wrap .cell-shift:not(.cell-pinned)').count() === 0);
+  await page.getByRole('button', { name: 'Fixierungen lösen', exact: true }).click();
+  await page.locator('#toast').filter({ hasText: 'gelöst' }).waitFor({ timeout: 10000 }).catch(() => {});
+  cellsNow = (await api(page, `/api/plans/${month}`)).plan.assignments;
+  check('Fixierungen lösen undoes it', cellsNow.every((a) => !a.pinned || fixed.has(`${a.personId}|${a.date}`)));
+
+  // the link to the first gap and to the first conflict: the grid scrolls sideways to that cell, the focus on it
+  const ds = await api(page, '/api/dataset');
+  const firstArea = ds.areas[0].id;
+  const askShift = ds.shifts.find((x) => x.areaId === firstArea).id;
+  await page.route(`**/api/plans/${month}/analysis`, async (route) => {
+    const a = await (await route.fetch()).json();
+    await route.fulfill({ json: { ...a, gaps: [{ areaId: firstArea, from: `${month}-30T08:00`, to: `${month}-30T16:00`, required: 2, planned: 1 }] } });
+  });
+  // one person who could be asked for that gap
+  const asked = cellsNow.find((a) => !a.shiftId && !a.compRest);
+  await page.route((u) => u.pathname === `/api/plans/${month}/candidates`, (route) => route.fulfill({ json: [
+    { personId: asked.personId, date: `${month}-30`, shiftId: askShift, plannedHours: 108, targetHours: 117.3 }] }));
+  await page.reload();
+  await page.locator('.roster-wrap table').waitFor();
+  const jump = page.locator('.jump-first button');
+  check('link to the first gap', await jump.textContent() === 'Zur ersten Lücke springen');
+  await jump.click();
+  const toGap = await page.evaluate(() => ({ cell: document.activeElement.dataset.cell, left: document.querySelector('.roster-wrap').scrollLeft }));
+  check('the link shows the gap', toGap.cell === `gaps|${month}-30` && toGap.left > 0, JSON.stringify(toGap));
+  // the list of who could be asked: what a click does, the hours with their meaning
+  await page.keyboard.press('Enter');
+  await page.locator('.popover .candidates[data-loaded]').waitFor({ timeout: 10000 });
+  const hint = await page.locator('.popover .candidates-hint').textContent();
+  const hours = await page.locator('.popover .candidates li span.muted').last().textContent();
+  check('candidates: what a click does', hint === 'Klick auf einen Namen setzt den Dienst und fixiert ihn.', hint);
+  check('candidates: hours with their meaning', hours === 'geplant 108,0 h von Ziel 117,3 h', hours);
+  await page.keyboard.press('Escape');
+  // a conflict (an absence entered on a planned duty late in the month) comes before the gap
+  const late = cellsNow.filter((a) => a.shiftId && a.date >= `${month}-28`).sort((a, b) => a.date.localeCompare(b.date))[0];
+  await page.route(`**/api/periods/${month}`, async (route) => {
+    const p = await (await route.fetch()).json();
+    await route.fulfill({ json: { ...p, absences: [...p.absences.filter((a) => !(a.personId === late.personId && a.date === late.date)),
+      { personId: late.personId, date: late.date, typeCode: 'K' }] } });
+  });
+  await page.reload();
+  await page.locator('.roster-wrap table').waitFor();
+  check('link to the first conflict', await jump.textContent() === 'Zum ersten Konflikt springen');
+  await page.evaluate(() => { document.querySelector('.roster-wrap').scrollLeft = 0; });
+  await jump.click();
+  const toConflict = await page.evaluate(() => ({ cell: document.activeElement.dataset.cell, left: document.querySelector('.roster-wrap').scrollLeft,
+    hard: document.activeElement.classList.contains('cell-hard') }));
+  check('the link shows the conflict', toConflict.cell === `${late.personId}|${late.date}` && toConflict.hard && toConflict.left > 0, JSON.stringify(toConflict));
+  await page.unroute(`**/api/periods/${month}`);
+  await page.unroute(`**/api/plans/${month}/analysis`);
+  await page.reload();
+  await page.locator('.roster-wrap table').waitFor();
+
   // the gap row is row 0 of the arrow key grid
   const days = await page.locator('.roster-wrap thead th').count() - 2;
   check('gap row in the arrow key grid', await page.locator('tr.sticky-gaps [data-cell]').count() === days, String(days));
@@ -297,6 +360,7 @@ try {
   await open(viewer, 'plan');
   check('viewer: no Erweitert, no Planen', await viewer.locator('details.advanced').count() === 0
     && await viewer.getByRole('button', { name: 'Planen', exact: true }).count() === 0);
+  check('viewer: no rule chips (there is no list behind them)', await viewer.locator('.statusbar .chips, .statusbar .chip').count() === 0);
   const viewerItems = await menuItems(viewer);
   check('viewer: menu only Drucken', viewerItems.length === 1 && viewerItems[0] === 'Drucken', viewerItems.join(', '));
   await viewer.locator('details.legend-box > summary').click();

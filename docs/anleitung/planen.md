@@ -19,7 +19,9 @@ verwendbar ist, und **Prüfen** listet alles auf, was nicht stimmt. Wie man einz
 Eine neue Planung baut auf dem gespeicherten Plan auf: Sie verbessert ihn, statt von vorn zu beginnen. Fixierte
 Zellen (von Hand gesetzt) und Vorgaben bleiben, wie sie sind. **Fixierungen lösen** löst alle Fixierungen des
 Monats, damit die nächste Planung auch diese Zellen ändern darf; Vorgaben aus den **Eingaben** bleiben dabei
-erhalten.
+erhalten. **Plan fixieren** macht das Gegenteil: Es fixiert alle geplanten Dienste und Ersatzruhetage des Monats,
+etwa wenn der Plan schon ausgehängt ist. Neu planen ändert sie dann nicht mehr und füllt Lücken nur noch an freien
+Tagen; freie Tage bleiben offen, damit sich für eine Lücke noch jemand findet.
 
 **Wann neu planen:** nach jeder Änderung, die den Hinweis
 [„Plan veraltet: neu planen“](#hinweis-plan-veraltet-neu-planen) bringt, und wenn der Plan Regelverstöße oder Lücken

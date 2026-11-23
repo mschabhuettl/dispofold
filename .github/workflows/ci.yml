@@ -203,7 +203,7 @@ jobs:
       - name: Print layouts of both plan views (browser)
         working-directory: frontend
         run: node scripts/check-print.mjs
-      - name: Header, status line and sticky rows of both plan views (browser)
+      - name: Header, status line, sticky rows, Plan fixieren and the jump to the first conflict (browser)
         working-directory: frontend
         run: node scripts/check-plan-views.mjs
       - name: Terms on every page, viewer navigation, import page (browser)
@@ -218,15 +218,21 @@ jobs:
       - name: Personen pages, one person form, area switch, viewers without form (browser)
         working-directory: frontend
         run: node scripts/check-people.mjs
-      - name: Eingaben with absence ranges and a person filter (browser)
+      - name: Eingaben with absence ranges, a person filter, section links, save bar and marked new rows (browser)
         working-directory: frontend
         run: node scripts/check-inputs.mjs
       - name: Daten page, corrections file, import keeping changes, anonymised export (browser)
         working-directory: frontend
         run: node scripts/check-data.mjs
-      - name: Help buttons by click, keyboard and touch (browser)
+      - name: Help buttons by click, keyboard and touch, the built-in guide on the server (browser)
         working-directory: frontend
         run: node scripts/check-help.mjs
+      - name: Phone width, menu folded, no sideways scrolling (browser)
+        working-directory: frontend
+        run: node scripts/check-phone.mjs
+      - name: Labels, intros and order for beginners (browser)
+        working-directory: frontend
+        run: node scripts/check-beginner.mjs
       - name: Plugin system with the test-only example plugin, server and desktop (browser)
         working-directory: frontend
         run: |

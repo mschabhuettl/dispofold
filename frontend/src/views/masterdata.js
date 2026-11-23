@@ -39,7 +39,7 @@ export async function render(root, ctx, params = []) {
         [t('masterdata.col.unpopular'), (s) => (s.unpopular ? t('common.yes') : '')]],
       demand: [[t('masterdata.col.area'), (d) => areaName.get(d.areaId) ?? d.areaId], [t('masterdata.col.valid'), (d) => (d.date ? de(d.date) : (d.days ?? []).map((x) => DAY_CODES[x] ?? x).join(', '))],
         [t('masterdata.col.from'), (d) => hhmm(d.from)], [t('masterdata.col.to'), (d) => hhmm(d.to)], [t('masterdata.col.min'), (d) => String(d.min), 'num'],
-        [t('masterdata.col.max'), (d) => d.max ?? '–', 'num']],
+        [t('masterdata.col.max'), (d) => d.max ?? t('masterdata.maxIsMin'), 'num']],
       holidays: [[t('masterdata.col.date'), (x) => de(x.date)], [t('masterdata.col.name'), (x) => x.name]],
     }[kind];
   }
@@ -101,7 +101,7 @@ export async function render(root, ctx, params = []) {
     const none = h('p.muted', { hidden: true }, t('masterdata.noMatch'));
     const filterId = `filter-${kind}`;
     const filter = h('input', { id: filterId, type: 'search', 'data-filter': kind, value: filters[kind] ?? '', autocomplete: 'off',
-      'aria-label': t('masterdata.filterLabel', { section: TITLES[kind] }), oninput: apply });
+      oninput: apply });
     function apply() {
       filters[kind] = filter.value;
       const terms = filter.value.trim().toLocaleLowerCase('de').split(/\s+/).filter(Boolean);
@@ -116,7 +116,7 @@ export async function render(root, ctx, params = []) {
     }
     apply();
     return h('section.section', { 'aria-labelledby': id }, h('h2', { id }, TITLES[kind]),
-      h('div.toolbar', {}, h('div.field', {}, h('label', { for: filterId }, t('masterdata.filter')), filter),
+      h('div.toolbar', {}, h('div.field', {}, h('label', { for: filterId }, t('masterdata.filterLabel', { section: TITLES[kind] })), filter),
         canEdit && h('button.btn.btn-secondary.btn-small', { type: 'button', 'data-new': kind, onclick: () => openForm(kind, null) }, t('masterdata.new'))),
       h('div', { style: { overflowX: 'auto' } }, table), none);
   }
