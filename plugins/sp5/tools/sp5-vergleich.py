@@ -182,6 +182,16 @@ def main(argv: list[str] | None = None) -> int:
         request = json.loads((work / "anfrage.json").read_text(encoding="utf-8"))
         lines.append(f"Optionen: {' '.join(a for a in request['args'] if a.startswith('--'))}; Korrekturdatei: "
                      f"{'ja' if request.get('corrections') else 'nein'}")
+        if request.get("nightsFair") is False:
+            # Dispofold marks night shifts only when chosen; sp5_export.py marks them when a shift rule has no
+            # "unpopular". The same result: every such rule with "unpopular": false for the Python run.
+            mapping = json.loads((work / "mapping.json").read_text(encoding="utf-8"))
+            for rule in mapping.get("shifts", []):
+                if isinstance(rule, dict):
+                    rule.setdefault("unpopular", False)
+            (work / "mapping.json").write_text(json.dumps(mapping, ensure_ascii=False), encoding="utf-8")
+            lines.append("Nachtschichten nicht automatisch fair verteilt: für sp5_export.py hat jede Schichtregel ohne "
+                         "Angabe „unpopular: false“")
         code, stderr = run_python(checkout, Path(args.daten).resolve(), work, request)
         if code != 0:
             lines.append(f"sp5_export.py endete mit Fehler (Code {code}); kein Vergleich möglich")

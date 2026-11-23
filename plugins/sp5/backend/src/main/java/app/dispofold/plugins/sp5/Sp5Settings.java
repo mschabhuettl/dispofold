@@ -13,8 +13,9 @@ import app.dispofold.plugin.api.PluginErrors;
 /**
  * The plugin's settings (version 1):
  * {@code {"root", "path", "mapping", "options": {historyMonths, areasFromHistory, shiftsFromHistory, demand,
- * mixMinDuties, shiftMix, hiddenShiftsMonths, recentMonths}}}. The options are those of sp5_export.py with its
- * defaults ({@code --no-shift-mix} is {@code shiftMix: false}).
+ * mixMinDuties, shiftMix, hiddenShiftsMonths, recentMonths, nightsFair}}}. The options are those of sp5_export.py with
+ * its defaults ({@code --no-shift-mix} is {@code shiftMix: false}); {@code nightsFair} (default off) marks night
+ * shifts whose mapping rule leaves {@code unpopular} empty, as sp5_export.py always does.
  */
 final class Sp5Settings {
 
@@ -37,6 +38,7 @@ final class Sp5Settings {
         o.put("shiftMix", true);
         o.put("hiddenShiftsMonths", 3);
         o.put("recentMonths", 3);
+        o.put("nightsFair", false);
         return s;
     }
 
@@ -95,6 +97,9 @@ final class Sp5Settings {
         }
         if (!o.get("shiftMix").isBoolean()) {
             throw invalid("shiftMix");
+        }
+        if (!o.get("nightsFair").isBoolean()) {
+            throw invalid("nightsFair");
         }
         if (!s.get("mapping").isNull() && !s.get("mapping").isObject()) {
             throw invalid("mapping");

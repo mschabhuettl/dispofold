@@ -101,7 +101,7 @@ leer sein. Felder, die im Beispiel `null` sind, dürfen fehlen.
 | shift | `code` | Kurzzeichen im Raster |
 | shift | `start`, `end` | Dienstbeginn und -ende; die Dauer ist die bezahlte Dienstzeit (bezahlte Pausen sind enthalten). Höchstens so lang wie die Regel „Höchstdauer eines Dienstes" (`maxDutyHours`, Standard 12 Stunden) |
 | shift | `category` | `EARLY`, `DAY`, `LATE`, `NIGHT`; fehlt sie, wird sie aus den Zeiten abgeleitet |
-| shift | `unpopular` | zählt in der Fairnessübersicht als unbeliebter Dienst |
+| shift | `unpopular` | „Fair verteilen“: Dienste dieser Schicht werden über die Fairness gleichmäßig auf alle verteilt, die sie machen können |
 | demand | `days` / `date` | Gültigkeit: Tagestypen `MON`..`SUN`, `HOL`, oder ein einzelnes Datum |
 | demand | `from`, `to`, `min`, `max` | Zeitfenster und Mindest- (optional Höchst-) Besetzung des Bereichs |
 | absenceType | `code` | Kürzel, auf das sich Abwesenheiten beziehen |

@@ -35,7 +35,7 @@ Regeln die wichtigste Vorgabe für die Planung. Siehe [Bereiche, Schichten und B
 
 ## Belastung
 
-Wie viele Nächte, Wochenenden, Feiertage und [unbeliebte Dienste](#unbeliebte-dienste) eine Person hat, umgerechnet
+Wie viele Nächte, Wochenenden, Feiertage und [fair verteilte Dienste](#fair-verteilte-dienste) eine Person hat, umgerechnet
 auf 30 verfügbare Tage bei 40 Wochenstunden, mit den Vormonaten. So sind Teilzeit und lange Abwesenheit
 vergleichbar. Die [Fairness](#fairness) vergleicht die Belastung. Siehe [Auswertungen](auswertungen.md#fairness).
 
@@ -118,7 +118,7 @@ Anteilen an. Siehe [Person bearbeiten](personen.md#person-bearbeiten).
 
 ## Historie
 
-Die Zahlen der abgeschlossenen Vormonate je Person: Nächte, Wochenenden, Feiertage, unbeliebte Dienste, Wünsche,
+Die Zahlen der abgeschlossenen Vormonate je Person: Nächte, Wochenenden, Feiertage, fair verteilte Dienste, Wünsche,
 Stundenkonto und Ersatzruhe. Sie zählt für die Fairness und als Ausgangspunkt für Stundenkonto und Ersatzruhe des
 nächsten Monats.
 
@@ -223,10 +223,11 @@ Monatsabschluss steht der neue Stand in der Historie.
 Mehr Personen eingeplant, als die Höchstbesetzung erlaubt (wo keine gesetzt ist, als die Mindestbesetzung
 verlangt), oder Dienste, die gar keinen Bedarf abdecken. Gehört zur Gruppe Bedarf.
 
-## Unbeliebte Dienste
+## Fair verteilte Dienste
 
-Schichten, die in den Stammdaten als **Unbeliebt** markiert sind, meist die Nachtschichten. Sie zählen für die
-Fairness extra.
+Dienste in Schichten, die in den Stammdaten **Fair verteilen** angekreuzt haben. Die Fairness verteilt sie
+gleichmäßig auf alle, die sie machen können. Markiert wird nur, was jemand ankreuzt; Nächte haben ohnehin ihre
+eigene Fairness-Regel.
 
 ## Vorgabe
 

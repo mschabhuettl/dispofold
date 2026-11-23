@@ -257,7 +257,7 @@ public final class Sp5Main {
                     intOption(o, "--shifts-from-history", null), o.getOrDefault("--demand", "history"),
                     o.containsKey("--no-shift-mix") ? null : intOption(o, "--mix-min-duties", Sp5Export.MIX_MIN_DUTIES),
                     intOption(o, "--hidden-shifts-months", Sp5Export.HIDDEN_SHIFTS_MONTHS),
-                    intOption(o, "--recent-months", Sp5Export.RECENT_MONTHS), mapping, corrections);
+                    intOption(o, "--recent-months", Sp5Export.RECENT_MONTHS), mapping, corrections, true);
             result = Sp5Export.run(request);
         } catch (Sp5Export.Sp5Error e) {
             return fail(err, e.getMessage());

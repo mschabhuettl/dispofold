@@ -21,8 +21,8 @@ in Schichtplaner 5 ändert sich nichts.
      `mapping.json` aus sp5-export. Eine Datei wählen oder den Text einfügen. Beim Speichern wird sie geprüft wie
      von `sp5_export.py`; alle Fehler stehen in der Meldung. Bequemer geht es auf der Seite
      [Zuordnung](plugin-sp5-zuordnung.md).
-   - **Optionen:** dieselben wie die von `sp5_export.py`, mit denselben Standardwerten. Jede hat ein „i“ mit der
-     Erklärung.
+   - **Optionen:** dieselben wie die von `sp5_export.py`, mit denselben Standardwerten, und dazu **Nachtschichten
+     automatisch fair verteilen**. Jede hat ein „i“ mit der Erklärung.
 3. **Einstellungen speichern.** Ausschalten der Erweiterung behält sie.
 
 | Einstellung | Standard | Entspricht |
@@ -34,6 +34,12 @@ in Schichtplaner 5 ändert sich nichts.
 | Gewohnte Verteilung übernehmen, ab … Diensten | an, 10 | `--no-shift-mix`, `--mix-min-duties` |
 | Ausgeblendete Schichten mit Diensten in den … Monaten davor | 3 | `--hidden-shifts-months` |
 | Bereiche ohne Dienst in den letzten … Monaten nur auf Anfrage | 3 | `--recent-months` |
+| Nachtschichten automatisch fair verteilen | aus | `sp5_export.py` tut das immer: eine Schichtregel ohne „Fair verteilen“ markiert dort Nachtschichten |
+
+Ohne diese Option wird eine Schicht nur fair verteilt, wenn ihre Schichtregel in der Zuordnung „Fair verteilen: ja“
+sagt; Nächte haben ohnehin ihre eigene Fairness-Regel. Eine Regel mit „ja“ oder „nein“ gilt immer so. Weil
+`sp5_export.py` die Nachtschichten markiert, gibt `sp5-vergleich.py` dem Python-Programm bei ausgeschalteter
+Option eine Zuordnung, in der jede Schichtregel ohne Angabe „nein“ sagt, und nennt das im Ergebnis.
 
 ## Importieren
 

@@ -97,7 +97,8 @@ public class Sp5ExportTest {
     }
 
     static Sp5Export.Request request(Path dir, Map<String, Object> corrections) throws Exception {
-        return new Sp5Export.Request(dir, "2027-01", null, 1, null, null, "history", 1, 3, 3, mapping(), corrections);
+        return new Sp5Export.Request(dir, "2027-01", null, 1, null, null, "history", 1, 3, 3, mapping(), corrections,
+                true);
     }
 
     @Test
@@ -132,6 +133,30 @@ public class Sp5ExportTest {
                 + "\"dispofold/dataset\",\n \"version\": 2,\n \"source\": \"sp5\",").endsWith("\n}\n");
     }
 
+    /** The shifts' "unpopular" with nightsFair on or off and this mapping. */
+    @SuppressWarnings("unchecked")
+    static List<Object> unpopular(Path dir, Map<String, Object> mapping, boolean nightsFair) throws Exception {
+        Sp5Export.Result r = Sp5Export.run(new Sp5Export.Request(dir, "2027-01", null, 1, null, null, "history", 1, 3,
+                3, mapping, null, nightsFair));
+        return ((List<Map<String, Object>>) r.dataset().get("shifts")).stream().map(s -> s.get("unpopular")).toList();
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void nightShiftsAreMarkedOnlyWhenChosenOrSetInTheRule(@TempDir Path dir) throws Exception {
+        folder(dir);
+        // A1 (day) and N1 (night), rules without "unpopular": marked only with the option, as sp5_export.py does
+        assertThat(unpopular(dir, mapping(), false)).containsExactly(false, false);
+        assertThat(unpopular(dir, mapping(), true)).containsExactly(false, true);
+        // a value in the rule wins either way
+        Map<String, Object> set = mapping();
+        List<Map<String, Object>> rules = (List<Map<String, Object>>) set.get("shifts");
+        rules.get(0).put("unpopular", true);
+        rules.get(1).put("unpopular", false);
+        assertThat(unpopular(dir, set, false)).containsExactly(true, false);
+        assertThat(unpopular(dir, set, true)).containsExactly(true, false);
+    }
+
     @Test
     @SuppressWarnings("unchecked")
     void correctionsAreAppliedLastAndListed(@TempDir Path dir) throws Exception {
@@ -164,7 +189,7 @@ public class Sp5ExportTest {
         assertThatThrownBy(() -> Corrections.load("{\"format\": \"x\"}".getBytes(StandardCharsets.UTF_8), "k.json"))
                 .hasMessage("Korrekturdatei k.json: unbekanntes Format, erwartet \"dispofold/corrections\"");
         assertThatThrownBy(() -> Sp5Export.run(new Sp5Export.Request(dir, "2027-01", "2028-02", 1, null, null,
-                "history", 10, 3, 3, mapping(), null))).hasMessage("Zeitraum 2027-01 bis 2028-02: Ende muss im selben "
+                "history", 10, 3, 3, mapping(), null, true))).hasMessage("Zeitraum 2027-01 bis 2028-02: Ende muss im selben "
                         + "Monat oder bis zu 12 Monate danach liegen");
     }
 

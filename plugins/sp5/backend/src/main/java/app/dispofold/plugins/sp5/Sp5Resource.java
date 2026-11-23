@@ -81,8 +81,8 @@ public class Sp5Resource {
     /**
      * The export of the months in the body ({@code {"month", "to"}}) as a ZIP file: dataset.json, report.csv and
      * warnings.txt as sp5_export.py writes them, and what it was made with (anfrage.json with the options of
-     * sp5_export.py, mapping.json, korrekturen.json if Dispofold has corrections). plugins/sp5/tools/sp5-vergleich.py
-     * runs the Python program with the same inputs and compares.
+     * sp5_export.py and nightsFair, mapping.json, korrekturen.json if Dispofold has corrections).
+     * plugins/sp5/tools/sp5-vergleich.py runs the Python program with the same inputs and compares.
      */
     @POST
     @Path("ergebnis")
@@ -96,6 +96,8 @@ public class Sp5Resource {
         question.put("format", "dispofold/sp5-ergebnis");
         question.put("version", 1);
         question.set("args", mapper.valueToTree(args(request)));
+        // sp5_export.py has no such option: it always marks night shifts whose rule has no "unpopular"
+        question.put("nightsFair", request.nightsFair());
         question.put("mapping", "mapping.json");
         if (request.corrections() != null) {
             question.put("corrections", Sp5Plugin.CORRECTIONS_FILE);

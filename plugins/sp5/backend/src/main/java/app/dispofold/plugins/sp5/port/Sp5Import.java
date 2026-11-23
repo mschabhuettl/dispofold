@@ -96,6 +96,8 @@ final class Sp5Import {
     record Pending(Map<String, Object> e, LocalDate start, LocalDate end) {
     }
 
+    /** A rule without {@code unpopular} marks night shifts (sp5_export.py does; the plugin only when chosen). */
+    final boolean nightsFair;
     final Path folder;
     final Map<String, Object> mapping;
     final int hiddenShiftsMonths;
@@ -138,7 +140,9 @@ final class Sp5Import {
 
     @SuppressWarnings("unchecked")
     Sp5Import(Path folder, List<String> months, Map<String, Object> mapping, int historyMonths, Integer areasFromHistory,
-            Integer shiftsFromHistory, String demand, Integer mixMinDuties, int hiddenShiftsMonths, int recentMonths) {
+            Integer shiftsFromHistory, String demand, Integer mixMinDuties, int hiddenShiftsMonths, int recentMonths,
+            boolean nightsFair) {
+        this.nightsFair = nightsFair;
         this.folder = folder;
         this.mapping = mapping;
         this.hiddenShiftsMonths = hiddenShiftsMonths;
@@ -460,7 +464,8 @@ final class Sp5Import {
             shift.put("category", cat);
             shift.put("color", Py.isIntLike(color) && Py.compare(color, 0L) > 0 ? Sp5Calc.bgrToHex(Py.pyInt(color))
                     : DEFAULT_SHIFT_COLOR);
-            shift.put("unpopular", rule.containsKey("unpopular") ? rule.get("unpopular") : cat.equals("NIGHT"));
+            // without a value in the rule: marked only when night shifts are to be marked automatically
+            shift.put("unpopular", rule.containsKey("unpopular") ? rule.get("unpopular") : nightsFair && cat.equals("NIGHT"));
             shiftBySp5.put(k(sp5Id), shift);
         }
         if (hidden.isEmpty()) {

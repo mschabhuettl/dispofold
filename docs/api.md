@@ -191,7 +191,7 @@ Nachtausgleich in den Kennzahlen je Person (`PersonStats` in Analyse und Persone
   verfügbare Tage einer 40-Stunden-Kraft (die Treffer `hit.fairNights` nennen dieselbe Zahl in Tausendsteln);
   `null`, wenn nicht verglichen.
 - `nightMean`: der Mittelwert dieser Last über alle Verglichenen.
-- `weekendLoad`, `holidayLoad`, `unpopularLoad`: dieselbe Last für Wochenenden, Feiertagsdienste und unbeliebte
+- `weekendLoad`, `holidayLoad`, `unpopularLoad`: dieselbe Last für Wochenenden, Feiertagsdienste und fair verteilte
   Dienste, wie die Fairness-Regeln sie vergleichen (Treffer `hit.fairWeekends` usw.); `null`, wenn nicht verglichen.
 
 Für `viewer` sind alle diese Felder `null`: Der Nachtausgleich würde die gewohnte Verteilung, Sperren oder

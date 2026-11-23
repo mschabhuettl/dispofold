@@ -99,7 +99,7 @@ class Sp5PluginTest {
                 .body("options.areasFromHistory", equalTo(null)).body("options.shiftsFromHistory", equalTo(null))
                 .body("options.demand", equalTo("history")).body("options.mixMinDuties", equalTo(10))
                 .body("options.shiftMix", equalTo(true)).body("options.hiddenShiftsMonths", equalTo(3))
-                .body("options.recentMonths", equalTo(3));
+                .body("options.recentMonths", equalTo(3)).body("options.nightsFair", equalTo(false));
     }
 
     @Test
@@ -107,7 +107,7 @@ class Sp5PluginTest {
         for (String[] bad : List.of(new String[] { "historyMonths", "25" }, new String[] { "historyMonths", "1.5" },
                 new String[] { "areasFromHistory", "0" }, new String[] { "areasFromHistory", "4294967297" },
                 new String[] { "demand", "\"plan\"" }, new String[] { "mixMinDuties", "0" },
-                new String[] { "recentMonths", "-1" }, new String[] { "shiftMix", "1" })) {
+                new String[] { "recentMonths", "-1" }, new String[] { "shiftMix", "1" }, new String[] { "nightsFair", "null" })) {
             ObjectNode s = settings("ordner");
             ((ObjectNode) s.get("options")).set(bad[0], mapper.readTree(bad[1]));
             json().body(s).put("/api/plugins/sp5/einstellungen").then().statusCode(400)
@@ -161,7 +161,10 @@ class Sp5PluginTest {
      */
     @Test
     void importThenTheResultIsWhatTheCommandLineWrites(@TempDir Path dir) throws Exception {
-        json().body(settings("ordner")).put("/api/plugins/sp5/einstellungen").then().statusCode(200);
+        // the command line marks night shifts without a value in the mapping; the plugin does so with this option
+        ObjectNode nights = settings("ordner");
+        ((ObjectNode) nights.get("options")).put("nightsFair", true);
+        json().body(nights).put("/api/plugins/sp5/einstellungen").then().statusCode(200);
         json().body("{\"month\":\"2027-01\",\"to\":null}").post("/api/import/plugin/sp5?replace=true").then()
                 .statusCode(200).body("months", equalTo(List.of("2027-01")));
         // the two people of the folder (an excluded person of an earlier dataset in this database stays as well)
@@ -178,6 +181,7 @@ class Sp5PluginTest {
                 "mapping.json", "korrekturen.json");
         JsonNode question = mapper.readTree(zip.get("anfrage.json"));
         assertThat(question.path("format").asText()).isEqualTo("dispofold/sp5-ergebnis");
+        assertThat(question.path("nightsFair").asBoolean()).isTrue();
         List<String> args = new ArrayList<>();
         question.path("args").forEach(a -> args.add(a.asText()));
         assertThat(args).containsExactly("--month", "2027-01", "--to", "2027-02", "--history-months", "1",
@@ -221,7 +225,7 @@ class Sp5PluginTest {
     @Test
     void theOptionsOfTheCommandLine() {
         assertThat(Sp5Resource.args(new app.dispofold.plugins.sp5.port.Sp5Export.Request(null, "2027-01", null, 0, 2,
-                5, "sp5", null, 0, 1, null, null))).containsExactly("--month", "2027-01", "--history-months", "0",
+                5, "sp5", null, 0, 1, null, null, false))).containsExactly("--month", "2027-01", "--history-months", "0",
                         "--areas-from-history", "2", "--shifts-from-history", "5", "--demand", "sp5",
                         "--no-shift-mix", "--hidden-shifts-months", "0", "--recent-months", "1");
     }

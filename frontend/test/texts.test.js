@@ -148,7 +148,7 @@ test('hit params are shown readably', async () => {
   assert.equal(hitText({ code: 'hit.fairNights', params: { count: 1, history: 14, load: 4470, mean: 4280 } }),
     '1 Nachtdienst (Vormonate 14), Belastung 4,47 gegenüber Mittel 4,28.');
   assert.equal(hitText({ code: 'hit.fairUnpopular', params: { count: 1, history: 14, load: 4470, mean: 4280 } }),
-    '1 unbeliebter Dienst (Vormonate 14), Belastung 4,47 gegenüber Mittel 4,28.');
+    '1 fair verteilter Dienst (Vormonate 14), Belastung 4,47 gegenüber Mittel 4,28.');
   assert.equal(hitText({ code: 'fairNights', params: { count: 5, history: 12, load: 1500, mean: 1200 } }),
     '5 Nachtdienste (Vormonate 12), Belastung 1,5 gegenüber Mittel 1,2.');
   assert.equal(messageText({ code: 'import.shiftTooLong', params: { shiftId: 'X1', minutes: 810, maxMinutes: 720 } }),

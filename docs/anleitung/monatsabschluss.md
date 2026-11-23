@@ -30,7 +30,7 @@ Danach steht im Status **abgeschlossen**:
 
 ## Was gespeichert wird
 
-Je Person die Zahlen des Monats (Nächte, Wochenenden, Feiertage, unbeliebte Dienste, Wünsche), die geplanten
+Je Person die Zahlen des Monats (Nächte, Wochenenden, Feiertage, fair verteilte Dienste, Wünsche), die geplanten
 Stunden, das Stundenkonto nach dem Monat und die Ersatzruhe nach dem Monat (genommen und neu erworben; ein Dienst
 an einem Feiertag bringt einen Ersatzruhetag). Diese Werte sind die Grundlage für Fairness und Stundenkonto der
 Folgemonate. Von außen importierte Ist-Werte (die Historie im Datensatz) haben Vorrang und werden nie

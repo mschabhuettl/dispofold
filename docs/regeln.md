@@ -229,7 +229,7 @@ der Erklärung je Person.
 | `fairNights` | Fairness Nachtdienste | Abweichung der Lasten vom Mittelwert, siehe Fairness | 3 |
 | `fairWeekends` | Fairness Wochenenden | siehe Fairness | 3 |
 | `fairHolidays` | Fairness Feiertage | siehe Fairness | 3 |
-| `fairUnpopular` | Fairness unbeliebte Dienste | siehe Fairness | 2 |
+| `fairUnpopular` | Fairness fair verteilte Dienste | siehe Fairness | 2 |
 | `wishes` | Wünsche mit gleicher Quote | siehe Wünsche | 300 |
 | `blockLength` | Blöcke von 2 bis 4 Diensten | je Tag zu kurz oder zu lang | 6000 |
 | `isolatedDayOff` | Kein einzelner freier Tag zwischen Diensten | je Fall | 10000 |
@@ -249,7 +249,7 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
 |---|---|---|---|
 | Dienstblöcke | `blockLength`, `isolatedDayOff` | 0,5 / 1 / 2 | 3000 / 6000 / 12000 und 5000 / 10000 / 20000 |
 | Wünsche | `wishes` | 0,5 / 1 / 2 | 150 / 300 / 600 |
-| Faire Verteilung | `fairNights`, `fairWeekends`, `fairHolidays`, `fairUnpopular` | 0,25 / 1 / 4 | 1 / 3 / 12, unbeliebte 1 / 2 / 8 |
+| Faire Verteilung | `fairNights`, `fairWeekends`, `fairHolidays`, `fairUnpopular` | 0,25 / 1 / 4 | 1 / 3 / 12, fair verteilte 1 / 2 / 8 |
 | Stunden treffen | `targetHours` | 0,5 / 1 / 2 | 10 / 20 / 40 |
 | Familienregeln | `family` | 0,5 / 1 / 2 | 400 / 800 / 1600 |
 
@@ -340,7 +340,7 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
   Abwechslung Dienste, solange die Verteilung besteht; sonst würde diese Regel die Verteilung wieder einebnen.
   Für die Fairness Nachtdienste (den Nachtausgleich) entscheidet die Nachtverteilung (siehe unten). Wer eine
   Verteilung je Bereich hat, zählt nicht für die Abwechslung der Bereiche. Wochenenden, Feiertage und
-  unbeliebte Dienste bleiben fair verteilt. Personen ohne Verteilung werden geplant wie bisher.
+  fair verteilte Dienste bleiben gleichmäßig verteilt. Personen ohne Verteilung werden geplant wie bisher.
 - Die Personenansicht zeigt die geplante Verteilung neben der gewohnten.
 - **Beispiel:** Olga macht seit Jahren fast nur Tagdienste (90 % Tag, 10 % Nacht). Die Regel verhindert, dass sie
   in einem Monat plötzlich zur Hälfte Nächte bekommt, nur weil das bei anderen Regeln etwas spart.
@@ -389,7 +389,7 @@ Eine Einstellung der Regeln, `nightDistribution`:
 
 ### Fairness
 
-- Gezählt werden je Person Nachtdienste, gearbeitete Wochenenden, Dienste an Feiertagen und unbeliebte
+- Gezählt werden je Person Nachtdienste, gearbeitete Wochenenden, Dienste an Feiertagen und fair verteilte
   Dienste (Schicht mit `unpopular`), jeweils zusammen mit den Summen der letzten `historyMonths` Monate
   (Standard 3) aus der Historie.
 - Verglichen wird die Last: Dienste je 30 verfügbare Tage einer 40-Stunden-Kraft, in Tausendsteln. Verfügbar
@@ -405,12 +405,12 @@ Eine Einstellung der Regeln, `nightDistribution`:
   Das nächste Wochenende im Dienst bekommt eher Tina.
 - **Beispiel `fairHolidays`:** Uwe hatte im Vormonat Dienst an einem Feiertag, Vera nicht. Am nächsten Feiertag
   ist eher Vera dran.
-- **Beispiel `fairUnpopular`:** Die Schicht Kurz 18-22 ist im Katalog als unbeliebt markiert. Sie geht nicht immer
+- **Beispiel `fairUnpopular`:** Die Schicht Kurz 18-22 hat im Katalog „Fair verteilen“ angekreuzt. Sie geht nicht immer
   an dieselben, sondern verteilt sich auf alle, die sie machen können.
 - Die Beispiele zeigen, was die Regeln vergleichen und bevorzugen. Wie wenig das den fertigen Plan bewegt, steht
   im nächsten Punkt.
 - Wirkung der Wichtigkeit „Faire Verteilung“ (Messung im Demomonat mit klaren Verteilungen, 300 s): Das 0,25-,
-  1- oder 4-Fache (Gewichte 1, 3 oder 12, unbeliebte 1, 2 oder 8) ändert die Fairness nicht über das Rauschen
+  1- oder 4-Fache (Gewichte 1, 3 oder 12, fair verteilte 1, 2 oder 8) ändert die Fairness nicht über das Rauschen
   zwischen zwei Läufen. Die Gründe:
   - Die vier Fairness-Regeln sind zusammen rund 0,5 % der weichen Strafe. Den Rest tragen gewohnte Verteilung
     (47 %), Sollstunden (24 %), Blocklänge (15 %), einzelne freie Tage (8 %) und Wünsche (6 %).
@@ -426,7 +426,7 @@ Eine Einstellung der Regeln, `nightDistribution`:
     verbessert vor allem die großen Posten. Die Fairness schwankt dabei um ± 5 % ohne Richtung.
   - Die Fairness wirkt deshalb wie ein Ausgleich unter sonst gleichwertigen Plänen. Proben mit 120 s: Ohne sie
     (Gewicht 0) waren die Wochenenden rund 15 % ungleicher, die übrigen kaum; das 100-Fache brachte 5 bis 13 %
-    mehr Ausgleich (ein Lauf, Nächte und unbeliebte Dienste im Rauschen). Der Bereich 0,25 bis 4 ist also viel zu
+    mehr Ausgleich (ein Lauf, Nächte und fair verteilte Dienste im Rauschen). Der Bereich 0,25 bis 4 ist also viel zu
     klein, um die Fairness spürbar zu verschieben; die Gewichte bleiben, wie sie sind. Nachrechnen:
     `FairnessAnalysisTest` im Backend.
 - Nachtdienst: ein Dienst, der mindestens `nightMinHours` (2 h) im Nachtfenster `nightStart` bis `nightEnd`

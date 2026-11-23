@@ -19,7 +19,7 @@ Rechner gibt es diese Rolle nicht.
   nur die eigene Zeile.
 - Den Plan drucken oder als PDF speichern (**Ausgabe**, **Drucken**), so wie er am Bildschirm steht.
 - Die Seite jeder Person mit ihren Diensten, Stunden und Soll und der Antwort auf „Warum dieser Dienst?“.
-- Die Fairness-Übersicht: wie Nächte, Wochenenden, Feiertage und unbeliebte Dienste verteilt sind.
+- Die Fairness-Übersicht: wie Nächte, Wochenenden, Feiertage und fair verteilte Dienste verteilt sind.
 - Die Zeile über dem Plan: ob der Plan Lücken hat und ob er **Entwurf** oder **abgeschlossen** ist. Ein Entwurf
   kann sich noch ändern; verbindlich ist ein abgeschlossener Monat oder was die Planung sagt.
 

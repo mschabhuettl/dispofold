@@ -10,7 +10,9 @@ Einstellungen der Erweiterung und hat dasselbe Format wie eine `mapping.json`.
 
 - **Bereiche:** die Bereiche, die der Import anlegt, mit Id (kurz, etwa `AN`), Name und Farbe.
 - **Schichtregeln:** ordnen Schichten nach ihrem Kürzel einem Bereich zu; die erste passende Regel gilt.
-  **Kategorie** leer heißt: aus den Zeiten der Schicht; **Unbeliebt** leer: Nachtschichten sind unbeliebt. Die
+  **Kategorie** leer heißt: aus den Zeiten der Schicht; **Fair verteilen**: Dienste dieser Schicht werden über die Fairness gleichmäßig auf alle verteilt, die
+  sie machen können; ohne Angabe nein, Nachtschichten nur mit der Option „Nachtschichten automatisch fair verteilen“
+  (Übersicht, Optionen). Die
   Spalte **Trifft** zeigt die Kürzel aus dem Ordner, die die Regel trifft, oder „trifft nichts“.
 - **Ignorierte Schichten:** Schichten, die der Import nicht übernimmt, auch wenn eine Regel passt.
 - **Gruppen:** Personen in einer Gruppe, deren Name passt, bekommen die angekreuzten Bereiche.

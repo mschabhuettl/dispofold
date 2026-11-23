@@ -7,7 +7,7 @@ export const ID = 'sp5';
 /** Address of one of the plugin's pages. */
 export const pageHref = (path) => `#/plugin/${ID}/${path}`;
 
-/** The options of sp5_export.py: [key, kind] (number, optional number, demand); shiftMix is a checkbox. */
+/** The options of sp5_export.py: [key, kind] (number, optional number, demand); shiftMix and nightsFair are checkboxes. */
 const OPTIONS = [
   ['historyMonths', 'number'], ['areasFromHistory', 'optional'], ['shiftsFromHistory', 'optional'],
   ['demand', 'demand'], ['mixMinDuties', 'number'], ['hiddenShiftsMonths', 'number'], ['recentMonths', 'number'],
@@ -39,12 +39,16 @@ export function optionFields(prefix, options = {}) {
     return field(key, control);
   });
   const shiftMix = h('input', { id: `${prefix}-shiftMix`, type: 'checkbox', checked: options.shiftMix !== false });
+  // off unless chosen: a shift rule without "Fair verteilen" leaves night shifts unmarked
+  const nightsFair = h('input', { id: `${prefix}-nightsFair`, type: 'checkbox', checked: options.nightsFair === true });
   const number = (v) => (v === '' ? null : Number(v));
   return {
-    elements: [...rows, h('label.check', {}, shiftMix, t('plugin.sp5.option.shiftMix'))],
+    elements: [...rows, h('label.check', {}, shiftMix, t('plugin.sp5.option.shiftMix')),
+      h('label.check', {}, nightsFair, t('plugin.sp5.option.nightsFair'), info(t('plugin.sp5.option.nightsFair.help'), t('plugin.sp5.option.nightsFair')))],
     value() {
       const out = Object.fromEntries(OPTIONS.map(([key, kind]) => [key, kind === 'demand' ? inputs[key].value : number(inputs[key].value)]));
       out.shiftMix = shiftMix.checked;
+      out.nightsFair = nightsFair.checked;
       return out;
     },
   };

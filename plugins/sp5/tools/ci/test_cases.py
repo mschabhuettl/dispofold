@@ -99,15 +99,18 @@ def test_cycle_without_end_yields_no_duties_in_the_port(source, tmp_path):
                         "same": True, "differences": [], "features": ["cycle without END"]})
 
 
-def _bundle(path: Path, out: Path, args: list[str]) -> Path:
+def _bundle(path: Path, out: Path, args: list[str], nights_fair: bool | None = None) -> Path:
     report = out.with_suffix(".csv")
     with zipfile.ZipFile(path, "w") as z:
         z.writestr("dataset.json", out.read_bytes())
         z.writestr("report.csv", report.read_bytes())
         z.writestr("warnings.txt", "".join(w + "\n" for w in out.with_suffix(".warnings").read_text(
             encoding="utf-8").splitlines()))
-        z.writestr("anfrage.json", json.dumps({"format": "dispofold/sp5-ergebnis", "version": 1, "args": args,
-                                               "mapping": "mapping.json", "corrections": None}))
+        request = {"format": "dispofold/sp5-ergebnis", "version": 1, "args": args, "mapping": "mapping.json",
+                   "corrections": None}
+        if nights_fair is not None:
+            request["nightsFair"] = nights_fair
+        z.writestr("anfrage.json", json.dumps(request))
         z.writestr("mapping.json", Path(MAPPING).read_bytes())
     return path
 
@@ -135,6 +138,29 @@ def test_owner_script_finds_identical_and_anonymous_differences(source, tmp_path
 
     same = compare(bundle)
     assert same.returncode == 0 and "ERGEBNIS: alles identisch" in same.stdout, same.stdout + same.stderr
+    assert "nicht automatisch fair verteilt" not in same.stdout
+    # Dispofold without automatic night marking (nightsFair false): its result is that of a mapping whose shift rules
+    # all say "unpopular": false; the script gives sp5_export.py such a mapping and finds no difference
+    plain = json.loads(Path(MAPPING).read_text(encoding="utf-8"))
+    for rule in plain["shifts"]:
+        rule.setdefault("unpopular", False)
+    plain_path = tmp_path / "plain-mapping.json"
+    plain_path.write_text(json.dumps(plain), encoding="utf-8")
+    plain_out = tmp_path / "plain" / "dataset.json"
+    plain_out.parent.mkdir()
+    run = subprocess.run(cmp.JAVA + ["--data", str(folder), *args, "--mapping", str(plain_path), "--out",
+                                     str(plain_out), "--report", str(plain_out.with_suffix(".csv"))],
+                         capture_output=True, text=True, encoding="utf-8")
+    assert run.returncode == 0, run.stderr
+    assert not any(s["unpopular"] for s in json.loads(plain_out.read_text(encoding="utf-8"))["shifts"])
+    plain_out.with_suffix(".warnings").write_text("".join(line[len("Warnung: "):] + "\n" for line in
+                                                          run.stderr.splitlines() if line.startswith("Warnung: ")),
+                                                  encoding="utf-8")
+    off = compare(_bundle(tmp_path / "ohne-nacht.zip", plain_out, args, nights_fair=False))
+    assert off.returncode == 0 and "ERGEBNIS: alles identisch" in off.stdout, off.stdout + off.stderr
+    assert "nicht automatisch fair verteilt" in off.stdout
+    # the same result compared as if nights were marked automatically: the difference shows
+    assert compare(_bundle(tmp_path / "mit-nacht.zip", plain_out, args, nights_fair=True)).returncode == 1
     # a changed person name and a changed number: found, and nothing of the data in the result
     changed = json.loads(out.read_text(encoding="utf-8"))
     person = changed["people"][1]

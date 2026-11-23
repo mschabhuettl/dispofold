@@ -88,7 +88,8 @@ public class Sp5Runs {
                 withoutCorrections = r.corrections() == null ? dataset
                         : plugin.data(plugin.export(new Sp5Export.Request(r.folder(), r.month(), r.to(),
                                 r.historyMonths(), r.areasFromHistory(), r.shiftsFromHistory(), r.demand(),
-                                r.mixMinDuties(), r.hiddenShiftsMonths(), r.recentMonths(), r.mapping(), null)))
+                                r.mixMinDuties(), r.hiddenShiftsMonths(), r.recentMonths(), r.mapping(), null,
+                                r.nightsFair())))
                                 .dataset();
             }
             return withoutCorrections;

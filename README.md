@@ -8,7 +8,7 @@ Mitarbeiterinnen und Mitarbeiter. Die Dienstplanung prüft, ändert, fixiert, sc
   Personen, Abwesenheiten und Sperren.
 - Bedarf je Bereich und Tageszeit. Der Solver wählt unter den Schichtvarianten des Bereichs. Ist der Bedarf
   nicht erfüllbar, zeigt das Programm die Lücken genau an.
-- Qualitätsregeln mit sichtbaren Gewichten: Stunden treffen, Fairness (Nächte, Wochenenden, Feiertage, unbeliebte
+- Qualitätsregeln mit sichtbaren Gewichten: Stunden treffen, Fairness (Nächte, Wochenenden, Feiertage, fair verteilte
   Dienste, auch über die Vormonate), Wünsche mit gleicher Quote je Person, Blöcke von 2 bis 4 Diensten,
   Vorwärtsrotation, ganze Wochenenden, Ersatzruhe abbauen, Abwechslung, Familienregeln.
 - Für jeden Dienst lässt sich nachlesen, welche Regeln gegriffen haben.

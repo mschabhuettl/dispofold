@@ -302,7 +302,7 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
         text: `${label(a.shiftId)} deckt Bedarf im Bereich ${sh.areaId}.` });
       if (a.pinned) hits.push({ constraintId: 'pinned', level: 'SOFT', date: a.date, score: 0, text: 'Von Hand fixiert.' });
       if (sh.unpopular) hits.push({ constraintId: 'fairUnpopular', level: 'SOFT', date: a.date, score: -weightOf('fairUnpopular'),
-        text: `Unbeliebter Dienst, Person hat in den letzten Monaten ${stats.historyUnpopular} gemacht.` });
+        text: `Fair verteilter Dienst, Person hat in den letzten Monaten ${stats.historyUnpopular} gemacht.` });
     }
     for (const w of period.wishes.filter((x) => x.personId === p.id)) {
       const a = plan?.assignments.find((x) => x.personId === p.id && x.date === w.date);

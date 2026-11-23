@@ -175,7 +175,7 @@ try {
   const measure = (await page.locator('.fairness-measure').textContent()) ?? '';
   check('fairness explains the measure', measure.includes('je 30 verfügbare Tage bei 40 Wochenstunden'), measure);
   const heads = await page.locator('table.data thead th').allTextContents();
-  check('fairness shows the loads', ['Belastung Nächte', 'Belastung Wochenenden', 'Belastung Feiertage', 'Belastung unbeliebte Dienste']
+  check('fairness shows the loads', ['Belastung Nächte', 'Belastung Wochenenden', 'Belastung Feiertage', 'Belastung fair verteilte Dienste']
     .every((x) => heads.some((hd) => hd.startsWith(x))), heads.slice(0, 6).join('|'));
   check('the 40 h toggle is gone', (await page.locator('main input[type=checkbox]').count()) === 0
     && !((await page.locator('main').textContent()) ?? '').includes('normiert'));

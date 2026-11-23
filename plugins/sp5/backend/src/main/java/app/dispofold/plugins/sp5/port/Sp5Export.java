@@ -47,9 +47,13 @@ public final class Sp5Export {
      * {@link #loadMapping} returns it) and the corrections (as {@link Corrections#load} returns them, or null).
      * `mixMinDuties` null writes no shift mix.
      */
+    /**
+     * @param nightsFair a mapping rule without {@code unpopular} marks night shifts (as sp5_export.py does); off, such
+     *        a shift is not marked
+     */
     public record Request(Path folder, String month, String to, int historyMonths, Integer areasFromHistory,
             Integer shiftsFromHistory, String demand, Integer mixMinDuties, int hiddenShiftsMonths, int recentMonths,
-            Map<String, Object> mapping, Map<String, Object> corrections) {
+            Map<String, Object> mapping, Map<String, Object> corrections, boolean nightsFair) {
     }
 
     /** The dataset (with appliedCorrections), the report rows (29 columns each, sorted) and the warnings. */
@@ -278,7 +282,8 @@ public final class Sp5Export {
             throw new Sp5Error("SP5-Ordner nicht gefunden: " + q.folder());
         }
         Sp5Import job = new Sp5Import(q.folder(), months, q.mapping(), history, q.areasFromHistory(),
-                q.shiftsFromHistory(), q.demand(), q.mixMinDuties(), q.hiddenShiftsMonths(), q.recentMonths());
+                q.shiftsFromHistory(), q.demand(), q.mixMinDuties(), q.hiddenShiftsMonths(), q.recentMonths(),
+                q.nightsFair());
         Map<String, Object> dataset = job.run();
         List<List<Object>> rows = new ArrayList<>();
         if (q.corrections() != null) {

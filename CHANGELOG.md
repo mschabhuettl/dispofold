@@ -26,6 +26,14 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
   Abwesenheit) gelten auch für schon gerechnete Pläne, ohne dass diese als veraltet markiert werden. Eine Vorgabe
   an einem jetzt freien Tag oder ein Schnitt über der eigenen Grenze erscheint in der Analyse als Regelverstoß;
   nach dem Update offene Monate prüfen und bei Bedarf neu planen.
+- **„Fair verteilen“:** Das Häkchen an einer Schicht heißt **Fair verteilen**: Dienste dieser Schicht werden über
+  die Fairness gleichmäßig auf alle verteilt, die sie machen können; das Wort, das eine Schicht bewertete, ist
+  überall ersetzt. Die Kennzahlen heißen „fair verteilte Dienste“. Im Datenformat bleibt das Feld `unpopular`, die
+  Regel `fairUnpopular`.
+- **Keine automatische Markierung von Nachtschichten:** In der Zuordnung der Import-Erweiterung heißt eine
+  Schichtregel ohne Angabe jetzt „nicht fair verteilen“; Nächte haben ihre eigene Fairness-Regel. Die neue Option
+  **Nachtschichten automatisch fair verteilen** (Standard aus) stellt das alte Verhalten wieder her. Eine Regel mit
+  „ja“ oder „nein“ gilt wie bisher. Hilfe: [Einstellungen der Erweiterung](plugins/sp5/docs/sp5.md).
 - **Prüfen → Stammdaten:** Die Meldung zu Bedarf, für den niemand eingeplant werden kann, kennt die freien Tage
   mitten in einer Abwesenheit.
 - **Planungsregeln:** Die Doku nennt, was der KV zur Durchrechnung, zu Teilzeit und zum Ersatzruhetag für
@@ -267,7 +275,7 @@ der Seite Daten, Hilfe auf jeder Seite. Die Planungsergebnisse sind unverändert
   Stammdaten (Personen ohne Bereich oder ohne planbare Schicht, Bereiche ohne Bedarf, unstimmige gewohnte
   Verteilung), jeweils mit dem, was zu tun ist.
 - **Fairness:** zeigt die Belastungen, die die Fairness-Regeln vergleichen (Nächte, Wochenenden, Feiertage,
-  unbeliebte Dienste je verfügbare Tage, mit den Vormonaten), statt der Umrechnung auf 40 Wochenstunden.
+  fair verteilte Dienste je verfügbare Tage, mit den Vormonaten), statt der Umrechnung auf 40 Wochenstunden.
 - **Personen:** eine durchsuchbare Liste und eine Seite je Person mit Kennzahlen, „Warum dieser Dienst?“ und einem
   einzigen Formular für Stammdaten, Eintritt und Austritt, gewohnte Verteilung, Einschränkungen und
   Familienregeln. Neu bei den Einschränkungen: je Bereich „ganzer Bereich: keine / nur auf Anfrage / nie“, mit

@@ -42,6 +42,11 @@ if git grep -i -n -E '[c]laude|[a]nthropic|[c]hatgpt|[o]penai|[l]lm' \
   echo "Forbidden words in tracked files"; fail=1
 fi
 
+# A shift is not judged: the flag is called "Fair verteilen" (the field keeps its English name), never the old word.
+if git grep -I -n -i -E '[u]nbeliebt'; then
+  echo "Old word for fairly distributed shifts in tracked files"; fail=1
+fi
+
 # The core knows only its own data format; the old planning system appears only in the plugin that imports from it
 # (plugins/[s]p5/: its code, texts and help pages). Elsewhere only these technical tokens may name it: paths into the
 # plugin's folder and its package, its help page ids, and the repository of the Python program it is compared with.

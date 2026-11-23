@@ -8,17 +8,17 @@ Dienst?“. Beide gelten für den gewählten Monat und rechnen die Vormonate aus
 
 ![Die Fairness-Übersicht](../screenshots/fairness.png)
 
-Die Fairness-Übersicht zeigt, wie gleichmäßig Nächte, Wochenenden, Feiertage und unbeliebte Dienste verteilt
+Die Fairness-Übersicht zeigt, wie gleichmäßig Nächte, Wochenenden, Feiertage und fair verteilte Dienste verteilt
 sind, je Person und mit den Vormonaten.
 
 - **Streuung je Kennzahl:** Jeder Punkt ist eine Person, der Strich der Mittelwert, der Rahmen reicht vom Minimum
   bis zum Maximum. Über jedem Streifen stehen Minimum, Mittel und Maximum. Ein Punkt weit rechts ist eine Person,
   die deutlich mehr hat als die anderen.
 - **Kennzahlen je Person:** eine Tabelle, nach jeder Spalte sortierbar (Klick auf die Überschrift). Die Spalten:
-  geplante Stunden, Stundenkonto danach, Nächte, Wochenenden im Dienst, freie Wochenenden, Feiertage, unbeliebte
+  geplante Stunden, Stundenkonto danach, Nächte, Wochenenden im Dienst, freie Wochenenden, Feiertage, fair verteilte
   Dienste, Einzeldienste, Wunscherfüllung, Ersatzruhe offen, dazu die Zahlen der Historie. Ein **i** an jeder
   Spalte erklärt sie.
-- In beiden steht für die Planung vorne die **Belastung** bei Nächten, Wochenenden, Feiertagen und unbeliebten
+- In beiden steht für die Planung vorne die **Belastung** bei Nächten, Wochenenden, Feiertagen und fair verteilten
   Diensten, so wie die Fairness-Regeln vergleichen: Dienste dieses Monats und der Vormonate je 30 verfügbare Tage
   bei 40 Wochenstunden. Damit sind Teilzeitkräfte und Personen mit langer Abwesenheit vergleichbar. Bei der
   Fairness zählt die Abweichung vom Mittel aller, die solche Dienste machen können.
@@ -56,7 +56,7 @@ hat ein **i** mit einer Erklärung.
   diesem Monat. „Historie unvollständig“ heißt: Die Vormonate reichen nicht so weit zurück, der Wert ist dann nur
   ein Hinweis.
 
-**Belastung und Wünsche:** Nächte, Wochenenden im Dienst und frei, Feiertage, unbeliebte Dienste, Einzeldienste
+**Belastung und Wünsche:** Nächte, Wochenenden im Dienst und frei, Feiertage, fair verteilte Dienste, Einzeldienste
 (ein Diensttag mit freien Tagen davor und danach), erfüllte Wünsche, Ersatzruhe geplant, erworben und offen danach.
 Die Kachel **Nächte** sagt, ob die Person ihrer gewohnten Verteilung folgt, nie Nacht macht oder im
 Nachtausgleich ist, dann mit ihrer Belastung und dem Mittel aller Verglichenen.
@@ -65,7 +65,7 @@ Nachtausgleich ist, dann mit ihrer Belastung und dem Mittel aller Verglichenen.
 der Nachtanteil nicht (Nachtdienste „Gleichmäßig“ oder die Person macht nie Nacht), zeigt die Spalte **Gilt
 (ohne Nächte)** die Anteile, die dann für die Dienste außer Nächten gelten.
 
-**Historie (Vormonate):** Nächte, Wochenenden, Feiertage, unbeliebte Dienste und Wünsche der Vormonate, die für
+**Historie (Vormonate):** Nächte, Wochenenden, Feiertage, fair verteilte Dienste und Wünsche der Vormonate, die für
 die Fairness mitzählen.
 
 ## Warum dieser Dienst?

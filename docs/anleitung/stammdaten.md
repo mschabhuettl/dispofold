@@ -58,7 +58,7 @@ Stundenkonto“.
 | Beginn, Ende | Liegt das Ende vor dem Beginn, endet die Schicht am nächsten Tag (Nachtdienst). Ein Dienst darf höchstens so lang sein wie unter Regeln eingestellt (Standard 12 Stunden). |
 | Kategorie | die [Schichtart](begriffe.md#schichtart) Früh, Tag, Spät oder Nacht für Vorwärtsrotation, Abwechslung, gewohnte Verteilung und Einschränkungen. Standard **aus den Zeiten**: Nacht, wenn genug Stunden in der Nachtzeit liegen (Standard 2 Stunden zwischen 22 und 6 Uhr), sonst nach Beginn und Ende Früh, Tag oder Spät. |
 | Farbe | Farbe im Plan; leer heißt ohne Farbe |
-| Unbeliebt | Unbeliebte Schichten verteilt die Fairness gleichmäßig auf alle, die sie machen können. Meist die Nachtschichten. |
+| Fair verteilen | Dienste dieser Schicht werden über die Fairness gleichmäßig auf alle verteilt, die sie machen können. die Nachtschichten. |
 
 Neue Schichten bekommen ihre Id vom Programm; der Code lässt sich ändern.
 

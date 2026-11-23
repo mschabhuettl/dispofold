@@ -83,7 +83,8 @@ class LoadedCorrectionsCompareTest {
         settings.put("root", Sp5Profile.ROOT.toString());
         settings.put("path", "korrekturen-laden");
         settings.set("mapping", mapper.readTree(program.resolve("mapping.example.json").toFile()));
-        settings.putObject("options").put("historyMonths", 3);
+        // the export program marks night shifts without a value in the mapping; the plugin does that only when chosen
+        settings.putObject("options").put("historyMonths", 3).put("nightsFair", true);
         store.savePluginSettings(Sp5Plugin.ID, 1, mapper.writeValueAsString(settings));
 
         // the ids of the folder, from a run without corrections (there are none yet)

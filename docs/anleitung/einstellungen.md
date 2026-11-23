@@ -41,7 +41,7 @@ Darunter die Ziele, jedes mit seinen Werten und einer **Wichtigkeit**:
 |---|---|---|
 | Dienstblöcke | Blöcke von 2 bis 4 Tagen | Dienste in Blöcken dieser Länge, ohne einzelne freie Tage dazwischen |
 | Wünsche | höchstens 6 je Person und Monat | so viele Wünsche je Person zählen, die ersten nach Datum |
-| Faire Verteilung | über die letzten 3 Monate | Wochenenden, Feiertage, unbeliebte Dienste und Nächte gleichmäßig verteilen |
+| Faire Verteilung | über die letzten 3 Monate | Wochenenden, Feiertage, fair verteilte Dienste und Nächte gleichmäßig verteilen |
 | Stunden treffen | höchstens 10 % über dem Ziel, Stundenkonto ausgleichen 25 % je Monat | geplante und angerechnete Stunden nahe am Ziel; die Obergrenze ist ein Regelverstoß |
 | Familienregeln | keine Werte | die persönlichen Regeln der Personen einhalten, wenn es geht |
 
@@ -122,7 +122,7 @@ Planungsziels steht, zu welchem Ziel sie gehören. Die Standardgewichte:
 |---|---|---|
 | Stunden treffen | 20 | Stunden treffen |
 | Fairness Nachtdienste, Wochenenden, Feiertage | je 3 | Faire Verteilung |
-| Fairness unbeliebte Dienste | 2 | Faire Verteilung |
+| Fairness fair verteilte Dienste | 2 | Faire Verteilung |
 | Wünsche | 300 | Wünsche |
 | Dienstblöcke | 6000 | Dienstblöcke |
 | Einzelne freie Tage | 10000 | Dienstblöcke |

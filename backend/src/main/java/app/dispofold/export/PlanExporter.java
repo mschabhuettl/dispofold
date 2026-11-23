@@ -53,10 +53,11 @@ public class PlanExporter {
     /** Column titles of the sheet "Kennzahlen", in the order of the {@link PersonStats} components. */
     static final List<String> STATS_HEADER = List.of("Id", "Soll (h)", "Gutschrift (h)", "Geplant (h)",
             "Konto vorher (h)", "Konto nachher (h)", "Dienste", "Nächte", "Wochenenden gearbeitet",
-            "Wochenenden frei", "Feiertage", "Unbeliebte Dienste", "Wünsche", "Wünsche erfüllt", "ER geplant",
+            "Wochenenden frei", "Feiertage", "Fair verteilte Dienste", "Wünsche", "Wünsche erfüllt", "ER geplant",
             "ER erworben", "ER offen danach", "Einzeltage", "Historie Nächte", "Historie Wochenenden",
-            "Historie Feiertage", "Historie unbeliebt", "Historie Wünsche", "Historie Wünsche erfüllt",
-            "Verfügbare Tage", "Konto belastet (h)", "Wochenschnitt (h)", "Wochenschnitt geprüft");
+            "Historie Feiertage", "Historie fair verteilt", "Historie Wünsche", "Historie Wünsche erfüllt",
+            "Verfügbare Tage", "Konto belastet (h)", "Wochenschnitt (h)", "Wochenschnitt geprüft",
+            "Wochenschnitt Grenze (h)");
 
     private static final List<String> WEEKDAYS = List.of("Mo", "Di", "Mi", "Do", "Fr", "Sa", "So");
     private static final Locale DE = Locale.GERMAN;

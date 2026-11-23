@@ -40,7 +40,7 @@ Datensätze in [datenformat.md](../datenformat.md). Installation und Sicherung s
 - **Eingaben des Monats:** Abwesenheiten, Wünsche und Vorgaben.
 - **Regeln:** Grenzen aus Kollektivvertrag und Betriebsvereinbarung (Ruhezeiten, Höchstarbeitszeiten, freie
   Sonntage) und die Planungsziele mit ihren Gewichten.
-- **Historie:** die Zahlen der abgeschlossenen Vormonate (Nächte, Wochenenden, Feiertage, unbeliebte Dienste,
+- **Historie:** die Zahlen der abgeschlossenen Vormonate (Nächte, Wochenenden, Feiertage, fair verteilte Dienste,
   erfüllte Wünsche, Stundenkonto, Ersatzruhe).
 
 **Was herauskommt:** ein Dienstplan für den Monat, eine Zelle je Person und Tag: frei, ein Dienst aus den
