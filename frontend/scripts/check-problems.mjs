@@ -95,8 +95,6 @@ try {
   order.join());
   check('every group collapsed', await page.locator('#main details[open]').count() === 0 && await page.locator('#main details.check-group').count() > 0);
   check('the notes on quality are no errors', (await page.locator('#check-quality h2').innerText()).startsWith('Hinweise zur Qualität (keine Fehler)'));
-  check('rule violations: only rule violations', (await page.locator('#check-problems li[data-level]').evaluateAll((li) => li.map((x) => x.dataset.level)))
-    .every((l) => l === 'HARD'));
   check('no "Strafen" on the page', !/Strafe/.test(await page.locator('#main').innerText()));
 
   // Problem list (the notes on quality)
@@ -192,6 +190,55 @@ try {
       const r = tr.getBoundingClientRect();
       return r.top >= 0 && r.bottom <= innerHeight;
     }), rowText);
+
+  // The verdict without gaps (injected into the analysis): nothing to do; with rule violations (injected into the
+  // analysis and the problem list): those first, listed by rule under "Regelverstöße"
+  const analysisUrl = `**/api/plans/${month}/analysis`;
+  const problemsUrl = `**/api/plans/${month}/problems`;
+  await page.route(analysisUrl, async (route) => {
+    const a = await (await route.fetch()).json();
+    await route.fulfill({ json: { ...a, hardViolations: 0, gaps: [], uncoveredHours: 0 } });
+  });
+  await page.goto(`${base}/#/pruefen`);
+  await page.locator('#check-data').waitFor();
+  const good = await page.locator('#check-verdict .plan-headline').innerText();
+  check('verdict without violations and gaps', good === 'Nichts zu tun: 0 Regelverstöße, 0 Lücken'
+    && (await page.locator('#check-verdict').getAttribute('class')).includes('status-good'), good);
+  // out of date (injected into the plan state): plan again first
+  const stateUrl = (url) => url.pathname === `/api/plans/${month}`;
+  await page.route(stateUrl, async (route) => {
+    const s = await (await route.fetch()).json();
+    await route.fulfill({ json: { ...s, stale: true } });
+  });
+  await page.reload();
+  await page.locator('#check-data').waitFor();
+  const stale = await page.locator('#check-verdict .plan-headline').innerText();
+  check('verdict on a plan out of date', stale === 'Zuerst: neu planen (der Plan ist veraltet)', stale);
+  await page.unroute(stateUrl);
+  await page.unroute(analysisUrl);
+  await page.route(analysisUrl, async (route) => {
+    const a = await (await route.fetch()).json();
+    await route.fulfill({ json: { ...a, hardViolations: 2 } });
+  });
+  await page.route(problemsUrl, async (route) => {
+    const list = await (await route.fetch()).json();
+    const hit = list.find((x) => x.personId);
+    await route.fulfill({ json: [...list, { ...hit, constraintId: 'dailyRest', level: 'HARD' }, { ...hit, constraintId: 'dailyRest', level: 'HARD', date: `${month}-02` }] });
+  });
+  await page.reload();
+  await page.locator('#check-data').waitFor();
+  const bad = await page.locator('#check-verdict .plan-headline').innerText();
+  check('verdict with violations: those first, then the gaps', /^Zuerst: 2 Regelverstöße beheben, dann \d+ Lücken? schließen \(/.test(bad)
+    && (await page.locator('#check-verdict').getAttribute('class')).includes('status-bad'), bad);
+  const hardGroups = await page.locator('#check-problems details.check-group > summary').allInnerTexts();
+  check('the rule violations listed by rule, collapsed', hardGroups.length === 1 && hardGroups[0].startsWith('Tägliche Ruhezeit · Regelverstoß (2)')
+    && await page.locator('#check-problems details[open]').count() === 0, hardGroups.join(' | '));
+  check('rule violations: only rule violations', (await page.locator('#check-problems li[data-level]').evaluateAll((li) => li.map((x) => x.dataset.level)))
+    .join() === 'HARD,HARD');
+  check('the notes on quality keep the rest', await page.locator('#check-quality li[data-level=HARD]').count() === 0
+    && await page.locator('#check-quality li[data-level]').count() > 0);
+  await page.unroute(analysisUrl);
+  await page.unroute(problemsUrl);
 
   // Fairness in the rules' own measure
   await page.goto(`${base}/#/fairness`);

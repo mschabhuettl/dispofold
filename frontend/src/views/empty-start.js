@@ -11,8 +11,8 @@ export function emptyStart(ctx) {
   const result = h('div', { 'aria-live': 'polite' });
   const { button, runImport } = importSteps(ctx, result);
   const withPages = ctx.plugins.filter((p) => p.pages?.length);
-  return h('section.statusbar.empty-start', { id: 'empty-start', 'aria-labelledby': 'h-empty-start' },
-    h('h2.plan-headline', { id: 'h-empty-start' }, t('start.empty.title')),
+  return h('section.empty-start', { id: 'empty-start', 'aria-labelledby': 'h-empty-start' },
+    h('h2', { id: 'h-empty-start' }, t('start.empty.title')),
     h('p', {}, t('start.empty.text')),
     h('div.toolbar', {},
       button(t('start.empty.demo'), async () => {

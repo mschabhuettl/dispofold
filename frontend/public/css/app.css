@@ -224,6 +224,11 @@ table.data th button { font: inherit; font-weight: 600; background: none; border
 .headline-bad { color: var(--danger); }
 .chips { display: flex; flex-wrap: wrap; gap: .4rem; }
 .chips-label { font-size: .82rem; align-self: center; }
+.empty-start {
+  display: flex; flex-direction: column; gap: .4rem; padding: .5rem .8rem; background: var(--surface);
+  border: 1px solid var(--border); border-left: 4px solid var(--info); border-radius: 0 6px 6px 0; margin-bottom: 1rem;
+}
+.empty-start h2 { margin: 0; font-size: 1.05rem; }
 .empty-start p { margin: 0; }
 .chip {
   font: inherit; font-size: .82rem; padding: .1rem .6rem; border: 1px solid var(--border-strong); border-radius: 999px;

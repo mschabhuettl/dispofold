@@ -141,11 +141,19 @@ try {
     && words.includes('Qualität: Abzüge ') && !words.includes(state.plan.score), words);
   check('the raw score as tooltip under Erweitert', await advanced.locator('.score span[title]').getAttribute('title') === state.plan.score);
   // figures that are no errors say so: overstaffing and the quality chips
-  check('overstaffing "(kein Fehler)"', !visible.includes('Überbesetzung') || /Überbesetzung: [\d,\u202f\u00a0]+ Personenstunden \(kein Fehler\)/.test(visible),
-    visible.replace(/\n/g, ' | '));
-  check('quality chips labelled as no errors', await page.locator('.chips .chip:not(.chip-hard)').count() === 0
-    || (await page.locator('.chips .chips-label').innerText()) === 'Qualität, kein Fehler:');
+  check('quality chips labelled as no errors', await page.locator('.chips .chip:not(.chip-hard)').count() > 0
+    && (await page.locator('.chips .chips-label').innerText()) === 'Qualität, kein Fehler:');
   check('gaps shown once', (visible.match(/Lücke/g) ?? []).length <= 1, visible.replace(/\n/g, ' | '));
+  // overstaffing (injected into the analysis) is no error: said next to it
+  await page.route(`**/api/plans/${month}/analysis`, async (route) => {
+    const a = await (await route.fetch()).json();
+    await route.fulfill({ json: { ...a, overstaffedHours: 12.5 } });
+  });
+  await page.reload();
+  await page.locator('.roster-wrap table').waitFor();
+  const overText = await page.locator('.status-details').innerText();
+  check('overstaffing "(kein Fehler)"', /Überbesetzung: 12,5 Personenstunden \(kein Fehler\)/.test(overText), overText);
+  await page.unroute(`**/api/plans/${month}/analysis`);
   // "Einzelne freie Tage" and the block days once: as chip when the rule has one (it lists who and when), else as figure
   const singleDays = async (withChip) => {
     await page.route(`**/api/plans/${month}/analysis`, async (route) => {

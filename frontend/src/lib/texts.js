@@ -116,6 +116,7 @@ export const TEXTS = {
   'check.verdict.none': 'Nichts zu tun: 0 Regelverstöße, 0 Lücken',
   'check.verdict.first': 'Zuerst: {todo}',
   'check.verdict.then': ', dann ',
+  'check.verdict.stale': 'neu planen (der Plan ist veraltet)',
   'check.verdict.hard': '{count|Regelverstoß|Regelverstöße} beheben',
   'check.verdict.gaps': '{count|Lücke|Lücken} schließen ({hours} Personenstunden)',
   'check.verdict.notes': 'Die Hinweise zur Qualität und die Stammdaten weiter unten sind keine Fehler im Plan.',

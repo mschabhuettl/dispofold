@@ -33,7 +33,7 @@ export async function render(root, ctx) {
     const entries = problems && analysis ? problemEntries(problems, analysis.constraints, dataset.people) : null;
     // who could be asked: only where a duty can be set
     const ask = cellsEditable({ canEdit: ctx.canEdit, solving: state.solving, closed: state.plan.status === 'CLOSED' });
-    append(root, [verdict(analysis), problemSection(dataset, entries), gapSection(ctx, dataset, analysis, ask),
+    append(root, [verdict(state, analysis), problemSection(dataset, entries), gapSection(ctx, dataset, analysis, ask),
       qualitySection(dataset, entries), accountSection(dataset, analysis)]);
   }
   root.append(dataSection(dataset, month, rules, period?.absences ?? []));
@@ -54,16 +54,17 @@ function accountSection(dataset, analysis) {
 }
 
 /**
- * What to do first, from the same figures as the headline of the Dienstplan: the rule violations, then the gaps; or
- * nothing to do. Nothing without an analysis.
+ * What to do first, from the same figures as the headline of the Dienstplan: plan again when the plan is out of date,
+ * the rule violations, then the gaps; or nothing to do. Nothing without an analysis.
  */
-function verdict(analysis) {
+function verdict(state, analysis) {
   if (!analysis) return null;
   const hard = analysis.hardViolations ?? 0;
   const gaps = analysis.gaps?.length ?? 0;
-  const todo = [hard > 0 && t('check.verdict.hard', { count: hard }),
+  const stale = Boolean(state.stale || state.previousMonthChanged || analysis.previousMonthChanged);
+  const todo = [stale && t('check.verdict.stale'), hard > 0 && t('check.verdict.hard', { count: hard }),
     gaps > 0 && t('check.verdict.gaps', { count: gaps, hours: Number(analysis.uncoveredHours ?? 0).toLocaleString('de-AT', { maximumFractionDigits: 1 }) })].filter(Boolean);
-  const level = hard > 0 ? 'bad' : gaps > 0 ? 'warn' : 'good';
+  const level = hard > 0 ? 'bad' : todo.length ? 'warn' : 'good';
   return h('div.statusbar.check-verdict', { id: 'check-verdict', class: `status-${level}` },
     h('p.plan-headline', { class: `headline-${level}` }, todo.length ? t('check.verdict.first', { todo: todo.join(t('check.verdict.then')) }) : t('check.verdict.none')),
     h('p.muted', {}, t('check.verdict.notes')));

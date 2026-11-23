@@ -204,7 +204,8 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
     return {
       plannedMix: duties.length ? { categories: share((a) => shifts.get(a.shiftId).category), areas: share((a) => shifts.get(a.shiftId).areaId) } : null,
       personId: p.id, targetHours: round(targetHours), creditedHours: round(creditedHours), plannedHours: round(plannedHours),
-      goalHours: round(targetHours + p.hoursAccount * 0.5), scaledGoalHours: round((targetHours + p.hoursAccount * 0.5) * 0.92),
+      // like the backend: plus hours lower the goal, minus hours raise it
+      goalHours: round(targetHours - p.hoursAccount * 0.5), scaledGoalHours: round((targetHours - p.hoursAccount * 0.5) * 0.92),
       accountBefore: p.hoursAccount, accountAfter: round(p.hoursAccount + plannedHours + creditedHours - targetHours),
       duties: duties.length, nights: duties.filter((a) => shifts.get(a.shiftId).category === 'NIGHT').length,
       weekendsWorked, weekendsOff: saturdays.length - weekendsWorked,
