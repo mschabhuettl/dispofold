@@ -39,7 +39,7 @@ export default {
             try { parsed = JSON.parse(mapping.value); } catch { return guarded(() => Promise.reject(new Error(t('plugin.sp5.mapping.invalidJson')))); }
           }
           const folder = picker.value() ?? { root: '', path: '' };
-          return guarded(() => api.put('einstellungen', { root: folder.root, path: folder.path, mapping: parsed, options: options.value() }), t('plugin.sp5.saved'));
+          return guarded(() => api.put('einstellungen', { ...s, root: folder.root, path: folder.path, mapping: parsed, options: options.value() }), t('plugin.sp5.saved'));
         });
         const months = monthFields(ctx, 'sp5-result');
         const result = h('button.btn.btn-secondary', { id: 'sp5-result', type: 'button' }, t('plugin.sp5.result.run'));

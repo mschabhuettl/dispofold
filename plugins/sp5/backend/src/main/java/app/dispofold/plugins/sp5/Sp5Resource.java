@@ -84,7 +84,8 @@ public class Sp5Resource {
     /**
      * The export of the months in the body ({@code {"month", "to"}}) as a ZIP file: dataset.json, report.csv and
      * warnings.txt as sp5_export.py writes them, and what it was made with (anfrage.json with the options of
-     * sp5_export.py and nightsFair, mapping.json, korrekturen.json if Dispofold has corrections).
+     * sp5_export.py and nightsFair, mapping.json, korrekturen.json if Dispofold has corrections), and
+     * vorschlag-vergleich.json: the proposals for an empty mapping against this mapping, counts only.
      * plugins/sp5/tools/sp5-vergleich.py runs the Python program with the same inputs and compares.
      */
     @POST
@@ -119,6 +120,10 @@ public class Sp5Resource {
             if (inputs.correctionsFile() != null) {
                 entry(zip, Sp5Plugin.CORRECTIONS_FILE, inputs.correctionsFile());
             }
+            // how far the proposals for an empty mapping come to this mapping: counts only (sp5-vergleich.py --vorschlag)
+            entry(zip, "vorschlag-vergleich.json", mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(
+                    Sp5ProposalCheck.counts(request.folder(), request.mapping(),
+                            Sp5Settings.proposals(plugin.settings()))));
         }
         String month = body == null ? "" : body.path("month").asText("").replaceAll("[^0-9-]", "");
         return Response.ok(bytes.toByteArray(), "application/zip")

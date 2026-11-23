@@ -3,6 +3,22 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.22.0 (unveröffentlicht)
+
+- **Zuordnung vorschlagen (Import-Erweiterung):** Auf der Seite Zuordnung schlägt Dispofold aus Gruppen,
+  Mitgliedern, Bedarf und Diensten des Ordners Einträge vor, für alles, was die Zuordnung noch nicht trifft: neue
+  Bereiche aus Gruppen mit eigenen Schichten, Schichtregeln (der Bedarf im bisherigen Planungssystem zuerst, sonst
+  wer die Dienste gemacht hat; unter dem Anteil von 80 % die zwei stärksten Bereiche zur Wahl), Gruppenregeln,
+  Sammelgruppen, Gruppen ohne Dienste, ausgeblendete und seltene Schichten zum Ignorieren und die Ersatzruhe. Jeder
+  Vorschlag nennt seinen Grund mit Zahlen; übernommen wird er in den Editor, gespeichert erst mit „Zuordnung
+  speichern“. Bestehende Einträge bleiben unverändert, verworfene Vorschläge kommen bis zum Zurücksetzen nicht
+  wieder. Anteil, seltene Schichten, Zeitraum und die Wörter für die Ersatzruhe sind Einstellungen. Die Übersicht
+  nennt nach einem Lauf die Zahl der neuen Vorschläge. Import und Export rechnen unverändert. Hilfe:
+  [Zuordnung](plugins/sp5/docs/zuordnung.md).
+- **Vorschläge gegen die eigene Zuordnung prüfen:** Das Vergleichsskript der Erweiterung zeigt mit `--vorschlag`
+  und der ZIP-Datei aus „Ergebnis speichern“, wie nah der Vorschlag an die eigene Zuordnung kommt, nur als Anzahlen
+  ([Vergleich](plugins/sp5/docs/vergleich.md)).
+
 ## 0.21.0 (unveröffentlicht)
 
 - **Wochenschnitt je Person:** Die Regel zum Durchschnitt der Wochenstunden misst jede Person an ihrem eigenen

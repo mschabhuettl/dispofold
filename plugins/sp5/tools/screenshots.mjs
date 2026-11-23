@@ -6,7 +6,7 @@
 //     node ../plugins/sp5/tools/screenshots.mjs <mapping.json> ../plugins/sp5/docs/img
 // It switches the plugin on, takes the note above the import of a first run without any corrections, imports January
 // 2027 once, changes a person and a person's exclusion in Dispofold, then runs the export again and takes the pages as
-// a planner sees them. It replaces the master data: never against
+// a planner sees them, with the proposals for an empty mapping. It replaces the master data: never against
 // production. Every request to another host is blocked. At the end scripts/optimize-png.py shrinks the files.
 import { spawnSync } from 'node:child_process';
 import { mkdirSync, readFileSync } from 'node:fs';
@@ -137,6 +137,13 @@ try {
   await page.locator('#sp5-codes table').first().waitFor();
   await shot('zuordnung');
   await clip('zuordnung-ordner', ['#sp5-codes']);
+  // the proposals for an empty mapping in the editor (not saved)
+  await page.click('summary:text("JSON anzeigen und bearbeiten")');
+  await page.fill('#sp5-map-json', JSON.stringify({ areas: [], shifts: [], groups: [] }));
+  await page.click('#sp5-map-apply');
+  await page.click('#sp5-propose');
+  await page.locator('#sp5-proposals-summary').waitFor();
+  await clip('zuordnung-vorschlaege', ['#h-sp5-propose', '#sp5-proposals']);
 
   // Vergleich: the run against the last import
   await open('plugin/sp5/lauf-vergleich');

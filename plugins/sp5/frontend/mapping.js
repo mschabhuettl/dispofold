@@ -1,10 +1,12 @@
 // Zuordnung: a structured editor of settings.mapping (mapping.json). Every change is checked by the server (POST
 // zuordnung/pruefen, debounced) and matched against the codes of the folder (POST zuordnung/codes): what each rule
 // and pattern matches, and what has no rule. Saving puts the settings with the new mapping; the server checks again.
-// Patterns are never evaluated here.
+// Patterns are never evaluated here. "Zuordnung vorschlagen" (POST zuordnung/vorschlaege) lists entries for what the
+// editor's mapping does not meet yet, each with its reason: taken into the editor (saved only with "Zuordnung
+// speichern") or discarded (remembered by the server until the reset).
 import { guarded, h, info, saveBlob, sortableTable, t, toast } from '../../../frontend/src/lib/plugin-api.js';
-import { ENTRY_LISTS, KNOWN_KEYS, PATTERN_LISTS, hitsBySection, isObject, mappingJson, moveEntry, newEntry, resultText, sectionList,
-  setOptional, toggleArea, unmatched } from './model.js';
+import { ENTRY_LISTS, KNOWN_KEYS, PATTERN_LISTS, PROPOSAL_SECTIONS, hitsBySection, isObject, mappingJson, moveEntry, newEntry, proposalTitle,
+  resultText, sectionList, setOptional, takeProposal, toggleArea, unmatched } from './model.js';
 import { ID, problem } from './shared.js';
 
 const CATEGORIES = ['EARLY', 'DAY', 'LATE', 'NIGHT'];
@@ -269,6 +271,123 @@ export async function render(root, ctx) {
       ...Object.keys(tables).flatMap((k) => [h('h3', {}, t(`plugin.sp5.codes.${k}`)), (codes?.[k] ?? []).length ? tables[k].element : h('p.muted', {}, t('plugin.sp5.codes.none.table'))]));
   }
 
+  // ---- proposals from the folder ----
+
+  const proposalBox = h('div', { id: 'sp5-proposals', 'aria-live': 'polite' });
+  let proposals = null;
+  const proposalSettings = () => settings.proposals ?? {};
+  const resetButton = button('', async () => {
+    const saved = await guarded(() => api.post('zuordnung/vorschlaege/zuruecksetzen'), t('plugin.sp5.propose.resetDone'));
+    if (saved) {
+      settings = { ...settings, proposals: saved.proposals };
+      await propose();
+    }
+  }, { id: 'sp5-propose-reset', hidden: true });
+  const showReset = (n) => {
+    resetButton.hidden = !n;
+    resetButton.textContent = t('plugin.sp5.propose.reset', { count: n });
+  };
+
+  async function propose() {
+    try {
+      proposals = await api.post('zuordnung/vorschlaege', mapping);
+    } catch (e) {
+      proposalBox.replaceChildren(problem(e));
+      return;
+    }
+    showReset(proposals.discarded ?? 0);
+    showProposals();
+  }
+
+  /** Removes a proposal from the list after it was taken or discarded; the focus goes to the next one. */
+  function done(section, p) {
+    const list = proposals[section];
+    const i = list.indexOf(p);
+    list.splice(i, 1);
+    showProposals();
+    const next = list[Math.min(i, list.length - 1)];
+    const target = next ? proposalBox.querySelector(`[data-proposal="${CSS.escape(next.key)}"] button`)
+      : proposalBox.querySelector('[data-proposal] button') ?? document.getElementById('sp5-propose');
+    target?.focus();
+  }
+
+  function take(section, p, choice = null) {
+    const added = takeProposal(mapping, section, p, proposals.areas, choice);
+    // an area that came along with a rule is no proposal of its own any more
+    proposals.areas = proposals.areas.filter((a) => section === 'areas' ? true : !added.includes(a.id));
+    codes = null;
+    changed();
+    draw();
+    done(section, p);
+  }
+
+  async function discard(section, p) {
+    const saved = await guarded(() => api.post('zuordnung/vorschlaege/verwerfen', { key: p.key }));
+    if (!saved) return;
+    settings = { ...settings, proposals: saved.proposals };
+    proposals.discarded = (proposals.discarded ?? 0) + 1;
+    showReset(proposals.discarded);
+    done(section, p);
+  }
+
+  function showProposals() {
+    const total = PROPOSAL_SECTIONS.reduce((n, s) => n + proposals[s].length, 0);
+    if (!total) {
+      proposalBox.replaceChildren(h('p.alert', { id: 'sp5-proposals-none' }, t('plugin.sp5.propose.none')));
+      return;
+    }
+    proposalBox.replaceChildren(h('p', { id: 'sp5-proposals-summary' }, t('plugin.sp5.propose.found', { count: total })),
+      ...PROPOSAL_SECTIONS.filter((s) => proposals[s].length).map((section) => {
+        const list = proposals[section];
+        const id = `h-sp5-propose-${section}`;
+        const takeAll = button(t('plugin.sp5.propose.takeAll'), () => {
+          for (const p of [...list].filter((x) => x.kind !== 'choice')) take(section, p);
+        }, { 'data-take-all': section, 'aria-label': t('plugin.sp5.propose.takeAll.aria', { section: t(`plugin.sp5.propose.section.${section}`) }) });
+        return h('section.section', { 'aria-labelledby': id, 'data-proposals': section },
+          h('div.toolbar', {}, h('h3', { id }, t(`plugin.sp5.propose.section.${section}`), ` (${list.length})`), takeAll),
+          list.some((x) => x.kind === 'choice') ? h('p.muted', {}, t('plugin.sp5.propose.choiceNote')) : null,
+          h('ul.proposals', {}, list.map((p) => {
+            const title = proposalTitle(section, p);
+            const takeButtons = p.kind === 'choice'
+              ? p.choices.map((c) => button(t('plugin.sp5.propose.takeArea', { area: c.areaId }), () => take(section, p, c.areaId),
+                { 'aria-label': t('plugin.sp5.propose.takeArea.aria', { area: c.areaId, what: title }) }))
+              : [button(t('plugin.sp5.propose.take'), () => take(section, p), { 'aria-label': t('plugin.sp5.propose.take.aria', { what: title }) })];
+            return h('li', { 'data-proposal': p.key },
+              h('div', {}, h('strong', {}, title)),
+              h('p.muted', {}, p.reason),
+              h('div.btn-row', {}, ...takeButtons,
+                button(t('plugin.sp5.propose.discard'), () => discard(section, p), { 'aria-label': t('plugin.sp5.propose.discard.aria', { what: title }) })));
+          })));
+      }));
+  }
+
+  // the settings of the proposals: share, rare shifts, months, words for the compensatory rest
+  const ps = proposalSettings();
+  const numberField = (key, min, max) => h('div.field', {}, h('label', { for: `sp5-propose-${key}` }, t(`plugin.sp5.propose.setting.${key}`),
+    info(t(`plugin.sp5.propose.setting.${key}.help`), t(`plugin.sp5.propose.setting.${key}`))),
+  h('input', { id: `sp5-propose-${key}`, type: 'number', min, max, value: ps[key] ?? '' }));
+  const words = h('input', { id: 'sp5-propose-restWords', type: 'text', value: (ps.restWords ?? []).join(', '), spellcheck: 'false' });
+  const saveProposalSettings = button(t('plugin.sp5.propose.saveSettings'), async () => {
+    const value = (key) => Number(document.getElementById(`sp5-propose-${key}`).value);
+    const body = { ...settings, proposals: { ...proposalSettings(), share: value('share'), minDuties: value('minDuties'), months: value('months'),
+      restWords: words.value.split(',').map((w) => w.trim()).filter(Boolean) } };
+    const saved = await guarded(() => api.put('einstellungen', body), t('plugin.sp5.propose.settingsSaved'));
+    if (saved) {
+      settings = { ...settings, proposals: saved.proposals };
+      if (proposals) await propose();
+    }
+  }, { id: 'sp5-propose-save' });
+  const proposalSection = h('section.section', { 'aria-labelledby': 'h-sp5-propose' },
+    h('h2', { id: 'h-sp5-propose' }, t('plugin.sp5.propose.title'), info(t('plugin.sp5.propose.title.help'), t('plugin.sp5.propose.title'))),
+    h('p.muted', {}, t('plugin.sp5.propose.intro')),
+    h('div.toolbar', {}, h('button.btn.btn-secondary', { id: 'sp5-propose', type: 'button', onclick: () => propose() }, t('plugin.sp5.propose.run')), resetButton),
+    h('details.advanced', {}, h('summary', {}, t('plugin.sp5.propose.settings')),
+      h('div.settings', {}, numberField('share', 1, 100), numberField('minDuties', 0), numberField('months', 0, 1200),
+        h('div.field', {}, h('label', { for: 'sp5-propose-restWords' }, t('plugin.sp5.propose.setting.restWords'),
+          info(t('plugin.sp5.propose.setting.restWords.help'), t('plugin.sp5.propose.setting.restWords'))), words),
+        h('div.row', {}, saveProposalSettings))),
+    proposalBox);
+
   // ---- saving and JSON ----
 
   const apply = (value) => {
@@ -326,6 +445,7 @@ export async function render(root, ctx) {
       h('div', {}, h('label', { for: 'sp5-map-file' }, t('plugin.sp5.map.file')), ' ', file)), // not a .field: its input would be too narrow
     h('section.section', { 'aria-labelledby': 'h-sp5-map-check' }, h('h2', { id: 'h-sp5-map-check' }, t('plugin.sp5.map.check'),
       info(t('plugin.sp5.map.check.help'), t('plugin.sp5.map.check'))), problems),
+    proposalSection,
     editor,
     h('section.section', { 'aria-labelledby': 'h-sp5-map-raw' }, h('h2', { id: 'h-sp5-map-raw' }, t('plugin.sp5.map.json'),
       info(t('plugin.sp5.map.json.help'), t('plugin.sp5.map.json'))),

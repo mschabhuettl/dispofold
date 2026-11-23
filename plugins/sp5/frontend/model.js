@@ -274,3 +274,56 @@ export function unmatched(codes) {
   return { shifts: (codes?.shifts ?? []).filter((x) => x.result?.kind === 'none' && !x.hidden).map((x) => x.code),
     groups: (codes?.groups ?? []).filter((x) => x.result?.kind === 'none').map((x) => x.name) };
 }
+
+// ---- proposals ----
+
+export const PROPOSAL_SECTIONS = ['areas', 'shifts', 'groups', 'compensatoryRest'];
+
+/** The areas a proposal needs ({ id, name, color } of the proposed ones), for a shift or group rule. */
+function neededAreas(proposal, choice) {
+  if (proposal.kind === 'choice') return [choice];
+  if (proposal.kind !== 'rule') return [];
+  return proposal.areaId ? [proposal.areaId] : proposal.areaIds ?? [];
+}
+
+/**
+ * Takes a proposal into the mapping (in place): an area, a shift rule (a choice with the chosen area), a group rule,
+ * an ignored shift or group, a compensatory rest type. A new area the entry needs comes along from proposedAreas.
+ * Returns the ids of the areas added.
+ */
+export function takeProposal(mapping, section, proposal, proposedAreas = [], choice = null) {
+  const added = [];
+  const addArea = (area) => {
+    const areas = sectionList(mapping, 'areas');
+    if (area && !areas.some((a) => isObject(a) && a.id === area.id)) {
+      areas.push({ id: area.id, name: area.name, color: area.color });
+      added.push(area.id);
+    }
+  };
+  if (section === 'areas') {
+    addArea(proposal);
+    return added;
+  }
+  for (const id of neededAreas(proposal, choice)) addArea(proposedAreas.find((a) => a.id === id));
+  if (section === 'shifts') {
+    if (proposal.kind === 'ignored') sectionList(mapping, 'ignoreShifts').push(proposal.match);
+    else sectionList(mapping, 'shifts').push({ match: proposal.match, areaId: proposal.kind === 'choice' ? choice : proposal.areaId });
+  } else if (section === 'groups') {
+    if (proposal.kind === 'ignored') sectionList(mapping, 'ignoreGroups').push(proposal.match);
+    else sectionList(mapping, 'groups').push({ match: proposal.match, areaIds: [...proposal.areaIds] });
+  } else if (section === 'compensatoryRest') sectionList(mapping, 'compensatoryRestAbsences').push(proposal.match);
+  return added;
+}
+
+/** The short text of what a proposal adds: "A1 → TA", "A1: ignorieren", "Team Annahme → TA". */
+export function proposalTitle(section, p) {
+  const what = section === 'areas' ? `${p.id} ${p.name}` : section === 'groups' ? p.name : `${p.code} ${p.name}`;
+  if (section === 'areas') return t('plugin.sp5.propose.area', { what, group: p.group });
+  if (section === 'compensatoryRest') return t('plugin.sp5.propose.rest', { what });
+  if (p.kind === 'ignored') return t('plugin.sp5.propose.ignored', { what });
+  if (p.kind === 'choice') return t('plugin.sp5.propose.choice', { what, areas: p.choices.map((c) => c.areaId).join(', ') });
+  return t('plugin.sp5.propose.rule', { what, areas: p.areaId ?? (p.areaIds ?? []).join(', ') });
+}
+
+/** How many proposals there are. */
+export const proposalCount = (proposals) => PROPOSAL_SECTIONS.reduce((n, s) => n + (proposals?.[s]?.length ?? 0), 0);

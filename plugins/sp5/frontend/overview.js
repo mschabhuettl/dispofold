@@ -1,7 +1,7 @@
 // Übersicht: runs the export with chosen months and options (POST lauf, nothing is imported), shows the last run
 // with links to its report, the mapping and the comparison, and imports exactly that run with the core's import.
 import { guarded, h, importFlow, info, monthLabel, saveBlob, t, toast } from '../../../frontend/src/lib/plugin-api.js';
-import { unmatched } from './model.js';
+import { proposalCount, unmatched } from './model.js';
 import { ID, monthFields, optionFields, orNoRun, pageHref, problem } from './shared.js';
 
 const COUNTS = ['people', 'areas', 'shifts', 'duties', 'demandRules', 'warnings', 'reportRows', 'corrections'];
@@ -73,7 +73,7 @@ export async function render(root, ctx) {
     }
     const r = last;
     const time = new Date(r.ranAt).toLocaleString('de-AT', { dateStyle: 'medium', timeStyle: 'short' });
-    const mapping = h('span', {});
+    const mapping = h('span.btn-row', {});
     summary.replaceChildren(h('div', { id: 'sp5-run-summary' },
       h('p', {}, h('strong', {}, t('plugin.sp5.run.done', { time })), ' ', t('plugin.sp5.run.months', { months: r.months.map(monthLabel).join(', ') })),
       h('div.kpis', {}, COUNTS.map((k) => h('div.kpi', { 'data-count': k }, h('div.label', {}, t(`plugin.sp5.count.${k}`)),
@@ -89,9 +89,14 @@ export async function render(root, ctx) {
       api.post('zuordnung/codes', settings.mapping).then((codes) => {
         const u = unmatched(codes);
         const count = u.shifts.length + u.groups.length;
-        if (count) mapping.replaceChildren(h('a', { href: pageHref('zuordnung') }, t('plugin.sp5.run.toMapping', { count })));
+        if (count) mapping.prepend(h('a', { href: pageHref('zuordnung') }, t('plugin.sp5.run.toMapping', { count })));
       }, () => {});
     }
+    // new proposals for the mapping (also without one): their number with a link
+    api.post('zuordnung/vorschlaege', settings.mapping ?? {}).then((p) => {
+      const count = proposalCount(p);
+      if (count) mapping.append(h('a', { id: 'sp5-run-proposals', href: pageHref('zuordnung') }, t('plugin.sp5.run.proposals', { count })));
+    }, () => {});
     const at = r.request.to && r.request.to !== r.request.month
       ? t('plugin.sp5.import.range', { from: monthLabel(r.request.month), to: monthLabel(r.request.to) }) : monthLabel(r.request.month);
     importBox.replaceChildren(h('p.muted', { id: 'sp5-import-request' }, t('plugin.sp5.import.request', { months: at, time })),

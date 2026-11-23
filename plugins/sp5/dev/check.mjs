@@ -98,6 +98,8 @@ export default async function run({ base, browser, check, shots }) {
     && (await text(page, '#sp5-run-summary'))?.includes('Korrekturdatei wurde angewendet'), await text(page, '#sp5-run-summary'));
   await page.waitForSelector(`#sp5-run-summary a[href="${P}/zuordnung"]`);
   check('a link to the mapping for codes without a rule', (await text(page, `#sp5-run-summary a[href="${P}/zuordnung"]`))?.includes('2 Kürzel ohne Regel'));
+  await page.waitForSelector('#sp5-run-proposals');
+  check('the number of new proposals with a link', (await text(page, '#sp5-run-proposals')) === 'Zuordnung: 2 neue Vorschläge');
   const lauf = await api(page, 'GET', '/api/plugins/sp5/lauf');
   check('the run used the options of the page', lauf.body.request.options.historyMonths === 6, JSON.stringify(lauf.body.request));
   check('the import names the run', (await text(page, '#sp5-import-request'))?.includes('Jänner 2027'));
@@ -333,7 +335,53 @@ export default async function run({ base, browser, check, shots }) {
   check('the pages bring no inline styles', !light.styled.length, light.styled.join(', '));
   await open(page, `${P}/zuordnung`, '#sp5-codes-summary');
   await shot(page, 'sp5-zuordnung-dunkel');
+
+  // ---- proposals: listed with their reasons in both themes, taken and discarded with the keyboard, reset ----
+  await page.click('#sp5-propose');
+  await page.waitForSelector('#sp5-proposals-summary');
+  check('the proposals with their reasons', (await page.locator('#sp5-proposals li').count()) === 2
+    && (await text(page, '[data-proposal="shift:T1"]'))?.includes('Kein Bereich erreicht 80 %')
+    && (await text(page, '[data-proposal="group:Projekt"]'))?.includes('keine Dienste'), await text(page, '#sp5-proposals'));
+  await page.locator('#sp5-proposals').scrollIntoViewIfNeeded();
+  await shot(page, 'sp5-vorschlaege-dunkel');
   await page.emulateMedia({ colorScheme: 'light' });
+  await shot(page, 'sp5-vorschlaege');
+  const saved0 = (await api(page, 'GET', '/api/plugins/sp5/einstellungen')).body.mapping;
+  await page.focus('[data-proposal="group:Projekt"] button[aria-label="Projekt: ignorieren verwerfen"]');
+  await page.keyboard.press('Enter');
+  await page.waitForFunction(() => !document.querySelector('[data-proposal="group:Projekt"]'));
+  check('a discarded proposal leaves the list, the reset counts it', (await text(page, '#sp5-propose-reset')) === 'Verworfene zurücksetzen (1)'
+    && JSON.stringify((await api(page, 'GET', '/api/plugins/sp5/einstellungen')).body.proposals.discarded) === '["group:Projekt"]');
+  check('the focus moves on to the next proposal', (await page.evaluate(() => document.activeElement?.closest('[data-proposal]')?.dataset.proposal)) === 'shift:T1');
+  await page.focus('[data-proposal="shift:T1"] button:text("Übernehmen: DR")');
+  await page.keyboard.press('Enter');
+  await page.waitForSelector('#sp5-proposals-none');
+  const rules = await page.$$eval('[data-section="shifts"] [data-key$=".match"]', (xs) => xs.map((x) => x.value));
+  check('a choice is taken with the chosen area into the editor', rules.at(-1) === 'T1'
+    && (await page.inputValue(`[data-key="shifts.${rules.length - 1}.areaId"]`)) === 'DR' && await page.isVisible('#sp5-map-dirty'), rules.join(','));
+  check('nothing is saved before "Zuordnung speichern"', JSON.stringify((await api(page, 'GET', '/api/plugins/sp5/einstellungen')).body.mapping) === JSON.stringify(saved0));
+  await page.click('#sp5-propose-reset');
+  await page.waitForSelector('[data-proposal="group:Projekt"]');
+  check('the reset brings the discarded proposal back, the taken code has a rule now', (await page.locator('#sp5-proposals li').count()) === 1
+    && await page.isHidden('#sp5-propose-reset'));
+  await page.click('[data-take-all="groups"]');
+  await page.waitForSelector('#sp5-proposals-none');
+  await page.click('#sp5-map-save');
+  await page.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('Zuordnung gespeichert'));
+  const after = (await api(page, 'GET', '/api/plugins/sp5/einstellungen')).body.mapping;
+  check('saved with the taken proposals', after.shifts.at(-1).match === 'T1' && after.shifts.at(-1).areaId === 'DR' && after.ignoreGroups.includes('Projekt'),
+    JSON.stringify(after));
+  // the settings of the proposals are checked by the server
+  await page.click('summary:text("Einstellungen der Vorschläge")');
+  await page.fill('#sp5-propose-share', '0');
+  await page.click('#sp5-propose-save');
+  await page.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('ungültig'));
+  check('a share of 0 is refused', (await text(page, '#toast'))?.includes('proposals.share'), await text(page, '#toast'));
+  await page.fill('#sp5-propose-share', '70');
+  await page.click('#sp5-propose-save');
+  await page.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('Einstellungen der Vorschläge gespeichert'));
+  check('the settings of the proposals are saved, the mapping stays', (await api(page, 'GET', '/api/plugins/sp5/einstellungen')).body.proposals.share === 70
+    && (await api(page, 'GET', '/api/plugins/sp5/einstellungen')).body.mapping.ignoreGroups.includes('Projekt'));
 
   // ---- readers ----
   const reader = await session('ansicht');

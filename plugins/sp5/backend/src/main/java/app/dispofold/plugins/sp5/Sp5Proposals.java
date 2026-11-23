@@ -580,7 +580,7 @@ final class Sp5Proposals {
 
     /** Two or more areas and none of them with the share of the people. */
     private static boolean umbrella(Map<String, Integer> cov, int people, double share) {
-        return cov.size() >= 2 && cov.values().stream().allMatch(c -> c < share * people);
+        return cov.size() >= 2 && cov.values().stream().noneMatch(c -> c >= share * people);
     }
 
     private static List<Map.Entry<String, Integer>> ranked(Map<String, Integer> cov) {

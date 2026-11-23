@@ -213,3 +213,28 @@ def test_ids_stored_with_decimals(source, tmp_path, columns):
         _with_decimals(folder, table, field)
     _run(_cmd(folder, tmp_path / "dataset.json", "--to", "2027-02"))
     assert cmp.RESULTS[-1]["same"], cmp.RESULTS[-1]["differences"]
+
+
+def test_the_proposal_mode_prints_only_counts(tmp_path):
+    # sp5-vergleich.py --vorschlag: the counts Dispofold wrote into the result file, nothing else
+    counts = {"areas": {"matched": 5, "different": 0, "missing": 0, "extra": 2},
+              "shifts": {"matched": 13, "different": 5, "missing": 0, "extra": 0},
+              "groups": {"matched": 11, "different": 3, "missing": 0, "extra": 0},
+              "compensatoryRest": {"matched": 1, "different": 0, "missing": 0, "extra": 0}}
+    bundle = tmp_path / "ergebnis.zip"
+    with zipfile.ZipFile(bundle, "w") as z:
+        z.writestr("vorschlag-vergleich.json", json.dumps(counts))
+    script = HERE.parent / "sp5-vergleich.py"
+    out = tmp_path / "vorschlag.txt"
+    run = subprocess.run([sys.executable, "-X", "utf8", str(script), "--ergebnis", str(bundle), "--vorschlag",
+                          "--ausgabe", str(out)], capture_output=True, text=True, encoding="utf-8")
+    assert run.returncode == 0, run.stderr
+    text = out.read_text(encoding="utf-8")
+    assert "Bereiche: 5 gleich, 0 verschieden, 0 fehlen im Vorschlag, 2 zusätzlich im Vorschlag" in text
+    assert "Schichten: 13 gleich, 5 verschieden" in text and "Ersatzruhe: 1 gleich" in text
+    # without the file (an older Dispofold): an error, no counts
+    with zipfile.ZipFile(tmp_path / "alt.zip", "w") as z:
+        z.writestr("anfrage.json", "{}")
+    old = subprocess.run([sys.executable, "-X", "utf8", str(script), "--ergebnis", str(tmp_path / "alt.zip"),
+                          "--vorschlag", "--ausgabe", str(out)], capture_output=True, text=True, encoding="utf-8")
+    assert old.returncode == 2 and "vorschlag-vergleich.json" in old.stderr

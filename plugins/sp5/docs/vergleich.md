@@ -32,3 +32,20 @@ es einmal so; die Daten verlassen dabei den Rechner nicht.
 Steht am Ende **ERGEBNIS: alles identisch**, liefert die Erweiterung mit diesen Daten dasselbe wie `sp5_export.py`.
 Eine Zyklus-Zuordnung ohne Ende ist der einzige gewollte Unterschied (siehe
 [Import aus Schichtplaner 5](plugin-sp5-sp5.md#zyklen)).
+
+## Vorschläge gegen die eigene Zuordnung
+
+Wie nah kommt **Zuordnung vorschlagen** an eine Zuordnung, die man schon von Hand gepflegt hat? Die ZIP-Datei aus
+Schritt 1 enthält dafür auch `vorschlag-vergleich.json`. Dispofold schlägt dazu für den Ordner eine Zuordnung von
+Grund auf vor, übernimmt alle Vorschläge (bei einer Wahl den stärkeren Bereich) und vergleicht sie Kürzel für
+Kürzel mit der eigenen Zuordnung. Die Bereiche werden über die Schichten einander zugeordnet, die sie gemeinsam
+haben. Die Datei enthält nur Anzahlen.
+
+```text
+python -X utf8 sp5-vergleich.py --ergebnis dispofold-sp5-ergebnis-2027-01.zip --vorschlag
+```
+
+Dafür braucht es weder den Ordner noch sp5-export. Das Skript zeigt je Abschnitt (Bereiche, Schichten, Gruppen,
+Ersatzruhe), wie viele Einträge gleich sind, wie viele verschieden, wie viele im Vorschlag fehlen und wie viele er
+zusätzlich hat. Dasselbe steht in `sp5-vergleich.txt`, ohne Kürzel und ohne Namen, und lässt sich so
+zurückschicken.

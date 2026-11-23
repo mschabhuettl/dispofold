@@ -191,6 +191,24 @@ function codes(m) {
   };
 }
 
+// the proposals for the codes of the folder (Sp5Proposals): only those no rule meets and not discarded are given
+const PROPOSALS = {
+  shifts: [{ key: 'shift:T1', code: 'T1', name: 'Sonderdienst', match: 'T1', kind: 'choice', choices: [{ areaId: 'AN', share: 62 }, { areaId: 'DR', share: 31 }],
+    reason: 'Kein Bedarf in Schichtplaner 5. Kein Bereich erreicht 80 % der 13 Dienste: AN 62 %, DR 31 %. Bitte wählen.' }],
+  groups: [{ key: 'group:Projekt', name: 'Projekt', match: 'Projekt', kind: 'ignored', reason: 'Die 2 Mitglieder haben keine Dienste im Zeitraum.' }],
+};
+
+function proposals(m, discarded) {
+  const c = codes(m);
+  const open = (section, key) => (c[section] ?? []).filter((x) => x.result.kind === 'none').map((x) => x[key]);
+  const shifts = open('shifts', 'code');
+  const groups = open('groups', 'name');
+  const keep = (list, codesLeft, key) => list.filter((p) => codesLeft.includes(p[key]) && !discarded.includes(p.key));
+  const all = [...PROPOSALS.shifts.filter((p) => shifts.includes(p.code)), ...PROPOSALS.groups.filter((p) => groups.includes(p.name))];
+  return { areas: [], shifts: keep(PROPOSALS.shifts, shifts, 'code'), groups: keep(PROPOSALS.groups, groups, 'name'), compensatoryRest: [],
+    discarded: all.filter((p) => discarded.includes(p.key)).length, duties: 812 };
+}
+
 // ---- answers ----
 
 const ok = (body) => ({ status: 200, body });
@@ -209,7 +227,9 @@ function options(saved, given) {
 }
 
 export function mock() {
-  let settings = { root: '/srv/dispofold/quellen', path: '2027', mapping: structuredClone(MAPPING), options: { ...OPTIONS } };
+  const PROPOSAL_SETTINGS = { share: 80, minDuties: 3, months: 0, restWords: ['Ersatzruhe'], discarded: [] };
+  let settings = { root: '/srv/dispofold/quellen', path: '2027', mapping: structuredClone(MAPPING), options: { ...OPTIONS },
+    proposals: structuredClone(PROPOSAL_SETTINGS) };
   let run = null;
   let imported = false;
 
@@ -234,7 +254,26 @@ export function mock() {
       if (mapping !== null && !object(mapping)) return error(400, 'plugin.sp5.setting', { field: 'mapping' }, 'Einstellung ungültig: mapping');
       const problems = mapping ? mappingErrors(mapping) : [];
       if (problems.length) return error(400, 'plugin.sp5.mapping', {}, problems.join('; '));
-      settings = { root: String(body.root ?? ''), path: String(body.path ?? ''), mapping, options: o.options };
+      const p = { ...PROPOSAL_SETTINGS, ...(object(body.proposals) ? body.proposals : {}) };
+      const bad = !integer(p.share, 1) || p.share > 100 ? 'share' : !integer(p.minDuties, 0) ? 'minDuties' : !integer(p.months, 0) ? 'months'
+        : !Array.isArray(p.restWords) || p.restWords.some((w) => typeof w !== 'string' || !w.trim()) ? 'restWords' : null;
+      if (bad) return error(400, 'plugin.sp5.setting', { field: `proposals.${bad}` }, `Einstellung ungültig: proposals.${bad}`);
+      // the discarded proposals change only through their routes
+      settings = { root: String(body.root ?? ''), path: String(body.path ?? ''), mapping, options: o.options,
+        proposals: { ...p, discarded: settings.proposals.discarded } };
+      return ok(settings);
+    }
+    if (is('POST', 'zuordnung/vorschlaege')) {
+      if (!settings.root) return error(400, 'plugin.sp5.noFolder', {}, 'Der Ordner fehlt (Einstellungen der Erweiterung)');
+      return ok(proposals(body, settings.proposals.discarded));
+    }
+    if (is('POST', 'zuordnung/vorschlaege/verwerfen')) {
+      if (typeof body?.key !== 'string' || !body.key.trim()) return error(400, 'plugin.sp5.setting', { field: 'key' }, 'Einstellung ungültig: key');
+      if (!settings.proposals.discarded.includes(body.key)) settings.proposals.discarded.push(body.key);
+      return ok(settings);
+    }
+    if (is('POST', 'zuordnung/vorschlaege/zuruecksetzen')) {
+      settings.proposals.discarded = [];
       return ok(settings);
     }
     if (is('POST', 'ergebnis')) {

@@ -159,3 +159,35 @@ test('codes of the folder: result texts, the hits of each rule and pattern, code
   // a hidden shift without a rule: dropped by the import when it has no duties, so not counted
   assert.deepEqual(m.unmatched({ shifts: [{ code: 'H1', hidden: true, result: { kind: 'none' } }], groups: [] }), { shifts: [], groups: [] });
 });
+
+test('a taken proposal adds its entry and the new area it needs, once', () => {
+  const areas = [{ id: 'TA', name: 'Team Annahme', color: '#B45309' }, { id: 'TD', name: 'Team Disposition', color: '#15803D' }];
+  const mapping = { areas: [{ id: 'AN', name: 'Annahme', color: '#000000' }], shifts: [], groups: [] };
+  assert.deepEqual(m.takeProposal(mapping, 'shifts', { kind: 'rule', match: 'A1', areaId: 'TA' }, areas), ['TA']);
+  assert.deepEqual(m.takeProposal(mapping, 'groups', { kind: 'rule', match: 'Team Annahme', areaIds: ['TA'] }, areas), []);
+  assert.deepEqual(m.takeProposal(mapping, 'shifts', { kind: 'choice', match: 'M1', choices: [{ areaId: 'TA' }, { areaId: 'TD' }] }, areas, 'TD'), ['TD']);
+  m.takeProposal(mapping, 'shifts', { kind: 'ignored', match: 'X[*]' }, areas);
+  m.takeProposal(mapping, 'groups', { kind: 'ignored', match: 'Gesamt' }, areas);
+  m.takeProposal(mapping, 'compensatoryRest', { match: 'ER' }, areas);
+  m.takeProposal(mapping, 'areas', areas[0], areas);
+  assert.deepEqual(mapping, {
+    areas: [{ id: 'AN', name: 'Annahme', color: '#000000' }, areas[0], areas[1]],
+    shifts: [{ match: 'A1', areaId: 'TA' }, { match: 'M1', areaId: 'TD' }],
+    groups: [{ match: 'Team Annahme', areaIds: ['TA'] }],
+    ignoreShifts: ['X[*]'], ignoreGroups: ['Gesamt'], compensatoryRestAbsences: ['ER'],
+  });
+  // an existing area is used as it is
+  const own = { areas: [{ id: 'AN', name: 'Annahme', color: '#000000' }], shifts: [], groups: [] };
+  assert.deepEqual(m.takeProposal(own, 'shifts', { kind: 'rule', match: 'A2', areaId: 'AN' }, areas), []);
+  assert.equal(own.areas.length, 1);
+});
+
+test('the titles and the count of proposals', () => {
+  assert.equal(m.proposalTitle('shifts', { code: 'A1', name: 'Früh', kind: 'rule', areaId: 'TA' }), 'A1 Früh → TA');
+  assert.equal(m.proposalTitle('shifts', { code: 'M1', name: 'Mitte', kind: 'choice', choices: [{ areaId: 'TA' }, { areaId: 'TD' }] }), 'M1 Mitte: TA, TD zur Wahl');
+  assert.equal(m.proposalTitle('groups', { name: 'Gesamt', kind: 'ignored' }), 'Gesamt: ignorieren');
+  assert.equal(m.proposalTitle('areas', { id: 'TA', name: 'Team Annahme', group: 'Team Annahme' }), 'Bereich TA Team Annahme (aus der Gruppe Team Annahme)');
+  assert.equal(m.proposalTitle('compensatoryRest', { code: 'ER', name: 'Ersatzruhe' }), 'ER Ersatzruhe: als Ersatzruhe');
+  assert.equal(m.proposalCount({ areas: [1], shifts: [1, 2], groups: [], compensatoryRest: [3] }), 4);
+  assert.equal(m.proposalCount(null), 0);
+});

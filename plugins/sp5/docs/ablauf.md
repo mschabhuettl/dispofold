@@ -18,9 +18,12 @@ Alle Beispiele sind erfunden: die Bereiche und Kürzel (`AN`, `DR`, `A1`, `R1` u
    [Import aus Schichtplaner 5](plugin-sp5-sp5.md#einschalten-und-einstellen)). Am Server sind nur die Ordner
    wählbar, die die IT freigegeben hat; am eigenen Rechner öffnet **Ordner wählen …** den Ordnerdialog. Der
    Ordner wird nur gelesen.
-3. Die **Zuordnung** anlegen: auf der Seite [Zuordnung](plugin-sp5-zuordnung.md) die Bereiche, die Regeln für
-   Schichten und Gruppen und die Listen der ignorierten Schichten, Gruppen und Abwesenheiten eintragen, oder eine
-   vorhandene `mapping.json` laden. Die Tabelle **Im Ordner** zeigt sofort, welche Schicht und welche Gruppe des
+3. Die **Zuordnung** anlegen: auf der Seite [Zuordnung](plugin-sp5-zuordnung.md) **Zuordnung vorschlagen**
+   wählen. Dispofold schlägt aus Gruppen, Bedarf und Diensten des Ordners Bereiche, Regeln für Schichten und
+   Gruppen und die Listen zum Ignorieren vor, jeweils mit Grund
+   ([Vorschläge aus dem Ordner](plugin-sp5-zuordnung.md#vorschläge-aus-dem-ordner)). Die passenden übernehmen,
+   die übrigen verwerfen oder selbst eintragen, dann **Zuordnung speichern**. Wer schon eine `mapping.json` hat,
+   lädt sie stattdessen. Die Tabelle **Im Ordner** zeigt sofort, welche Schicht und welche Gruppe des
    Ordners noch keine Regel hat.
 4. Die **Optionen** passen meist mit ihren Standardwerten. Für den ersten Lauf mit einem neuen Bestand hilft
    **Bereiche aus der Historie ab … Diensten** mit 3; danach, wenn die Zeilen **Schichten der Personen** im
@@ -53,8 +56,9 @@ Alle Beispiele sind erfunden: die Bereiche und Kürzel (`AN`, `DR`, `A1`, `R1` u
 ## 3. Zuordnung anpassen
 
 Was der Bericht oder die Tabelle **Im Ordner** als „keine Regel“ zeigt, auf der Seite **Zuordnung** ergänzen:
-eine Schichtregel mit Muster und Bereich, eine Gruppenregel mit ihren Bereichen, oder das Kürzel in eine der
-Listen zum Ignorieren. Die Prüfung unter der Zuordnung meldet jeden Fehler mit Liste und Eintragsnummer.
+mit **Zuordnung vorschlagen** (die Übersicht nennt nach dem Lauf, wie viele neue Vorschläge es gibt), oder von
+Hand mit einer Schichtregel mit Muster und Bereich, einer Gruppenregel mit ihren Bereichen, oder dem Kürzel in
+einer der Listen zum Ignorieren. Die Prüfung unter der Zuordnung meldet jeden Fehler mit Liste und Eintragsnummer.
 **Zuordnung speichern**, dann auf der Übersicht noch einmal **Ausführen**.
 
 ## 4. Vergleichen

@@ -11,6 +11,12 @@ file on the SP5 folder and compares the three files. It prints only an anonymous
 and for differences JSON paths with list positions instead of ids, field names of the data format, column names of
 the report and counts; no names, codes, ids, dates or values. The same text goes to --ausgabe to send back.
 Python 3.10 or later, standard library only. Nothing is written into the SP5 folder.
+
+    python -X utf8 sp5-vergleich.py --ergebnis dispofold-sp5-ergebnis-2027-01.zip --vorschlag [--ausgabe ...]
+
+compares instead what "Zuordnung vorschlagen" proposes for this folder from an empty mapping with the own mapping in
+the ZIP file (vorschlag-vergleich.json, made by Dispofold): per section only counts of entries that are the same,
+different, missing in the proposal and extra in it; no codes or names. It needs neither the folder nor sp5-export.
 """
 
 import argparse
@@ -38,6 +44,7 @@ SCHEMA_KEYS = {
     "compRestUsed", "hoursAccountAfter", "compRestBalanceAfter", "wishesMet", "type", "half",
 }
 WARNING = "Warnung: "
+SECTIONS = {"areas": "Bereiche", "shifts": "Schichten", "groups": "Gruppen", "compensatoryRest": "Ersatzruhe"}
 
 
 def run_python(checkout: Path, data: Path, work: Path, request: dict) -> tuple[int, str]:
@@ -156,14 +163,39 @@ def compare_warnings(java: bytes, python: bytes, lines: list) -> bool:
     return False
 
 
+def proposal(args) -> int:
+    with zipfile.ZipFile(args.ergebnis) as z:
+        if "vorschlag-vergleich.json" not in z.namelist():
+            print("Fehler: die ZIP-Datei hat keine vorschlag-vergleich.json (Dispofold 0.22.0 oder neuer)",
+                  file=sys.stderr)
+            return 2
+        counts = json.loads(z.read("vorschlag-vergleich.json").decode("utf-8"))
+    lines = ["Vorschlag der Zuordnung (aus leerer Zuordnung) gegen die eigene Zuordnung"]
+    for key, label in SECTIONS.items():
+        c = counts.get(key, {})
+        lines.append(f"{label}: {c.get('matched', 0)} gleich, {c.get('different', 0)} verschieden, "
+                     f"{c.get('missing', 0)} fehlen im Vorschlag, {c.get('extra', 0)} zusätzlich im Vorschlag")
+    text = "\n".join(lines) + "\n"
+    print(text, end="")
+    Path(args.ausgabe).write_text(text, encoding="utf-8")
+    print(f"gespeichert: {args.ausgabe}")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Ergebnis der Erweiterung sp5 mit sp5_export.py vergleichen "
                                             "(anonymes Ergebnis).")
     p.add_argument("--ergebnis", required=True, help="ZIP-Datei aus Dispofold („Ergebnis speichern“)")
-    p.add_argument("--daten", required=True, help="Datenordner von Schichtplaner 5 (wird nur gelesen)")
-    p.add_argument("--sp5-export", required=True, help="Ordner mit sp5-export (sp5_export.py)")
+    p.add_argument("--daten", help="Datenordner von Schichtplaner 5 (wird nur gelesen)")
+    p.add_argument("--sp5-export", help="Ordner mit sp5-export (sp5_export.py)")
+    p.add_argument("--vorschlag", action="store_true",
+                   help="statt des Vergleichs: Vorschlag aus dem Ordner gegen die eigene Zuordnung (nur Zahlen)")
     p.add_argument("--ausgabe", default="sp5-vergleich.txt", help="Textdatei mit dem Ergebnis zum Zurückschicken")
     args = p.parse_args(argv)
+    if args.vorschlag:
+        return proposal(args)
+    if not args.daten or not args.sp5_export:
+        p.error("--daten und --sp5-export fehlen (oder --vorschlag)")
     checkout = Path(args.sp5_export).resolve()
     if not (checkout / "sp5_export.py").is_file():
         print(f"Fehler: {checkout} enthält kein sp5_export.py", file=sys.stderr)
