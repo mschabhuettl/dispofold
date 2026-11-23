@@ -44,6 +44,8 @@ ausführen, oder den Monat unter **Einstellungen → Daten** mit **Monat wieder 
 Der Link im Hinweis führt dorthin und wählt den Monat schon; sind mehrere abgeschlossen, wird der neueste zuerst
 wieder geöffnet.
 
+![Der Hinweis über dem Import, wenn ein Monat des Laufs abgeschlossen ist](img/import-abgeschlossen.png)
+
 Gibt es noch gar keine Korrekturen (keine geladene Korrekturdatei, keine Änderung in Dispofold), steht über dem
 Import ein Hinweis mit dem Weg zu [Korrekturdatei laden](daten.md#korrekturdatei-laden). Wer bisher mit
 `sp5_export.py --corrections` exportiert hat, lädt seine `korrekturen.json` dort einmal vor dem ersten Import.

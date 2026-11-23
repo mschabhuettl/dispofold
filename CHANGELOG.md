@@ -54,7 +54,7 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
   noch kein Bereich eingetragen.“), „Die Zuordnung fehlt“ führt mit **Zur Zuordnung** gleich dorthin,
   Seitentitel wie ihre Reiter, ein Ort für den Import (**Lauf und Import**, nicht mehr auch unter Daten),
   Monatsfelder nicht mehr abgeschnitten, ein abgeschlossener Monat mit dem nächsten Schritt. Neue Hilfeseite für den
-  Anfang, Schritt für Schritt: [Echte Daten übernehmen](plugins/sp5/docs/echte-daten.md); Vergleich und Hinweise
+  Anfang, Schritt für Schritt mit Bildern: [Echte Daten übernehmen](plugins/sp5/docs/echte-daten.md); Vergleich und Hinweise
   für Entwickler auf einer Seite [Technik](plugins/sp5/docs/technik.md), die beide gewollten Unterschiede nennt
   (Zyklen, und Nachtschichten standardmäßig nicht als fair zu verteilen markiert).
 - **Anleitung und Dokumentation an den Code angeglichen:** Die Planungsregeln rechnen einen Historienmonat beim
