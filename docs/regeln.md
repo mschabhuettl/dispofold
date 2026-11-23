@@ -76,7 +76,7 @@ die Parameter (Seite Regeln, „Gesetz und Betriebsvereinbarung“; die Höchsts
 | `weeklyRest` | Mindestens 36 h ununterbrochene Ruhe je Kalenderwoche | KV, Ruhezeit | `minWeeklyRestHours` (36) |
 | `maxDutyLength` | Ein Dienst dauert höchstens 12 h | KV, Durchrechnung | `maxDutyHours` (12) |
 | `maxWeekHours` | Höchstens 60 h Dienst je Kalenderwoche | KV, Durchrechnung | `maxWeekHours` (60) |
-| `maxMonthHours` | Im Monat höchstens das Soll (beim festen Anteil je Monat: das Ziel) plus eine Toleranz (Dienste, angerechnete Abwesenheiten und Ersatzruhe) | Betrieb | `maxOverTargetPercent` (10 % des Ziels) |
+| `maxMonthHours` | Im Monat höchstens das Soll (beim festen Anteil je Monat: das Ziel) plus eine Toleranz (Dienste, angerechnete Abwesenheiten und Ersatzruhe) | Betrieb | `maxOverTargetPercent` (10 %) |
 | `freeSundays` | Mindestens N Sonntage je Kalendermonat ohne Dienst | Standardwert, einstellbar | `minFreeSundays` (2, 0 = aus) |
 | `averageWeekHours` | Im Durchschnitt des Durchrechnungszeitraums höchstens die eigenen Wochenstunden plus Spielraum, nie mehr als 46,16 h je Woche | KV, Durchrechnung; Teilzeit siehe unten | `maxAverageWeekHours` (46,16), `averageTolerancePercent` (10 %), `averagingPeriod` (Kalenderhalbjahr), `averagingWeeks` (52, nur gleitend) |
 | `qualification` | Nur Personen, die für den Bereich eingeteilt werden dürfen | Stammdaten | `areaIds` der Person |

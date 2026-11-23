@@ -177,8 +177,8 @@ verteilt. Wer [nie Nacht](#nie-nacht) macht, ist nie im Nachtausgleich.
 Eine Person, die keine Nachtdienste macht, in einem dieser drei Fälle:
 
 - Ihre Bereiche haben keine Nachtschicht.
-- Sie hat Einschränkungen „Nie“ für jeden Wochentag, die zusammen jede Nachtschicht ihrer Bereiche abdecken, als
-  Schichtart Nacht oder Schicht für Schicht, und die den ganzen Planungsmonat gelten. Eine Einschränkung nur für
+- Sie hat Einschränkungen „Nie“ an **jedem Tag** (nicht sieben einzelne Wochentage), die zusammen jede Nachtschicht
+  ihrer Bereiche abdecken, als Schichtart Nacht oder Schicht für Schicht, und die den ganzen Planungsmonat gelten. Eine Einschränkung nur für
   einige Wochentage, nur für einen Teil des Monats oder nur für eine von mehreren Nachtschichten genügt nicht.
 - Sie hat eine Familienregel „keine Nacht“ an allen sieben Wochentagen.
 

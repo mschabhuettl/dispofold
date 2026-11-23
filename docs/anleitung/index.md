@@ -51,8 +51,8 @@ Server, und keine Daten verlassen ihn. Was ins Netz gehen kann, steht unter
   gewohnter Verteilung), Bereiche, Schichten, Bedarf je Bereich und Tageszeit, Abwesenheitsarten und Feiertage.
   Sie ändern sich selten und kommen meist als Datensatz aus dem Quellsystem.
 - **Eingaben des Monats:** Abwesenheiten, Wünsche und Vorgaben.
-- **Regeln:** Grenzen aus Kollektivvertrag und Betriebsvereinbarung (Ruhezeiten, Höchstarbeitszeiten,
-  Wochenschnitt, freie Sonntage) und die Planungsziele mit ihren Gewichten.
+- **Regeln:** feste Grenzen (Ruhezeiten, Höchstarbeitszeiten und Wochenschnitt nach dem Kollektivvertrag, freie
+  Sonntage als einstellbarer Standardwert) und die Planungsziele mit ihren Gewichten.
 - **Historie:** die Zahlen der abgeschlossenen Vormonate (gearbeitete Stunden, Wochenstunden, Nächte, Wochenenden,
   Feiertage, fair verteilte Dienste, erfüllte Wünsche, Stundenkonto, Ersatzruhe).
 

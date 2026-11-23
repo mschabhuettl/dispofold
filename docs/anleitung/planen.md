@@ -84,8 +84,8 @@ Regeln im Einzelnen (alle mit **i** auf der Seite **Regeln**, ausführlich in [r
   Ersatzruhe) dürfen das Soll (beim festen Anteil je Monat: das Ziel) höchstens um eine Toleranz übersteigen,
   voreingestellt 10 %. Das Programm plant nie
   darüber. Ein von Hand gesetzter Dienst darf darüber gehen, zählt dann aber als Regelverstoß. Die gesetzlichen
-  Grenzen wie die Höchstarbeitszeit je Woche gelten unabhängig davon. Für die Obergrenze zählt immer das echte,
-  nicht das verkleinerte Ziel.
+  Grenzen wie die Höchstarbeitszeit je Woche gelten unabhängig davon. Beim festen Anteil zählt für die Obergrenze
+  das echte, nicht das verkleinerte Ziel.
 - **Wochenschnitt:** Im Durchrechnungszeitraum (Standard: das Kalenderhalbjahr) arbeitet eine Person im Schnitt
   höchstens ihre eigenen Wochenstunden plus einen Spielraum (Standard 10 %), nie mehr als 46,16 h je Woche. Ein
   Regelverstoß ist das erst, wenn die Historie alle Vormonate des Zeitraums enthält.

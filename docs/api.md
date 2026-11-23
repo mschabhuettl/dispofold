@@ -130,9 +130,9 @@ Importquelle prüft jeden beim Import noch einmal.
 Feld die Einträge, die wirken können, in der Reihenfolge `weeklyHours`, `areaIds`, `hoursAccount`,
 `compRestBalance`, `familyRules`, `entryDate`, `exitDate`, `shiftMix`, `restrictions`, `exclude` und `demand`
 (Bereiche). `skipped` nennt die Einträge, die nicht wirken, je mit einem Hinweis-Code (siehe Fehlercodes,
-Hinweise); er nennt nur Ids, Feldnamen und Anzahlen, nie freien Text der Datei, und einen Schlüssel, der keine Id
-ist, gar nicht (`personId` ist dann leer). `overridden` zählt die Einträge, die Änderungen in Dispofold seit dem
-letzten Import überdecken, `replaced` die Einträge der Korrekturen des letzten Imports, die die Datei ersetzt.
+Hinweise); er nennt Ids, Feldnamen, Bereichsschlüssel und Anzahlen, einen Personenschlüssel, der keine Id ist,
+aber nicht (`personId` ist dann leer). `overridden` zählt die Einträge der Datei, die von Änderungen in Dispofold
+seit dem letzten Import überdeckt werden, `replaced` die Einträge der Korrekturen des letzten Imports, die die Datei ersetzt.
 
 `ImportSummary`: `{ "source", "people", "areas", "shifts", "months": ["YYYY-MM"], "warnings": [{ "code", "params" }], "kept": n, "notes": [{ "code", "params" }] }`.
 Ein Import ersetzt die Stammdaten und die Planungsmonate, die im Datensatz enthalten sind. Pläne bleiben.
