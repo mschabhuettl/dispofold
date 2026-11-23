@@ -4,7 +4,8 @@ Its links are written for the repository root: docs/x.md becomes x.md, other fil
 THIRD_PARTY.md) point to the repository on GitHub.
 
 Plugins (docs/plugins.md): the help pages of each plugin (plugins/<id>/docs/<page>.md) become
-anleitung/plugin-<id>-<page>.md, listed under "Anleitung" after the core pages, as in the built-in guide. Plugins
+anleitung/plugin-<id>-<page>.md, listed under "Anleitung" after the core pages in the order of the plugin's help list,
+as in the built-in guide. Plugins
 marked testOnly in their plugin.json only with DISPOFOLD_DOCS_TEST_PLUGINS=1 (CI builds them into a throwaway folder).
 Their images (plugins/<id>/docs/img/<name>.png, shown as img/<name>.png) become anleitung/plugin-<id>-img/<name>.png.
 """
@@ -27,13 +28,27 @@ def plugin_pages(config):
             if json.load(f).get("testOnly") and not test:
                 continue
         docs = os.path.join(base, plugin, "docs")
-        for name in sorted(os.listdir(docs)) if os.path.isdir(docs) else []:
+        order = help_order(os.path.join(base, plugin))
+        names = sorted(os.listdir(docs)) if os.path.isdir(docs) else []
+        for name in sorted(names, key=lambda n: (order.get(n[:-3], len(order)), n)):
             if re.match(r"[a-z0-9-]+\.md$", name):
                 path = os.path.join(docs, name)
                 with open(path, encoding="utf-8") as f:
                     title = f.readline().strip().removeprefix("# ")
                 pages.append((f"anleitung/plugin-{plugin}-{name}", title, path))
     return pages
+
+
+def help_order(plugin_dir):
+    """{page: position} of the plugin's help list in its frontend (frontend/index.js, `help: [{ page: '…' }, …]`), the
+    order of the built-in guide; pages it does not list come after them, by name."""
+    path = os.path.join(plugin_dir, "frontend", "index.js")
+    if not os.path.isfile(path):
+        return {}
+    with open(path, encoding="utf-8") as f:
+        listed = re.search(r"\bhelp:\s*\[(.*?)\]", f.read(), re.S)
+    pages = re.findall(r"\bpage:\s*'([a-z0-9-]+)'", listed.group(1)) if listed else []
+    return {page: i for i, page in enumerate(pages)}
 
 
 def on_config(config):
