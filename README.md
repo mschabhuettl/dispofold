@@ -14,6 +14,32 @@ Mitarbeiterinnen und Mitarbeiter. Die Dienstplanung prüft, ändert, fixiert, sc
 - Für jeden Dienst lässt sich nachlesen, welche Regeln gegriffen haben.
 - Import eines Datensatzes im eigenen, dokumentierten JSON-Format. Export als Excel, CSV und JSON.
 
+## Was ist Dispofold?
+
+**Timefold Solver** ist eine freie Planungs-Engine (eine Java-Bibliothek, Community Edition, Lizenz Apache 2.0,
+Version 2.8.0). Sie sucht unter sehr vielen möglichen Plänen einen guten, indem sie Pläne ausprobiert und nach
+Regeln bewertet. Von Dienstplänen weiß sie von sich aus nichts.
+
+**Dispofold** ist das Dienstplanungsprogramm, das um diese Engine herum gebaut ist:
+
+- die Regeln aus dem Kollektivvertrag und die Planungsregeln, geschrieben als Regeln für Timefold, mit sichtbaren
+  Gewichten;
+- die Daten: Personen, Bereiche, Schichten, Bedarf, Abwesenheiten, Wünsche, Historie und Stundenkonto;
+- Import und Export;
+- die Oberfläche zum Planen, Prüfen, Ändern und Abschließen eines Monats;
+- die Auswertungen und „Warum dieser Dienst?“.
+
+Kurz gesagt: Timefold rechnet, Dispofold sagt, was zu rechnen ist, und zeigt das Ergebnis.
+
+**Offline:** Timefold läuft in Dispofold, auf dem eigenen Rechner oder dem eigenen Server. Dispofold nutzt keinen
+Cloud-Dienst und nicht die kommerzielle Plattform von Timefold, und keine Daten verlassen den Rechner. Die
+Anleitung ist eingebaut. Ins Internet gehen nur:
+
+- die Suche nach einer neuen Version: am Server einmal beim Start und einmal am Tag eine anonyme Anfrage an GitHub,
+  abschaltbar mit `DISPOFOLD_UPDATE_CHECK=false`; das Programm am eigenen Rechner fragt beim ersten Start, ob es
+  suchen soll, und geht nach „Nein“ nie ins Netz;
+- unter Windows das Setup, wenn die WebView2-Runtime von Microsoft fehlt: Dann lädt es sie herunter.
+
 ## Auslieferungen
 
 | Auslieferung | Datei im Release | Für |

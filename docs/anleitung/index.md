@@ -9,6 +9,19 @@ Die Regeln, nach denen das Programm plant, stehen im Einzelnen in [regeln.md](..
 Datensätze in [datenformat.md](../datenformat.md). Installation und Sicherung sind Sache der IT:
 [betrieb.md](../betrieb.md).
 
+## Was ist Dispofold?
+
+Dispofold plant den Monatsdienstplan. Das Rechnen übernimmt **Timefold Solver**, eine freie Planungs-Engine. Sie
+probiert sehr viele mögliche Pläne aus, bewertet jeden nach Regeln und behält einen guten. Von Dienstplänen weiß
+sie von sich aus nichts. Alles andere ist Dispofold: die Regeln aus dem Kollektivvertrag und die Planungsregeln
+mit ihren Gewichten, die Daten (Personen, Bereiche, Schichten, Bedarf, Abwesenheiten, Wünsche, Historie,
+Stundenkonto), Import und Export, die Seiten zum Planen, Prüfen, Ändern und Abschließen, die Auswertungen und
+„Warum dieser Dienst?“. Kurz gesagt: Timefold rechnet, Dispofold sagt, was zu rechnen ist, und zeigt das Ergebnis.
+
+Dispofold arbeitet ganz ohne Internet. Timefold läuft in Dispofold, auf dem eigenen Rechner oder dem eigenen
+Server, und keine Daten verlassen ihn. Was ins Netz gehen kann, steht unter
+[Häufige Fragen](fragen.md#häufige-fragen) unter „Braucht Dispofold Internet?“.
+
 ## Seiten dieser Anleitung
 
 | Seite | Inhalt |

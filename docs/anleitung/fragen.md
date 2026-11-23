@@ -8,6 +8,16 @@ der Seite.
 
 ## Häufige Fragen
 
+**Braucht Dispofold Internet?** Nein. Geplant wird auf dem eigenen Rechner oder dem eigenen Server, ohne
+Cloud-Dienst, und keine Daten verlassen ihn; auch diese Anleitung ist eingebaut. Ins Netz gehen kann Dispofold nur
+für zwei Dinge:
+
+- die Suche nach einer neuen Version: Der Server fragt beim Start und einmal am Tag anonym bei GitHub nach; die IT
+  kann das abschalten. Das Programm am eigenen Rechner fragt beim ersten Start, ob es suchen soll, und geht nach
+  **Nein** nie ins Netz (siehe [Updates](updates.md)).
+- unter Windows das Setup, wenn die WebView2-Runtime von Microsoft fehlt: Dann lädt es sie herunter. Ohne
+  Internet installiert die IT sie vorher.
+
 **Warum ist eine Lücke geblieben, obwohl noch Leute frei sind?** Frei heißt nicht, dass jemand den Dienst machen
 darf. Meist verhindert es eine Regel: die tägliche Ruhezeit nach einem Dienst am Vortag, die Höchststunden im
 Monat, die freien Sonntage, eine Einschränkung „Nie“ oder ein anderer Bereich. Wer die Schicht nur auf Anfrage
