@@ -33,7 +33,7 @@ class AccountGoalTest {
     static final Rules DEFAULT = Rules.defaults();
 
     static Person person(double account) {
-        return new Person("P1", "A", "B", "AB", 40, List.of("AN"), account, 0, List.of(), null, null, null, null, null);
+        return new Person("P1", "A", "B", "AB", 40, List.of("AN"), account, 0, List.of(), null, null, null, null);
     }
 
     /** The history entry of the month before {@code month} with this account after it. */

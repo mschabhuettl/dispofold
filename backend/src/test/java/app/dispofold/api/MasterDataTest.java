@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import app.dispofold.model.Dataset;
+import app.dispofold.model.Restriction;
 import app.dispofold.store.Store;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.junit.TestProfile;
@@ -197,6 +198,65 @@ class MasterDataTest {
                 .statusCode(400).body("errors.code", hasItem("import.badDemand"));
         assertThat(revision()).isEqualTo(before);
         assertThat(person("P0002").path("weeklyHours").asDouble()).isEqualTo(40.0);
+    }
+
+    /** The stored rows of a person, as "shift weekday kind". */
+    java.util.Set<String> rows(String id) {
+        java.util.Set<String> out = new java.util.TreeSet<>();
+        for (Restriction r : store.dataset().orElseThrow().restrictions()) {
+            if (r.personId().equals(id)) {
+                out.add((r.shiftId() == null ? r.category() : r.shiftId()) + " " + r.weekday() + " " + r.kind());
+            }
+        }
+        return out;
+    }
+
+    @Test
+    void theStatesOfTheAreasAreReadFoldedAndStoredAsRestrictions() throws Exception {
+        // P0002 has AN (AN-T) and DR (DR-T, DR-N): "nur von Hand" for DR, an exception on AN-T
+        ObjectNode p = person("P0002");
+        p.putObject("areaStates").put("DR", "ON_REQUEST");
+        update("people", "P0002", p).statusCode(200);
+        assertThat(rows("P0002")).containsExactly("DR-N 0 ON_REQUEST", "DR-T 0 ON_REQUEST");
+        at(revision()).body(List.of(Map.of("shiftId", "AN-T", "weekday", 6, "kind", "NEVER")))
+                .put("/api/dataset/people/P0002/restrictions").then().statusCode(200);
+        // the exceptions as sent, the state stays
+        assertThat(rows("P0002")).containsExactly("AN-T 6 NEVER", "DR-N 0 ON_REQUEST", "DR-T 0 ON_REQUEST");
+        JsonNode read = person("P0002");
+        assertThat(read.path("areaStates").path("DR").asText()).isEqualTo("ON_REQUEST");
+        assertThat(dataset().path("restrictions").findValuesAsText("shiftId")).containsExactly("AN-T");
+        // a body without the states (an older page) keeps them
+        ObjectNode older = person("P0002");
+        older.remove("areaStates");
+        older.put("weeklyHours", 38.5);
+        update("people", "P0002", older).statusCode(200);
+        assertThat(rows("P0002")).contains("DR-T 0 ON_REQUEST");
+        // "nie" instead, then planbar again
+        p = person("P0002");
+        p.putObject("areaStates").put("DR", "NEVER");
+        update("people", "P0002", p).statusCode(200);
+        assertThat(rows("P0002")).containsExactly("AN-T 6 NEVER", "DR-N 0 NEVER", "DR-T 0 NEVER");
+        p = person("P0002");
+        p.remove("areaStates");
+        p.putObject("areaStates");
+        update("people", "P0002", p).statusCode(200);
+        assertThat(rows("P0002")).containsExactly("AN-T 6 NEVER");
+        // the matrix: several people at once; an area left out drops its state, exceptions stay
+        at(revision()).body(List.of(Map.of("personId", "P0002", "areaIds", List.of("AN", "DR"), "areaStates",
+                Map.of("AN", "ON_REQUEST")), Map.of("personId", "P0004", "areaIds", List.of("AN"), "areaStates",
+                        Map.of("AN", "NEVER")))).put("/api/dataset/area-states").then().statusCode(200);
+        assertThat(rows("P0002")).containsExactly("AN-T 0 ON_REQUEST", "AN-T 6 NEVER");
+        assertThat(rows("P0004")).containsExactly("AN-T 0 NEVER");
+        assertThat(person("P0004").path("areaIds").size()).isEqualTo(1);
+        at(revision()).body(List.of(Map.of("personId", "NOPE", "areaIds", List.of("AN"))))
+                .put("/api/dataset/area-states").then().statusCode(404);
+        // a new shift of an area someone has "nie": the same for it
+        create("shifts", Map.of("areaId", "AN", "code", "A9", "name", "Annahme neu", "start", "08:00", "end", "16:00",
+                "category", "DAY", "color", "#F6E3D3", "unpopular", false)).statusCode(200);
+        String added = dataset().path("shifts").findValuesAsText("id").stream().filter(id -> !id.startsWith("AN-T")
+                && !id.startsWith("DR")).findFirst().orElseThrow();
+        assertThat(rows("P0004")).containsExactlyInAnyOrder(added + " 0 NEVER", "AN-T 0 NEVER");
+        assertThat(person("P0004").path("areaStates").path("AN").asText()).isEqualTo("NEVER");
     }
 
     @Test

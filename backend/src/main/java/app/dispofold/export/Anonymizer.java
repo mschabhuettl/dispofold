@@ -87,7 +87,7 @@ public final class Anonymizer {
             return new Person(id, id, id, id, p.weeklyHours(), p.areaIds(), p.hoursAccount(), p.compRestBalance(),
                     list(p.familyRules()).stream().map(f -> new FamilyRule(f.weekdays(), f.latestEnd(),
                             f.earliestStart(), f.noNights(), null)).toList(),
-                    id, p.entryDate(), p.exitDate(), p.shiftMix(), p.excludedFrom());
+                    id, p.entryDate(), p.exitDate(), p.shiftMix(), p.excludedFrom(), null, null);
         }).toList();
         Dataset dataset = new Dataset(d.format(), d.version(), SOURCE,
                 list(d.areas()).stream().map(a -> new Area(a.id(), a.id(), a.color())).toList(),

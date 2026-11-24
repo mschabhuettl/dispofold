@@ -23,27 +23,23 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  *        after the last closed month when it was set), or null; written only when set
  * @param areaSources where each area of the person comes from, as text per area id (an import writes it, for
  *        example "Gruppe Team Annahme; Historie: 14 Dienste"), or null; only shown, written only when set
+ * @param areaStates per area of the person that is not freely plannable: ON_REQUEST ("nur von Hand": never planned
+ *        automatically, a planner may set a duty) or NEVER ("nie"), for every shift of the area on every day; or null.
+ *        Only in what the pages read and send: stored as restrictions ({@link AreaStates})
  */
 public record Person(String id, String firstName, String lastName, String shortName, double weeklyHours,
         List<String> areaIds, double hoursAccount, int compRestBalance, List<FamilyRule> familyRules,
         String externalId, LocalDate entryDate, LocalDate exitDate, ShiftMix shiftMix,
         @JsonInclude(JsonInclude.Include.NON_NULL) LocalDate excludedFrom,
-        @JsonInclude(JsonInclude.Include.NON_NULL) Map<String, String> areaSources) {
-
-    /** A person with an exclusion and without area sources. */
-    public Person(String id, String firstName, String lastName, String shortName, double weeklyHours,
-            List<String> areaIds, double hoursAccount, int compRestBalance, List<FamilyRule> familyRules,
-            String externalId, LocalDate entryDate, LocalDate exitDate, ShiftMix shiftMix, LocalDate excludedFrom) {
-        this(id, firstName, lastName, shortName, weeklyHours, areaIds, hoursAccount, compRestBalance, familyRules,
-                externalId, entryDate, exitDate, shiftMix, excludedFrom, null);
-    }
+        @JsonInclude(JsonInclude.Include.NON_NULL) Map<String, String> areaSources,
+        @JsonInclude(JsonInclude.Include.NON_EMPTY) Map<String, RestrictionKind> areaStates) {
 
     /** A person taken over from the source. */
     public Person(String id, String firstName, String lastName, String shortName, double weeklyHours,
             List<String> areaIds, double hoursAccount, int compRestBalance, List<FamilyRule> familyRules,
             String externalId, LocalDate entryDate, LocalDate exitDate, ShiftMix shiftMix) {
         this(id, firstName, lastName, shortName, weeklyHours, areaIds, hoursAccount, compRestBalance, familyRules,
-                externalId, entryDate, exitDate, shiftMix, null, null);
+                externalId, entryDate, exitDate, shiftMix, null, null, null);
     }
 
     /** Employed on this day, and not yet excluded from it on. */
@@ -55,13 +51,19 @@ public record Person(String id, String firstName, String lastName, String shortN
     /** The same person with another {@link #excludedFrom}. */
     public Person withExcludedFrom(LocalDate from) {
         return new Person(id, firstName, lastName, shortName, weeklyHours, areaIds, hoursAccount, compRestBalance,
-                familyRules, externalId, entryDate, exitDate, shiftMix, from, areaSources);
+                familyRules, externalId, entryDate, exitDate, shiftMix, from, areaSources, areaStates);
     }
 
     /** The same person with other {@link #areaSources}. */
     public Person withAreaSources(Map<String, String> sources) {
         return new Person(id, firstName, lastName, shortName, weeklyHours, areaIds, hoursAccount, compRestBalance,
-                familyRules, externalId, entryDate, exitDate, shiftMix, excludedFrom, sources);
+                familyRules, externalId, entryDate, exitDate, shiftMix, excludedFrom, sources, areaStates);
+    }
+
+    /** The same person with other {@link #areaStates}. */
+    public Person withAreaStates(Map<String, RestrictionKind> states) {
+        return new Person(id, firstName, lastName, shortName, weeklyHours, areaIds, hoursAccount, compRestBalance,
+                familyRules, externalId, entryDate, exitDate, shiftMix, excludedFrom, areaSources, states);
     }
 
 

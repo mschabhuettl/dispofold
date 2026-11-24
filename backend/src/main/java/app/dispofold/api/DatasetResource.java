@@ -24,6 +24,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import app.dispofold.api.MasterDataService.MasterChange;
 import app.dispofold.api.MasterDataService.Removal;
+import app.dispofold.model.AreaStates;
 import app.dispofold.model.Dataset;
 import app.dispofold.model.Restriction;
 import app.dispofold.store.Store;
@@ -56,7 +57,8 @@ public class DatasetResource {
                     List.of(), List.of(), List.of(), List.of(), List.of(), List.of(), List.of()));
             state = master.state();
         }
-        ObjectNode node = mapper.valueToTree(d);
+        // as the pages read it: per person the states of the areas and only the other restrictions (stored as rows)
+        ObjectNode node = mapper.valueToTree(AreaStates.fold(d));
         node.put("revision", state.revision());
         node.put("changedSinceImport", state.changedSinceImport());
         return node;
@@ -96,6 +98,14 @@ public class DatasetResource {
     public Removal remove(@PathParam("kind") String kind, @PathParam("key") String key,
             @QueryParam("confirm") boolean confirm, @HeaderParam("If-Match") String ifMatch) {
         return master.remove(kind, key, confirm, revision(ifMatch));
+    }
+
+    /** The matrix "Bereiche": areas and their states of several people in one change. */
+    @PUT
+    @Path("area-states")
+    @RolesAllowed("planner")
+    public MasterChange areaStates(@HeaderParam("If-Match") String ifMatch, List<MasterDataService.AreaRow> rows) {
+        return master.areaStates(rows, revision(ifMatch));
     }
 
     @PUT

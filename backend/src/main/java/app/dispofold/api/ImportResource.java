@@ -38,6 +38,7 @@ import app.dispofold.importclient.Issue;
 import app.dispofold.model.AbsenceCredit;
 import app.dispofold.model.AbsenceType;
 import app.dispofold.model.Area;
+import app.dispofold.model.AreaStates;
 import app.dispofold.model.Dataset;
 import app.dispofold.model.HistoryEntry;
 import app.dispofold.model.Period;
@@ -231,7 +232,9 @@ public class ImportResource {
         }
     }
 
-    private DatasetValidator.Result validated(Dataset dataset) {
+    private DatasetValidator.Result validated(Dataset given) {
+        // a file with area states (as the pages read the data): stored as their restrictions
+        Dataset dataset = AreaStates.expand(given);
         DatasetValidator.Result result = DatasetValidator.validate(dataset, store.rules());
         if (!result.ok()) {
             throw new WebApplicationException(Response.status(Status.BAD_REQUEST).type(MediaType.APPLICATION_JSON)
@@ -352,7 +355,8 @@ public class ImportResource {
             people.add(new Person(p.id(), p.firstName(), p.lastName(), p.shortName(), p.weeklyHours(),
                     list(p.areaIds()).stream().filter(areas::contains).toList(), p.hoursAccount(),
                     p.compRestBalance(), p.familyRules(), p.externalId(), p.entryDate(), p.exitDate(), mix,
-                    before.getOrDefault(p.id(), p.excludedFrom() != null ? p.excludedFrom() : start), p.areaSources()));
+                    before.getOrDefault(p.id(), p.excludedFrom() != null ? p.excludedFrom() : start), p.areaSources(),
+                    p.areaStates()));
         }
         list(current.restrictions()).stream().filter(r -> ids.contains(r.personId())
                 && (r.shiftId() == null || shifts.contains(r.shiftId()))).forEach(restrictions::add);

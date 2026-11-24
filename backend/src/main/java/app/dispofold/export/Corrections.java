@@ -510,7 +510,7 @@ public final class Corrections {
                 fields.contains("entryDate") ? p.entryDate() : t.entryDate(),
                 fields.contains("exitDate") ? p.exitDate() : t.exitDate(),
                 fields.contains("shiftMix") ? p.shiftMix() : t.shiftMix(),
-                fields.contains(EXCLUDED_FROM) ? p.excludedFrom() : t.excludedFrom(), t.areaSources());
+                fields.contains(EXCLUDED_FROM) ? p.excludedFrom() : t.excludedFrom(), t.areaSources(), t.areaStates());
     }
 
     /**
