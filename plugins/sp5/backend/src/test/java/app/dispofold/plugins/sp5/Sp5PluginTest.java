@@ -91,7 +91,8 @@ class Sp5PluginTest {
         s.put("root", ROOT);
         s.put("path", path);
         s.set("mapping", mapper.readTree(Sp5ExportTest.MAPPING));
-        s.putObject("options").put("historyMonths", 1).put("mixMinDuties", 1);
+        // the areas from the groups, as the command line computes them
+        s.putObject("options").put("historyMonths", 1).put("mixMinDuties", 1).put("areaSource", "groups");
         return s;
     }
 
@@ -102,7 +103,22 @@ class Sp5PluginTest {
                 .body("options.areasFromHistory", equalTo(null)).body("options.shiftsFromHistory", equalTo(null))
                 .body("options.demand", equalTo("history")).body("options.mixMinDuties", equalTo(10))
                 .body("options.shiftMix", equalTo(true)).body("options.hiddenShiftsMonths", equalTo(3))
-                .body("options.recentMonths", equalTo(3)).body("options.nightsFair", equalTo(false));
+                .body("options.recentMonths", equalTo(3)).body("options.nightsFair", equalTo(false))
+                // Dispofold's own: new settings take the history with the groups as a reserve
+                .body("options.areaSource", equalTo("reserve")).body("options.historyAreaDuties", equalTo(3));
+    }
+
+    @Test
+    void aSaveWithoutTheAreaSourceKeepsTheStoredOne() throws IOException {
+        ObjectNode s = settings("vorschlag");
+        ((ObjectNode) s.get("options")).put("areaSource", "history").put("historyAreaDuties", 5);
+        json().body(s).put("/api/plugins/sp5/einstellungen").then().statusCode(200)
+                .body("options.areaSource", equalTo("history"));
+        // a page that does not know the option yet
+        ObjectNode older = settings("vorschlag");
+        ((ObjectNode) older.get("options")).remove("areaSource");
+        json().body(older).put("/api/plugins/sp5/einstellungen").then().statusCode(200)
+                .body("options.areaSource", equalTo("history")).body("options.historyAreaDuties", equalTo(5));
     }
 
     @Test

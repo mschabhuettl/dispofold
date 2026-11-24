@@ -66,13 +66,13 @@ final class Sp5Settings {
     }
 
     /**
-     * The stored settings with every missing key at its default; settings stored before the option areaSource keep
-     * the areas from the groups.
+     * The stored settings with every missing key at its default; settings stored before the option areaSource (any
+     * saved settings: an empty object is what switching the plugin on stores) keep the areas from the groups.
      */
     static ObjectNode withDefaults(ObjectMapper mapper, JsonNode stored) {
         ObjectNode s = defaults(mapper);
         if (stored != null && stored.isObject()) {
-            if (!stored.path("options").has("areaSource")) {
+            if (stored.size() > 0 && !stored.path("options").has("areaSource")) {
                 ((ObjectNode) s.get("options")).put("areaSource", "groups");
             }
             stored.fields().forEachRemaining(e -> {

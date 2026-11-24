@@ -229,6 +229,10 @@ class Sp5FamiliesTest {
         // the setting off: as 0.24.0, the codes are families of their own
         Map<String, Object> off = propose(dir, Map.of(), untimed(false), "families");
         assertThat(areas(off).values()).contains("AUSB, FA", "DS, HO"); // with the families of the same staff
+        // a folder without any demand (its demand comes from the history) says nothing: the rule does not apply
+        FamilyFolder.write(dir, shifts.toArray(new Object[0][]), new long[0]);
+        assertThat(brief(propose(dir, Map.of(), untimed(true), "families"), "shifts")).doesNotContainEntry("AUSB", "ignored")
+                .doesNotContainEntry("HO", "ignored");
         assertThat(off).containsEntry("stems", 11);
     }
 

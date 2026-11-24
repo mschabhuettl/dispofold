@@ -160,7 +160,8 @@ In beiden Grundlagen wird eine Schicht zum Ignorieren vorgeschlagen, wenn ihr K�
 besetzt werden: Ausbildung, Home-Office, die Leitung eines anderen Dienstes. Beispiel: „Kein Zeitraum im Kürzel,
 kein Bedarf in Schichtplaner 5, 40 Dienste: vermutlich kein Platz im Dienstplan, etwa Ausbildung.“ Ein Kürzel ohne
 Zeitraum, aber mit Bedarf (etwa ein Tag- und ein Nachtdienst der Einsatzleitung) bleibt ein Dienst, ebenso ein
-Kürzel mit Zeitraum ohne Bedarf. Solche Schichten bilden keine Familie und zählen nicht für die Empfehlung. Trifft
+Kürzel mit Zeitraum ohne Bedarf. Solche Schichten bilden keine Familie und zählen nicht für die Empfehlung. Hat der Ordner gar keinen Bedarf
+eingetragen (der Bedarf kommt dann aus der Historie), sagt das Fehlen nichts, und die Regel greift nicht. Trifft
 die Regel einen echten Arbeitsplatz, dessen Kürzel keinen Zeitraum und keinen Bedarf hat, verwirft man den
 Vorschlag oder trägt eine Regel ein; ganz abschalten lässt sie sich mit **Schichten ohne Zeitraum und ohne Bedarf
 ignorieren**.

@@ -22,7 +22,8 @@ import org.junit.jupiter.api.io.TempDir;
  * Where a person's areas come from ("Bereiche einer Person aus"), on a synthetic folder: one broad group gives the
  * areas X and Y; Z belongs to no group. December 2026 is the history of January 2027.
  * <ul>
- * <li>E1 is in the broad group and works only X (10 duties): never a duty in Y.</li>
+ * <li>E1 is in the broad group and in the group Ypsilon (area Y) and works X (10 duties) and Y twice, below the
+ * threshold of 3.</li>
  * <li>E2 is in no group and works Z regularly (8 duties).</li>
  * <li>E3 is in the broad group with 2 duties in X, below the threshold of 3.</li>
  * <li>E4 is in the broad group and new: no history.</li>
@@ -36,7 +37,7 @@ class AreaSourceTest {
                        {"id": "Y", "name": "Bereich Y", "color": "#15803D"},
                        {"id": "Z", "name": "Bereich Z", "color": "#2563EB"}],
              "shifts": [{"match": "X1", "areaId": "X"}, {"match": "Y1", "areaId": "Y"}, {"match": "Z1", "areaId": "Z"}],
-             "groups": [{"match": "Breit", "areaIds": ["X", "Y"]}]}""";
+             "groups": [{"match": "Breit", "areaIds": ["X", "Y"]}, {"match": "Ypsilon", "areaIds": ["Y"]}]}""";
 
     static void folder(Path dir) throws Exception {
         List<TestTables.Field> shift = new ArrayList<>(List.of(n("ID", 11), c("NAME", 40), c("SHORTNAME", 24),
@@ -55,9 +56,9 @@ class AreaSourceTest {
         }
         TestTables.write(dir, "5SHIFT", shift, shifts);
         TestTables.write(dir, "5GROUP", List.of(n("ID", 11), c("NAME", 40), c("SHORTNAME", 24), n("SUPERID", 11)),
-                row(1L, "Breit", "BR", 0L));
+                row(1L, "Breit", "BR", 0L), row(2L, "Ypsilon", "YP", 0L));
         TestTables.write(dir, "5GRASG", List.of(n("ID", 11), n("EMPLOYEEID", 11), n("GROUPID", 11)),
-                row(1L, 1L, 1L), row(2L, 3L, 1L), row(3L, 4L, 1L));
+                row(1L, 1L, 1L), row(2L, 3L, 1L), row(3L, 4L, 1L), row(4L, 1L, 2L));
         List<Object[]> people = new ArrayList<>();
         for (long e = 1; e <= 4; e++) {
             people.add(row(e, "Person" + e, "Vorname" + e, "P" + e, 0L,
@@ -68,10 +69,10 @@ class AreaSourceTest {
                 n("HIDE", 1), c("WORKDAYS", 16), n("CALCBASE", 11), f("HRSDAY", 10, 2), f("HRSWEEK", 10, 2),
                 f("HRSMONTH", 10, 2), f("HRSTOTAL", 10, 2), d("EMPSTART"), d("EMPEND")), people.toArray(new Object[0][]));
         List<Object[]> duties = new ArrayList<>();
-        long[][] work = { { 1, 1, 10 }, { 2, 3, 8 }, { 3, 1, 2 } }; // {person, shift, duties in December}
+        long[][] work = { { 1, 1, 10 }, { 1, 2, 2 }, { 2, 3, 8 }, { 3, 1, 2 } }; // {person, shift, December duties}
         for (long[] w : work) {
             for (int k = 0; k < w[2]; k++) {
-                duties.add(row((long) duties.size() + 1, w[0], w[1], String.format("2026-12-%02d", k * 3 + 1), 0L));
+                duties.add(row((long) duties.size() + 1, w[0], w[1], String.format("2026-12-%02d", k * 3 + (int) w[1]), 0L));
             }
         }
         TestTables.write(dir, "5MASHI", List.of(n("ID", 11), n("EMPLOYEEID", 11), n("SHIFTID", 11), d("DATE"),
@@ -128,9 +129,13 @@ class AreaSourceTest {
                         + "1 aus Gruppen als Reserve nur auf Anfrage, 0 aus Gruppen weggelassen; 2 Mitarbeiter"));
         assertThat(reserve.areaCounts()).containsEntry("fromHistory", 2).containsEntry("reserve", 1)
                 .containsEntry("peopleWithoutHistory", 2);
-        // where each area comes from
+        // where each area comes from: per area only the groups that give it
         assertThat(reserve.areaSources().get("E1")).containsExactly(Map.entry("X", "Gruppe Breit; Historie: 10 Dienste"),
-                Map.entry("Y", "Gruppe Breit"));
+                Map.entry("Y", "Gruppen Breit, Ypsilon; Historie: 2 Dienste"));
+        // the reserve area, all on request, gives no usual share (as an area no longer worked)
+        Map<String, Object> mix = (Map<String, Object>) ((List<Map<String, Object>>) reserve.dataset().get("people"))
+                .stream().filter(p -> "E1".equals(p.get("id"))).findFirst().orElseThrow().get("shiftMix");
+        assertThat((Map<String, Object>) mix.get("areas")).containsOnlyKeys("X");
         assertThat(reserve.areaSources().get("E2")).containsExactly(Map.entry("Z", "Historie: 8 Dienste"));
         assertThat(history.areaSources().get("E3")).containsExactly(Map.entry("X", "Gruppe Breit; Historie: 2 Dienste"),
                 Map.entry("Y", "Gruppe Breit"));

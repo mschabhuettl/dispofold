@@ -77,6 +77,17 @@ public class Sp5Resource {
     private static final Object SETTINGS_LOCK = new Object();
 
     private JsonNode saveSettings(JsonNode body) {
+        // a page or client that does not know an option yet keeps its stored value (not the default of old settings)
+        if (body != null && body.isObject() && (!body.has("options") || body.get("options").isObject())) {
+            JsonNode stored = plugin.settings().get("options");
+            ObjectNode options = body.has("options") ? (ObjectNode) body.get("options")
+                    : ((ObjectNode) body).putObject("options");
+            for (String k : new String[] { "areaSource", "historyAreaDuties" }) {
+                if (!options.has(k)) {
+                    options.set(k, stored.get(k));
+                }
+            }
+        }
         ObjectNode s = Sp5Settings.checked(mapper, body);
         // the discarded proposals change only through their routes: a page with an older copy keeps them
         ((ObjectNode) s.get("proposals")).set("discarded", plugin.settings().get("proposals").get("discarded"));

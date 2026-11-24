@@ -238,10 +238,11 @@ def main(argv: list[str] | None = None) -> int:
             lines.append(f"Bereiche einer Person aus: {AREA_SOURCE.get(request['areaSource'], request['areaSource'])} "
                          f"(ab {request.get('historyAreaDuties')} Diensten); sp5_export.py kennt nur Gruppen, "
                          "Unterschiede bei Bereichen und Einschränkungen sind deshalb zu erwarten")
-            lines.append(f"Bereiche: {counts.get('fromGroups', 0)} aus Gruppen, {counts.get('fromHistory', 0)} aus der "
-                         f"Historie, {counts.get('reserve', 0)} aus Gruppen als Reserve, "
-                         f"{counts.get('droppedGroupAreas', 0)} aus Gruppen weggelassen; "
-                         f"{counts.get('peopleWithoutHistory', 0)} Personen ohne Bereich aus der Historie")
+            lines.append(f"Bereiche: {counts.get('fromGroups', 0)} mit einer Gruppe als Quelle (auch wenn die Historie "
+                         f"sie ebenso gibt), {counts.get('fromHistory', 0)} aus der Historie, davon unabhängig "
+                         f"{counts.get('reserve', 0)} aus Gruppen als Reserve und {counts.get('droppedGroupAreas', 0)} "
+                         f"aus Gruppen weggelassen; {counts.get('peopleWithoutHistory', 0)} Personen ohne Bereich aus "
+                         "der Historie")
         code, stderr = run_python(checkout, Path(args.daten).resolve(), work, request)
         if code != 0:
             lines.append(f"sp5_export.py endete mit Fehler (Code {code}); kein Vergleich möglich")

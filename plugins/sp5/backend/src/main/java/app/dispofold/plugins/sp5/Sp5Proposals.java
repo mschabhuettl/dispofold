@@ -54,7 +54,7 @@ final class Sp5Proposals {
     /**
      * share, minDuties, months: as above; family*: those of {@link Sp5Families}; ignoreUntimed: a shift whose short
      * name has no time range and that has no demand in the folder is proposed to be ignored (not a desk duty, such as
-     * training), in both bases.
+     * training), in both bases; only in a folder with demand at all.
      */
     record Settings(int share, int minDuties, int months, List<String> restWords, Set<String> discarded,
             int familyShare, int familyMinDuties, int familyRatio, boolean ignoreUntimed) {
@@ -79,8 +79,9 @@ final class Sp5Proposals {
      * Why a shift with this code, these duties and no demand anywhere in the folder is no desk duty: no time range in
      * its short name; null when it has one (or the rule is off).
      */
-    static String untimed(Settings s, String code, int duties, boolean demand) {
-        if (!s.ignoreUntimed() || demand || TIME_RANGE.matcher(code).find()) {
+    static String untimed(Settings s, String code, int duties, boolean demand, boolean folderHasDemand) {
+        // a folder without any demand says nothing: its demand comes from the history
+        if (!s.ignoreUntimed() || !folderHasDemand || demand || TIME_RANGE.matcher(code).find()) {
             return null;
         }
         return "Kein Zeitraum im Kürzel, kein Bedarf in Schichtplaner 5, " + duties + (duties == 1 ? " Dienst" : " Dienste")
@@ -197,8 +198,8 @@ final class Sp5Proposals {
                 shiftProposal.put(id, ignoredShift(sh, n == 0 ? "Keine Dienste im Zeitraum und kein Bedarf."
                         : "Nur " + n + (n == 1 ? " Dienst" : " Dienste") + " im Zeitraum (weniger als "
                                 + s.minDuties() + ") und kein Bedarf."));
-            } else if (untimed(s, (String) sh.get("code"), n, anyDemand.contains(id)) != null) {
-                shiftProposal.put(id, ignoredShift(sh, untimed(s, (String) sh.get("code"), n, false)));
+            } else if (untimed(s, (String) sh.get("code"), n, anyDemand.contains(id), !anyDemand.isEmpty()) != null) {
+                shiftProposal.put(id, ignoredShift(sh, untimed(s, (String) sh.get("code"), n, false, true)));
             } else if (d.size() == 1) {
                 Object g = d.iterator().next();
                 owner.put(id, g);

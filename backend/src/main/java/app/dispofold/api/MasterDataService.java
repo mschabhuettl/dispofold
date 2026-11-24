@@ -197,6 +197,7 @@ public class MasterDataService {
                 case PEOPLE, SHIFTS -> {
                     key = nextId(kind, master, ids);
                     node.put("id", key);
+                    node.remove("areaSources"); // only an import writes where the areas come from
                     item = parse(kind, node);
                 }
                 case AREAS, ABSENCE_TYPES -> {

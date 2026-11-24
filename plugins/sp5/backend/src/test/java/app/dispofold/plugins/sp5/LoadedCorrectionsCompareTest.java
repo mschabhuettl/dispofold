@@ -151,7 +151,8 @@ class LoadedCorrectionsCompareTest {
         Dataset expected = mapper.readValue(dataset, Dataset.class);
         Dataset imported = mapper.readValue(given().get("/api/dataset").then().statusCode(200).extract().asString(),
                 Dataset.class);
-        assertThat(imported.people()).isEqualTo(expected.people());
+        // where the areas come from is shown on the person page only; the Python program has no such field
+        assertThat(imported.people().stream().map(p -> p.withAreaSources(null)).toList()).isEqualTo(expected.people());
         assertThat(imported.restrictions()).isEqualTo(expected.restrictions());
         assertThat(imported.demand()).isEqualTo(expected.demand());
         assertThat(imported.areas()).isEqualTo(expected.areas());

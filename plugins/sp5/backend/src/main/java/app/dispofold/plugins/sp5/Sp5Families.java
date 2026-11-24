@@ -230,7 +230,7 @@ final class Sp5Families {
                             + ") und kein Bedarf.";
         }
         // no desk duty (training, another service's line): no family, not counted for the recommendation
-        return Sp5Proposals.untimed(s, (String) sh.get("code"), n, f.withDemand().contains(id));
+        return Sp5Proposals.untimed(s, (String) sh.get("code"), n, f.withDemand().contains(id), !f.withDemand().isEmpty());
     }
 
     private static boolean open(Map<String, Object> shift) {

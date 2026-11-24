@@ -111,7 +111,7 @@ final class Sp5Import {
     final Map<String, Map<String, String>> areaSources = new LinkedHashMap<>();
     /** Counts of the areas for the result file: from groups, from history, reserve, people without history. */
     final Map<String, Integer> areaCounts = new LinkedHashMap<>();
-    final Map<Object, Set<String>> groupNamesOf = new HashMap<>(); // SP5 employee key -> names of its groups
+    final Map<Object, Map<String, Set<String>>> groupNamesOf = new HashMap<>(); // employee key -> area -> groups
     final Map<String, Set<String>> reserve = new LinkedHashMap<>(); // person -> group areas kept as a reserve
     final Path folder;
     final Map<String, Object> mapping;
@@ -593,9 +593,12 @@ final class Sp5Import {
             Object g = groups.getOrDefault(k(a.get("GROUPID")), "ignore");
             if (!"ignore".equals(g)) {
                 member.computeIfAbsent(k(a.get("EMPLOYEEID")), x -> new ArrayList<>()).add(g);
-                if (g instanceof Set<?> && groupName.containsKey(k(a.get("GROUPID")))) {
-                    groupNamesOf.computeIfAbsent(k(a.get("EMPLOYEEID")), x -> new TreeSet<>())
-                            .add(groupName.get(k(a.get("GROUPID"))));
+                if (g instanceof Set<?> areasOfGroup && groupName.containsKey(k(a.get("GROUPID")))) {
+                    for (Object area : areasOfGroup) {
+                        groupNamesOf.computeIfAbsent(k(a.get("EMPLOYEEID")), x -> new HashMap<>())
+                                .computeIfAbsent((String) area, x -> new TreeSet<>())
+                                .add(groupName.get(k(a.get("GROUPID"))));
+                    }
                 }
                 memberIds.putIfAbsent(k(a.get("EMPLOYEEID")), a.get("EMPLOYEEID"));
             }
@@ -1850,7 +1853,7 @@ final class Sp5Import {
             added += personBySp5.containsKey(e.getKey()) ? worked.size() : 0;
             extra += personBySp5.containsKey(e.getKey()) ? 1 : 0;
         }
-        if (n != null && n != 0) {
+        if (n != null && n != 0 && byGroups) {
             warn("Bereiche aus Diensten (mindestens " + n + "): " + added + " Bereiche ergänzt, davon für " + extra
                     + " Mitarbeiter ohne Bereich aus Gruppen, die damit übernommen werden");
         }
@@ -1926,7 +1929,8 @@ final class Sp5Import {
                 List<String> parts = new ArrayList<>();
                 if (group.getOrDefault(p.get("id"), Set.of()).contains(a)) {
                     fromGroups++;
-                    Set<String> names = new TreeSet<>(groupNamesOf.getOrDefault(e.getKey(), Set.of()));
+                    Set<String> names = new TreeSet<>(groupNamesOf.getOrDefault(e.getKey(), Map.of())
+                            .getOrDefault(a, Set.of()));
                     parts.add(names.isEmpty() ? "Gruppe" : (names.size() == 1 ? "Gruppe " : "Gruppen ")
                             + String.join(", ", names));
                 }
@@ -2121,7 +2125,9 @@ final class Sp5Import {
             long n = e.getValue();
             dutyTotals.add(pid, n);
             Map<String, Object> s = byId.get(ps.get(1));
-            if (pastAreas.getOrDefault((String) pid, Set.of()).contains(s.get("areaId"))) {
+            // areas no longer worked and reserve areas (all on request) give no usual share
+            if (pastAreas.getOrDefault((String) pid, Set.of()).contains(s.get("areaId"))
+                    || reserve.getOrDefault((String) pid, Set.of()).contains(s.get("areaId"))) {
                 continue;
             }
             categories.computeIfAbsent(pid, x -> new Counter()).add(s.get("category"), n);

@@ -18,6 +18,9 @@ class Sp5SettingsTest {
     @Test
     void newSettingsTakeTheReserveStoredOnesKeepTheGroups() throws Exception {
         assertThat(Sp5Settings.withDefaults(m, null).get("options").get("areaSource").asText()).isEqualTo("reserve");
+        // switching the plugin on stores an empty object: new settings too
+        assertThat(Sp5Settings.withDefaults(m, m.readTree("{}")).get("options").get("areaSource").asText())
+                .isEqualTo("reserve");
         // stored before the option, with areas from history at 3 and shifts from history at 1: as before
         JsonNode stored = m.readTree("""
                 {"root": "", "path": "", "mapping": null,
