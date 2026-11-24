@@ -144,7 +144,9 @@ try {
     .filter((i) => !i.id || !f.querySelector(`label[for="${i.id}"]`)).length);
   const mixFields = await form.locator('input[data-mix-cat], input[data-mix-area]').count();
   check('mix fields have labels', mixFields > 0 && unlabelled === 0, `${unlabelled} of ${mixFields} without label`);
-  const areaLabels = await form.locator('input[name="areaIds"]').evaluateAll((cs) => cs.map((c) => c.parentElement.textContent.trim()));
+  // the label without the note next to a ticked area (where it comes from, on request)
+  const areaLabels = await form.locator('input[name="areaIds"]').evaluateAll((cs) => cs.map((c) => [...c.parentElement.childNodes]
+    .filter((n) => !n.dataset?.areaNote).map((n) => n.textContent).join('').trim()));
   check('area checkboxes named', areaLabels.length > 0 && areaLabels.every((l) => areas.some((a) => l === `${a.name} (${a.id})`)), areaLabels.slice(0, 3).join(' | '));
   check('night note in the person form', (await form.innerText()).includes('Nachtausgleich'));
   await scan(page, 'person form');
