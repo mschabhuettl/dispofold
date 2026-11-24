@@ -3,6 +3,18 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.24.0 (2026-11-24)
+
+- **Zuordnung vorschlagen aus Schichtnamen:** Die mitgelieferte Import-Erweiterung schlägt Bereiche jetzt auch aus
+  Familien von Schichtnamen vor (`NW 7-19` und `NW 19-7` → NW; Varianten wie `LK-F` und `LK-S` kommen dazu, wenn
+  dieselben Leute sie arbeiten), für Ordner, deren Gruppen grob sind und fast alle enthalten. Die Seite bietet
+  „Bereiche aus Gruppen“ und „Bereiche aus Schichtnamen“ zur Wahl, empfiehlt eine davon und sagt warum; jede Regel
+  einer Familie ist ein Muster und nennt die Kürzel, die es heute trifft, mit ihren Diensten. Die Schwellen sind
+  Einstellungen der Vorschläge. Bestehende Einträge bleiben unverändert, Import und Export rechnen wie bisher.
+- **Die Zuordnung erklärt sich:** Oben und über jedem Abschnitt sagt ein Satz, wofür er da ist; dazu, wie man den
+  Grund eines Vorschlags liest und was man im Zweifel tut. Die Anleitung der Erweiterung sagt dasselbe, mit einem
+  Bild der Vorschläge aus Schichtnamen.
+
 ## 0.23.2 (2026-11-24)
 
 - **Website mit Zensical:** Die Dokumentations-Website wird mit Zensical gebaut, dem Nachfolger von Material for

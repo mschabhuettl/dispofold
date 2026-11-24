@@ -27,7 +27,7 @@ import app.dispofold.plugins.sp5.port.Sp5Export;
 class Sp5ProposalsTest {
 
     static Sp5Proposals.Settings settings(int share, int minDuties, int months, List<String> words, Set<String> gone) {
-        return new Sp5Proposals.Settings(share, minDuties, months, words, gone);
+        return new Sp5Proposals.Settings(share, minDuties, months, words, gone, 70, 2, 50);
     }
 
     static final Sp5Proposals.Settings DEFAULTS = settings(80, 3, 0, List.of("Ersatzruhe"), Set.of());

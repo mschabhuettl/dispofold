@@ -46,6 +46,7 @@ export default async function run({ base, browser, check, shots }) {
     return { name: d.suggestedFilename(), text: readFileSync(await d.path(), 'utf8') };
   };
   const shot = async (page, name) => { if (shots) await page.screenshot({ path: join(shots, `${name}.png`), fullPage: true }); };
+  const shotOf = async (page, selector, name) => { if (shots) await page.locator(selector).screenshot({ path: join(shots, `${name}.png`) }); };
 
   const page = await session('planung');
   await api(page, 'PUT', '/api/extensions/sp5', { enabled: true });
@@ -433,6 +434,53 @@ export default async function run({ base, browser, check, shots }) {
   await page.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('Einstellungen der Vorschläge gespeichert'));
   check('the settings of the proposals are saved, the mapping stays', (await api(page, 'GET', '/api/plugins/sp5/einstellungen')).body.proposals.share === 70
     && (await api(page, 'GET', '/api/plugins/sp5/einstellungen')).body.mapping.ignoreGroups.includes('Projekt'));
+
+  // ---- a page that explains itself, the areas from the shift names ----
+  await open(page, `${P}/zuordnung`, '#sp5-codes-summary');
+  check('the page says what the mapping is', (await text(page, '#sp5-map-intro'))?.startsWith('Die Zuordnung übersetzt Schichtplaner 5 in Dispofold'));
+  const intros = await page.$$eval('[data-intro]', (ps) => Object.fromEntries(ps.map((x) => [x.dataset.intro, x.textContent])));
+  check('each section says what it is for', intros.areas?.startsWith('Arbeitsplätze, die getrennt besetzt werden')
+    && intros.shifts?.startsWith('Zu welchem Bereich gehört dieser Dienstcode?') && intros.groups?.includes('Sammelgruppen')
+    && intros.compensatoryRestAbsences?.includes('Ersatzruhe'), JSON.stringify(intros));
+  check('how to read a reason and what to do when unsure', (await text(page, '#sp5-propose-reading'))?.includes('14 von 15 Mitgliedern')
+    && (await text(page, '#sp5-propose-reading'))?.includes('Im Zweifel'));
+  await page.click('#sp5-propose');
+  await page.waitForSelector('#sp5-basis');
+  check('the proposals come from the groups here, recommended, with the reason', await page.isChecked('#sp5-basis-groups')
+    && (await text(page, 'label[for="sp5-basis-groups"]'))?.includes('(empfohlen)') && (await text(page, '#sp5-basis-reason'))?.includes('Hier passen die Gruppen'));
+  await page.check('#sp5-basis-families');
+  await page.waitForSelector('[data-proposal="shift:NW *"]');
+  check('from the shift names: an area per family, a pattern rule with the codes it covers',
+    (await text(page, '[data-proposal="area:LK, LK-F, LK-S"]'))?.includes('Bereich LK LK, LK-F, LK-S (aus den Schichtnamen LK, LK-F, LK-S)')
+    && (await text(page, '[data-proposal="shift:NW *"]'))?.includes('NW * → NW')
+    && (await text(page, '[data-proposal="shift:NW *"]'))?.includes('Deckt heute NW 7-19 (54 Dienste), NW 19-7 (40 Dienste)')
+    && (await text(page, '[data-proposal="group:Tagdienst"]'))?.includes('Sammelgruppe'), await text(page, '#sp5-proposals'));
+  check('the chosen basis keeps its focus', await page.waitForFunction(() => document.activeElement?.id === 'sp5-basis-families', null, { timeout: 3000 })
+    .then(() => true, () => false));
+  await page.click('[data-proposal="shift:NW *"] button:text("Übernehmen")');
+  await page.waitForFunction(() => !document.querySelector('[data-proposal="shift:NW *"]'));
+  const familyRules = await page.$$eval('[data-section="shifts"] [data-key$=".match"]', (xs) => xs.map((x) => x.value));
+  check('a family rule is taken with its new area', familyRules.at(-1) === 'NW *'
+    && (await page.$$eval('[data-section="areas"] [data-key$=".id"]', (xs) => xs.map((x) => x.value))).includes('NW')
+    && !(await page.locator('[data-proposal="area:NW"]').count()), familyRules.join(','));
+  await page.click('#sp5-propose');
+  await page.waitForSelector('#sp5-proposals-summary');
+  check('asked again, the chosen basis stays and the taken rule is not proposed again', await page.isChecked('#sp5-basis-families')
+    && !(await page.locator('[data-proposal="shift:NW *"]').count()));
+  // the pictures of the guide: a folder whose groups are coarse, from an empty mapping
+  const before = (await api(page, 'GET', '/api/plugins/sp5/einstellungen')).body;
+  await api(page, 'PUT', '/api/plugins/sp5/einstellungen', { ...before, path: 'familien', mapping: null });
+  await open(page, `${P}/zuordnung`, '#sp5-codes-summary');
+  if (shots) await page.screenshot({ path: join(shots, 'sp5-zuordnung-erklaert.png') }); // the top of the page, as it opens
+  await page.click('#sp5-propose');
+  await page.waitForSelector('[data-proposal="shift:NW *"]');
+  check('a folder with coarse groups recommends the shift names', await page.isChecked('#sp5-basis-families')
+    && (await text(page, 'label[for="sp5-basis-families"]'))?.includes('(empfohlen)') && (await text(page, '#sp5-basis-reason'))?.includes('Hier passen die Schichtnamen'));
+  await shotOf(page, 'section[aria-labelledby="h-sp5-propose"]', 'sp5-zuordnung-familien');
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await shotOf(page, 'section[aria-labelledby="h-sp5-propose"]', 'sp5-zuordnung-familien-dunkel');
+  await page.emulateMedia({ colorScheme: 'light' });
+  await api(page, 'PUT', '/api/plugins/sp5/einstellungen', before);
 
   // ---- readers ----
   const reader = await session('ansicht');

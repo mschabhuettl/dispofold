@@ -10,14 +10,20 @@ noch, führt der Hinweis „Die Zuordnung fehlt“ auf der Seite Lauf und Import
 
 ## Abschnitte
 
-- **Bereiche:** die Bereiche, die der Import anlegt, mit Id (kurz, etwa `AN`), Name und Farbe.
+Die Zuordnung übersetzt Schichtplaner 5 in Dispofold: welche Arbeitsplätze getrennt geplant werden (Bereiche),
+welcher Dienstcode zu welchem Bereich gehört (Schichtregeln), welche Gruppe wo arbeiten darf (Gruppen) und welche
+Abwesenheit die Ersatzruhe ist. Dieselben Sätze stehen auf der Seite über jedem Abschnitt.
+
+- **Bereiche:** Arbeitsplätze, die getrennt besetzt werden. Der Import legt sie als Bereiche an, mit Id (kurz,
+  etwa `AN`), Name und Farbe.
 - **Schichtregeln:** ordnen Schichten nach ihrem Kürzel einem Bereich zu; die erste passende Regel gilt.
   **Kategorie** leer heißt: aus den Zeiten der Schicht; **Fair verteilen**: Dienste dieser Schicht werden über die Fairness gleichmäßig auf alle verteilt, die
   sie machen können; ohne Angabe nein, Nachtschichten nur mit der Option „Nachtschichten automatisch fair verteilen“
   (Lauf und Import, Optionen). Die
   Spalte **Trifft** zeigt die Kürzel aus dem Ordner, die die Regel trifft, oder „trifft nichts“.
 - **Ignorierte Schichten:** Schichten, die der Import nicht übernimmt, auch wenn eine Regel passt.
-- **Gruppen:** Personen in einer Gruppe, deren Name passt, bekommen die angekreuzten Bereiche.
+- **Gruppen:** Wer darf in welchem Bereich arbeiten? Personen in einer Gruppe, deren Name passt, bekommen die
+  angekreuzten Bereiche. Sammelgruppen, in denen fast alle sind, werden ignoriert.
 - **Ignorierte Gruppen** geben keine Bereiche; **Ausgeschlossene Gruppen**: ihre Personen übernimmt der Import
   nicht.
 - **Ersatzruhe** und **Ignorierte Abwesenheiten:** Kürzel von Abwesenheitsarten.
@@ -49,13 +55,39 @@ ganze erste Zuordnung. Bestehende Einträge ändert ein Vorschlag nie.
 
 ![Vorschläge für Schichten und Gruppen mit ihren Gründen](img/zuordnung-vorschlaege.png)
 
-Jeder Vorschlag nennt seinen Grund mit den Zahlen dahinter. **Übernehmen** trägt ihn in den Editor ein,
+Jeder Vorschlag nennt seinen Grund mit den Zahlen dahinter. So liest man ihn: „14 von 15 Mitgliedern mit Diensten
+(93 %) haben Dienste im Bereich NW“ heißt, fast alle aus dieser Gruppe, die im Zeitraum gearbeitet haben, hatten
+Dienste in NW; die Gruppe gehört also dorthin. Je näher an 100 %, desto sicherer. Im Zweifel übernimmt man einen
+Vorschlag nicht, sieht unter [Im Ordner](#im-ordner) nach, welche Kürzel und Gruppen es gibt, und trägt die Regel
+selbst ein.
+
+**Übernehmen** trägt ihn in den Editor ein,
 **Verwerfen** nimmt ihn aus der Liste, **Alle übernehmen** nimmt alle eines Abschnitts. Gespeichert wird erst mit
 **Zuordnung speichern**, mit derselben Prüfung wie sonst. Ein verworfener Vorschlag kommt nicht wieder, bis man
 **Verworfene zurücksetzen** wählt. Nach jedem Lauf nennt die Seite Lauf und Import die Zahl der neuen Vorschläge mit einem
 Link hierher.
 
-So entstehen die Vorschläge (die Beispiele stammen aus einem erfundenen Ordner):
+### Woraus die Bereiche kommen
+
+Über den Vorschlägen steht die Wahl **Bereiche aus Gruppen** oder **Bereiche aus Schichtnamen**, die passende als
+„(empfohlen)“ markiert und darunter der Grund:
+
+- **Aus Gruppen** passt, wenn die Gruppen in Schichtplaner 5 die Arbeitsplätze trennen (Team Annahme, Team
+  Disposition …): Eine Gruppe mit eigenen Schichten wird ein Bereich. So entstehen die Vorschläge im nächsten
+  Abschnitt.
+- **Aus Schichtnamen** passt, wenn wenige Sammelgruppen fast alle enthalten und die Arbeitsplätze nur an den Namen
+  der Schichten zu erkennen sind: `NW 7-19` und `NW 19-7` gehören zu NW. Siehe
+  [Bereiche aus Schichtnamen](#bereiche-aus-schichtnamen).
+
+Empfohlen sind die Schichtnamen, wenn die Gruppen weniger Bereiche ergeben als die Hälfte der verschiedenen Kürzel
+vorn in den Schichtnamen (Einstellung **Schichtnamen empfehlen unter**). Beispiel: „Aus den Gruppen ergeben sich 3
+Bereiche, die Schichtnamen haben 8 verschiedene Kürzel. Hier passen die Schichtnamen: die Gruppen trennen die
+Dienste kaum (weniger als 50 % so viele Bereiche wie Kürzel).“ Die Wahl gilt, bis man die Seite verlässt; jedes
+erneute **Zuordnung vorschlagen** nimmt dieselbe Grundlage.
+
+### Bereiche aus Gruppen
+
+So entstehen die Vorschläge aus den Gruppen (die Beispiele stammen aus einem erfundenen Ordner):
 
 - **Dienste:** Gezählt werden die Dienste im Ordner, auch die aus Dienstzyklen, im gewählten Zeitraum; „alle“
   reicht bis zum neuesten Dienst oder bis heute, was später ist. Zu einer Gruppe gehören auch die Mitglieder ihrer
@@ -89,6 +121,32 @@ So entstehen die Vorschläge (die Beispiele stammen aus einem erfundenen Ordner)
 - **Ersatzruhe:** die Abwesenheitsart, deren Name oder Kürzel eines der Wörter enthält (Standard „Ersatzruhe“).
   Passen keine oder mehrere, gibt es keinen Vorschlag.
 
+### Bereiche aus Schichtnamen
+
+![Vorschläge aus den Schichtnamen: die Wahl der Grundlage, neue Bereiche je Schichtfamilie](img/zuordnung-familien.png)
+
+- **Kürzel:** der Teil eines Schichtnamens vor dem ersten Leerzeichen oder vor einer Uhrzeit am Ende: `NW 7-19` und
+  `NW7-19` → `NW`, `LK-F 6-14` → `LK-F`, `P/PU 18-6` → `P/PU`. Ein Name ohne beides ist selbst das Kürzel (`A1`).
+  Je Kürzel eine Schichtfamilie; ausgeblendete und seltene Schichten werden wie sonst zum Ignorieren vorgeschlagen.
+- **Zusammenlegen:** Eine Person arbeitet eine Familie, wenn sie dort mindestens 2 Dienste hat (Einstellung
+  **Arbeitet eine Familie ab … Diensten**). Zwei Familien mit verwandtem Namen (derselbe Anfang vor `-` oder `/`,
+  etwa `LK`, `LK-F` und `LK-S`, oder eines Teil des anderen, etwa `P/PU` und `PU`) werden eins, wenn Personen,
+  die auch die größere arbeiten, mindestens 70 % der Dienste der kleineren gemacht haben (Einstellung
+  **Schichtfamilien zusammenlegen ab**). Bei Namen ohne gemeinsamen Anfang muss das in beide Richtungen gelten.
+  Beispiel: „LK zu LK-F, LK-S: 83 % der 36 Dienste von LK leisten Personen, die auch LK-F, LK-S arbeiten.“ Familien
+  mit verschiedenem Personal bleiben getrennt, auch bei ähnlichem Namen (`M-QZ` und `W-QZ`), und ein paar
+  Springer, die zwei Familien gelegentlich arbeiten, legen sie nicht zusammen.
+- **Bereiche:** Jede Familie wird ein Bereich mit dem Kürzel als Id (`NW`; bei Varianten der gemeinsame Anfang,
+  `LK`) und den Kürzeln als Name. Der Grund nennt die Schichten mit ihren Diensten: „Schichtfamilie NW: NW 7-19 (54
+  Dienste), NW 19-7 (40 Dienste); 11 Personen mit mindestens 2 Diensten darin.“ Gehören Schichten mit demselben
+  Kürzel schon zu einem Bereich der Zuordnung, kommt die Familie dorthin.
+- **Schichtregeln:** je Kürzel ein Muster, `NW *` für alle Namen, die mit NW und einem Leerzeichen beginnen. Der
+  Grund nennt, was es heute trifft: „Deckt heute NW 7-19 (54 Dienste), NW 19-7 (40 Dienste).“ Fängt das Muster
+  auch eine ausgeblendete oder seltene Schicht, sagt der Grund das; deren eigener Vorschlag ignoriert sie. Würde
+  ein Muster eine Schicht einer anderen Familie treffen, stehen stattdessen die genauen Kürzel da.
+- **Gruppen:** Eine Gruppe bekommt jeden Bereich, in dem mindestens der Anteil ihrer Mitglieder mit Diensten
+  gearbeitet hat (Standard 80 %); erreicht keiner ihn, ist sie eine Sammelgruppe und wird ignoriert, wie oben.
+
 Was der Ordner nicht wissen kann, entscheidet man selbst: ob eine Gruppe wie ein Servicetelefon oder die
 Verwaltung überhaupt in den Plan gehört (dann ausschließen statt übernehmen), und die Kategorie einer Schicht
 (leer heißt: aus ihren Zeiten).
@@ -101,6 +159,9 @@ Verwaltung überhaupt in den Plan gehört (dann ausschließen statt übernehmen)
 | Seltene Schicht: weniger Dienste als | 3 | eine Schicht ohne Bedarf mit weniger Diensten wird ignoriert |
 | Zeitraum in Monaten | 0 (alle) | nur die Dienste der letzten Monate bis zum neuesten Dienst |
 | Wörter für die Ersatzruhe | Ersatzruhe | durch Komma getrennt, ohne Groß- und Kleinschreibung |
+| Schichtfamilien zusammenlegen ab | 70 % | nur aus Schichtnamen: ab diesem Anteil werden zwei Familien ein Bereich |
+| Arbeitet eine Familie ab … Diensten | 2 | nur aus Schichtnamen: ab so vielen Diensten zählt eine Person zu einer Familie |
+| Schichtnamen empfehlen unter | 50 % | Schichtnamen empfohlen, wenn die Gruppen weniger Bereiche ergeben als dieser Anteil der Kürzel |
 
 ## Im Ordner
 

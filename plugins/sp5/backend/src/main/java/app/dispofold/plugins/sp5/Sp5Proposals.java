@@ -51,10 +51,16 @@ final class Sp5Proposals {
     static final List<String> COLORS = List.of("#B45309", "#15803D", "#2563EB", "#7C3AED", "#0E7490", "#BE123C",
             "#4D7C0F", "#A16207", "#1D4ED8", "#9333EA", "#0F766E", "#C2410C");
 
-    record Settings(int share, int minDuties, int months, List<String> restWords, Set<String> discarded) {
+    /** share, minDuties, months: as above; family*: those of {@link Sp5Families}. */
+    record Settings(int share, int minDuties, int months, List<String> restWords, Set<String> discarded,
+            int familyShare, int familyMinDuties, int familyRatio) {
+
+        Settings withoutDiscarded() {
+            return new Settings(share, minDuties, months, restWords, Set.of(), familyShare, familyMinDuties, familyRatio);
+        }
     }
 
-    private record Group(Object id, String name, Object parent, Map<String, Object> result) {
+    record Group(Object id, String name, Object parent, Map<String, Object> result) {
     }
 
     private Sp5Proposals() {
@@ -67,48 +73,11 @@ final class Sp5Proposals {
         double share = s.share() / 100.0;
 
         // ---- groups and members ----
-        List<Map<String, Object>> groupRows = Sp5Codes.table(folder, "5GROUP");
-        List<Object> groupCodes = (List<Object>) codes.get("groups");
-        Map<Object, Group> groups = new LinkedHashMap<>();
-        Set<String> groupNames = new HashSet<>();
-        Set<Object> repeated = new HashSet<>(); // a group whose name came before: the same rule meets both
-        for (int i = 0; i < groupRows.size(); i++) {
-            Map<String, Object> r = groupRows.get(i);
-            Object id = Py.key(r.get("ID"));
-            if (id == null || groups.containsKey(id)) {
-                continue;
-            }
-            if (!groupNames.add(Sp5Codes.text(r.get("NAME")))) {
-                repeated.add(id);
-            }
-            groups.put(id, new Group(id, Sp5Codes.text(r.get("NAME")),
-                    Py.truthy(r.get("SUPERID")) ? Py.key(r.get("SUPERID")) : null,
-                    (Map<String, Object>) ((Map<String, Object>) groupCodes.get(i)).get("result")));
-        }
-        Map<Object, Set<Object>> direct = new HashMap<>();
-        for (Map<String, Object> a : Sp5Codes.table(folder, "5GRASG")) {
-            direct.computeIfAbsent(Py.key(a.get("GROUPID")), k -> new HashSet<>()).add(Py.key(a.get("EMPLOYEEID")));
-        }
-        Map<Object, List<Object>> children = new HashMap<>();
-        for (Group g : groups.values()) {
-            if (g.parent() != null && groups.containsKey(g.parent()) && !g.parent().equals(g.id())) {
-                children.computeIfAbsent(g.parent(), k -> new ArrayList<>()).add(g.id());
-            }
-        }
-        Map<Object, Set<Object>> members = new HashMap<>();
-        for (Object id : groups.keySet()) {
-            Set<Object> all = new HashSet<>();
-            Set<Object> seen = new HashSet<>();
-            List<Object> todo = new ArrayList<>(List.of(id));
-            while (!todo.isEmpty()) {
-                Object g = todo.remove(todo.size() - 1);
-                if (seen.add(g)) {
-                    all.addAll(direct.getOrDefault(g, Set.of()));
-                    todo.addAll(children.getOrDefault(g, List.of()));
-                }
-            }
-            members.put(id, all);
-        }
+        Groups gd = groups(folder, codes);
+        Map<Object, Group> groups = gd.groups();
+        Set<Object> repeated = gd.repeated();
+        Map<Object, List<Object>> children = gd.children();
+        Map<Object, Set<Object>> members = gd.members();
 
         // ---- duties in the window ----
         List<Object[]> duties = duties(folder, s.months()); // {employee, shift}
@@ -433,33 +402,7 @@ final class Sp5Proposals {
         }
 
         // ---- compensatory rest ----
-        List<Map<String, Object>> rest = new ArrayList<>();
-        List<Map<String, Object>> types = (List<Map<String, Object>>) codes.get("absenceTypes");
-        boolean hasRest = types.stream().anyMatch(t -> "compensatoryRest".equals(((Map<?, ?>) t.get("result")).get("kind")));
-        if (!hasRest) {
-            List<Map<String, Object>> found = new ArrayList<>();
-            for (Map<String, Object> t : types) {
-                if (!"none".equals(((Map<?, ?>) t.get("result")).get("kind"))) {
-                    continue;
-                }
-                for (String word : s.restWords()) {
-                    String w = word.toLowerCase(Locale.ROOT);
-                    if (!w.isBlank() && (((String) t.get("name")).toLowerCase(Locale.ROOT).contains(w)
-                            || ((String) t.get("code")).toLowerCase(Locale.ROOT).contains(w))) {
-                        Map<String, Object> p = new LinkedHashMap<>();
-                        p.put("key", "rest:" + t.get("code"));
-                        p.put("code", t.get("code"));
-                        p.put("name", t.get("name"));
-                        p.put("reason", "Der Name „" + t.get("name") + "“ oder das Kürzel enthält „" + word + "“.");
-                        found.add(p);
-                        break;
-                    }
-                }
-            }
-            if (found.size() == 1) {
-                rest.add(found.get(0));
-            }
-        }
+        List<Map<String, Object>> rest = restProposals(codes, s);
 
         // a new area travels with each proposal that needs it, so that taking one without the other stays valid
         for (Map<String, Object> p : new ArrayList<>(shiftProposal.values())) {
@@ -536,7 +479,7 @@ final class Sp5Proposals {
         return m;
     }
 
-    private static Map<String, Object> areaEntry(Object area) {
+    static Map<String, Object> areaEntry(Object area) {
         Map<?, ?> a = (Map<?, ?>) area;
         Map<String, Object> e = new LinkedHashMap<>();
         e.put("id", a.get("id"));
@@ -545,10 +488,95 @@ final class Sp5Proposals {
         return e;
     }
 
+    /** The groups of the folder in their order, the repeated names, the subgroups and the members (with those of the subgroups). */
+    record Groups(Map<Object, Group> groups, Set<Object> repeated, Map<Object, List<Object>> children,
+            Map<Object, Set<Object>> members) {
+    }
+
+    @SuppressWarnings("unchecked")
+    static Groups groups(Path folder, Map<String, Object> codes) {
+        List<Map<String, Object>> groupRows = Sp5Codes.table(folder, "5GROUP");
+        List<Object> groupCodes = (List<Object>) codes.get("groups");
+        Map<Object, Group> groups = new LinkedHashMap<>();
+        Set<String> groupNames = new HashSet<>();
+        Set<Object> repeated = new HashSet<>(); // a group whose name came before: the same rule meets both
+        for (int i = 0; i < groupRows.size(); i++) {
+            Map<String, Object> r = groupRows.get(i);
+            Object id = Py.key(r.get("ID"));
+            if (id == null || groups.containsKey(id)) {
+                continue;
+            }
+            if (!groupNames.add(Sp5Codes.text(r.get("NAME")))) {
+                repeated.add(id);
+            }
+            groups.put(id, new Group(id, Sp5Codes.text(r.get("NAME")),
+                    Py.truthy(r.get("SUPERID")) ? Py.key(r.get("SUPERID")) : null,
+                    (Map<String, Object>) ((Map<String, Object>) groupCodes.get(i)).get("result")));
+        }
+        Map<Object, Set<Object>> direct = new HashMap<>();
+        for (Map<String, Object> a : Sp5Codes.table(folder, "5GRASG")) {
+            direct.computeIfAbsent(Py.key(a.get("GROUPID")), k -> new HashSet<>()).add(Py.key(a.get("EMPLOYEEID")));
+        }
+        Map<Object, List<Object>> children = new HashMap<>();
+        for (Group g : groups.values()) {
+            if (g.parent() != null && groups.containsKey(g.parent()) && !g.parent().equals(g.id())) {
+                children.computeIfAbsent(g.parent(), k -> new ArrayList<>()).add(g.id());
+            }
+        }
+        Map<Object, Set<Object>> members = new HashMap<>();
+        for (Object id : groups.keySet()) {
+            Set<Object> all = new HashSet<>();
+            Set<Object> seen = new HashSet<>();
+            List<Object> todo = new ArrayList<>(List.of(id));
+            while (!todo.isEmpty()) {
+                Object g = todo.remove(todo.size() - 1);
+                if (seen.add(g)) {
+                    all.addAll(direct.getOrDefault(g, Set.of()));
+                    todo.addAll(children.getOrDefault(g, List.of()));
+                }
+            }
+            members.put(id, all);
+        }
+        return new Groups(groups, repeated, children, members);
+    }
+
     // ---- duties ----
 
+    /** Compensatory rest: the one absence type whose name or short name contains one of the words, if the mapping has none. */
+    @SuppressWarnings("unchecked")
+    static List<Map<String, Object>> restProposals(Map<String, Object> codes, Settings s) {
+        List<Map<String, Object>> rest = new ArrayList<>();
+        List<Map<String, Object>> types = (List<Map<String, Object>>) codes.get("absenceTypes");
+        boolean hasRest = types.stream().anyMatch(t -> "compensatoryRest".equals(((Map<?, ?>) t.get("result")).get("kind")));
+        if (!hasRest) {
+            List<Map<String, Object>> found = new ArrayList<>();
+            for (Map<String, Object> t : types) {
+                if (!"none".equals(((Map<?, ?>) t.get("result")).get("kind"))) {
+                    continue;
+                }
+                for (String word : s.restWords()) {
+                    String w = word.toLowerCase(Locale.ROOT);
+                    if (!w.isBlank() && (((String) t.get("name")).toLowerCase(Locale.ROOT).contains(w)
+                            || ((String) t.get("code")).toLowerCase(Locale.ROOT).contains(w))) {
+                        Map<String, Object> p = new LinkedHashMap<>();
+                        p.put("key", "rest:" + t.get("code"));
+                        p.put("code", t.get("code"));
+                        p.put("name", t.get("name"));
+                        p.put("reason", "Der Name „" + t.get("name") + "“ oder das Kürzel enthält „" + word + "“.");
+                        found.add(p);
+                        break;
+                    }
+                }
+            }
+            if (found.size() == 1) {
+                rest.add(found.get(0));
+            }
+        }
+        return rest;
+    }
+
     /** {employee, shift} of every duty in the window: all of them, or the last months up to the newest duty. */
-    private static List<Object[]> duties(Path folder, int months) {
+    static List<Object[]> duties(Path folder, int months) {
         List<Object[]> rows = new ArrayList<>(); // {employee, shift, date}
         for (Map<String, Object> r : Sp5Codes.table(folder, "5MASHI")) {
             if (!Long.valueOf(1).equals(Py.key(r.get("TYPE")))) {
@@ -589,7 +617,7 @@ final class Sp5Proposals {
 
     /** Excluded or ignored by the mapping, also through the group above. */
     @SuppressWarnings("unchecked")
-    private static boolean blocked(Map<String, Object> result) {
+    static boolean blocked(Map<String, Object> result) {
         Object kind = result.get("kind");
         if ("inherited".equals(kind)) {
             return blocked((Map<String, Object>) result.get("result"));
@@ -599,7 +627,7 @@ final class Sp5Proposals {
 
     /** The area ids of an existing group rule (also inherited), or null. */
     @SuppressWarnings("unchecked")
-    private static List<String> existingAreas(Map<String, Object> result) {
+    static List<String> existingAreas(Map<String, Object> result) {
         Object kind = result.get("kind");
         if ("inherited".equals(kind)) {
             return existingAreas((Map<String, Object>) result.get("result"));
@@ -612,7 +640,7 @@ final class Sp5Proposals {
     }
 
     /** The areas of a group: its own, else those of the nearest group above it that has some. */
-    private static List<String> areasOf(Object g, Map<Object, Group> groups, Map<Object, List<String>> groupAreas) {
+    static List<String> areasOf(Object g, Map<Object, Group> groups, Map<Object, List<String>> groupAreas) {
         Set<Object> seen = new HashSet<>();
         Object cur = g;
         while (cur != null && seen.add(cur) && groups.containsKey(cur)) {
@@ -624,13 +652,13 @@ final class Sp5Proposals {
         return null;
     }
 
-    private static boolean inheritsArea(Object g, Map<Object, Group> groups, Map<Object, List<String>> groupAreas) {
+    static boolean inheritsArea(Object g, Map<Object, Group> groups, Map<Object, List<String>> groupAreas) {
         Object parent = groups.get(g).parent();
         return parent != null && !parent.equals(g) && areasOf(parent, groups, groupAreas) != null;
     }
 
     /** Per area: how many of these people worked at least one duty in it. */
-    private static Map<String, Integer> coverage(Set<Object> people, Map<Object, Set<Object>> shiftsOf,
+    static Map<String, Integer> coverage(Set<Object> people, Map<Object, Set<Object>> shiftsOf,
             Map<Object, String> areas) {
         Map<String, Integer> cov = new HashMap<>();
         for (Object e : people) {
@@ -650,7 +678,7 @@ final class Sp5Proposals {
         return cov.size() >= 2 && cov.values().stream().noneMatch(c -> c >= share * people);
     }
 
-    private static List<Map.Entry<String, Integer>> ranked(Map<String, Integer> cov) {
+    static List<Map.Entry<String, Integer>> ranked(Map<String, Integer> cov) {
         return cov.entrySet().stream().sorted(Map.Entry.<String, Integer>comparingByValue().reversed()
                 .thenComparing(Map.Entry.comparingByKey())).toList();
     }
@@ -664,11 +692,11 @@ final class Sp5Proposals {
         return (double) n / workers.size();
     }
 
-    private static String percent(int part, int whole) {
+    static String percent(int part, int whole) {
         return percent((double) part / whole);
     }
 
-    private static String percent(double share) {
+    static String percent(double share) {
         return Math.round(share * 100) + " %";
     }
 
@@ -734,7 +762,7 @@ final class Sp5Proposals {
         return p;
     }
 
-    private static Map<String, Object> ignoredShift(Map<String, Object> sh, String reason) {
+    static Map<String, Object> ignoredShift(Map<String, Object> sh, String reason) {
         Map<String, Object> p = new LinkedHashMap<>();
         p.put("key", "shift:" + sh.get("code"));
         p.put("code", sh.get("code"));
@@ -745,7 +773,7 @@ final class Sp5Proposals {
         return p;
     }
 
-    private static Map<String, Object> ignoredGroup(Group g, String reason) {
+    static Map<String, Object> ignoredGroup(Group g, String reason) {
         Map<String, Object> p = new LinkedHashMap<>();
         p.put("key", "group:" + g.name());
         p.put("name", g.name());
@@ -754,7 +782,7 @@ final class Sp5Proposals {
         return p;
     }
 
-    private static List<Map<String, Object>> kept(List<Map<String, Object>> list, Set<String> discarded, int[] count) {
+    static List<Map<String, Object>> kept(List<Map<String, Object>> list, Set<String> discarded, int[] count) {
         List<Map<String, Object>> kept = new ArrayList<>();
         for (Map<String, Object> p : list) {
             if (discarded.contains((String) p.get("key"))) {

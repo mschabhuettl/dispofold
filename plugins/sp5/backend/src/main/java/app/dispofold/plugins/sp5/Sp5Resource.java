@@ -199,14 +199,21 @@ public class Sp5Resource {
 
     /**
      * Proposals of mapping entries from the folder in the settings for what the mapping in the body does not meet
-     * yet, without the discarded ones ({@link Sp5Proposals}).
+     * yet, without the discarded ones: the areas from the groups ({@link Sp5Proposals}, {@code ?basis=groups}) or from
+     * the shift name families ({@link Sp5Families}, {@code ?basis=families}); without the parameter the one that fits
+     * the folder.
      */
     @POST
     @Path("zuordnung/vorschlaege")
     @Consumes(MediaType.APPLICATION_JSON)
-    public Map<String, Object> proposals(JsonNode mapping) {
+    public Map<String, Object> proposals(JsonNode mapping, @QueryParam("basis") String basis) {
+        if (basis != null && !basis.isEmpty() && !basis.equals(Sp5Families.GROUPS) && !basis.equals(Sp5Families.FAMILIES)) {
+            throw PluginErrors.error(Status.BAD_REQUEST, "plugin.sp5.failed", Map.of(),
+                    "Grundlage der Vorschläge unbekannt: " + basis);
+        }
         JsonNode s = plugin.settings();
-        return Sp5Proposals.propose(plugin.folder(s), python(mapping), Sp5Settings.proposals(s));
+        return Sp5Families.propose(plugin.folder(s), python(mapping), Sp5Settings.proposals(s),
+                basis == null || basis.isEmpty() ? null : basis);
     }
 
     /** Remembers a proposal ({@code {"key"}}) as discarded: it is not proposed again until the reset. */

@@ -45,6 +45,7 @@ SCHEMA_KEYS = {
 }
 WARNING = "Warnung: "
 SECTIONS = {"areas": "Bereiche", "shifts": "Schichten", "groups": "Gruppen", "compensatoryRest": "Ersatzruhe"}
+BASIS = {"groups": "Gruppen", "families": "Schichtnamen"}
 
 
 def run_python(checkout: Path, data: Path, work: Path, request: dict) -> tuple[int, str]:
@@ -171,10 +172,15 @@ def proposal(args) -> int:
             return 2
         counts = json.loads(z.read("vorschlag-vergleich.json").decode("utf-8"))
     lines = ["Vorschlag der Zuordnung (aus leerer Zuordnung) gegen die eigene Zuordnung"]
-    for key, label in SECTIONS.items():
-        c = counts.get(key, {})
-        lines.append(f"{label}: {c.get('matched', 0)} gleich, {c.get('different', 0)} verschieden, "
-                     f"{c.get('missing', 0)} fehlen im Vorschlag, {c.get('extra', 0)} zusätzlich im Vorschlag")
+    # since 0.24.0: the basis the proposals took for this folder, and the counts with the other one
+    for part in [counts] + ([counts["other"]] if isinstance(counts.get("other"), dict) else []):
+        if "basis" in part:
+            lines.append(f"Bereiche aus {BASIS.get(part['basis'], part['basis'])}"
+                         + (" (vorgeschlagen)" if part is counts else " (zum Vergleich)") + ":")
+        for key, label in SECTIONS.items():
+            c = part.get(key, {})
+            lines.append(f"{label}: {c.get('matched', 0)} gleich, {c.get('different', 0)} verschieden, "
+                         f"{c.get('missing', 0)} fehlen im Vorschlag, {c.get('extra', 0)} zusätzlich im Vorschlag")
     text = "\n".join(lines) + "\n"
     print(text, end="")
     Path(args.ausgabe).write_text(text, encoding="utf-8")

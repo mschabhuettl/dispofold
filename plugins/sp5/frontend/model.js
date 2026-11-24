@@ -311,8 +311,8 @@ export function takeProposal(mapping, section, proposal, choice = null) {
 
 /** The short text of what a proposal adds: "A1 → TA", "A1: ignorieren", "Team Annahme → TA". */
 export function proposalTitle(section, p) {
-  const what = section === 'areas' ? `${p.id} ${p.name}` : section === 'groups' ? p.name : `${p.code} ${p.name}`;
-  if (section === 'areas') return t('plugin.sp5.propose.area', { what, group: p.group });
+  const what = (section === 'areas' ? `${p.id} ${p.name}` : section === 'groups' ? p.name : `${p.code} ${p.name ?? ''}`).trim();
+  if (section === 'areas') return p.family ? t('plugin.sp5.propose.areaFamily', { what, family: p.family }) : t('plugin.sp5.propose.area', { what, group: p.group });
   if (section === 'compensatoryRest') return t('plugin.sp5.propose.rest', { what });
   if (p.kind === 'ignored') return t('plugin.sp5.propose.ignored', { what });
   if (p.kind === 'choice') return t('plugin.sp5.propose.choice', { what, areas: p.choices.map((c) => c.areaId).join(', ') });

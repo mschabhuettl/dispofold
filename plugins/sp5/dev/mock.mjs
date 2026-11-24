@@ -213,7 +213,65 @@ const PROPOSALS = {
   groups: [{ key: 'group:Projekt', name: 'Projekt', match: 'Projekt', kind: 'ignored', reason: 'Die 2 Mitglieder haben keine Dienste im Zeitraum.' }],
 };
 
-function proposals(m, discarded) {
+// What "Bereiche aus Schichtnamen" proposes, as Sp5Families gives it for the synthetic folder of Sp5FamiliesTest
+// (FamilyFolder: umbrella groups, shift name families; invented codes) from an empty mapping.
+const FAMILY_PROPOSALS = {
+  areas: [
+    {"key": "area:DS", "id": "DS", "name": "DS", "color": "#B45309", "family": "DS", "reason": "Schichtfamilie DS: DS 7-19 (30 Dienste), DS 19-7 (25 Dienste); 5 Personen mit mindestens 2 Diensten darin."},
+    {"key": "area:FA", "id": "FA", "name": "FA", "color": "#15803D", "family": "FA", "reason": "Schichtfamilie FA: FA 7-19 (45 Dienste); 5 Personen mit mindestens 2 Diensten darin."},
+    {"key": "area:LK, LK-F, LK-S", "id": "LK", "name": "LK, LK-F, LK-S", "color": "#2563EB", "family": "LK, LK-F, LK-S", "reason": "Schichtfamilie LK, LK-F, LK-S: LK-F 6-14 (40 Dienste), LK-S 14-22 (40 Dienste), LK 7-19 (36 Dienste); 13 Personen mit mindestens 2 Diensten darin. Zusammengelegt: LK-S zu LK-F: 100 % der 40 Dienste von LK-S leisten Personen, die auch LK-F arbeiten. LK zu LK-F, LK-S: 83 % der 36 Dienste von LK leisten Personen, die auch LK-F, LK-S arbeiten."},
+    {"key": "area:M-QZ", "id": "MQZ", "name": "M-QZ", "color": "#7C3AED", "family": "M-QZ", "reason": "Schichtfamilie M-QZ: M-QZ 7-19 (32 Dienste); 4 Personen mit mindestens 2 Diensten darin."},
+    {"key": "area:NW", "id": "NW", "name": "NW", "color": "#0E7490", "family": "NW", "reason": "Schichtfamilie NW: NW 7-19 (54 Dienste), NW 19-7 (40 Dienste); 11 Personen mit mindestens 2 Diensten darin."},
+    {"key": "area:P, P/PU, PU", "id": "P", "name": "P, P/PU, PU", "color": "#BE123C", "family": "P, P/PU, PU", "reason": "Schichtfamilie P, P/PU, PU: P 7-19 (30 Dienste), P/PU 18-6 (12 Dienste), PU 19-7 (24 Dienste); 6 Personen mit mindestens 2 Diensten darin. Zusammengelegt: P/PU zu P: 100 % der 12 Dienste von P/PU leisten Personen, die auch P arbeiten. PU zu P, P/PU: 100 % der 24 Dienste von PU leisten Personen, die auch P, P/PU arbeiten."},
+    {"key": "area:W-QZ", "id": "WQZ", "name": "W-QZ", "color": "#4D7C0F", "family": "W-QZ", "reason": "Schichtfamilie W-QZ: W-QZ 7-19 (32 Dienste); 4 Personen mit mindestens 2 Diensten darin."},
+  ],
+  shifts: [
+    {"key": "shift:NW 0-24", "code": "NW 0-24", "name": "Dienst NW 0-24", "match": "NW 0-24", "kind": "ignored", "reason": "In Schichtplaner 5 ausgeblendet.", "newAreas": []},
+    {"key": "shift:Q 8-12", "code": "Q 8-12", "name": "Dienst Q 8-12", "match": "Q 8-12", "kind": "ignored", "reason": "Nur 2 Dienste im Zeitraum (weniger als 3) und kein Bedarf.", "newAreas": []},
+    {"key": "shift:DS *", "code": "DS *", "name": "", "match": "DS *", "kind": "rule", "areaId": "DS", "covers": [{"code": "DS 7-19", "duties": 30}, {"code": "DS 19-7", "duties": 25}], "reason": "Schichtfamilie DS (neuer Bereich DS). Deckt heute DS 7-19 (30 Dienste), DS 19-7 (25 Dienste).", "newAreas": [{"id": "DS", "name": "DS", "color": "#B45309"}]},
+    {"key": "shift:FA *", "code": "FA *", "name": "", "match": "FA *", "kind": "rule", "areaId": "FA", "covers": [{"code": "FA 7-19", "duties": 45}], "reason": "Schichtfamilie FA (neuer Bereich FA). Deckt heute FA 7-19 (45 Dienste).", "newAreas": [{"id": "FA", "name": "FA", "color": "#15803D"}]},
+    {"key": "shift:LK *", "code": "LK *", "name": "", "match": "LK *", "kind": "rule", "areaId": "LK", "covers": [{"code": "LK 7-19", "duties": 36}], "reason": "Schichtfamilie LK, LK-F, LK-S (neuer Bereich LK). Deckt heute LK 7-19 (36 Dienste).", "newAreas": [{"id": "LK", "name": "LK, LK-F, LK-S", "color": "#2563EB"}]},
+    {"key": "shift:LK-F *", "code": "LK-F *", "name": "", "match": "LK-F *", "kind": "rule", "areaId": "LK", "covers": [{"code": "LK-F 6-14", "duties": 40}], "reason": "Schichtfamilie LK, LK-F, LK-S (neuer Bereich LK). Deckt heute LK-F 6-14 (40 Dienste).", "newAreas": [{"id": "LK", "name": "LK, LK-F, LK-S", "color": "#2563EB"}]},
+    {"key": "shift:LK-S *", "code": "LK-S *", "name": "", "match": "LK-S *", "kind": "rule", "areaId": "LK", "covers": [{"code": "LK-S 14-22", "duties": 40}], "reason": "Schichtfamilie LK, LK-F, LK-S (neuer Bereich LK). Deckt heute LK-S 14-22 (40 Dienste).", "newAreas": [{"id": "LK", "name": "LK, LK-F, LK-S", "color": "#2563EB"}]},
+    {"key": "shift:M-QZ *", "code": "M-QZ *", "name": "", "match": "M-QZ *", "kind": "rule", "areaId": "MQZ", "covers": [{"code": "M-QZ 7-19", "duties": 32}], "reason": "Schichtfamilie M-QZ (neuer Bereich MQZ). Deckt heute M-QZ 7-19 (32 Dienste).", "newAreas": [{"id": "MQZ", "name": "M-QZ", "color": "#7C3AED"}]},
+    {"key": "shift:NW *", "code": "NW *", "name": "", "match": "NW *", "kind": "rule", "areaId": "NW", "covers": [{"code": "NW 7-19", "duties": 54}, {"code": "NW 19-7", "duties": 40}], "reason": "Schichtfamilie NW (neuer Bereich NW). Deckt heute NW 7-19 (54 Dienste), NW 19-7 (40 Dienste). Das Muster fängt auch NW 0-24; dafür gibt es den Vorschlag „ignorieren“, ohne ihn käme sie in diesen Bereich.", "newAreas": [{"id": "NW", "name": "NW", "color": "#0E7490"}]},
+    {"key": "shift:P *", "code": "P *", "name": "", "match": "P *", "kind": "rule", "areaId": "P", "covers": [{"code": "P 7-19", "duties": 30}], "reason": "Schichtfamilie P, P/PU, PU (neuer Bereich P). Deckt heute P 7-19 (30 Dienste).", "newAreas": [{"id": "P", "name": "P, P/PU, PU", "color": "#BE123C"}]},
+    {"key": "shift:P/PU *", "code": "P/PU *", "name": "", "match": "P/PU *", "kind": "rule", "areaId": "P", "covers": [{"code": "P/PU 18-6", "duties": 12}], "reason": "Schichtfamilie P, P/PU, PU (neuer Bereich P). Deckt heute P/PU 18-6 (12 Dienste).", "newAreas": [{"id": "P", "name": "P, P/PU, PU", "color": "#BE123C"}]},
+    {"key": "shift:PU *", "code": "PU *", "name": "", "match": "PU *", "kind": "rule", "areaId": "P", "covers": [{"code": "PU 19-7", "duties": 24}], "reason": "Schichtfamilie P, P/PU, PU (neuer Bereich P). Deckt heute PU 19-7 (24 Dienste).", "newAreas": [{"id": "P", "name": "P, P/PU, PU", "color": "#BE123C"}]},
+    {"key": "shift:W-QZ *", "code": "W-QZ *", "name": "", "match": "W-QZ *", "kind": "rule", "areaId": "WQZ", "covers": [{"code": "W-QZ 7-19", "duties": 32}], "reason": "Schichtfamilie W-QZ (neuer Bereich WQZ). Deckt heute W-QZ 7-19 (32 Dienste).", "newAreas": [{"id": "WQZ", "name": "W-QZ", "color": "#4D7C0F"}]},
+  ],
+  groups: [
+    {"key": "group:Tagdienst", "name": "Tagdienst", "kind": "ignored", "reason": "Sammelgruppe: die 37 Mitglieder mit Diensten verteilen sich auf die Bereiche LK (35 %), NW (30 %), P (16 %), DS (14 %), FA (14 %); keiner erreicht 80 %.", "newAreas": [], "match": "Tagdienst"},
+    {"key": "group:Nachtdienst", "name": "Nachtdienst", "kind": "ignored", "reason": "Sammelgruppe: die 37 Mitglieder mit Diensten verteilen sich auf die Bereiche LK (35 %), P (16 %), DS (14 %), FA (14 %), MQZ (11 %), WQZ (11 %), NW (8 %); keiner erreicht 80 %.", "newAreas": [], "match": "Nachtdienst"},
+    {"key": "group:Team P", "name": "Team P", "kind": "rule", "areaIds": ["P"], "reason": "6 von 6 Mitgliedern mit Diensten (100 %) haben Dienste im Bereich P.", "newAreas": [{"id": "P", "name": "P, P/PU, PU", "color": "#BE123C"}], "match": "Team P"},
+  ],
+};
+const FAMILY_REASON = "Aus den Gruppen ergeben sich 3 Bereiche, die Schichtnamen haben 8 verschiedene Kürzel. Hier passen die Schichtnamen: die Gruppen trennen die Dienste kaum (weniger als 50 % so viele Bereiche wie Kürzel).";
+
+const GROUP_REASON = 'Aus den Gruppen ergeben sich 2 Bereiche, die Schichtnamen haben 4 verschiedene Kürzel. Hier passen die Gruppen: sie trennen die Dienste (mindestens 50 % so viele Bereiche wie Kürzel).';
+
+/**
+ * The proposals for a mapping: from the groups or from the shift names (basis "families"); without a basis the
+ * recommended one: the groups, in the folder "familien" (the path in the settings) the shift names.
+ */
+function proposals(m, discarded, basis, familyFolder) {
+  const about = familyFolder ? { recommended: 'families', groupAreas: 3, stems: 8, basisReason: FAMILY_REASON }
+    : { recommended: 'groups', groupAreas: 2, stems: 4, basisReason: GROUP_REASON };
+  if ((basis ?? about.recommended) === 'families') {
+    // left out what the mapping has already: an area of that id, a rule or an ignored entry of that pattern or name
+    const has = (list, value) => (Array.isArray(list) ? list : []).some((x) => (typeof x === 'string' ? x : x?.match ?? x?.id) === value);
+    const areas = FAMILY_PROPOSALS.areas.filter((p) => !has(m.areas, p.id));
+    const shifts = FAMILY_PROPOSALS.shifts.filter((p) => !has(m.shifts, p.match) && !has(m.ignoreShifts, p.match));
+    const groups = FAMILY_PROPOSALS.groups.filter((p) => !has(m.groups, p.match) && !has(m.ignoreGroups, p.match));
+    const all = [...areas, ...shifts, ...groups];
+    return { areas: areas.filter((p) => !discarded.includes(p.key)), shifts: shifts.filter((p) => !discarded.includes(p.key)),
+      groups: groups.filter((p) => !discarded.includes(p.key)), compensatoryRest: [], discarded: all.filter((p) => discarded.includes(p.key)).length,
+      duties: 1046, basis: 'families', ...about };
+  }
+  return { ...groupProposals(m, discarded), basis: 'groups', ...about };
+}
+
+function groupProposals(m, discarded) {
   const c = codes(m);
   const open = (section, key) => (c[section] ?? []).filter((x) => x.result.kind === 'none').map((x) => x[key]);
   const shifts = open('shifts', 'code');
@@ -246,7 +304,7 @@ function options(saved, given) {
 }
 
 export function mock() {
-  const PROPOSAL_SETTINGS = { share: 80, minDuties: 3, months: 0, restWords: ['Ersatzruhe'], discarded: [] };
+  const PROPOSAL_SETTINGS = { share: 80, minDuties: 3, months: 0, restWords: ['Ersatzruhe'], discarded: [], familyShare: 70, familyMinDuties: 2, familyRatio: 50 };
   let settings = { root: '/srv/dispofold/quellen', path: '2027', mapping: structuredClone(MAPPING), options: { ...OPTIONS },
     proposals: structuredClone(PROPOSAL_SETTINGS) };
   let run = null;
@@ -275,7 +333,8 @@ export function mock() {
       if (problems.length) return error(400, 'plugin.sp5.mapping', {}, problems.join(' '));
       const p = { ...PROPOSAL_SETTINGS, ...(object(body.proposals) ? body.proposals : {}) };
       const bad = !integer(p.share, 1) || p.share > 100 ? 'share' : !integer(p.minDuties, 0) ? 'minDuties' : !integer(p.months, 0) ? 'months'
-        : !Array.isArray(p.restWords) || p.restWords.some((w) => typeof w !== 'string' || !w.trim()) ? 'restWords' : null;
+        : !Array.isArray(p.restWords) || p.restWords.some((w) => typeof w !== 'string' || !w.trim()) ? 'restWords'
+          : ['familyShare', 'familyRatio'].find((k) => !integer(p[k], 1) || p[k] > 100) ?? (!integer(p.familyMinDuties, 1) ? 'familyMinDuties' : null);
       if (bad) return invalid(`proposals.${bad}`);
       // the discarded proposals change only through their routes
       settings = { root: String(body.root ?? ''), path: String(body.path ?? ''), mapping, options: o.options,
@@ -284,7 +343,9 @@ export function mock() {
     }
     if (is('POST', 'zuordnung/vorschlaege')) {
       if (!settings.root) return error(400, 'plugin.sp5.noFolder', {}, 'Der Ordner fehlt (Einstellungen der Erweiterung)');
-      return ok(proposals(body, settings.proposals.discarded));
+      const basis = query?.get('basis') || null;
+      if (basis && !['groups', 'families'].includes(basis)) return error(400, 'plugin.sp5.failed', {}, `Grundlage der Vorschläge unbekannt: ${basis}`);
+      return ok(proposals(body, settings.proposals.discarded, basis, settings.path === 'familien'));
     }
     if (is('POST', 'zuordnung/vorschlaege/verwerfen')) {
       if (typeof body?.key !== 'string' || !body.key.trim()) return invalid('key');

@@ -150,6 +150,8 @@ export async function render(root, ctx) {
       hitsCell(section, i)];
   }
 
+  // the sections that say in a sentence what they are for
+  const INTROS = ['areas', 'shifts', 'groups', 'compensatoryRestAbsences'];
   const HEADERS = { areas: ['id', 'name', 'color'], shifts: ['match', 'areaId', 'category', 'unpopular', 'hits'], groups: ['match', 'areaIds', 'hits'] };
 
   function listSection(section) {
@@ -182,6 +184,7 @@ export async function render(root, ctx) {
       draw(`${section}.${i}.${patterns ? 'pattern' : section === 'areas' ? 'id' : 'match'}`);
     });
     return h('section.section', { 'aria-labelledby': id, 'data-section': section }, head,
+      INTROS.includes(section) ? h('p.muted', { 'data-intro': section }, t(`plugin.sp5.map.${section}.intro`)) : null,
       section === 'shifts' ? h('p.muted', {}, t('plugin.sp5.map.firstWins')) : null,
       list.length ? h('table.data', { 'aria-labelledby': id },
         h('thead', {}, h('tr', {}, h('th.num', { scope: 'col' }, t('plugin.sp5.map.number')), headers.map((x) => h('th', { scope: 'col' }, t(`plugin.sp5.map.field.${x}`))),
@@ -275,6 +278,7 @@ export async function render(root, ctx) {
 
   const proposalBox = h('div', { id: 'sp5-proposals', 'aria-live': 'polite' });
   let proposals = null;
+  let basis = null; // the basis the planner chose; null: the one the server recommends for the folder
   const proposalSettings = () => settings.proposals ?? {};
   const resetButton = button('', async () => {
     const saved = await guarded(() => api.post('zuordnung/vorschlaege/zuruecksetzen'), t('plugin.sp5.propose.resetDone'));
@@ -290,7 +294,7 @@ export async function render(root, ctx) {
 
   async function propose() {
     try {
-      proposals = await api.post('zuordnung/vorschlaege', mapping);
+      proposals = await api.post(basis ? `zuordnung/vorschlaege?basis=${basis}` : 'zuordnung/vorschlaege', mapping);
     } catch (e) {
       proposalBox.replaceChildren(problem(e));
       return;
@@ -334,13 +338,31 @@ export async function render(root, ctx) {
     done(section, p);
   }
 
+  /** The choice where the areas come from: the groups or the shift names, the recommended one marked, and why. */
+  function basisChoice() {
+    if (!proposals.basis) return null;
+    const option = (value) => {
+      const input = h('input', { type: 'radio', name: 'sp5-basis', id: `sp5-basis-${value}`, value, checked: proposals.basis === value });
+      input.addEventListener('change', () => {
+        basis = value;
+        propose().then(() => document.getElementById(`sp5-basis-${value}`)?.focus());
+      });
+      return h('label', { for: `sp5-basis-${value}` }, input, ' ', t(`plugin.sp5.propose.basis.${value}`),
+        proposals.recommended === value ? ` ${t('plugin.sp5.propose.basis.recommended')}` : '');
+    };
+    return h('div', { id: 'sp5-basis', role: 'radiogroup', 'aria-labelledby': 'sp5-basis-label', 'aria-describedby': 'sp5-basis-reason' },
+      h('p', {}, h('strong', { id: 'sp5-basis-label' }, t('plugin.sp5.propose.basis')), info(t('plugin.sp5.propose.basis.help'), t('plugin.sp5.propose.basis'))),
+      h('div.btn-row', {}, option('groups'), option('families')),
+      h('p.muted', { id: 'sp5-basis-reason' }, proposals.basisReason ?? ''));
+  }
+
   function showProposals() {
     const total = PROPOSAL_SECTIONS.reduce((n, s) => n + proposals[s].length, 0);
     if (!total) {
-      proposalBox.replaceChildren(h('p.alert', { id: 'sp5-proposals-none' }, t('plugin.sp5.propose.none')));
+      proposalBox.replaceChildren(basisChoice() ?? '', h('p.alert', { id: 'sp5-proposals-none' }, t('plugin.sp5.propose.none')));
       return;
     }
-    proposalBox.replaceChildren(h('p', { id: 'sp5-proposals-summary' }, t('plugin.sp5.propose.found', { count: total })),
+    proposalBox.replaceChildren(basisChoice() ?? '', h('p', { id: 'sp5-proposals-summary' }, t('plugin.sp5.propose.found', { count: total })),
       ...PROPOSAL_SECTIONS.filter((s) => proposals[s].length).map((section) => {
         const list = proposals[section];
         const id = `h-sp5-propose-${section}`;
@@ -374,6 +396,7 @@ export async function render(root, ctx) {
   const saveProposalSettings = button(t('plugin.sp5.propose.saveSettings'), async () => {
     const value = (key) => Number(document.getElementById(`sp5-propose-${key}`).value);
     const body = { ...settings, proposals: { ...proposalSettings(), share: value('share'), minDuties: value('minDuties'), months: value('months'),
+      familyShare: value('familyShare'), familyMinDuties: value('familyMinDuties'), familyRatio: value('familyRatio'),
       restWords: words.value.split(',').map((w) => w.trim()).filter(Boolean) } };
     const saved = await guarded(() => api.put('einstellungen', body), t('plugin.sp5.propose.settingsSaved'));
     if (saved) {
@@ -384,9 +407,11 @@ export async function render(root, ctx) {
   const proposalSection = h('section.section', { 'aria-labelledby': 'h-sp5-propose' },
     h('h2', { id: 'h-sp5-propose' }, t('plugin.sp5.propose.title'), info(t('plugin.sp5.propose.title.help'), t('plugin.sp5.propose.title'))),
     h('p.muted', {}, t('plugin.sp5.propose.intro')),
+    h('p.muted', { id: 'sp5-propose-reading' }, t('plugin.sp5.propose.reading')),
     h('div.toolbar', {}, h('button.btn.btn-secondary', { id: 'sp5-propose', type: 'button', onclick: () => propose() }, t('plugin.sp5.propose.run')), resetButton),
     h('details.advanced', {}, h('summary', {}, t('plugin.sp5.propose.settings')),
       h('div.settings', {}, numberField('share', 1, 100), numberField('minDuties', 0), numberField('months', 0, 1200),
+        numberField('familyShare', 1, 100), numberField('familyMinDuties', 1), numberField('familyRatio', 1, 100),
         h('div.field', {}, h('label', { for: 'sp5-propose-restWords' }, t('plugin.sp5.propose.setting.restWords'),
           info(t('plugin.sp5.propose.setting.restWords.help'), t('plugin.sp5.propose.setting.restWords'))), words),
         h('div.row', {}, saveProposalSettings))),
@@ -446,6 +471,7 @@ export async function render(root, ctx) {
   const none = settings.mapping == null ? h('p.alert', { id: 'sp5-map-none' }, t('plugin.sp5.map.none')) : null;
 
   root.append(h('h1', {}, t('plugin.sp5.map.title')),
+    h('p', { id: 'sp5-map-intro' }, t('plugin.sp5.map.intro')),
     none ?? '',
     h('div.toolbar', {}, save, marker, download,
       h('div', {}, h('label', { for: 'sp5-map-file' }, t('plugin.sp5.map.file')), ' ', file)), // not a .field: its input would be too narrow

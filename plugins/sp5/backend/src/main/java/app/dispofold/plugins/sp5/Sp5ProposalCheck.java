@@ -11,7 +11,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * How far the proposals for an empty mapping come to a planner's own mapping: every proposal taken (a choice by its
+ * How far the proposals for an empty mapping (from the basis that fits the folder, {@link Sp5Families}) come to a planner's own mapping: every proposal taken (a choice by its
  * stronger area), then per code of the folder what each mapping decides, the proposed areas matched to the planner's
  * by the shifts they share. Per section the counts matched, different, missing (the own mapping has a rule, the
  * proposal none) and extra (the other way round); {@link #details} names the codes, for tests on synthetic data only.
@@ -23,8 +23,23 @@ final class Sp5ProposalCheck {
     private Sp5ProposalCheck() {
     }
 
-    /** {section: {matched, different, missing, extra}}. */
-    static Map<String, Map<String, Integer>> counts(Path folder, Object own, Sp5Proposals.Settings settings) {
+    /**
+     * {section: {matched, different, missing, extra}, "basis": the basis that fits the folder, "other": the same
+     * counts with the other basis}.
+     */
+    static Map<String, Object> counts(Path folder, Object own, Sp5Proposals.Settings settings) {
+        String basis = (String) Sp5Families.propose(folder, Map.of(), settings.withoutDiscarded(), null).get("basis");
+        String other = Sp5Families.GROUPS.equals(basis) ? Sp5Families.FAMILIES : Sp5Families.GROUPS;
+        Map<String, Object> counts = new LinkedHashMap<>(sectionCounts(folder, own, settings, basis));
+        counts.put("basis", basis);
+        Map<String, Object> second = new LinkedHashMap<>(sectionCounts(folder, own, settings, other));
+        second.put("basis", other);
+        counts.put("other", second);
+        return counts;
+    }
+
+    private static Map<String, Map<String, Integer>> sectionCounts(Path folder, Object own,
+            Sp5Proposals.Settings settings, String basis) {
         Map<String, Map<String, Integer>> counts = new LinkedHashMap<>();
         for (String section : SECTIONS) {
             Map<String, Integer> c = new LinkedHashMap<>();
@@ -33,18 +48,18 @@ final class Sp5ProposalCheck {
             }
             counts.put(section, c);
         }
-        details(folder, own, settings).forEach(d -> counts.get(d.section()).merge(d.outcome(), 1, Integer::sum));
+        details(folder, own, settings, basis).forEach(d -> counts.get(d.section()).merge(d.outcome(), 1, Integer::sum));
         return counts;
     }
 
     record Detail(String section, String code, String outcome, String own, String proposed) {
     }
 
+    /** Per code what the two mappings decide; basis null: the one that fits the folder. */
     @SuppressWarnings("unchecked")
-    static List<Detail> details(Path folder, Object own, Sp5Proposals.Settings settings) {
-        Sp5Proposals.Settings all = new Sp5Proposals.Settings(settings.share(), settings.minDuties(), settings.months(),
-                settings.restWords(), Set.of());
-        Map<String, Object> proposed = Sp5Proposals.taken(Sp5Proposals.propose(folder, Map.of(), all));
+    static List<Detail> details(Path folder, Object own, Sp5Proposals.Settings settings, String basis) {
+        Sp5Proposals.Settings all = settings.withoutDiscarded();
+        Map<String, Object> proposed = Sp5Proposals.taken(Sp5Families.propose(folder, Map.of(), all, basis));
         Map<String, Object> a = Sp5Codes.codes(folder, own, new ArrayList<>());
         Map<String, Object> b = Sp5Codes.codes(folder, proposed, new ArrayList<>());
         List<Map<String, Object>> shiftsA = (List<Map<String, Object>>) a.get("shifts");

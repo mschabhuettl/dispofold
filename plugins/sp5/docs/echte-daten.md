@@ -60,8 +60,10 @@ Im roten Hinweis **Zur Zuordnung** anklicken.
 So sieht es aus, wenn es geklappt hat: Der Reiter **Zuordnung** ist gewählt, oben steht „Noch keine Zuordnung
 gespeichert“, und unter **Prüfung** steht „Es ist noch kein Bereich eingetragen.“
 
-Die [Zuordnung](plugin-sp5-zuordnung.md) sagt, welche Schichten und Gruppen von Schichtplaner 5 zu welchem
-[Bereich](begriffe.md#bereich) von Dispofold gehören.
+Die [Zuordnung](plugin-sp5-zuordnung.md) übersetzt Schichtplaner 5 in Dispofold: welche Arbeitsplätze getrennt
+geplant werden ([Bereiche](begriffe.md#bereich)), welcher Dienstcode zu welchem Bereich gehört (Schichtregeln),
+welche Gruppe wo arbeiten darf (Gruppen) und welche Abwesenheit die Ersatzruhe ist. Über jedem Abschnitt steht ein
+Satz, wofür er da ist.
 
 ## 6. Die Zuordnung vorschlagen lassen
 
@@ -74,6 +76,18 @@ Unter **Vorschläge aus dem Ordner** **Zuordnung vorschlagen** anklicken.
 So sieht es aus, wenn es geklappt hat: Darunter stehen Vorschläge in Abschnitten (**Neue Bereiche**,
 **Schichten**, **Gruppen**, **Ersatzruhe**), jeder mit seinem Grund, etwa „Mitglieder der Gruppe … haben 100 %
 der … Dienste“.
+
+Darüber steht, woraus die Bereiche kommen: **Bereiche aus Gruppen** oder **Bereiche aus Schichtnamen**, die
+passende ist als „(empfohlen)“ markiert, mit einem Satz, warum. Die empfohlene passt fast immer. Sind die Gruppen in
+Schichtplaner 5 grob (zwei oder drei Gruppen mit fast allen) und die Arbeitsplätze nur an den Schichtnamen zu
+erkennen (`NW 7-19`, `NW 19-7`), schlägt Dispofold die Bereiche aus den Schichtnamen vor, je Schichtfamilie einen:
+
+![Vorschläge aus den Schichtnamen: je Schichtfamilie ein Bereich](img/zuordnung-familien.png)
+
+So liest man einen Grund: „14 von 15 Mitgliedern mit Diensten (93 %) haben Dienste im Bereich NW“ heißt, fast alle
+aus dieser Gruppe hatten Dienste in NW; die Gruppe gehört dorthin. Je näher an 100 %, desto sicherer. Im Zweifel
+einen Vorschlag nicht übernehmen und die Regel später selbst eintragen; mehr dazu unter
+[Vorschläge aus dem Ordner](plugin-sp5-zuordnung.md#vorschläge-aus-dem-ordner).
 
 ## 7. Die Vorschläge übernehmen
 

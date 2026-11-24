@@ -238,3 +238,13 @@ def test_the_proposal_mode_prints_only_counts(tmp_path):
     old = subprocess.run([sys.executable, "-X", "utf8", str(script), "--ergebnis", str(tmp_path / "alt.zip"),
                           "--vorschlag", "--ausgabe", str(out)], capture_output=True, text=True, encoding="utf-8")
     assert old.returncode == 2 and "vorschlag-vergleich.json" in old.stderr
+    # since 0.24.0: the basis the proposals took, and the counts with the other basis
+    counts2 = dict(counts, basis="families", other=dict(counts, basis="groups"))
+    with zipfile.ZipFile(bundle, "w") as z:
+        z.writestr("vorschlag-vergleich.json", json.dumps(counts2))
+    run = subprocess.run([sys.executable, "-X", "utf8", str(script), "--ergebnis", str(bundle), "--vorschlag",
+                          "--ausgabe", str(out)], capture_output=True, text=True, encoding="utf-8")
+    assert run.returncode == 0, run.stderr
+    text = out.read_text(encoding="utf-8")
+    assert "Bereiche aus Schichtnamen (vorgeschlagen):" in text and "Bereiche aus Gruppen (zum Vergleich):" in text
+    assert text.count("Bereiche: 5 gleich") == 2

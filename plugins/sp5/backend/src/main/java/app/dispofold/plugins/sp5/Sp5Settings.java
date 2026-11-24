@@ -20,7 +20,7 @@ import app.dispofold.plugin.api.PluginErrors;
  * mixMinDuties, shiftMix, hiddenShiftsMonths, recentMonths, nightsFair}}}. The options are those of sp5_export.py with
  * its defaults ({@code --no-shift-mix} is {@code shiftMix: false}); {@code nightsFair} (default off) marks night
  * shifts whose mapping rule leaves {@code unpopular} empty, as sp5_export.py always does. {@code "proposals":
- * {share, minDuties, months, restWords, discarded}} are the settings of the mapping proposals ({@link Sp5Proposals});
+ * {share, minDuties, months, restWords, discarded, familyShare, familyMinDuties, familyRatio}} are the settings of the mapping proposals ({@link Sp5Proposals});
  * the discarded keys change only through their own routes, a save keeps the stored ones.
  */
 final class Sp5Settings {
@@ -51,6 +51,9 @@ final class Sp5Settings {
         p.put("months", 0);
         p.putArray("restWords").add("Ersatzruhe");
         p.putArray("discarded");
+        p.put("familyShare", 70);
+        p.put("familyMinDuties", 2);
+        p.put("familyRatio", 50);
         return s;
     }
 
@@ -125,6 +128,14 @@ final class Sp5Settings {
         if (!intIn(p.get("months"), 0, 1200)) {
             throw invalid("proposals.months");
         }
+        for (String k : new String[] { "familyShare", "familyRatio" }) {
+            if (!intIn(p.get(k), 1, 100)) {
+                throw invalid("proposals." + k);
+            }
+        }
+        if (!intIn(p.get("familyMinDuties"), 1, Integer.MAX_VALUE)) {
+            throw invalid("proposals.familyMinDuties");
+        }
         for (String k : new String[] { "restWords", "discarded" }) {
             if (!p.get(k).isArray()) {
                 throw invalid("proposals." + k);
@@ -149,7 +160,8 @@ final class Sp5Settings {
         Set<String> discarded = new LinkedHashSet<>();
         p.get("discarded").forEach(w -> discarded.add(w.asText()));
         return new Sp5Proposals.Settings(p.get("share").asInt(), p.get("minDuties").asInt(), p.get("months").asInt(),
-                words, discarded);
+                words, discarded, p.get("familyShare").asInt(), p.get("familyMinDuties").asInt(),
+                p.get("familyRatio").asInt());
     }
 
     private static boolean intIn(JsonNode n, int min, int max) {
@@ -175,6 +187,9 @@ final class Sp5Settings {
             Map.entry("proposals.months", "Zeitraum in Monaten (0 bis 1200)"),
             Map.entry("proposals.restWords", "Wörter für die Ersatzruhe (keines leer)"),
             Map.entry("proposals.discarded", "Verworfene Vorschläge"),
+            Map.entry("proposals.familyShare", "Schichtfamilien zusammenlegen ab (1 bis 100 %)"),
+            Map.entry("proposals.familyMinDuties", "Arbeitet eine Familie ab … Diensten (ab 1)"),
+            Map.entry("proposals.familyRatio", "Schichtnamen empfehlen unter (1 bis 100 %)"),
             Map.entry("mapping", "Zuordnung"),
             Map.entry("key", "Vorschlag"));
 

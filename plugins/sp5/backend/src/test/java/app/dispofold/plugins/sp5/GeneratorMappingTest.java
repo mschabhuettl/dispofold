@@ -33,7 +33,10 @@ class GeneratorMappingTest {
         LoadedCorrectionsCompareTest.run(program, python, "-m", "tools.sp5writer", "--month", "2027-01", "--people",
                 String.valueOf(people), "--out", folder.toString());
         Object own = PyJson.load(Files.readAllBytes(program.resolve("mapping.example.json")));
-        List<Sp5ProposalCheck.Detail> details = Sp5ProposalCheck.details(folder, own, Sp5ProposalsTest.DEFAULTS);
+        // its groups separate the shifts: the proposals stay those from the groups
+        assertThat(Sp5Families.propose(folder, java.util.Map.of(), Sp5ProposalsTest.DEFAULTS, null))
+                .containsEntry("basis", "groups");
+        List<Sp5ProposalCheck.Detail> details = Sp5ProposalCheck.details(folder, own, Sp5ProposalsTest.DEFAULTS, null);
         List<String> differences = details.stream().filter(d -> !d.outcome().equals("matched"))
                 .map(d -> d.section() + " " + d.code() + ": " + d.outcome() + " (" + d.own() + " / " + d.proposed() + ")")
                 .toList();
