@@ -34,15 +34,16 @@ import app.dispofold.plugins.sp5.port.Sp5Export;
  * with at least familyMinDuties duties in it; related names (the same part before "-" or "/" without digits at its
  * end, as BR-F and BR or A1 and A2, or one a part of the other, as K/KU and KU) merge when people who also work the larger family worked the share of the
  * smaller one's duties; other names only when that holds both ways.</li>
- * <li>Each family is an area (an existing one when the mapping gives shifts of the same leading code one area), its
- * rule a pattern per leading code ("AX *"), or the exact codes when a pattern would also catch a shift of another
- * family.</li>
+ * <li>Each family is an area: the one the mapping already gives most of its duties to (its shifts with a rule
+ * take part in the families, so that a family keeps its name when some of its rules are taken), else a new one; its
+ * rules a pattern per leading code ("AX *"), or the exact codes when a pattern would also catch a shift of another
+ * family. The keys of the proposals name this basis.</li>
  * <li>Groups get the areas in which at least the share of their members with duties worked; a group whose members
  * spread over two or more areas below the share is an umbrella group and ignored, as from the groups.</li>
  * </ol>
- * Which basis fits a folder: the areas from the groups for an empty mapping against the stems of the shifts' leading
- * codes (BR-F and BR are one, A1 and A2 too; hidden and rare shifts left out), which depend on the names alone; the
- * families when the groups give fewer areas than familyRatio percent of the stems.
+ * Which basis fits a folder: the areas from the groups for an empty mapping against the beginnings (stems) of the
+ * shifts' leading codes (BR-F and BR are one, A1 and A2 too; hidden and rare shifts left out), which depend on the
+ * names alone; the families when the groups give fewer areas than familyRatio percent of the beginnings.
  */
 final class Sp5Families {
 
@@ -76,20 +77,25 @@ final class Sp5Families {
         result.put("groupAreas", groupAreas);
         result.put("stems", families);
         result.put("basisReason", "Aus den Gruppen ergeben sich " + count(groupAreas, "Bereich", "Bereiche")
-                + ", die Schichtnamen haben " + count(families, "Kürzel", "verschiedene Kürzel") + ". "
+                + ", die Schichtnamen haben " + count(families, "Anfang", "verschiedene Anfänge") + ". "
                 + (byFamilies ? "Hier passen die Schichtnamen: die Gruppen trennen die Dienste kaum (weniger als "
-                        + s.familyRatio() + " % so viele Bereiche wie Kürzel)."
+                        + s.familyRatio() + " % so viele Bereiche wie Anfänge)."
                         : "Hier passen die Gruppen: sie trennen die Dienste (mindestens " + s.familyRatio()
-                                + " % so viele Bereiche wie Kürzel)."));
+                                + " % so viele Bereiche wie Anfänge)."));
         return result;
     }
 
     // ---- families ----
 
-    /** A family: its leading codes, shifts and duties per person. */
+    /**
+     * A family: its leading codes, shifts (those without a rule, open, and those the mapping places already) and
+     * duties per person, and the duties of its placed shifts per area.
+     */
     private static final class Family {
         final TreeSet<String> prefixes = new TreeSet<>();
         final List<Object> shifts = new ArrayList<>();
+        final List<Object> open = new ArrayList<>();
+        final Map<String, Integer> placed = new TreeMap<>();
         final Map<Object, Integer> people = new HashMap<>();
         final List<String> merged = new ArrayList<>(); // why other families came in
         int duties;
@@ -126,8 +132,15 @@ final class Sp5Families {
         return head.isEmpty() ? c : head;
     }
 
+    /** The parts between "-" and "/"; a leading code of these signs alone is its own only part. */
     private static List<String> parts(String prefix) {
-        return List.of(prefix.split("[-/]"));
+        List<String> parts = new ArrayList<>();
+        for (String part : prefix.split("[-/]")) {
+            if (!part.isEmpty()) {
+                parts.add(part);
+            }
+        }
+        return parts.isEmpty() ? List.of(prefix) : parts;
     }
 
     /** The first part without digits at its end: BR-F -> BR, A2 -> A, X1-T -> X. */
@@ -223,18 +236,29 @@ final class Sp5Families {
         return "none".equals(((Map<?, ?>) shift.get("result")).get("kind"));
     }
 
-    /** The families of the shifts the mapping does not meet, merged (or one per leading code). */
+    /**
+     * The families of the shifts without a rule and of those a rule places in an area (so that a family keeps its
+     * name and area when some of its rules are taken), merged (or one per leading code).
+     */
     private static List<Family> families(Folder f, Settings s, boolean merge) {
         Map<String, Family> byPrefix = new TreeMap<>();
         for (Map.Entry<Object, Map<String, Object>> e : f.shiftById().entrySet()) {
             Object id = e.getKey();
-            if (!open(e.getValue()) || f.noProposal().contains(id) || ignoredWhy(f, id, s) != null) {
+            Map<?, ?> r = (Map<?, ?>) e.getValue().get("result");
+            String area = "rule".equals(r.get("kind")) && r.get("areaId") instanceof String a ? a : null;
+            boolean proposed = open(e.getValue()) && !f.noProposal().contains(id) && ignoredWhy(f, id, s) == null;
+            if (area == null && !proposed) {
                 continue;
             }
             String p = prefix((String) e.getValue().get("code"));
             Family fam = byPrefix.computeIfAbsent(p, k -> new Family());
             fam.prefixes.add(p);
             fam.shifts.add(id);
+            if (area != null) {
+                fam.placed.merge(area, f.byShift().getOrDefault(id, List.of()).size(), Integer::sum);
+            } else {
+                fam.open.add(id);
+            }
             for (Object person : f.byShift().getOrDefault(id, List.of())) {
                 fam.people.merge(person, 1, Integer::sum);
                 fam.duties++;
@@ -250,6 +274,7 @@ final class Sp5Families {
             Family bestInto = null;
             Family bestFrom = null;
             double best = -1;
+            boolean bestRelated = false;
             String why = null;
             for (int i = 0; i < families.size(); i++) {
                 for (int j = i + 1; j < families.size(); j++) {
@@ -261,7 +286,8 @@ final class Sp5Families {
                     double into = by(small, large, min);
                     double score;
                     String text;
-                    if (related(a, b)) {
+                    boolean rel = related(a, b);
+                    if (rel) {
                         score = into;
                         text = small.name() + " zu " + large.name() + ": " + Sp5Proposals.percent(into) + " der "
                                 + dienste(small.duties) + " von " + small.name() + " leisten Personen, die auch "
@@ -275,8 +301,10 @@ final class Sp5Families {
                                 + dienste(large.duties) + " von " + large.name() + " Personen, die auch "
                                 + small.name() + " arbeiten.";
                     }
-                    if (score >= share && score > best) {
+                    // the strongest pair; at equal strength a related one
+                    if (score >= share && (score > best || score == best && rel && !bestRelated)) {
                         best = score;
+                        bestRelated = rel;
                         bestInto = large;
                         bestFrom = small;
                         why = text;
@@ -290,7 +318,9 @@ final class Sp5Families {
             bestInto.merged.add(why);
             bestInto.prefixes.addAll(bestFrom.prefixes);
             bestInto.shifts.addAll(bestFrom.shifts);
+            bestInto.open.addAll(bestFrom.open);
             Family into = bestInto;
+            bestFrom.placed.forEach((a, n) -> into.placed.merge(a, n, Integer::sum));
             bestFrom.people.forEach((p, n) -> into.people.merge(p, n, Integer::sum));
             bestInto.duties += bestFrom.duties;
             families.remove(bestFrom);
@@ -306,12 +336,10 @@ final class Sp5Families {
         double share = s.share() / 100.0;
         Map<Object, Map<String, Object>> shiftProposal = new LinkedHashMap<>();
         Map<Object, String> shiftArea = new HashMap<>(); // shift -> area id (existing rules, then proposals)
-        Map<String, Set<String>> prefixAreas = new HashMap<>(); // leading code -> areas the mapping gives its shifts
         for (Map.Entry<Object, Map<String, Object>> e : f.shiftById().entrySet()) {
             Map<String, Object> r = (Map<String, Object>) e.getValue().get("result");
             if ("rule".equals(r.get("kind")) && r.get("areaId") instanceof String a) {
                 shiftArea.put(e.getKey(), a);
-                prefixAreas.computeIfAbsent(prefix((String) e.getValue().get("code")), k -> new TreeSet<>()).add(a);
             }
             if (open(e.getValue()) && !f.noProposal().contains(e.getKey())) {
                 String why = ignoredWhy(f, e.getKey(), s);
@@ -350,13 +378,17 @@ final class Sp5Families {
         Map<String, Map<String, Object>> areaById = new HashMap<>();
         Map<Family, String> familyArea = new LinkedHashMap<>();
         Map<Family, String> familyWhy = new HashMap<>();
+        families.removeIf(fam -> fam.open.isEmpty()); // placed completely: nothing to propose
         for (Family fam : families) {
-            Set<String> placed = new TreeSet<>();
-            fam.prefixes.forEach(p -> placed.addAll(prefixAreas.getOrDefault(p, Set.of())));
-            if (placed.size() == 1) {
-                String a = placed.iterator().next();
+            if (!fam.placed.isEmpty()) {
+                // the area the mapping gives most of the family's duties already (ties by id)
+                String a = fam.placed.entrySet().stream().max(Map.Entry.<String, Integer>comparingByValue()
+                        .thenComparing(Map.Entry.comparingByKey(Comparator.reverseOrder()))).orElseThrow().getKey();
                 familyArea.put(fam, a);
-                familyWhy.put(fam, "Schichten mit dem Kürzel " + fam.name() + " gehören schon zum Bereich " + a + ".");
+                familyWhy.put(fam, "Schichtfamilie " + fam.name() + ": ihre übrigen Schichten gehören schon zum Bereich "
+                        + (fam.placed.size() == 1 ? a + "." : a + " (" + fam.placed.entrySet().stream()
+                                .map(e -> e.getKey() + " " + dienste(e.getValue())).collect(Collectors.joining(", "))
+                                + ")."));
                 continue;
             }
             if (areaByName.containsKey(fam.name())) {
@@ -384,7 +416,7 @@ final class Sp5Families {
                 }
             });
             Map<String, Object> area = new LinkedHashMap<>();
-            area.put("key", "area:" + fam.name());
+            area.put("key", "area:families:" + fam.name());
             area.put("id", id);
             area.put("name", fam.name());
             area.put("color", color);
@@ -401,11 +433,11 @@ final class Sp5Families {
 
         // ---- shift rules: a pattern per leading code, or the exact codes ----
         Map<Object, Family> familyOf = new HashMap<>();
-        families.forEach(fam -> fam.shifts.forEach(id -> familyOf.put(id, fam)));
+        families.forEach(fam -> fam.open.forEach(id -> familyOf.put(id, fam)));
         for (Family fam : families) {
             String area = familyArea.get(fam);
             Map<String, List<Object>> byPrefix = new TreeMap<>();
-            for (Object id : fam.shifts) {
+            for (Object id : fam.open) {
                 byPrefix.computeIfAbsent(prefix((String) f.shiftById().get(id).get("code")), k -> new ArrayList<>())
                         .add(id);
             }
@@ -414,7 +446,7 @@ final class Sp5Families {
                     List<Object> covered = rule.getValue();
                     covered.forEach(id -> shiftArea.put(id, area));
                     Map<String, Object> proposal = new LinkedHashMap<>();
-                    proposal.put("key", "shift:" + rule.getKey());
+                    proposal.put("key", "shift:families:" + rule.getKey());
                     proposal.put("code", rule.getKey());
                     proposal.put("name", "");
                     proposal.put("match", rule.getKey());
@@ -426,7 +458,8 @@ final class Sp5Families {
                     // a hidden or rare shift the pattern also catches: its own proposal ignores it
                     List<String> alsoIgnored = new ArrayList<>();
                     shiftProposal.forEach((k, q) -> {
-                        if ("ignored".equals(q.get("kind")) && Sp5Export.matches(rule.getKey(), (String) q.get("code"))) {
+                        if ("ignored".equals(q.get("kind")) && !s.discarded().contains((String) q.get("key"))
+                                && Sp5Export.matches(rule.getKey(), (String) q.get("code"))) {
                             alsoIgnored.add((String) q.get("code"));
                         }
                     });
@@ -481,7 +514,7 @@ final class Sp5Families {
             if (!strong.isEmpty()) {
                 List<String> areas = strong.stream().map(Map.Entry::getKey).toList();
                 Map<String, Object> p = new LinkedHashMap<>();
-                p.put("key", "group:" + g.name());
+                p.put("key", "group:families:" + g.name());
                 p.put("name", g.name());
                 p.put("kind", "rule");
                 p.put("areaIds", areas);
@@ -498,6 +531,8 @@ final class Sp5Families {
             }
         }
 
+        // the groups' keys name the basis, so that discarding one here does not hide a proposal from the groups
+        groupProposal.values().forEach(p -> p.put("key", "group:families:" + p.get("name")));
         // a new area travels with each proposal that needs it
         for (Map<String, Object> p : shiftProposal.values()) {
             p.put("newAreas", p.get("areaId") instanceof String a && areaById.containsKey(a)
@@ -536,7 +571,7 @@ final class Sp5Families {
         for (Object id : ids) {
             String code = ((String) f.shiftById().get(id).get("code")).strip();
             String rest = code.substring(Math.min(prefix.length(), code.length()));
-            String pattern = code.equals(prefix) ? exact : !rest.isEmpty() && Character.isWhitespace(rest.charAt(0))
+            String pattern = code.equals(prefix) ? exact : !rest.isEmpty() && rest.charAt(0) == ' '
                     ? exact + " *" : !rest.isEmpty() && Character.isDigit(rest.charAt(0)) ? exact + "[0-9]*"
                             : Sp5Proposals.exact(code);
             rules.computeIfAbsent(pattern, k -> new ArrayList<>()).add(id);

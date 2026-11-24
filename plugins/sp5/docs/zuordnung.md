@@ -79,10 +79,11 @@ Link hierher.
   der Schichten zu erkennen sind: `NW 7-19` und `NW 19-7` gehören zu NW. Siehe
   [Bereiche aus Schichtnamen](#bereiche-aus-schichtnamen).
 
-Empfohlen sind die Schichtnamen, wenn die Gruppen weniger Bereiche ergeben als die Hälfte der verschiedenen Kürzel
-vorn in den Schichtnamen (Einstellung **Schichtnamen empfehlen unter**). Beispiel: „Aus den Gruppen ergeben sich 3
-Bereiche, die Schichtnamen haben 8 verschiedene Kürzel. Hier passen die Schichtnamen: die Gruppen trennen die
-Dienste kaum (weniger als 50 % so viele Bereiche wie Kürzel).“ Die Wahl gilt, bis man die Seite verlässt; jedes
+Empfohlen sind die Schichtnamen, wenn die Gruppen weniger Bereiche ergeben als die Hälfte der verschiedenen
+Anfänge der Schichtnamen (Einstellung **Schichtnamen empfehlen unter**). Der Anfang ist das Kürzel vorn ohne
+Variante nach `-` oder `/` und ohne Ziffern am Ende: `LK`, `LK-F` und `LK-S` sind ein Anfang, `A1` und `A2` auch.
+Beispiel: „Aus den Gruppen ergeben sich 3 Bereiche, die Schichtnamen haben 8 verschiedene Anfänge. Hier passen die
+Schichtnamen: die Gruppen trennen die Dienste kaum (weniger als 50 % so viele Bereiche wie Anfänge).“ Die Wahl gilt, bis man die Seite verlässt; jedes
 erneute **Zuordnung vorschlagen** nimmt dieselbe Grundlage.
 
 ### Bereiche aus Gruppen
@@ -137,15 +138,18 @@ So entstehen die Vorschläge aus den Gruppen (die Beispiele stammen aus einem er
   mit verschiedenem Personal bleiben getrennt, auch bei ähnlichem Namen (`M-QZ` und `W-QZ`), und ein paar
   Springer, die zwei Familien gelegentlich arbeiten, legen sie nicht zusammen.
 - **Bereiche:** Jede Familie wird ein Bereich mit dem Kürzel als Id (`NW`; bei Varianten der gemeinsame Anfang,
-  `LK`) und den Kürzeln als Name. Der Grund nennt die Schichten mit ihren Diensten: „Schichtfamilie NW: NW 7-19 (54
-  Dienste), NW 19-7 (40 Dienste); 11 Personen mit mindestens 2 Diensten darin.“ Gehören Schichten mit demselben
-  Kürzel schon zu einem Bereich der Zuordnung, kommt die Familie dorthin.
+  `LK`; ein Kürzel mit mehr als 6 Zeichen wird abgekürzt) und den Kürzeln als Name. Der Grund nennt die Schichten
+  mit ihren Diensten: „Schichtfamilie NW: NW 7-19 (54 Dienste), NW 19-7 (40 Dienste); 11 Personen mit mindestens 2
+  Diensten darin.“ Gehören Schichten der Familie schon zu einem Bereich der Zuordnung, kommt die Familie dorthin
+  (bei mehreren in den mit den meisten Diensten); so bleibt sie beisammen, wenn man ihre Regeln einzeln übernimmt,
+  und eine neue Variante wie `LK-N` kommt zu `LK`, wenn dieselben Leute sie arbeiten.
 - **Schichtregeln:** je Kürzel ein Muster, `NW *` für alle Namen, die mit NW und einem Leerzeichen beginnen. Der
   Grund nennt, was es heute trifft: „Deckt heute NW 7-19 (54 Dienste), NW 19-7 (40 Dienste).“ Fängt das Muster
   auch eine ausgeblendete oder seltene Schicht, sagt der Grund das; deren eigener Vorschlag ignoriert sie. Würde
   ein Muster eine Schicht einer anderen Familie treffen, stehen stattdessen die genauen Kürzel da.
 - **Gruppen:** Eine Gruppe bekommt jeden Bereich, in dem mindestens der Anteil ihrer Mitglieder mit Diensten
-  gearbeitet hat (Standard 80 %); erreicht keiner ihn, ist sie eine Sammelgruppe und wird ignoriert, wie oben.
+  gearbeitet hat (Standard 80 %). Verteilen sich die Mitglieder auf zwei oder mehr Bereiche und erreicht keiner den
+  Anteil, ist sie eine Sammelgruppe und wird ignoriert, wie oben.
 
 Was der Ordner nicht wissen kann, entscheidet man selbst: ob eine Gruppe wie ein Servicetelefon oder die
 Verwaltung überhaupt in den Plan gehört (dann ausschließen statt übernehmen), und die Kategorie einer Schicht
@@ -161,7 +165,7 @@ Verwaltung überhaupt in den Plan gehört (dann ausschließen statt übernehmen)
 | Wörter für die Ersatzruhe | Ersatzruhe | durch Komma getrennt, ohne Groß- und Kleinschreibung |
 | Schichtfamilien zusammenlegen ab | 70 % | nur aus Schichtnamen: ab diesem Anteil werden zwei Familien ein Bereich |
 | Arbeitet eine Familie ab … Diensten | 2 | nur aus Schichtnamen: ab so vielen Diensten zählt eine Person zu einer Familie |
-| Schichtnamen empfehlen unter | 50 % | Schichtnamen empfohlen, wenn die Gruppen weniger Bereiche ergeben als dieser Anteil der Kürzel |
+| Schichtnamen empfehlen unter | 50 % | Schichtnamen empfohlen, wenn die Gruppen weniger Bereiche ergeben als dieser Anteil der Anfänge |
 
 ## Im Ordner
 

@@ -21,7 +21,7 @@ import java.util.List;
 public final class FamilyFolder {
 
     /** {short name, hidden, first person, last person, duties per person}: who works the shift in January 2027. */
-    static final Object[][] SHIFTS = {
+    public static final Object[][] SHIFTS = {
         { "NW 7-19", 0L, 1, 8, 6 }, { "NW 19-7", 0L, 1, 8, 5 }, { "NW 0-24", 1L, 1, 2, 1 },
         { "LK-F 6-14", 0L, 9, 18, 4 }, { "LK-S 14-22", 0L, 9, 18, 4 }, { "LK 7-19", 0L, 9, 18, 3 },
         { "P 7-19", 0L, 19, 24, 5 }, { "PU 19-7", 0L, 19, 24, 4 }, { "P/PU 18-6", 0L, 19, 24, 2 },
@@ -37,6 +37,11 @@ public final class FamilyFolder {
     }
 
     public static void write(Path dir) throws Exception {
+        write(dir, SHIFTS);
+    }
+
+    /** The folder with other shifts, in the shape of {@link #SHIFTS}. */
+    public static void write(Path dir, Object[][] SHIFTS) throws Exception {
         List<TestTables.Field> shift = new ArrayList<>(List.of(n("ID", 11), c("NAME", 40), c("SHORTNAME", 24),
                 n("HIDE", 1), n("COLORBK", 11)));
         for (int i = 0; i < 8; i++) {

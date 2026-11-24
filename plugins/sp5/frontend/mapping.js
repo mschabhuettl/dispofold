@@ -297,10 +297,11 @@ export async function render(root, ctx) {
       proposals = await api.post(basis ? `zuordnung/vorschlaege?basis=${basis}` : 'zuordnung/vorschlaege', mapping);
     } catch (e) {
       proposalBox.replaceChildren(problem(e));
-      return;
+      return false;
     }
     showReset(proposals.discarded ?? 0);
     showProposals();
+    return true;
   }
 
   /** Removes a proposal from the list after it was taken or discarded; the focus goes to the next one. */
@@ -343,9 +344,11 @@ export async function render(root, ctx) {
     if (!proposals.basis) return null;
     const option = (value) => {
       const input = h('input', { type: 'radio', name: 'sp5-basis', id: `sp5-basis-${value}`, value, checked: proposals.basis === value });
-      input.addEventListener('change', () => {
+      input.addEventListener('change', async () => {
+        const before = basis;
         basis = value;
-        propose().then(() => document.getElementById(`sp5-basis-${value}`)?.focus());
+        if (await propose()) document.getElementById(`sp5-basis-${value}`)?.focus();
+        else basis = before; // the answer failed: the earlier basis stays chosen
       });
       return h('label', { for: `sp5-basis-${value}` }, input, ' ', t(`plugin.sp5.propose.basis.${value}`),
         proposals.recommended === value ? ` ${t('plugin.sp5.propose.basis.recommended')}` : '');

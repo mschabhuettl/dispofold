@@ -449,31 +449,31 @@ export default async function run({ base, browser, check, shots }) {
   check('the proposals come from the groups here, recommended, with the reason', await page.isChecked('#sp5-basis-groups')
     && (await text(page, 'label[for="sp5-basis-groups"]'))?.includes('(empfohlen)') && (await text(page, '#sp5-basis-reason'))?.includes('Hier passen die Gruppen'));
   await page.check('#sp5-basis-families');
-  await page.waitForSelector('[data-proposal="shift:NW *"]');
+  await page.waitForSelector('[data-proposal="shift:families:NW *"]');
   check('from the shift names: an area per family, a pattern rule with the codes it covers',
-    (await text(page, '[data-proposal="area:LK, LK-F, LK-S"]'))?.includes('Bereich LK LK, LK-F, LK-S (aus den Schichtnamen LK, LK-F, LK-S)')
-    && (await text(page, '[data-proposal="shift:NW *"]'))?.includes('NW * → NW')
-    && (await text(page, '[data-proposal="shift:NW *"]'))?.includes('Deckt heute NW 7-19 (54 Dienste), NW 19-7 (40 Dienste)')
-    && (await text(page, '[data-proposal="group:Tagdienst"]'))?.includes('Sammelgruppe'), await text(page, '#sp5-proposals'));
+    (await text(page, '[data-proposal="area:families:LK, LK-F, LK-S"]'))?.includes('Bereich LK LK, LK-F, LK-S (aus den Schichtnamen LK, LK-F, LK-S)')
+    && (await text(page, '[data-proposal="shift:families:NW *"]'))?.includes('NW * → NW')
+    && (await text(page, '[data-proposal="shift:families:NW *"]'))?.includes('Deckt heute NW 7-19 (54 Dienste), NW 19-7 (40 Dienste)')
+    && (await text(page, '[data-proposal="group:families:Tagdienst"]'))?.includes('Sammelgruppe'), await text(page, '#sp5-proposals'));
   check('the chosen basis keeps its focus', await page.waitForFunction(() => document.activeElement?.id === 'sp5-basis-families', null, { timeout: 3000 })
     .then(() => true, () => false));
-  await page.click('[data-proposal="shift:NW *"] button:text("Übernehmen")');
-  await page.waitForFunction(() => !document.querySelector('[data-proposal="shift:NW *"]'));
+  await page.click('[data-proposal="shift:families:NW *"] button:text("Übernehmen")');
+  await page.waitForFunction(() => !document.querySelector('[data-proposal="shift:families:NW *"]'));
   const familyRules = await page.$$eval('[data-section="shifts"] [data-key$=".match"]', (xs) => xs.map((x) => x.value));
   check('a family rule is taken with its new area', familyRules.at(-1) === 'NW *'
     && (await page.$$eval('[data-section="areas"] [data-key$=".id"]', (xs) => xs.map((x) => x.value))).includes('NW')
-    && !(await page.locator('[data-proposal="area:NW"]').count()), familyRules.join(','));
+    && !(await page.locator('[data-proposal="area:families:NW"]').count()), familyRules.join(','));
   await page.click('#sp5-propose');
   await page.waitForSelector('#sp5-proposals-summary');
   check('asked again, the chosen basis stays and the taken rule is not proposed again', await page.isChecked('#sp5-basis-families')
-    && !(await page.locator('[data-proposal="shift:NW *"]').count()));
+    && !(await page.locator('[data-proposal="shift:families:NW *"]').count()));
   // the pictures of the guide: a folder whose groups are coarse, from an empty mapping
   const before = (await api(page, 'GET', '/api/plugins/sp5/einstellungen')).body;
   await api(page, 'PUT', '/api/plugins/sp5/einstellungen', { ...before, path: 'familien', mapping: null });
   await open(page, `${P}/zuordnung`, '#sp5-codes-summary');
   if (shots) await page.screenshot({ path: join(shots, 'sp5-zuordnung-erklaert.png') }); // the top of the page, as it opens
   await page.click('#sp5-propose');
-  await page.waitForSelector('[data-proposal="shift:NW *"]');
+  await page.waitForSelector('[data-proposal="shift:families:NW *"]');
   check('a folder with coarse groups recommends the shift names', await page.isChecked('#sp5-basis-families')
     && (await text(page, 'label[for="sp5-basis-families"]'))?.includes('(empfohlen)') && (await text(page, '#sp5-basis-reason'))?.includes('Hier passen die Schichtnamen'));
   await shotOf(page, 'section[aria-labelledby="h-sp5-propose"]', 'sp5-zuordnung-familien');

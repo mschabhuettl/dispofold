@@ -70,7 +70,7 @@ class Sp5FamiliesTest {
         assertThat(p).containsEntry("basis", "families").containsEntry("recommended", "families")
                 .containsEntry("groupAreas", 3).containsEntry("stems", 8);
         assertThat((String) p.get("basisReason")).contains("Aus den Gruppen ergeben sich 3 Bereiche",
-                "8 verschiedene Kürzel", "Hier passen die Schichtnamen");
+                "8 verschiedene Anfänge", "Hier passen die Schichtnamen");
         // the variants of LK and the three names of P are one family each; M-QZ and W-QZ have different staff; the
         // stand-ins who work NW and LK now and then do not join them
         assertThat(areas(p)).containsExactly(Map.entry("DS", "DS"), Map.entry("FA", "FA"),
@@ -85,13 +85,13 @@ class Sp5FamiliesTest {
                 Map.entry("Nachtdienst", "ignored"), Map.entry("Team P", "P"));
         assertThat(brief(p, "compensatoryRest")).containsOnlyKeys("ER");
         Map<String, String> why = reasons(p);
-        assertThat(why.get("area:LK, LK-F, LK-S")).contains("LK-F 6-14 (40 Dienste)", "13 Personen",
+        assertThat(why.get("area:families:LK, LK-F, LK-S")).contains("LK-F 6-14 (40 Dienste)", "13 Personen",
                 "LK zu LK-F, LK-S: 83 % der 36 Dienste von LK leisten Personen, die auch LK-F, LK-S arbeiten");
-        assertThat(why.get("area:P, P/PU, PU")).contains("P/PU zu P: 100 % der 12 Dienste");
-        assertThat(why.get("shift:NW *")).contains("Deckt heute NW 7-19 (54 Dienste), NW 19-7 (40 Dienste)",
+        assertThat(why.get("area:families:P, P/PU, PU")).contains("P/PU zu P: 100 % der 12 Dienste");
+        assertThat(why.get("shift:families:NW *")).contains("Deckt heute NW 7-19 (54 Dienste), NW 19-7 (40 Dienste)",
                 "fängt auch NW 0-24", "ignorieren");
-        assertThat(why.get("group:Tagdienst")).startsWith("Sammelgruppe").contains("keiner erreicht 80 %");
-        assertThat(why.get("group:Team P")).isEqualTo("6 von 6 Mitgliedern mit Diensten (100 %) haben Dienste im Bereich P.");
+        assertThat(why.get("group:families:Tagdienst")).startsWith("Sammelgruppe").contains("keiner erreicht 80 %");
+        assertThat(why.get("group:families:Team P")).isEqualTo("6 von 6 Mitgliedern mit Diensten (100 %) haben Dienste im Bereich P.");
         // each rule names the codes it covers today with their duties
         Map<String, Object> nw = ((List<Map<String, Object>>) p.get("shifts")).stream()
                 .filter(x -> "NW *".equals(x.get("code"))).findFirst().orElseThrow();
@@ -144,7 +144,7 @@ class Sp5FamiliesTest {
         Map<String, String> shifts = brief(p, "shifts");
         assertThat(shifts).containsEntry("NW *", "N9").containsEntry("LK *", "LKX").doesNotContainKeys("DS *",
                 "NW 7-19", "DS 7-19");
-        assertThat(reasons(p).get("shift:NW *")).contains("gehören schon zum Bereich N9");
+        assertThat(reasons(p).get("shift:families:NW *")).contains("gehören schon zum Bereich N9");
         assertThat((List<?>) p.get("compensatoryRest")).isEmpty();
         // the existing entries are untouched: the proposals only add, and the first rule still wins for NW 7-19
         Map<String, Object> taken = new LinkedHashMap<>((Map<String, Object>) mapping);
@@ -159,6 +159,47 @@ class Sp5FamiliesTest {
         Map<String, Object> first = ((List<Map<String, Object>>) codes.get("shifts")).get(0);
         assertThat(first.get("code")).isEqualTo("NW 7-19");
         assertThat(((Map<?, ?>) first.get("result")).get("index")).isEqualTo(0);
+    }
+
+    @Test
+    void takingSomeRulesKeepsTheFamiliesTheirAreasAndTheirKeys(@TempDir Path dir) throws Exception {
+        folder(dir);
+        Map<String, Object> first = propose(dir, Map.of(), DEFAULTS, "families");
+        // only the rules LK-F * and P * taken, with their new areas
+        Map<String, Object> some = new LinkedHashMap<>();
+        some.put("areas", List.of(Map.of("id", "LK", "name", "LK, LK-F, LK-S", "color", "#B45309"),
+                Map.of("id", "P", "name", "P, P/PU, PU", "color", "#15803D")));
+        some.put("shifts", List.of(Map.of("match", "LK-F *", "areaId", "LK"), Map.of("match", "P *", "areaId", "P")));
+        Map<String, Object> again = propose(dir, some, DEFAULTS, "families");
+        assertThat(areas(again)).doesNotContainKeys("LK", "LK2", "P", "PU");
+        assertThat(brief(again, "shifts")).containsEntry("LK *", "LK").containsEntry("LK-S *", "LK")
+                .containsEntry("P/PU *", "P").containsEntry("PU *", "P");
+        assertThat(brief(again, "groups")).containsEntry("Team P", "P");
+        // the keys of what is still proposed are those of the first answer
+        Set<String> keys = reasons(first).keySet();
+        assertThat(keys).containsAll(reasons(again).keySet());
+    }
+
+    @Test
+    void oddShortNamesGiveNoCrash(@TempDir Path dir) throws Exception {
+        List<Object[]> shifts = new ArrayList<>(List.of(FamilyFolder.SHIFTS));
+        shifts.add(new Object[] { "-", 0L, 41, 45, 3 });
+        shifts.add(new Object[] { "/", 0L, 41, 45, 3 });
+        shifts.add(new Object[] { "--", 0L, 41, 45, 3 });
+        shifts.add(new Object[] { "-1", 0L, 41, 45, 3 });
+        shifts.add(new Object[] { "CX\t7-19", 0L, 36, 40, 4 });
+        FamilyFolder.write(dir, shifts.toArray(new Object[0][]));
+        for (String basis : new String[] { null, "groups", "families" }) {
+            assertThat(propose(dir, Map.of(), DEFAULTS, basis)).as(String.valueOf(basis)).containsKey("basis");
+        }
+        // a tab after the code: the exact code, since "CX *" would not meet it; taking everything places it
+        Map<String, Object> p = propose(dir, Map.of(), DEFAULTS, "families");
+        assertThat(brief(p, "shifts")).containsKey("CX\t7-19").doesNotContainKey("CX *");
+        Object python = PyJson.load(new ObjectMapper().writeValueAsBytes(Sp5Proposals.taken(p)));
+        for (Map<String, Object> c : (List<Map<String, Object>>) Sp5Codes.codes(dir, python, new ArrayList<>())
+                .get("shifts")) {
+            assertThat(((Map<?, ?>) c.get("result")).get("kind")).as((String) c.get("code")).isNotEqualTo("none");
+        }
     }
 
     @Test

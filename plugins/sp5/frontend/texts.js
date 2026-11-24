@@ -299,7 +299,7 @@ export const TEXTS = {
   'plugin.sp5.propose.setting.familyMinDuties': 'Arbeitet eine Familie ab … Diensten',
   'plugin.sp5.propose.setting.familyMinDuties.help': 'Nur für Bereiche aus Schichtnamen. Ab so vielen Diensten in einer Familie zählt eine Person zu ihren Leuten; einzelne Aushilfen zählen so nicht. Standard 2.',
   'plugin.sp5.propose.setting.familyRatio': 'Schichtnamen empfehlen unter (%)',
-  'plugin.sp5.propose.setting.familyRatio.help': 'Bereiche aus Schichtnamen werden empfohlen, wenn die Gruppen weniger Bereiche ergeben als so viel Prozent der verschiedenen Kürzel vorn in den Schichtnamen. Standard 50.',
+  'plugin.sp5.propose.setting.familyRatio.help': 'Bereiche aus Schichtnamen werden empfohlen, wenn die Gruppen weniger Bereiche ergeben als so viel Prozent der verschiedenen Anfänge der Schichtnamen (das Kürzel vorn ohne Variante nach - oder / und ohne Ziffern am Ende: LK-F und LK sind ein Anfang, A1 und A2 auch). Standard 50.',
   'plugin.sp5.propose.setting.restWords': 'Wörter für die Ersatzruhe',
   'plugin.sp5.propose.setting.restWords.help': 'Eine Abwesenheitsart, deren Name oder Kürzel eines dieser Wörter enthält (durch Komma getrennt, ohne Groß- und Kleinschreibung), wird als Ersatzruhe vorgeschlagen; nur wenn genau eine passt. Standard „Ersatzruhe“.',
   'plugin.sp5.codes.title': 'Im Ordner',
