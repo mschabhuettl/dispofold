@@ -234,8 +234,9 @@ public class MasterDataService {
                         "Die Id im Pfad und im Body muss gleich sein");
             }
             if (kind == Kind.PEOPLE) {
-                // set and cleared only with exclude()
-                item = ((Person) item).withExcludedFrom(master.people.get(index).excludedFrom());
+                // set and cleared only with exclude(); where the areas come from only by an import
+                item = ((Person) item).withExcludedFrom(master.people.get(index).excludedFrom())
+                        .withAreaSources(master.people.get(index).areaSources());
             }
             master.items(kind).set(index, item);
             return new Result(key, item, 0);
@@ -350,7 +351,7 @@ public class MasterDataService {
                 : new Person(p.id(), p.firstName(), p.lastName(), p.shortName(), p.weeklyHours(),
                         p.areaIds().stream().filter(a -> !id.equals(a)).toList(), p.hoursAccount(),
                         p.compRestBalance(), p.familyRules(), p.externalId(), p.entryDate(), p.exitDate(),
-                        p.shiftMix() == null ? null : p.shiftMix().withoutArea(id), p.excludedFrom()));
+                        p.shiftMix() == null ? null : p.shiftMix().withoutArea(id), p.excludedFrom(), p.areaSources()));
         return demand + people;
     }
 

@@ -91,6 +91,7 @@ public class ViewerFilter implements ContainerResponseFilter {
             ((ObjectNode) p).putArray("familyRules");
             ((ObjectNode) p).putNull("shiftMix");
             ((ObjectNode) p).putNull("externalId");
+            ((ObjectNode) p).remove("areaSources"); // group names and duty counts of the history
             blank(p, PERSON_BALANCES);
         }
         empty(d, "restrictions");

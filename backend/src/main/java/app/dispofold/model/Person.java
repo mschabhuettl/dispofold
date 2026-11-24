@@ -2,6 +2,7 @@ package app.dispofold.model;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -20,18 +21,29 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param shiftMix usual shares of duties per category and area (for example from the history), or null
  * @param excludedFrom no longer taken over from the source: the first day the person is not planned (the first day
  *        after the last closed month when it was set), or null; written only when set
+ * @param areaSources where each area of the person comes from, as text per area id (an import writes it, for
+ *        example "Gruppe Team Annahme; Historie: 14 Dienste"), or null; only shown, written only when set
  */
 public record Person(String id, String firstName, String lastName, String shortName, double weeklyHours,
         List<String> areaIds, double hoursAccount, int compRestBalance, List<FamilyRule> familyRules,
         String externalId, LocalDate entryDate, LocalDate exitDate, ShiftMix shiftMix,
-        @JsonInclude(JsonInclude.Include.NON_NULL) LocalDate excludedFrom) {
+        @JsonInclude(JsonInclude.Include.NON_NULL) LocalDate excludedFrom,
+        @JsonInclude(JsonInclude.Include.NON_NULL) Map<String, String> areaSources) {
+
+    /** A person with an exclusion and without area sources. */
+    public Person(String id, String firstName, String lastName, String shortName, double weeklyHours,
+            List<String> areaIds, double hoursAccount, int compRestBalance, List<FamilyRule> familyRules,
+            String externalId, LocalDate entryDate, LocalDate exitDate, ShiftMix shiftMix, LocalDate excludedFrom) {
+        this(id, firstName, lastName, shortName, weeklyHours, areaIds, hoursAccount, compRestBalance, familyRules,
+                externalId, entryDate, exitDate, shiftMix, excludedFrom, null);
+    }
 
     /** A person taken over from the source. */
     public Person(String id, String firstName, String lastName, String shortName, double weeklyHours,
             List<String> areaIds, double hoursAccount, int compRestBalance, List<FamilyRule> familyRules,
             String externalId, LocalDate entryDate, LocalDate exitDate, ShiftMix shiftMix) {
         this(id, firstName, lastName, shortName, weeklyHours, areaIds, hoursAccount, compRestBalance, familyRules,
-                externalId, entryDate, exitDate, shiftMix, null);
+                externalId, entryDate, exitDate, shiftMix, null, null);
     }
 
     /** Employed on this day, and not yet excluded from it on. */
@@ -43,7 +55,13 @@ public record Person(String id, String firstName, String lastName, String shortN
     /** The same person with another {@link #excludedFrom}. */
     public Person withExcludedFrom(LocalDate from) {
         return new Person(id, firstName, lastName, shortName, weeklyHours, areaIds, hoursAccount, compRestBalance,
-                familyRules, externalId, entryDate, exitDate, shiftMix, from);
+                familyRules, externalId, entryDate, exitDate, shiftMix, from, areaSources);
+    }
+
+    /** The same person with other {@link #areaSources}. */
+    public Person withAreaSources(Map<String, String> sources) {
+        return new Person(id, firstName, lastName, shortName, weeklyHours, areaIds, hoursAccount, compRestBalance,
+                familyRules, externalId, entryDate, exitDate, shiftMix, excludedFrom, sources);
     }
 
 

@@ -60,6 +60,17 @@ export function onRequestTest(restrictions, shifts, rules = null) {
 const undatedFor = (r, personId, ids) => r.personId === personId && r.shiftId != null && ids.has(r.shiftId) && r.validFrom == null && r.validTo == null;
 
 /**
+ * How much of an area the person has on request: 'ALL' when every shift of the area is on request on every day (an
+ * undated restriction for every day), 'SOME' when at least one shift has an undated "on request" restriction, else
+ * 'NONE'. Shown next to the ticked area on the person page.
+ */
+export function areaOnRequest(restrictions, personId, shiftIds) {
+  const undated = (restrictions ?? []).filter((r) => undatedFor(r, personId, new Set(shiftIds)) && r.kind === 'ON_REQUEST');
+  if (!shiftIds.length || !undated.length) return 'NONE';
+  return shiftIds.every((id) => undated.some((r) => r.shiftId === id && !r.weekday)) ? 'ALL' : 'SOME';
+}
+
+/**
  * State of a whole area for the person: 'NEVER' or 'ON_REQUEST' when every shift of the area
  * has exactly that restriction on every day and no other undated one, 'NONE' when no shift has an undated one,
  * 'MIXED' otherwise. Dated restrictions and those by category do not count.

@@ -3,6 +3,7 @@ package app.dispofold.plugins.sp5;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -79,9 +80,23 @@ public class Sp5Plugin implements Plugin, ImportSource {
     }
 
     /** An export's dataset as the import loads it. */
+    @SuppressWarnings("unchecked")
     Data data(Sp5Export.Result result) {
         Map<String, Object> dataset = new LinkedHashMap<>(result.dataset());
         Object applied = dataset.remove("appliedCorrections");
+        // where each person's areas come from, for the person page (not in dataset.json, which is sp5_export.py's)
+        if (dataset.get("people") instanceof List<?> people) {
+            List<Object> withSources = new ArrayList<>();
+            for (Object p : people) {
+                Map<String, Object> person = new LinkedHashMap<>((Map<String, Object>) p);
+                Map<String, String> sources = result.areaSources().get((String) person.get("id"));
+                if (sources != null && !sources.isEmpty()) {
+                    person.put("areaSources", sources);
+                }
+                withSources.add(person);
+            }
+            dataset.put("people", withSources);
+        }
         return new Data(mapper.convertValue(dataset, Dataset.class),
                 applied == null ? null : mapper.valueToTree(applied));
     }

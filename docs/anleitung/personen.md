@@ -44,9 +44,16 @@ Unter **Person bearbeiten** steht alles zu einer Person in einem Formular. Geän
 | Ersatzruhe offen | offene Ersatzruhetage (Pflichtfeld, ganze Zahl ab 0); gilt wie das Stundenkonto nur ohne abgeschlossenen Vormonat | wie beim Stundenkonto |
 | Externe Id | die Kennung im Quellsystem, zum Beispiel die Personalnummer | selten; das Exportprogramm braucht sie |
 | Eintritt, Austritt | erster und letzter Tag der Beschäftigung; davor und danach keine Dienste, das Soll zählt nur dazwischen. Leer: unbegrenzt. | bei Eintritt, Austritt oder einer Karenz über Monate |
-| Bereiche | in welchen Bereichen die Person eingeplant werden darf; ohne Bereich wird sie nie eingeplant | wenn jemand neu eingeschult ist oder einen Bereich nicht mehr macht |
+| Bereiche | in welchen Bereichen die Person grundsätzlich eingeplant werden kann; ohne Bereich wird sie nie eingeplant | wenn jemand neu eingeschult ist oder einen Bereich nicht mehr macht |
 
 Über den Feldern steht die Id der Person. Neue Personen bekommen ihre Id vom Programm.
+
+Ein Haken bei einem Bereich heißt „grundsätzlich möglich“; wie die Person dort geplant wird, entscheiden die
+[Einschränkungen](#einschränkungen). Neben jedem angekreuzten Bereich steht in Klammern, woher er kommt, wenn ein
+Import es mitgegeben hat: eine Gruppe, die Historie mit der Zahl der Dienste („Historie: 14 Dienste“), oder „von
+Hand“ für einen Bereich, den der Import nicht gegeben hat. Dazu steht dort „nur auf Anfrage“, wenn alle Schichten
+des Bereichs nur auf Anfrage sind (die Person wird dort nicht automatisch geplant, nur von Hand), oder „teilweise
+auf Anfrage“, wenn es einige sind.
 
 ### Gewohnte Verteilung
 

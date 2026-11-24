@@ -108,6 +108,26 @@ class DataTest {
     }
 
     @Test
+    void whereTheAreasComeFromStaysThroughAnEditAndIsNoChange() throws Exception {
+        Dataset d = TestData.dataset(MONTH);
+        Person first = d.people().get(0);
+        List<Person> people = new ArrayList<>(d.people());
+        people.set(0, first.withAreaSources(Map.of(first.areaIds().get(0), "Gruppe Team; Historie: 14 Dienste")));
+        importDataset(new Dataset(d.format(), d.version(), d.source(), d.areas(), d.shifts(), d.demand(),
+                d.holidays(), d.absenceTypes(), people, d.restrictions(), d.history(), d.periods()), "?replace=true")
+                .statusCode(200);
+        // an edit of the person keeps it (the form does not send it); it is not a change for the corrections file
+        edit(first.id(), "hoursAccount", 7.5);
+        JsonNode p = mapper.readTree(given().get("/api/dataset").then().statusCode(200).extract().asString())
+                .path("people").get(0);
+        assertThat(p.path("areaSources").path(first.areaIds().get(0)).asText())
+                .isEqualTo("Gruppe Team; Historie: 14 Dienste");
+        // the other people have none, and it is not written for them
+        assertThat(mapper.readTree(given().get("/api/dataset").then().extract().asString()).path("people").get(1)
+                .has("areaSources")).isFalse();
+    }
+
+    @Test
     void everyImportStoresItsBaseline() throws Exception {
         assertThat(store.baseline()).contains(master(TestData.dataset(MONTH)));
         given().post("/api/import/demo?replace=true").then().statusCode(200);

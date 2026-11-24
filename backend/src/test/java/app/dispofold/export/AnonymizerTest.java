@@ -53,6 +53,7 @@ class AnonymizerTest {
             Map.entry("Person.id", "pseudonym"), Map.entry("Person.firstName", "pseudonym"),
             Map.entry("Person.lastName", "pseudonym"), Map.entry("Person.shortName", "pseudonym"),
             Map.entry("Person.externalId", "pseudonym"), Map.entry("Person.areaIds", "ids, kept"),
+            Map.entry("Person.areaSources", "cleared (group names and duty counts)"),
             Map.entry("FamilyRule.note", "cleared"),
             Map.entry("ShiftMix.areas", "area ids as keys, kept"),
             Map.entry("Restriction.personId", "pseudonym"), Map.entry("Restriction.shiftId", "id, kept"),

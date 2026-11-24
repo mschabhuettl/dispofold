@@ -155,6 +155,7 @@ final class Sp5Comparison {
             b.fieldNames().forEachRemaining(keys::add);
             a.fieldNames().forEachRemaining(keys::add);
             List<Object> fields = new ArrayList<>();
+            keys.remove("areaSources"); // only shown on the person page, no change of the data
             for (String k : keys) {
                 JsonNode x = a.has(k) ? a.get(k) : NullNode.getInstance();
                 JsonNode y = b.has(k) ? b.get(k) : NullNode.getInstance();

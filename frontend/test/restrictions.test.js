@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { areaRestriction, needsRulesForCategories, onRequestTest, restrictionAppliesOn, setAreaRestriction, shiftCategory } from '../src/lib/restrictions.js';
+import { areaOnRequest, areaRestriction, needsRulesForCategories, onRequestTest, restrictionAppliesOn, setAreaRestriction, shiftCategory } from '../src/lib/restrictions.js';
 import { restrictionFromForm } from '../src/lib/masterdata-edit.js';
 
 const shifts = [
@@ -106,4 +106,16 @@ test('the state of an area: one kind, none, or mixed', () => {
   assert.equal(areaRestriction([r({ shiftId: 'X-T', validTo: '2027-01-31' }), r({ category: 'DAY' }), r({ personId: 'P2', shiftId: 'X-N' })], 'P1', ids), 'NONE');
   assert.equal(areaRestriction([{ personId: 'P1', shiftId: 'X-T', weekday: 0, kind: 'NEVER' }, { personId: 'P1', shiftId: 'X-N', weekday: 0, kind: 'NEVER' }], 'P1', ids), 'NEVER');
   assert.equal(areaRestriction([], 'P1', []), 'NONE');
+});
+
+test('an area is all, partly or not on request for the note next to it', () => {
+  const ids = ['S1', 'S2'];
+  const on = (shiftId, weekday = 0, extra = {}) => ({ personId: 'P1', shiftId, weekday, kind: 'ON_REQUEST', ...extra });
+  assert.equal(areaOnRequest([], 'P1', ids), 'NONE');
+  assert.equal(areaOnRequest([on('S1'), on('S2')], 'P1', ids), 'ALL');
+  assert.equal(areaOnRequest([on('S1')], 'P1', ids), 'SOME');
+  assert.equal(areaOnRequest([on('S1'), on('S2', 3)], 'P1', ids), 'SOME');
+  // dated, another person's or "never" do not count
+  assert.equal(areaOnRequest([on('S1', 0, { validFrom: '2027-01-01' }), on('S2', 0, { personId: 'P2' }), { ...on('S2'), kind: 'NEVER' }], 'P1', ids), 'NONE');
+  assert.equal(areaOnRequest([on('S1')], 'P1', []), 'NONE');
 });

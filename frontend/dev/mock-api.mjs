@@ -484,7 +484,7 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
       people: ids.map((id) => {
         const p = byId.get(id);
         const q = pseudonym.get(id);
-        return { ...p, id: q, firstName: q, lastName: q, shortName: q, externalId: q, familyRules: (p.familyRules ?? []).map((f) => ({ ...f, note: null })) };
+        return { ...p, id: q, firstName: q, lastName: q, shortName: q, externalId: q, areaSources: undefined, familyRules: (p.familyRules ?? []).map((f) => ({ ...f, note: null })) };
       }) });
     const key = ['﻿pseudonym;id;externe_id;nachname;vorname;kuerzel', ...ids.map((id) => {
       const p = byId.get(id);
@@ -590,7 +590,7 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
     if (a === 'dataset' && !b && method === 'GET') {
       if (role !== 'planner') {
         return json({ ...dataset, revision: masterRevision, periods: [], restrictions: [], changedSinceImport, people: dataset.people.map((p) => ({ ...p, familyRules: [], hoursAccount: null,
-          compRestBalance: null, shiftMix: null, externalId: null })) });
+          compRestBalance: null, shiftMix: null, externalId: null, areaSources: undefined })) });
       }
       return json({ ...dataset, revision: masterRevision, periods: [], changedSinceImport });
     }
@@ -629,6 +629,9 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
       const item = { ...body, id: c };
       delete item.excludedFrom;
       if (dataset.people[i].excludedFrom) item.excludedFrom = dataset.people[i].excludedFrom;
+      // where the areas come from: only an import writes it
+      delete item.areaSources;
+      if (dataset.people[i].areaSources) item.areaSources = dataset.people[i].areaSources;
       dataset.people[i] = item;
       changedSinceImport = true;
       return json({ revision: ++masterRevision, key: c, item: dataset.people[i] });

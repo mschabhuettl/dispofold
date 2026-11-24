@@ -129,6 +129,7 @@
         "entryDate": { "$ref": "#/$defs/dateOrNull" },
         "exitDate": { "$ref": "#/$defs/dateOrNull" },
         "excludedFrom": { "$ref": "#/$defs/dateOrNull" },
+        "areaSources": { "type": ["object", "null"], "additionalProperties": { "type": "string" } },
         "shiftMix": { "anyOf": [{ "$ref": "#/$defs/shiftMix" }, { "type": "null" }] }
       }
     },

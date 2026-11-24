@@ -9,7 +9,7 @@ import { goalReasons, groupHitsByDate, hitEffect, hitSummary } from '../lib/expl
 import { personName } from '../lib/grid-model.js';
 import { constraintLabel, hitText } from '../lib/codes.js';
 import { CATEGORIES, conflictDecision, fromForm, inUseQuestion, itemLabel, restrictionFromForm, restrictionText, toForm } from '../lib/masterdata-edit.js';
-import { areaRestriction, setAreaRestriction } from '../lib/restrictions.js';
+import { areaOnRequest, areaRestriction, setAreaRestriction } from '../lib/restrictions.js';
 import { accountRestShort, nightStatus } from '../lib/fairness.js';
 import { info } from '../lib/info.js';
 import { effectiveMix, MIX_CATEGORIES, mixFromForm, mixNightNote, mixRows, mixText, nightNote, sharePercent } from '../lib/shift-mix.js';
@@ -274,8 +274,21 @@ function editor(root, ctx, initial, personId, rules) {
           onclick: () => { local.splice(i, 1); drawItems(); } }, t('masterdata.remove')))) : [h('li.muted', {}, t('masterdata.restriction.none'))]));
       drawSwitches();
     };
+    // next to each ticked area: where it comes from (an import's areaSources; "von Hand" for an area it did not give)
+    // and whether its shifts are on request, so that a tick is not read as "is planned there"
+    const drawNotes = () => form.querySelectorAll('input[name="areaIds"]').forEach((box) => {
+      box.parentElement.querySelector('[data-area-note]')?.remove();
+      if (!box.checked) return;
+      const sources = base?.areaSources;
+      const parts = [];
+      if (sources) parts.push(sources[box.value] || t('people.area.byHand'));
+      const ids = dataset.shifts.filter((s) => s.areaId === box.value).map((s) => s.id);
+      const request = areaOnRequest(local, key, ids);
+      if (request !== 'NONE') parts.push(request === 'ALL' ? t('people.area.allOnRequest') : t('people.area.someOnRequest'));
+      if (parts.length) box.parentElement.append(h('span.muted', { 'data-area-note': box.value }, ` (${parts.join(', ')})`));
+    });
     // "ganzer Bereich" per ticked area: the same records as setting each of its shifts for every day by hand
-    const drawSwitches = () => switches.replaceChildren(...ticked().map((areaId) => {
+    const drawSwitches = () => { drawNotes(); switches.replaceChildren(...ticked().map((areaId) => {
       const ids = dataset.shifts.filter((s) => s.areaId === areaId).map((s) => s.id);
       const state = areaRestriction(local, key, ids);
       const name = dataset.areas.find((a) => a.id === areaId)?.name ?? areaId;
@@ -286,7 +299,7 @@ function editor(root, ctx, initial, personId, rules) {
           drawItems();
         } }, AREA_KINDS.map(([v, label]) => h('option', { value: v, selected: v === state }, label)),
         state === 'MIXED' && h('option', { value: 'MIXED', disabled: true, selected: true }, t('people.area.mixed'))));
-    }));
+    })); };
     const restrictionsBlock = h('div', { style: wide }, h('strong', {}, t('masterdata.col.restrictions')),
       info(t('help.field.people.restrictions'), t('masterdata.col.restrictions')), h('p.muted', {}, t('people.restrictions.help')),
       switches, items,

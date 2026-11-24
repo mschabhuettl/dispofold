@@ -54,6 +54,7 @@ try {
     await page.waitForTimeout(500);
   }
   const dataset = await getDataset(page);
+
   const shiftsOf = (areaId) => dataset.shifts.filter((s) => s.areaId === areaId);
   // a person without restrictions in two areas with at least two shifts each
   const person = dataset.people.find((p) => !dataset.restrictions.some((r) => r.personId === p.id)
@@ -227,8 +228,44 @@ try {
   check('viewer: no hours account tile', !(await viewer.locator('#main').innerText()).includes('Stundenkonto'));
   check('viewer: no switch for the source', await viewer.locator('#f-excluded').count() === 0 && await viewer.locator('#h-source').count() === 0);
   const seen = await getDataset(viewer);
-  check('viewer: no restrictions, family rules, balances, mix or external id', seen.restrictions.length === 0
-    && seen.people.every((p) => !p.familyRules.length && p.hoursAccount == null && p.compRestBalance == null && p.shiftMix == null && p.externalId == null));
+  check('viewer: no restrictions, family rules, balances, mix, external id or area sources', seen.restrictions.length === 0
+    && seen.people.every((p) => !p.familyRules.length && p.hoursAccount == null && p.compRestBalance == null && p.shiftMix == null && p.externalId == null
+      && p.areaSources == null));
+  // next to each ticked area: where it comes from and whether it is on request; an import gives two people areaSources
+  // (only an import writes them): the second area of the first a reserve all on request, that of the second set by hand
+  // and partly on request
+  const current = await getDataset(page);
+  const [one, two] = current.people.filter((p) => p.excludedFrom == null).slice(0, 2);
+  const [a1, a2] = current.areas.map((a) => a.id);
+  const shiftsIn = (a) => current.shifts.filter((sh) => sh.areaId === a).map((sh) => sh.id);
+  const people = current.people.map((p) => (p.id === one.id ? { ...p, areaIds: [a1, a2], areaSources: { [a1]: 'Gruppe Team Annahme; Historie: 14 Dienste', [a2]: 'Gruppe Alle' } }
+    : p.id === two.id ? { ...p, areaIds: [a1, a2], areaSources: { [a1]: 'Historie: 22 Dienste' } } : p));
+  const withRequest = [...current.restrictions.filter((r) => r.personId !== one.id && r.personId !== two.id),
+    ...shiftsIn(a2).map((shiftId) => ({ personId: one.id, shiftId, weekday: 0, kind: 'ON_REQUEST' })),
+    { personId: two.id, shiftId: shiftsIn(a2)[0], weekday: 0, kind: 'ON_REQUEST' }];
+  const imported = await page.evaluate(async (body) => (await fetch('/api/import/dataset?replace=true', { method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body) })).status, { ...current, version: 2, people, restrictions: withRequest });
+  check('a dataset with area sources is imported', imported === 200, String(imported));
+  // the notes as the page shows them
+  const notes = async (id) => {
+    await page.goto(`${base}/#/person/${encodeURIComponent(id)}`);
+    await page.locator('#person-form').waitFor();
+    return page.$$eval('#person-form [data-area-note]', (xs) => Object.fromEntries(xs.map((x) => [x.dataset.areaNote, x.textContent.trim()])));
+  };
+  const reserve = await notes(one.id);
+  check('an area from a group and the history, a reserve area all on request', reserve[a1] === '(Gruppe Team Annahme; Historie: 14 Dienste)'
+    && reserve[a2] === '(Gruppe Alle, nur auf Anfrage)', JSON.stringify(reserve));
+  if (process.env.SHOTS) {
+    await page.locator('#person-form fieldset:has(input[name="areaIds"])').screenshot({ path: join(process.env.SHOTS, 'person-bereiche.png') });
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.locator('#person-form fieldset:has(input[name="areaIds"])').screenshot({ path: join(process.env.SHOTS, 'person-bereiche-dunkel.png') });
+    await page.emulateMedia({ colorScheme: 'light' });
+  }
+  const byHand = await notes(two.id);
+  check('an area set by hand, partly on request', byHand[a1] === '(Historie: 22 Dienste)' && byHand[a2] === '(von Hand, teilweise auf Anfrage)', JSON.stringify(byHand));
+  await page.locator(`#person-form select[data-area="${a2}"]`).selectOption('ON_REQUEST');
+  check('the note follows the area switch', (await page.textContent(`#person-form [data-area-note="${a2}"]`))?.trim() === '(von Hand, nur auf Anfrage)');
+  check('no note for a person without sources and on-request restrictions', Object.keys(await notes(current.people.find((p) => p.id !== one.id && p.id !== two.id && !current.restrictions.some((r) => r.personId === p.id)).id)).length === 0);
 } finally {
   await browser.close();
   server.kill();
