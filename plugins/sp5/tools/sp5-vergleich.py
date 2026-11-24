@@ -149,19 +149,19 @@ def compare_report(java: bytes, python: bytes, lines: list) -> bool:
     return False
 
 
-def compare_warnings(java: bytes, python: bytes, lines: list) -> bool:
+def compare_warnings(java: bytes, python: bytes, out: list) -> bool:
     if java == python:
-        lines.append("warnings.txt: identisch")
+        out.append("warnings.txt: identisch")
         return True
-    lines.append("warnings.txt: VERSCHIEDEN")
+    out.append("warnings.txt: VERSCHIEDEN")
     a, b = lines(java.decode("utf-8", "replace")), lines(python.decode("utf-8", "replace"))
-    lines.append(f"  Warnungen: {len(b)} bei sp5_export.py, {len(a)} bei Dispofold")
+    out.append(f"  Warnungen: {len(b)} bei sp5_export.py, {len(a)} bei Dispofold")
     only_b = [i for i, w in enumerate(b) if w not in a]
     only_a = [i for i, w in enumerate(a) if w not in b]
-    lines.append(f"  nur bei sp5_export.py: {len(only_b)} (Positionen {only_b[:20]})")
-    lines.append(f"  nur bei Dispofold: {len(only_a)} (Positionen {only_a[:20]})")
+    out.append(f"  nur bei sp5_export.py: {len(only_b)} (Positionen {only_b[:20]})")
+    out.append(f"  nur bei Dispofold: {len(only_a)} (Positionen {only_a[:20]})")
     if not only_a and not only_b:
-        lines.append("  dieselben Warnungen in anderer Reihenfolge")
+        out.append("  dieselben Warnungen in anderer Reihenfolge")
     return False
 
 

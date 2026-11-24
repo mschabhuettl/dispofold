@@ -255,3 +255,17 @@ def test_the_proposal_mode_prints_only_counts(tmp_path):
     text = out.read_text(encoding="utf-8")
     assert "Bereiche aus Schichtnamen (vorgeschlagen):" in text and "Bereiche aus Gruppen (zum Vergleich):" in text
     assert text.count("Bereiche: 5 gleich") == 2
+
+
+def test_differing_warnings_are_counted_not_crashed():
+    # the comparison of warnings.txt when the files differ (always so with areas from history): counts, no crash
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("sp5_vergleich", HERE.parent / "sp5-vergleich.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    out = []
+    same = module.compare_warnings("eins\nzwei\ndrei\n".encode(), "eins\nvier\n".encode(), out)
+    assert same is False
+    assert out == ["warnings.txt: VERSCHIEDEN", "  Warnungen: 2 bei sp5_export.py, 3 bei Dispofold",
+                   "  nur bei sp5_export.py: 1 (Positionen [1])", "  nur bei Dispofold: 2 (Positionen [1, 2])"]
+    assert module.compare_warnings(b"eins\n", b"eins\n", out) is True

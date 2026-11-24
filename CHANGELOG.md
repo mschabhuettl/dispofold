@@ -3,6 +3,11 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.25.1 (2026-11-25)
+
+- **Vergleichsskript der Import-Erweiterung:** Es brach ab, sobald sich die Warnungen unterschieden, etwa bei
+  „Bereiche einer Person aus: Historie“. Jetzt zählt es die Unterschiede wie vorgesehen.
+
 ## 0.25.0 (2026-11-25)
 
 - **Woher die Bereiche einer Person kommen:** Die mitgelieferte Import-Erweiterung hat die Option „Bereiche einer
