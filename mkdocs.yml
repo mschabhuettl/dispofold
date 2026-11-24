@@ -1,5 +1,6 @@
-# Documentation site from docs/*.md and README.md (start page, see tools/docs/hooks.py).
-#   pip install -r tools/docs/requirements.txt && mkdocs build --strict    (output in site/, not committed)
+# Documentation site from docs/*.md, README.md (start page) and the plugins' help pages, built with Zensical by
+# tools/docs/build.py, which assembles the pages first:
+#   pip install -r tools/docs/requirements.txt && python tools/docs/build.py    (output in site/, not committed)
 site_name: Dispofold
 site_description: Dienstplanung für Leitstellen
 site_url: https://mschabhuettl.github.io/dispofold/
@@ -8,8 +9,6 @@ repo_name: dispofold
 edit_uri: ""
 copyright: Dispofold steht unter der AGPL-3.0.
 docs_dir: docs
-hooks:
-  - tools/docs/hooks.py
 
 nav:
   - Start: index.md
@@ -68,8 +67,7 @@ theme:
         name: Hell
 
 plugins:
-  - search:
-      lang: de
+  - search
 
 markdown_extensions:
   - tables
@@ -84,7 +82,8 @@ markdown_extensions:
         kwds:
           case: lower
 
-# With --strict every warning fails the build: missing pages, anchors and images.
+# tools/docs/build.py builds with --strict: every warning fails the build (missing pages and anchors); it checks
+# images and other files itself.
 validation:
   omitted_files: warn
   absolute_links: warn

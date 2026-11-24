@@ -7,7 +7,7 @@ GitHub Actions führt die Workflows in `.github/workflows/` aus:
   Programmfensters (`cargo test`), Linux-Pakete mit Selbsttest des installierten Programms, Prüfung der
   Browser-Oberfläche und Desktop-Ende-zu-Ende-Test (Update, Rollback, Passwortwechsel, mit einem
   Wegwerf-Schlüssel je Lauf), Start des ganzen Stacks mit Rauchtest. Mit `WINDOWS_TEST` zusätzlich der Windows-Test (siehe unten).
-  Dazu baut die CI die Dokumentations-Website (`mkdocs build --strict`, siehe `mkdocs.yml`); eine fehlende Seite,
+  Dazu baut die CI die Dokumentations-Website (mit Zensical, `python tools/docs/build.py`, siehe `mkdocs.yml`); eine fehlende Seite,
   ein fehlender Anker oder ein fehlendes Bild lässt sie scheitern.
 - **Release** (`release.yml`) bei einem Tag `v*`, siehe [Release](#release).
 

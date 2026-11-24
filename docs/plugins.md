@@ -39,7 +39,7 @@ Gebaut wird sie mit dem Rest:
 - **Front End:** `frontend/scripts/build.mjs` bündelt `frontend/index.js` jeder Erweiterung als Modul
   `dispofold:plugins` und baut ihre Hilfeseiten in die eingebaute Anleitung. Erweiterungen mit `testOnly` nur mit
   `--test-plugins --out <ordner>`, nie nach `dist/`.
-- **Website:** Der MkDocs-Hook `tools/docs/hooks.py` stellt die Hilfeseiten als
+- **Website:** `tools/docs/build.py` stellt die Hilfeseiten vor dem Bauen als
   `anleitung/plugin-<id>-<seite>.md` unter „Anleitung“ ein, nach den Seiten des Kerns.
 
 ## Regeln
@@ -176,7 +176,7 @@ führt diese Prüfungen aus.
 ```bash
 cd backend && ./mvnw test -Dtest='PluginArchitectureTest,BeispielPluginTest,HiddenPluginTest,PickedRootTest'
 cd frontend && npm test && npm run check:plugins
-DISPOFOLD_DOCS_TEST_PLUGINS=1 mkdocs build --strict -d /tmp/site-plugins
+DISPOFOLD_DOCS_TEST_PLUGINS=1 python tools/docs/build.py /tmp/site-plugins
 scripts/check-no-test-plugins.sh frontend/dist
 ```
 

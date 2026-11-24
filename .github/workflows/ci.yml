@@ -173,12 +173,20 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: "3.12"
-      - name: Install MkDocs
+      - name: Install Zensical
         run: pip install -r tools/docs/requirements.txt
       - name: Build the site
-        run: mkdocs build --strict
+        run: python tools/docs/build.py
       - name: Plugin help pages on the site (with the test-only example plugin, into a throwaway folder)
-        run: DISPOFOLD_DOCS_TEST_PLUGINS=1 mkdocs build --strict -d "$RUNNER_TEMP/site-plugins" && test -f "$RUNNER_TEMP/site-plugins/anleitung/plugin-beispiel-beispiel/index.html"
+        run: DISPOFOLD_DOCS_TEST_PLUGINS=1 python tools/docs/build.py "$RUNNER_TEMP/site-plugins" && test -f "$RUNNER_TEMP/site-plugins/anleitung/plugin-beispiel-beispiel/index.html"
+      - name: A missing page, anchor or image fails the build
+        run: |
+          cp docs/anleitung/daten.md "$RUNNER_TEMP/daten.md"
+          for plant in '[x](gibt-es-nicht.md)' '[x](planen.md#gibt-es-nicht)' '![x](img/gibt-es-nicht.png)'; do
+            printf '\n%s\n' "$plant" >> docs/anleitung/daten.md
+            if python tools/docs/build.py "$RUNNER_TEMP/site-broken"; then echo "Not caught: $plant"; exit 1; fi
+            cp "$RUNNER_TEMP/daten.md" docs/anleitung/daten.md
+          done
 
   frontend:
     runs-on: ubuntu-latest
