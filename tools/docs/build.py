@@ -11,10 +11,10 @@ Zensical runs no MkDocs hooks, so this script assembles the pages in a temporary
   list, as in the built-in guide. Plugins marked testOnly in their plugin.json only with DISPOFOLD_DOCS_TEST_PLUGINS=1
   (CI builds them into a throwaway folder). Their images (plugins/<id>/docs/img/<name>.png, shown as img/<name>.png)
   become anleitung/plugin-<id>-img/<name>.png.
-Zensical checks pages and anchors but not images and other files, so after the build every relative src and href of
-the built pages must name a file of the site.
+Zensical checks links to pages and anchors but not images and other files, nor pages missing from the navigation; so
+every page must be in the navigation, and after the build every relative src and href of the built pages must name a
+file of the site.
 """
-import html
 import json
 import os
 import re
@@ -22,13 +22,13 @@ import shutil
 import subprocess
 import sys
 import tempfile
+from html.parser import HTMLParser
 from urllib.parse import unquote, urlsplit
 
 import yaml
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 LINK = re.compile(r"\]\((?!https?://|#|mailto:)([^)\s]+)\)")
-REF = re.compile(r"""\s(?:src|href)="([^"]*)\"""")
 
 
 def plugin_pages():
@@ -108,6 +108,38 @@ def stage(work):
     return config["site_url"]
 
 
+def inside(path, folder):
+    return os.path.commonpath([path, folder]) == folder
+
+
+def nav_paths(nav):
+    """The pages of a navigation (mkdocs.yml)."""
+    for item in nav:
+        for value in item.values() if isinstance(item, dict) else [item]:
+            yield from nav_paths(value) if isinstance(value, list) else [value]
+
+
+def omitted_pages(work):
+    """Pages of work/docs that the navigation of work/mkdocs.yml does not list."""
+    with open(os.path.join(work, "mkdocs.yml"), encoding="utf-8") as f:
+        listed = set(nav_paths(yaml.safe_load(f)["nav"]))
+    docs = os.path.join(work, "docs")
+    pages = {os.path.relpath(os.path.join(folder, name), docs).replace(os.sep, "/")
+             for folder, _, names in os.walk(docs) for name in names if name.endswith(".md")}
+    return sorted(pages - listed)
+
+
+class Refs(HTMLParser):
+    """The src and href attributes of an HTML page."""
+
+    def __init__(self):
+        super().__init__()
+        self.refs = []
+
+    def handle_starttag(self, tag, attrs):
+        self.refs += [value for name, value in attrs if name in ("src", "href") and value]
+
+
 def missing_files(site, base):
     """src and href of the built pages within the site (relative, or absolute under the path of site_url, as on the
     error page) that name no file of the site, as 'page: reference'."""
@@ -117,10 +149,11 @@ def missing_files(site, base):
             if not name.endswith(".html"):
                 continue
             page = os.path.join(folder, name)
+            parser = Refs()
             with open(page, encoding="utf-8") as f:
-                refs = REF.findall(f.read())
-            for ref in refs:
-                url = urlsplit(html.unescape(ref))
+                parser.feed(f.read())
+            for ref in parser.refs:
+                url = urlsplit(ref)
                 if url.scheme or url.netloc or not url.path:
                     continue
                 if url.path.startswith("/"):
@@ -133,17 +166,23 @@ def missing_files(site, base):
                 target = os.path.normpath(target)
                 if url.path.endswith("/") or os.path.isdir(target):
                     target = os.path.join(target, "index.html")
-                if not os.path.isfile(target):
+                if not inside(target, site) or not os.path.isfile(target):
                     missing.append(f"{os.path.relpath(page, site)}: {ref}")
     return missing
 
 
 def main():
     out = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "site"))
-    if os.path.commonpath([out, ROOT]) == out:
-        sys.exit(f"Documentation site: {out} holds the repository, the site needs a folder of its own")
+    # the output folder is replaced: never the repository or a folder of it other than site/
+    if inside(ROOT, out) or (inside(out, ROOT) and out != os.path.join(ROOT, "site")):
+        sys.exit(f"Documentation site: {out} is not a folder for the site (site/ or a folder outside the repository)")
     with tempfile.TemporaryDirectory() as work:
+        if inside(work, out):
+            sys.exit(f"Documentation site: {out} holds the temporary folder of the build")
         base = urlsplit(stage(work)).path.rstrip("/") + "/"
+        omitted = omitted_pages(work)
+        if omitted:
+            sys.exit("Documentation site: pages missing from the navigation (mkdocs.yml)\n" + "\n".join(omitted))
         config = os.path.join(work, "mkdocs.yml")
         if subprocess.run([sys.executable, "-m", "zensical", "build", "--strict", "-f", config]).returncode:
             sys.exit("Documentation site: the build failed")

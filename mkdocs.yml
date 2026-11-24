@@ -82,8 +82,8 @@ markdown_extensions:
         kwds:
           case: lower
 
-# tools/docs/build.py builds with --strict: every warning fails the build (missing pages and anchors); it checks
-# images and other files itself.
+# tools/docs/build.py builds with --strict: a link to a missing page or anchor fails the build. Of this block Zensical
+# reads only the anchors; the script itself checks images, other files and pages missing from the navigation.
 validation:
   omitted_files: warn
   absolute_links: warn

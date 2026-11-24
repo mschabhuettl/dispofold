@@ -6,9 +6,9 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
 ## 0.23.2 (2026-11-24)
 
 - **Website mit Zensical:** Die Dokumentations-Website wird mit Zensical gebaut, dem Nachfolger von Material for
-  MkDocs, das nur noch gewartet wird. Adressen, Navigation, Suche, hell und dunkel bleiben; die Seiten sehen etwas
-  anders aus. Eine fehlende Seite, ein fehlender Anker, ein fehlendes Bild oder eine fehlende Datei lässt den Bau
-  weiter scheitern. Die eingebaute Anleitung im Programm ist davon nicht berührt.
+  MkDocs, das nur noch gewartet wird. Adressen, Navigation, Suche (auch ohne Internet), hell und dunkel bleiben; die
+  Seiten sehen etwas anders aus. Eine fehlende Seite, ein fehlender Anker, ein fehlendes Bild oder eine fehlende
+  Datei lässt den Bau weiter scheitern. Die eingebaute Anleitung im Programm ist davon nicht berührt.
 
 ## 0.23.1 (2026-11-23)
 

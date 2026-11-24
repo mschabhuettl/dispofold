@@ -179,14 +179,21 @@ jobs:
         run: python tools/docs/build.py
       - name: Plugin help pages on the site (with the test-only example plugin, into a throwaway folder)
         run: DISPOFOLD_DOCS_TEST_PLUGINS=1 python tools/docs/build.py "$RUNNER_TEMP/site-plugins" && test -f "$RUNNER_TEMP/site-plugins/anleitung/plugin-beispiel-beispiel/index.html"
-      - name: A missing page, anchor or image fails the build
+      - name: A missing page, anchor, image or file, or a page outside the navigation fails the build
         run: |
           cp docs/anleitung/daten.md "$RUNNER_TEMP/daten.md"
-          for plant in '[x](gibt-es-nicht.md)' '[x](planen.md#gibt-es-nicht)' '![x](img/gibt-es-nicht.png)'; do
+          for plant in '[x](gibt-es-nicht.md)' '[x](planen.md#gibt-es-nicht)' '![x](img/gibt-es-nicht.png)' \
+              '[x](../../mkdocs.yml)'; do
             printf '\n%s\n' "$plant" >> docs/anleitung/daten.md
-            if python tools/docs/build.py "$RUNNER_TEMP/site-broken"; then echo "Not caught: $plant"; exit 1; fi
+            if python tools/docs/build.py "$RUNNER_TEMP/site-broken" > "$RUNNER_TEMP/out" 2>&1 \
+                || ! grep -q -E 'does not exist|links to missing files' "$RUNNER_TEMP/out"; then
+              cat "$RUNNER_TEMP/out"; echo "Not caught: $plant"; exit 1
+            fi
             cp "$RUNNER_TEMP/daten.md" docs/anleitung/daten.md
           done
+          echo '# Neu' > docs/gibt-es-nicht.md
+          if python tools/docs/build.py "$RUNNER_TEMP/site-broken"; then echo "Not caught: a page outside the navigation"; exit 1; fi
+          rm docs/gibt-es-nicht.md
 
   frontend:
     runs-on: ubuntu-latest
