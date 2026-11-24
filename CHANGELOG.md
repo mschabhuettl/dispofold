@@ -3,6 +3,22 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.25.0 (2026-11-25)
+
+- **Woher die Bereiche einer Person kommen:** Die mitgelieferte Import-Erweiterung hat die Option „Bereiche einer
+  Person aus“: aus den Gruppen (wie bisher), aus der Historie (nur Bereiche, in denen jemand genug Dienste hatte),
+  oder aus der Historie mit den übrigen Bereichen der Gruppen als Reserve, deren Schichten nur auf Anfrage sind.
+  Neue Einstellungen nehmen die Reserve, gespeicherte rechnen weiter wie bisher. Wer in keinem Bereich auf die Zahl
+  kommt, etwa neu, behält die Bereiche seiner Gruppen.
+- **Personenseite:** Neben jedem angekreuzten Bereich steht, woher er kommt (eine Gruppe, die Historie mit der Zahl
+  der Dienste, „von Hand“), und ob seine Schichten nur oder teilweise auf Anfrage sind. Ein Haken heißt
+  „grundsätzlich möglich“; wie, sagen die Einschränkungen.
+- **Import für Einsteiger:** Die Optionen erklären sich mit Beispielen, die selten gebrauchten stehen unter
+  „Erweitert“. Die Zuordnung hat Sprunglinks zu ihren Abschnitten, nach einem Lauf steht nur eine Aussage zur
+  Korrekturdatei, und oben im Bericht steht, ob der Lauf in Ordnung aussieht und was man zuerst ansieht.
+- **Vorschläge der Zuordnung:** Eine Schicht ohne Zeitraum im Kürzel und ohne Bedarf (etwa Ausbildung) wird zum
+  Ignorieren vorgeschlagen, abschaltbar.
+
 ## 0.24.0 (2026-11-24)
 
 - **Zuordnung vorschlagen aus Schichtnamen:** Die mitgelieferte Import-Erweiterung schlägt Bereiche jetzt auch aus
