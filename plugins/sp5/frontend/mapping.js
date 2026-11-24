@@ -156,7 +156,7 @@ export async function render(root, ctx) {
 
   function listSection(section) {
     const id = `h-sp5-map-${section}`;
-    const head = h('h2', { id }, t(`plugin.sp5.map.${section}`), info(t(`plugin.sp5.map.${section}.help`), t(`plugin.sp5.map.${section}`)));
+    const head = h('h2', { id, tabindex: '-1' }, t(`plugin.sp5.map.${section}`), info(t(`plugin.sp5.map.${section}.help`), t(`plugin.sp5.map.${section}`)));
     const value = mapping[section];
     if (value !== undefined && !Array.isArray(value)) {
       return h('section.section', { 'aria-labelledby': id, 'data-section': section }, head, h('p', {}, invalid(value)), h('p.muted', {}, t('plugin.sp5.map.notList')));
@@ -396,10 +396,11 @@ export async function render(root, ctx) {
     info(t(`plugin.sp5.propose.setting.${key}.help`), t(`plugin.sp5.propose.setting.${key}`))),
   h('input', { id: `sp5-propose-${key}`, type: 'number', min, max, value: ps[key] ?? '' }));
   const words = h('input', { id: 'sp5-propose-restWords', type: 'text', value: (ps.restWords ?? []).join(', '), spellcheck: 'false' });
+  const untimed = h('input', { id: 'sp5-propose-ignoreUntimed', type: 'checkbox', checked: ps.ignoreUntimed !== false });
   const saveProposalSettings = button(t('plugin.sp5.propose.saveSettings'), async () => {
     const value = (key) => Number(document.getElementById(`sp5-propose-${key}`).value);
     const body = { ...settings, proposals: { ...proposalSettings(), share: value('share'), minDuties: value('minDuties'), months: value('months'),
-      familyShare: value('familyShare'), familyMinDuties: value('familyMinDuties'), familyRatio: value('familyRatio'),
+      familyShare: value('familyShare'), familyMinDuties: value('familyMinDuties'), familyRatio: value('familyRatio'), ignoreUntimed: untimed.checked,
       restWords: words.value.split(',').map((w) => w.trim()).filter(Boolean) } };
     const saved = await guarded(() => api.put('einstellungen', body), t('plugin.sp5.propose.settingsSaved'));
     if (saved) {
@@ -408,13 +409,15 @@ export async function render(root, ctx) {
     }
   }, { id: 'sp5-propose-save' });
   const proposalSection = h('section.section', { 'aria-labelledby': 'h-sp5-propose' },
-    h('h2', { id: 'h-sp5-propose' }, t('plugin.sp5.propose.title'), info(t('plugin.sp5.propose.title.help'), t('plugin.sp5.propose.title'))),
+    h('h2', { id: 'h-sp5-propose', tabindex: '-1' }, t('plugin.sp5.propose.title'), info(t('plugin.sp5.propose.title.help'), t('plugin.sp5.propose.title'))),
     h('p.muted', {}, t('plugin.sp5.propose.intro')),
     h('p.muted', { id: 'sp5-propose-reading' }, t('plugin.sp5.propose.reading')),
     h('div.toolbar', {}, h('button.btn.btn-secondary', { id: 'sp5-propose', type: 'button', onclick: () => propose() }, t('plugin.sp5.propose.run')), resetButton),
     h('details.advanced', {}, h('summary', {}, t('plugin.sp5.propose.settings')),
       h('div.settings', {}, numberField('share', 1, 100), numberField('minDuties', 0), numberField('months', 0, 1200),
         numberField('familyShare', 1, 100), numberField('familyMinDuties', 1), numberField('familyRatio', 1, 100),
+        h('label.check', {}, untimed, t('plugin.sp5.propose.setting.ignoreUntimed'),
+          info(t('plugin.sp5.propose.setting.ignoreUntimed.help'), t('plugin.sp5.propose.setting.ignoreUntimed'))),
         h('div.field', {}, h('label', { for: 'sp5-propose-restWords' }, t('plugin.sp5.propose.setting.restWords'),
           info(t('plugin.sp5.propose.setting.restWords.help'), t('plugin.sp5.propose.setting.restWords'))), words),
         h('div.row', {}, saveProposalSettings))),
@@ -473,8 +476,17 @@ export async function render(root, ctx) {
   raw.value = mappingJson(mapping);
   const none = settings.mapping == null ? h('p.alert', { id: 'sp5-map-none' }, t('plugin.sp5.map.none')) : null;
 
+  // links to the sections of this long page (buttons, as on Eingaben: a link to an anchor would be taken for a page)
+  const jumpTo = (id, label) => h('button.btn-link', { type: 'button', 'data-jump': id, onclick: () => {
+    const heading = root.querySelector(`#${id}`);
+    heading?.scrollIntoView({ block: 'start' });
+    heading?.focus({ preventScroll: true });
+  } }, label);
+  const jumps = h('nav.jump-links', { 'aria-label': t('plugin.sp5.map.jump') }, jumpTo('h-sp5-propose', t('plugin.sp5.propose.title')),
+    ...[...ENTRY_LISTS, ...PATTERN_LISTS].map((s) => jumpTo(`h-sp5-map-${s}`, t(`plugin.sp5.map.${s}`))), jumpTo('h-sp5-codes', t('plugin.sp5.codes.title')));
   root.append(h('h1', {}, t('plugin.sp5.map.title')),
     h('p', { id: 'sp5-map-intro' }, t('plugin.sp5.map.intro')),
+    jumps,
     none ?? '',
     h('div.toolbar', {}, save, marker, download,
       h('div', {}, h('label', { for: 'sp5-map-file' }, t('plugin.sp5.map.file')), ' ', file)), // not a .field: its input would be too narrow
@@ -485,7 +497,7 @@ export async function render(root, ctx) {
     h('section.section', { 'aria-labelledby': 'h-sp5-map-raw' }, h('h2', { id: 'h-sp5-map-raw' }, t('plugin.sp5.map.json'),
       info(t('plugin.sp5.map.json.help'), t('plugin.sp5.map.json'))),
     h('details.advanced', {}, h('summary', {}, t('plugin.sp5.map.json.show')), raw, h('div.toolbar', {}, applyRaw))),
-    h('section.section', { 'aria-labelledby': 'h-sp5-codes' }, h('h2', { id: 'h-sp5-codes' }, t('plugin.sp5.codes.title'),
+    h('section.section', { 'aria-labelledby': 'h-sp5-codes' }, h('h2', { id: 'h-sp5-codes', tabindex: '-1' }, t('plugin.sp5.codes.title'),
       info(t('plugin.sp5.codes.title.help'), t('plugin.sp5.codes.title'))), codesBox));
   draw();
   await check();

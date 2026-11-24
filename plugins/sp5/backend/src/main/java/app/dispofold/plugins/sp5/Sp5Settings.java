@@ -24,7 +24,7 @@ import app.dispofold.plugin.api.PluginErrors;
  * areasFromHistory adding areas), "history" or "reserve" (the areas with at least historyAreaDuties duties, the group
  * areas below that left out or kept on request; areasFromHistory then has no effect). New settings start with
  * "reserve"; stored settings from before the option keep "groups", so that they compute as before. {@code "proposals":
- * {share, minDuties, months, restWords, discarded, familyShare, familyMinDuties, familyRatio}} are the settings of the mapping proposals ({@link Sp5Proposals});
+ * {share, minDuties, months, restWords, discarded, familyShare, familyMinDuties, familyRatio, ignoreUntimed}} are the settings of the mapping proposals ({@link Sp5Proposals});
  * the discarded keys change only through their own routes, a save keeps the stored ones.
  */
 final class Sp5Settings {
@@ -61,6 +61,7 @@ final class Sp5Settings {
         p.put("familyShare", 70);
         p.put("familyMinDuties", 2);
         p.put("familyRatio", 50);
+        p.put("ignoreUntimed", true);
         return s;
     }
 
@@ -155,6 +156,9 @@ final class Sp5Settings {
         if (!intIn(p.get("familyMinDuties"), 1, Integer.MAX_VALUE)) {
             throw invalid("proposals.familyMinDuties");
         }
+        if (!p.get("ignoreUntimed").isBoolean()) {
+            throw invalid("proposals.ignoreUntimed");
+        }
         for (String k : new String[] { "restWords", "discarded" }) {
             if (!p.get(k).isArray()) {
                 throw invalid("proposals." + k);
@@ -180,7 +184,7 @@ final class Sp5Settings {
         p.get("discarded").forEach(w -> discarded.add(w.asText()));
         return new Sp5Proposals.Settings(p.get("share").asInt(), p.get("minDuties").asInt(), p.get("months").asInt(),
                 words, discarded, p.get("familyShare").asInt(), p.get("familyMinDuties").asInt(),
-                p.get("familyRatio").asInt());
+                p.get("familyRatio").asInt(), p.get("ignoreUntimed").asBoolean());
     }
 
     private static boolean intIn(JsonNode n, int min, int max) {
@@ -211,6 +215,7 @@ final class Sp5Settings {
             Map.entry("proposals.familyShare", "Schichtfamilien zusammenlegen ab (1 bis 100 %)"),
             Map.entry("proposals.familyMinDuties", "Arbeitet eine Familie ab … Diensten (ab 1)"),
             Map.entry("proposals.familyRatio", "Schichtnamen empfehlen unter (1 bis 100 %)"),
+            Map.entry("proposals.ignoreUntimed", "Schichten ohne Zeitraum und Bedarf ignorieren"),
             Map.entry("mapping", "Zuordnung"),
             Map.entry("key", "Vorschlag"));
 

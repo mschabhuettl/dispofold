@@ -16,6 +16,14 @@ export async function render(root, ctx) {
   }
   const people = new Set((dataset?.people ?? []).map((p) => p.id));
   const groups = reportGroups(report.columns ?? [], report.rows ?? []);
+  // in plain words on top: whether the run looks fine and what to look at first, from the run's own rows and warnings
+  const unmapped = groups.find((g) => g.type === 'nicht_zugeordnet')?.rows.length ?? 0;
+  const notices = (report.rows ?? []).filter((r) => NOTICE_STATUSES.has(r.status)).length;
+  const warned = (report.warnings ?? []).length;
+  const first = [unmapped && t('plugin.sp5.report.first.unmapped', { count: unmapped }), notices && t('plugin.sp5.report.first.notices', { count: notices })].filter(Boolean);
+  root.append(h('p.alert', { id: 'sp5-report-verdict', role: 'note' }, first.length
+    ? t('plugin.sp5.report.first', { what: first.join('; '), warnings: warned })
+    : t('plugin.sp5.report.fine', { warnings: warned })));
   const sorted = (values) => [...new Set(values)].sort((a, b) => a.localeCompare(b, 'de', { numeric: true }));
 
   const select = (id, label, all, options) => h('div.field', {}, h('label', { for: id }, label),

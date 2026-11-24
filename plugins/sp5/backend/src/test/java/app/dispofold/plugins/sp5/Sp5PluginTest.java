@@ -265,7 +265,8 @@ class Sp5PluginTest {
                 .statusCode(200).body("proposals.discarded", equalTo(List.of("shift:Z1")));
         json().body("{}").post("/api/plugins/sp5/zuordnung/vorschlaege/verwerfen").then().statusCode(400);
         // a page with an older copy of the settings saves: the discarded one stays, the other settings change
-        ((ObjectNode) s.putObject("proposals")).put("share", 50).putArray("discarded");
+        // (the codes of this folder have no time range: without that rule, as 0.24.0)
+        ((ObjectNode) s.putObject("proposals")).put("share", 50).put("ignoreUntimed", false).putArray("discarded");
         json().body(s).put("/api/plugins/sp5/einstellungen").then().statusCode(200)
                 .body("proposals.share", equalTo(50)).body("proposals.discarded", equalTo(List.of("shift:Z1")));
         json().body("{}").post("/api/plugins/sp5/zuordnung/vorschlaege").then().statusCode(200)

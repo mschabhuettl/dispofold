@@ -229,7 +229,8 @@ final class Sp5Families {
                     : "Nur " + n + (n == 1 ? " Dienst" : " Dienste") + " im Zeitraum (weniger als " + s.minDuties()
                             + ") und kein Bedarf.";
         }
-        return null;
+        // no desk duty (training, another service's line): no family, not counted for the recommendation
+        return Sp5Proposals.untimed(s, (String) sh.get("code"), n, f.withDemand().contains(id));
     }
 
     private static boolean open(Map<String, Object> shift) {

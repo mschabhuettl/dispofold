@@ -78,7 +78,8 @@ export async function render(root, ctx) {
       h('p', {}, h('strong', {}, t('plugin.sp5.run.done', { time })), ' ', t('plugin.sp5.run.months', { months: r.months.map(monthLabel).join(', ') })),
       h('div.kpis', {}, COUNTS.map((k) => h('div.kpi', { 'data-count': k }, h('div.label', {}, t(`plugin.sp5.count.${k}`)),
         h('div.value', {}, String(r.counts?.[k] ?? '–'))))),
-      h('p', {}, r.corrections ? t('plugin.sp5.run.corrections.yes') : t('plugin.sp5.run.corrections.no')),
+      // one statement about the corrections: applied with their number, or nothing (the import below says when there are none)
+      r.corrections && r.counts?.corrections ? h('p', { id: 'sp5-run-corrections' }, t('plugin.sp5.run.corrections.applied', { count: r.counts.corrections })) : '',
       h('div.toolbar', {},
         h('a', { href: pageHref('bericht') }, t('plugin.sp5.run.toReport')),
         h('a', { href: pageHref('lauf-vergleich') }, t('plugin.sp5.run.toCompare')),

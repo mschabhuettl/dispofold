@@ -4,7 +4,7 @@
 // evaluated here roughly as the plugin does (fnmatch, "re:" from the start); the front end never evaluates them.
 
 const OPTIONS = { historyMonths: 12, areasFromHistory: null, shiftsFromHistory: null, demand: 'history', mixMinDuties: 10,
-  shiftMix: true, hiddenShiftsMonths: 3, recentMonths: 3 };
+  shiftMix: true, hiddenShiftsMonths: 3, recentMonths: 3, areaSource: 'reserve', historyAreaDuties: 3 };
 
 export const MAPPING = {
   areas: [{ id: 'AN', name: 'Annahme', color: '#D7E8F5' }, { id: 'DR', name: 'Disposition', color: '#F5E1C8' }],
@@ -226,6 +226,8 @@ const FAMILY_PROPOSALS = {
     {"key": "area:families:W-QZ", "id": "WQZ", "name": "W-QZ", "color": "#4D7C0F", "family": "W-QZ", "reason": "Schichtfamilie W-QZ: W-QZ 7-19 (32 Dienste); 4 Personen mit mindestens 2 Diensten darin."},
   ],
   shifts: [
+    // a code without a time range and without demand (Sp5FamiliesTest, the folder with "AUSB")
+    {"key": "shift:AUSB", "code": "AUSB", "name": "Dienst AUSB", "match": "AUSB", "kind": "ignored", "reason": "Kein Zeitraum im Kürzel, kein Bedarf in Schichtplaner 5, 40 Dienste: vermutlich kein Platz im Dienstplan, etwa Ausbildung.", "newAreas": []},
     {"key": "shift:NW 0-24", "code": "NW 0-24", "name": "Dienst NW 0-24", "match": "NW 0-24", "kind": "ignored", "reason": "In Schichtplaner 5 ausgeblendet.", "newAreas": []},
     {"key": "shift:Q 8-12", "code": "Q 8-12", "name": "Dienst Q 8-12", "match": "Q 8-12", "kind": "ignored", "reason": "Nur 2 Dienste im Zeitraum (weniger als 3) und kein Bedarf.", "newAreas": []},
     {"key": "shift:families:DS *", "code": "DS *", "name": "", "match": "DS *", "kind": "rule", "areaId": "DS", "covers": [{"code": "DS 7-19", "duties": 30}, {"code": "DS 19-7", "duties": 25}], "reason": "Schichtfamilie DS (neuer Bereich DS). Deckt heute DS 7-19 (30 Dienste), DS 19-7 (25 Dienste).", "newAreas": [{"id": "DS", "name": "DS", "color": "#B45309"}]},
@@ -299,12 +301,14 @@ function options(saved, given) {
   const bad = !integer(o.historyMonths, 0) || o.historyMonths > 24 ? 'historyMonths'
     : ['areasFromHistory', 'shiftsFromHistory'].find((k) => o[k] !== null && !integer(o[k], 1))
       ?? (!['history', 'sp5'].includes(o.demand) ? 'demand' : !integer(o.mixMinDuties, 1) ? 'mixMinDuties'
-        : ['hiddenShiftsMonths', 'recentMonths'].find((k) => !integer(o[k], 0)) ?? (typeof o.shiftMix !== 'boolean' ? 'shiftMix' : null));
+        : ['hiddenShiftsMonths', 'recentMonths'].find((k) => !integer(o[k], 0)) ?? (typeof o.shiftMix !== 'boolean' ? 'shiftMix'
+          : !['groups', 'history', 'reserve'].includes(o.areaSource) ? 'areaSource' : !integer(o.historyAreaDuties, 1) ? 'historyAreaDuties' : null));
   return bad ? { refused: invalid(bad) } : { options: o };
 }
 
 export function mock() {
-  const PROPOSAL_SETTINGS = { share: 80, minDuties: 3, months: 0, restWords: ['Ersatzruhe'], discarded: [], familyShare: 70, familyMinDuties: 2, familyRatio: 50 };
+  const PROPOSAL_SETTINGS = { share: 80, minDuties: 3, months: 0, restWords: ['Ersatzruhe'], discarded: [], familyShare: 70, familyMinDuties: 2, familyRatio: 50,
+    ignoreUntimed: true };
   let settings = { root: '/srv/dispofold/quellen', path: '2027', mapping: structuredClone(MAPPING), options: { ...OPTIONS },
     proposals: structuredClone(PROPOSAL_SETTINGS) };
   let run = null;
@@ -334,7 +338,8 @@ export function mock() {
       const p = { ...PROPOSAL_SETTINGS, ...(object(body.proposals) ? body.proposals : {}) };
       const bad = !integer(p.share, 1) || p.share > 100 ? 'share' : !integer(p.minDuties, 0) ? 'minDuties' : !integer(p.months, 0) ? 'months'
         : !Array.isArray(p.restWords) || p.restWords.some((w) => typeof w !== 'string' || !w.trim()) ? 'restWords'
-          : ['familyShare', 'familyRatio'].find((k) => !integer(p[k], 1) || p[k] > 100) ?? (!integer(p.familyMinDuties, 1) ? 'familyMinDuties' : null);
+          : ['familyShare', 'familyRatio'].find((k) => !integer(p[k], 1) || p[k] > 100) ?? (!integer(p.familyMinDuties, 1) ? 'familyMinDuties'
+            : typeof p.ignoreUntimed !== 'boolean' ? 'ignoreUntimed' : null);
       if (bad) return invalid(`proposals.${bad}`);
       // the discarded proposals change only through their routes
       settings = { root: String(body.root ?? ''), path: String(body.path ?? ''), mapping, options: o.options,

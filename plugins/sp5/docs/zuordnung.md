@@ -8,6 +8,8 @@ noch, führt der Hinweis „Die Zuordnung fehlt“ auf der Seite Lauf und Import
 
 ![Die Zuordnung mit Bereichen und Schichtregeln](img/zuordnung.png)
 
+Die Seite ist lang; oben führen Links zu jedem Abschnitt, von den Vorschlägen bis **Im Ordner**.
+
 ## Abschnitte
 
 Die Zuordnung übersetzt Schichtplaner 5 in Dispofold: welche Arbeitsplätze getrennt geplant werden (Bereiche),
@@ -151,6 +153,18 @@ So entstehen die Vorschläge aus den Gruppen (die Beispiele stammen aus einem er
   gearbeitet hat (Standard 80 %). Verteilen sich die Mitglieder auf zwei oder mehr Bereiche und erreicht keiner den
   Anteil, ist sie eine Sammelgruppe und wird ignoriert, wie oben.
 
+### Schichten ohne Platz im Dienstplan
+
+In beiden Grundlagen wird eine Schicht zum Ignorieren vorgeschlagen, wenn ihr Kürzel keinen Zeitraum wie `7-19` oder
+`5:20-15:20` hat und sie in Schichtplaner 5 keinen Bedarf hat. Das sind meist Dinge, die nicht im Dienstplan
+besetzt werden: Ausbildung, Home-Office, die Leitung eines anderen Dienstes. Beispiel: „Kein Zeitraum im Kürzel,
+kein Bedarf in Schichtplaner 5, 40 Dienste: vermutlich kein Platz im Dienstplan, etwa Ausbildung.“ Ein Kürzel ohne
+Zeitraum, aber mit Bedarf (etwa ein Tag- und ein Nachtdienst der Einsatzleitung) bleibt ein Dienst, ebenso ein
+Kürzel mit Zeitraum ohne Bedarf. Solche Schichten bilden keine Familie und zählen nicht für die Empfehlung. Trifft
+die Regel einen echten Arbeitsplatz, dessen Kürzel keinen Zeitraum und keinen Bedarf hat, verwirft man den
+Vorschlag oder trägt eine Regel ein; ganz abschalten lässt sie sich mit **Schichten ohne Zeitraum und ohne Bedarf
+ignorieren**.
+
 Was der Ordner nicht wissen kann, entscheidet man selbst: ob eine Gruppe wie ein Servicetelefon oder die
 Verwaltung überhaupt in den Plan gehört (dann ausschließen statt übernehmen), und die Kategorie einer Schicht
 (leer heißt: aus ihren Zeiten).
@@ -166,6 +180,7 @@ Verwaltung überhaupt in den Plan gehört (dann ausschließen statt übernehmen)
 | Schichtfamilien zusammenlegen ab | 70 % | nur aus Schichtnamen: ab diesem Anteil werden zwei Familien ein Bereich |
 | Arbeitet eine Familie ab … Diensten | 2 | nur aus Schichtnamen: ab so vielen Diensten zählt eine Person zu einer Familie |
 | Schichtnamen empfehlen unter | 50 % | Schichtnamen empfohlen, wenn die Gruppen weniger Bereiche ergeben als dieser Anteil der Anfänge |
+| Schichten ohne Zeitraum und ohne Bedarf ignorieren | an | ohne Zeitraum im Kürzel und ohne Bedarf: als „ignorieren“ vorgeschlagen; aus wie in 0.24.0 |
 
 ## Im Ordner
 

@@ -108,7 +108,13 @@ export default async function run({ base, browser, check, shots }) {
   await api(page, 'PUT', '/api/plugins/sp5/einstellungen', { root: '/srv/dispofold/quellen', path: '2027', mapping: MAPPING });
   await open(page, `${P}/uebersicht`, '#h-sp5-run');
   check('options prefilled from the settings', (await page.inputValue('#sp5-run-historyMonths')) === '12');
+  check('the areas of a person from history with the groups as a reserve, recommended', (await page.inputValue('#sp5-run-areaSource')) === 'reserve'
+    && (await page.textContent('#sp5-run-areaSource option[value="reserve"]'))?.includes('(empfohlen)') && (await page.inputValue('#sp5-run-historyAreaDuties')) === '3',
+  `${await page.inputValue('#sp5-run-areaSource')} ${await page.inputValue('#sp5-run-historyAreaDuties')}`);
+  check('the options a beginner never needs are collapsed under Erweitert', !(await page.$eval('#sp5-run-advanced', (d) => d.open))
+    && (await page.locator('#sp5-run-advanced #sp5-run-recentMonths').count()) === 1 && (await page.locator('#sp5-run-advanced #sp5-run-historyMonths').count()) === 0);
   await page.click('details.advanced summary');
+  if (shots) await page.locator('section[aria-labelledby="h-sp5-run"]').screenshot({ path: join(shots, 'sp5-lauf-optionen.png') });
   await page.fill('#sp5-run-historyMonths', '30');
   await page.click('#sp5-run');
   await page.waitForSelector('#sp5-summary .alert-error');
@@ -126,8 +132,9 @@ export default async function run({ base, browser, check, shots }) {
   await page.keyboard.press('Enter');
   await page.waitForSelector('#sp5-run-summary');
   check('the run shows its counts', (await text(page, '[data-count="people"] .value')) === '150' && (await text(page, '[data-count="corrections"] .value')) === '5');
-  check('the run names its months and the corrections', (await text(page, '#sp5-run-summary'))?.includes('Jänner 2027')
-    && (await text(page, '#sp5-run-summary'))?.includes('Korrekturdatei wurde angewendet'), await text(page, '#sp5-run-summary'));
+  check('the run names its months and the corrections, once', (await text(page, '#sp5-run-summary'))?.includes('Jänner 2027')
+    && (await text(page, '#sp5-run-corrections')) === 'Die Korrekturdatei wurde angewendet: 5 Korrekturen.'
+    && !(await text(page, '#sp5-run-summary'))?.includes('noch keine'), await text(page, '#sp5-run-summary'));
   await page.waitForSelector(`#sp5-run-summary a[href="${P}/zuordnung"]`);
   check('a link to the mapping for codes without a rule', (await text(page, `#sp5-run-summary a[href="${P}/zuordnung"]`))?.includes('2 Kürzel ohne Regel'));
   await page.waitForSelector('#sp5-run-proposals');
@@ -187,6 +194,8 @@ export default async function run({ base, browser, check, shots }) {
 
   // ---- Bericht ----
   await open(page, `${P}/bericht`, '#sp5-report-count');
+  check('the report says on top what to look at first', (await text(page, '#sp5-report-verdict'))?.startsWith('Zuerst ansehen: 1 Schicht ohne Bereich')
+    && (await text(page, '#sp5-report-verdict'))?.includes('2 Zeilen mit rotem Hinweis'), await text(page, '#sp5-report-verdict'));
   const types = await page.$$eval('#main section[data-type]', (s) => s.map((x) => x.dataset.type));
   check('one section per row type, unknown ones too', types.join(',') === 'bedarf,bereich,schicht,person,nicht_zugeordnet,ignoriert,verworfen,wochenstunden,korrektur,ausgeblendet,nicht_mehr,sonderfall', types.join(','));
   const korrHeads = await page.$$eval('#sp5-type-korrektur th', (ths) => ths.map((th) => [th.textContent.replace(/[▲▼]/g, '').trim(), th.querySelector('button')?.title]));
@@ -437,6 +446,12 @@ export default async function run({ base, browser, check, shots }) {
 
   // ---- a page that explains itself, the areas from the shift names ----
   await open(page, `${P}/zuordnung`, '#sp5-codes-summary');
+  const jumps = await page.$$eval('nav.jump-links [data-jump]', (bs) => bs.map((b) => b.textContent));
+  check('jump links to the sections of the long page', jumps.join('|') === 'Vorschläge aus dem Ordner|Bereiche|Schichtregeln|Gruppen|Ignorierte Schichten|Ignorierte Gruppen|Ausgeschlossene Gruppen|Ersatzruhe|Ignorierte Abwesenheiten|Im Ordner',
+    jumps.join('|'));
+  await page.click('nav.jump-links [data-jump="h-sp5-map-groups"]');
+  check('a jump link moves the focus to its section', (await page.evaluate(() => document.activeElement?.id)) === 'h-sp5-map-groups');
+  if (shots) await page.screenshot({ path: join(shots, 'sp5-zuordnung-sprung.png') });
   check('the page says what the mapping is', (await text(page, '#sp5-map-intro'))?.startsWith('Die Zuordnung übersetzt Schichtplaner 5 in Dispofold'));
   const intros = await page.$$eval('[data-intro]', (ps) => Object.fromEntries(ps.map((x) => [x.dataset.intro, x.textContent])));
   check('each section says what it is for', intros.areas?.startsWith('Arbeitsplätze, die getrennt besetzt werden')
@@ -474,6 +489,10 @@ export default async function run({ base, browser, check, shots }) {
   if (shots) await page.screenshot({ path: join(shots, 'sp5-zuordnung-erklaert.png') }); // the top of the page, as it opens
   await page.click('#sp5-propose');
   await page.waitForSelector('[data-proposal="shift:families:NW *"]');
+  check('a code without a time range and without demand is proposed to be ignored, with its reason',
+    (await text(page, '[data-proposal="shift:AUSB"]'))?.includes('Kein Zeitraum im Kürzel, kein Bedarf in Schichtplaner 5, 40 Dienste'));
+  await shotOf(page, '[data-proposal="shift:AUSB"]', 'sp5-ohne-zeitraum');
+  check('the setting of that rule is on', await page.isChecked('#sp5-propose-ignoreUntimed'));
   check('a folder with coarse groups recommends the shift names', await page.isChecked('#sp5-basis-families')
     && (await text(page, 'label[for="sp5-basis-families"]'))?.includes('(empfohlen)') && (await text(page, '#sp5-basis-reason'))?.includes('Hier passen die Schichtnamen'));
   await shotOf(page, 'section[aria-labelledby="h-sp5-propose"]', 'sp5-zuordnung-familien');

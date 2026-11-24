@@ -39,12 +39,18 @@ eingetragen.“); der Lauf selbst prüft die Zuordnung genau wie `sp5_export.py`
 
 ## Optionen und Kommandozeile
 
-Die Optionen der Erweiterung entsprechen denen von `sp5_export.py`, mit denselben Standardwerten:
+Die Optionen der Erweiterung entsprechen denen von `sp5_export.py`, mit denselben Standardwerten, bis auf **Bereiche
+einer Person aus**: `sp5_export.py` kennt nur „Gruppen“. Mit „Historie“ oder „Historie, Gruppen als Reserve“
+unterscheiden sich Bereiche und Einschränkungen der Personen deshalb gewollt; `sp5-vergleich.py` sagt das und
+nennt die Zahl der Bereiche nach ihrer Herkunft (aus `anfrage.json`). Byte für Byte gleich ist ein Lauf nur mit
+„Gruppen“.
 
 | Option in Dispofold | Kommandozeile von `sp5_export.py` |
 |---|---|
 | Monate Historie | `--history-months` |
-| Bereiche aus der Historie ab … Diensten | `--areas-from-history` |
+| Bereiche einer Person aus | keine; `sp5_export.py` rechnet immer mit „Gruppen“ |
+| Bereich aus der Historie ab … Diensten | keine (gilt nur für „Historie“ und „Historie, Gruppen als Reserve“) |
+| Bei Gruppen: Bereiche aus der Historie ab … Diensten dazu | `--areas-from-history` |
 | Schichten seltener als … Dienste nur auf Anfrage | `--shifts-from-history` |
 | Bedarf | `--demand` |
 | Gewohnte Verteilung übernehmen, ab … Diensten | `--no-shift-mix`, `--mix-min-duties` |

@@ -202,6 +202,36 @@ class Sp5FamiliesTest {
         }
     }
 
+    static Sp5Proposals.Settings untimed(boolean on) {
+        return new Sp5Proposals.Settings(80, 3, 0, List.of("Ersatzruhe"), Set.of(), 70, 2, 50, on);
+    }
+
+    @Test
+    void shiftsWithoutATimeRangeAndWithoutDemandAreProposedToBeIgnored(@TempDir Path dir) throws Exception {
+        List<Object[]> shifts = new ArrayList<>(List.of(FamilyFolder.SHIFTS));
+        shifts.add(new Object[] { "AUSB", 0L, 41, 45, 8 }); // training: no time range, no demand, 40 duties
+        shifts.add(new Object[] { "HO", 0L, 36, 40, 4 }); // home office
+        shifts.add(new Object[] { "LD", 0L, 1, 4, 5 }); // a duty officer's code: no time range, but demand
+        FamilyFolder.write(dir, shifts.toArray(new Object[0][]), new long[] { shifts.size() });
+        for (String basis : new String[] { "groups", "families" }) {
+            Map<String, String> on = brief(propose(dir, Map.of(), untimed(true), basis), "shifts");
+            assertThat(on).as(basis).containsEntry("AUSB", "ignored").containsEntry("HO", "ignored");
+            assertThat(on.get("LD")).as(basis).isNotEqualTo("ignored");
+            // a timed shift without demand stays a desk duty
+            assertThat(on.getOrDefault("NW 7-19", on.get("NW *"))).as(basis).isNotEqualTo("ignored");
+        }
+        Map<String, Object> on = propose(dir, Map.of(), untimed(true), "families");
+        assertThat(reasons(on).get("shift:AUSB")).isEqualTo(
+                "Kein Zeitraum im Kürzel, kein Bedarf in Schichtplaner 5, 40 Dienste: vermutlich kein Platz im Dienstplan, etwa Ausbildung.");
+        assertThat(areas(on)).doesNotContainKeys("AUSB", "HO").containsKey("LD");
+        // not counted for the recommendation: 8 beginnings and LD
+        assertThat(on).containsEntry("stems", 9);
+        // the setting off: as 0.24.0, the codes are families of their own
+        Map<String, Object> off = propose(dir, Map.of(), untimed(false), "families");
+        assertThat(areas(off).values()).contains("AUSB, FA", "DS, HO"); // with the families of the same staff
+        assertThat(off).containsEntry("stems", 11);
+    }
+
     @Test
     void eachThresholdChangesTheResult(@TempDir Path dir) throws Exception {
         folder(dir);

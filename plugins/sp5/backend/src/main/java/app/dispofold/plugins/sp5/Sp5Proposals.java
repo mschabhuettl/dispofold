@@ -51,13 +51,53 @@ final class Sp5Proposals {
     static final List<String> COLORS = List.of("#B45309", "#15803D", "#2563EB", "#7C3AED", "#0E7490", "#BE123C",
             "#4D7C0F", "#A16207", "#1D4ED8", "#9333EA", "#0F766E", "#C2410C");
 
-    /** share, minDuties, months: as above; family*: those of {@link Sp5Families}. */
+    /**
+     * share, minDuties, months: as above; family*: those of {@link Sp5Families}; ignoreUntimed: a shift whose short
+     * name has no time range and that has no demand in the folder is proposed to be ignored (not a desk duty, such as
+     * training), in both bases.
+     */
     record Settings(int share, int minDuties, int months, List<String> restWords, Set<String> discarded,
-            int familyShare, int familyMinDuties, int familyRatio) {
+            int familyShare, int familyMinDuties, int familyRatio, boolean ignoreUntimed) {
+
+        /** Without the rule for shifts without a time range, as 0.24.0. */
+        Settings(int share, int minDuties, int months, List<String> restWords, Set<String> discarded, int familyShare,
+                int familyMinDuties, int familyRatio) {
+            this(share, minDuties, months, restWords, discarded, familyShare, familyMinDuties, familyRatio, false);
+        }
 
         Settings withoutDiscarded() {
-            return new Settings(share, minDuties, months, restWords, Set.of(), familyShare, familyMinDuties, familyRatio);
+            return new Settings(share, minDuties, months, restWords, Set.of(), familyShare, familyMinDuties, familyRatio,
+                    ignoreUntimed);
         }
+    }
+
+    /** A time range in a short name: 7-19, 5:20-15:20, 06.30-14. */
+    static final java.util.regex.Pattern TIME_RANGE = java.util.regex.Pattern
+            .compile("\\d{1,2}(?:[:.]\\d{2})?\\s*-\\s*\\d{1,2}(?:[:.]\\d{2})?");
+
+    /**
+     * Why a shift with this code, these duties and no demand anywhere in the folder is no desk duty: no time range in
+     * its short name; null when it has one (or the rule is off).
+     */
+    static String untimed(Settings s, String code, int duties, boolean demand) {
+        if (!s.ignoreUntimed() || demand || TIME_RANGE.matcher(code).find()) {
+            return null;
+        }
+        return "Kein Zeitraum im Kürzel, kein Bedarf in Schichtplaner 5, " + duties + (duties == 1 ? " Dienst" : " Dienste")
+                + ": vermutlich kein Platz im Dienstplan, etwa Ausbildung.";
+    }
+
+    /** The shifts with demand (MIN or MAX) in the folder's demand tables, of any group. */
+    static Set<Object> withDemand(Path folder) {
+        Set<Object> ids = new HashSet<>();
+        for (String table : List.of("5SHDEM", "5SPDEM")) {
+            for (Map<String, Object> r : Sp5Codes.table(folder, table)) {
+                if (Py.truthy(r.get("MIN")) || Py.truthy(r.get("MAX"))) {
+                    ids.add(Py.key(r.get("SHIFTID")));
+                }
+            }
+        }
+        return ids;
     }
 
     record Group(Object id, String name, Object parent, Map<String, Object> result) {
@@ -139,6 +179,7 @@ final class Sp5Proposals {
             }
         }
         Map<Object, Map<String, Object>> shiftProposal = new LinkedHashMap<>();
+        Set<Object> anyDemand = s.ignoreUntimed() ? withDemand(folder) : Set.of();
         Map<Object, Object> owner = new LinkedHashMap<>();
         Map<Object, String> ownerWhy = new HashMap<>();
         List<Object> open = new ArrayList<>();
@@ -156,6 +197,8 @@ final class Sp5Proposals {
                 shiftProposal.put(id, ignoredShift(sh, n == 0 ? "Keine Dienste im Zeitraum und kein Bedarf."
                         : "Nur " + n + (n == 1 ? " Dienst" : " Dienste") + " im Zeitraum (weniger als "
                                 + s.minDuties() + ") und kein Bedarf."));
+            } else if (untimed(s, (String) sh.get("code"), n, anyDemand.contains(id)) != null) {
+                shiftProposal.put(id, ignoredShift(sh, untimed(s, (String) sh.get("code"), n, false)));
             } else if (d.size() == 1) {
                 Object g = d.iterator().next();
                 owner.put(id, g);

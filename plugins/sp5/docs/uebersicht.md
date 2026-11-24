@@ -13,10 +13,12 @@ beschreibt [Ablauf](plugin-sp5-ablauf.md), den kurzen Weg für den Anfang
   Leer beim letzten Monat heißt: nur der erste.
 - **Optionen:** vorbelegt mit denen aus den Einstellungen. Was man hier ändert, gilt nur für diesen Lauf und
   seinen Import; **Als Standard speichern** übernimmt die Optionen in die Einstellungen. Was jede Option tut, sagt
-  ihr „i“ und die Tabelle unter [Import aus Schichtplaner 5](plugin-sp5-sp5.md#einschalten-und-einstellen).
+  ihr „i“ mit einem Beispiel und die Tabelle unter [Import aus Schichtplaner 5](plugin-sp5-sp5.md#einschalten-und-einstellen).
+  Was man selten braucht, steht unter **Erweitert**.
 - **Ausführen:** liest den Ordner, wendet die Korrekturdatei von Dispofold an und rechnet den Datensatz. Danach
   stehen die Zahlen des Laufs da: Personen, Bereiche, Schichten, Dienste, Bedarfsregeln, Warnungen,
-  Berichtszeilen und Zeilen der Korrekturdatei, dazu die Zeit des Laufs und die Monate.
+  Berichtszeilen und Zeilen der Korrekturdatei, dazu die Zeit des Laufs und die Monate. Hat die Korrekturdatei
+  Einträge, steht dort „Die Korrekturdatei wurde angewendet“ mit ihrer Zahl; ohne Einträge steht dazu nichts.
 
 Von dort führen Links zum [Bericht](plugin-sp5-bericht.md), zur [Zuordnung](plugin-sp5-zuordnung.md), wenn
 Kürzel ohne Regel geblieben sind, zum [Vergleich](plugin-sp5-lauf-vergleich.md) und zum Import.

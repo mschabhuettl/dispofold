@@ -42,6 +42,17 @@ public final class FamilyFolder {
 
     /** The folder with other shifts, in the shape of {@link #SHIFTS}. */
     public static void write(Path dir, Object[][] SHIFTS) throws Exception {
+        write(dir, SHIFTS, new long[0]);
+    }
+
+    /** The folder with other shifts and demand (MIN 1 in the group Tagdienst) for the shifts of these ids (1 up). */
+    public static void write(Path dir, Object[][] SHIFTS, long[] demand) throws Exception {
+        List<Object[]> rows = new ArrayList<>();
+        for (long id : demand) {
+            rows.add(row((long) rows.size() + 1, 1L, 0L, id, 1L, 0L));
+        }
+        TestTables.write(dir, "5SHDEM", List.of(n("ID", 11), n("GROUPID", 11), n("WEEKDAY", 5), n("SHIFTID", 11),
+                n("MIN", 5), n("MAX", 5)), rows.toArray(new Object[0][]));
         List<TestTables.Field> shift = new ArrayList<>(List.of(n("ID", 11), c("NAME", 40), c("SHORTNAME", 24),
                 n("HIDE", 1), n("COLORBK", 11)));
         for (int i = 0; i < 8; i++) {
