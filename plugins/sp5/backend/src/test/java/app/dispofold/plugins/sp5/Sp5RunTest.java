@@ -110,7 +110,8 @@ class Sp5RunTest {
         List<String> keys = new ArrayList<>();
         summary.path("request").path("options").fieldNames().forEachRemaining(keys::add);
         assertThat(keys).containsExactlyInAnyOrder("historyMonths", "areasFromHistory", "shiftsFromHistory",
-                "demand", "mixMinDuties", "shiftMix", "hiddenShiftsMonths", "recentMonths", "nightsFair");
+                "demand", "mixMinDuties", "shiftMix", "hiddenShiftsMonths", "recentMonths", "nightsFair", "areaSource",
+                "historyAreaDuties");
         assertThat(summary.path("request").path("options").path("historyMonths").asInt()).isEqualTo(1);
         assertThat(summary.path("months")).containsExactly(mapper.readTree("\"2027-01\""));
         assertThat(summary.path("ranAt").asText()).matches("\\d{4}-\\d\\d-\\d\\dT\\d\\d:\\d\\d:\\d\\dZ");

@@ -99,7 +99,7 @@ def test_cycle_without_end_yields_no_duties_in_the_port(source, tmp_path):
                         "same": True, "differences": [], "features": ["cycle without END"]})
 
 
-def _bundle(path: Path, out: Path, args: list[str], nights_fair: bool | None = None) -> Path:
+def _bundle(path: Path, out: Path, args: list[str], nights_fair: bool | None = None, extra: dict | None = None) -> Path:
     report = out.with_suffix(".csv")
     with zipfile.ZipFile(path, "w") as z:
         z.writestr("dataset.json", out.read_bytes())
@@ -110,6 +110,7 @@ def _bundle(path: Path, out: Path, args: list[str], nights_fair: bool | None = N
                    "corrections": None}
         if nights_fair is not None:
             request["nightsFair"] = nights_fair
+        request.update(extra or {})
         z.writestr("anfrage.json", json.dumps(request))
         z.writestr("mapping.json", Path(MAPPING).read_bytes())
     return path
@@ -158,6 +159,12 @@ def test_owner_script_finds_identical_and_anonymous_differences(source, tmp_path
                                                   encoding="utf-8")
     off = compare(_bundle(tmp_path / "ohne-nacht.zip", plain_out, args, nights_fair=False))
     assert off.returncode == 0 and "ERGEBNIS: alles identisch" in off.stdout, off.stdout + off.stderr
+    # since 0.25.0: areas from history (Dispofold only) are named, with the counts, as a reason for differences
+    counts = {"fromGroups": 40, "fromHistory": 30, "reserve": 12, "droppedGroupAreas": 0, "peopleWithoutHistory": 3}
+    hist = compare(_bundle(tmp_path / "historie.zip", out, args,
+                           extra={"areaSource": "reserve", "historyAreaDuties": 3, "areaCounts": counts}))
+    assert "Bereiche einer Person aus: Historie, Gruppen als Reserve (ab 3 Diensten)" in hist.stdout, hist.stdout
+    assert "Bereiche: 40 aus Gruppen, 30 aus der Historie, 12 aus Gruppen als Reserve" in hist.stdout
     assert "nicht automatisch fair verteilt" in off.stdout
     # the same result compared as if nights were marked automatically: the difference shows
     assert compare(_bundle(tmp_path / "mit-nacht.zip", plain_out, args, nights_fair=True)).returncode == 1

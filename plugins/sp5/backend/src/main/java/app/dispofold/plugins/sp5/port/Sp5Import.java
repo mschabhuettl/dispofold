@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
+import java.util.TreeSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -98,6 +99,20 @@ final class Sp5Import {
 
     /** A rule without {@code unpopular} marks night shifts (sp5_export.py does; the plugin only when chosen). */
     final boolean nightsFair;
+    /**
+     * Where a person's areas come from (Dispofold only, sp5_export.py knows only "groups"): "groups", "history" (the
+     * areas with at least historyAreaDuties duties in the history months) or "reserve" (those, and the group areas
+     * below that as a reserve whose shifts are all on request); a person who reaches it in no area keeps the group
+     * areas. Set after construction.
+     */
+    String areaSource = "groups";
+    int historyAreaDuties = 3;
+    /** Per person (E…) and area: where it comes from, as the person page shows it ("Gruppe …; Historie: 14 Dienste"). */
+    final Map<String, Map<String, String>> areaSources = new LinkedHashMap<>();
+    /** Counts of the areas for the result file: from groups, from history, reserve, people without history. */
+    final Map<String, Integer> areaCounts = new LinkedHashMap<>();
+    final Map<Object, Set<String>> groupNamesOf = new HashMap<>(); // SP5 employee key -> names of its groups
+    final Map<String, Set<String>> reserve = new LinkedHashMap<>(); // person -> group areas kept as a reserve
     final Path folder;
     final Map<String, Object> mapping;
     final int hiddenShiftsMonths;
@@ -531,9 +546,11 @@ final class Sp5Import {
         List<Map<String, Object>> unmapped = new ArrayList<>();
         List<Object> exclude = patterns("excludeGroups");
         List<Object> ignore = patterns("ignoreGroups");
+        Map<Object, String> groupName = new HashMap<>();
         for (Map<String, Object> g : table("5GROUP", true, false)) {
             String name = text(g.get("NAME"));
             Object gid = k(g.get("ID"));
+            groupName.putIfAbsent(gid, name);
             parent.put(gid, k(Py.truthy(g.get("SUPERID")) ? g.get("SUPERID") : 0L));
             Map<String, Object> rule;
             if (any(exclude, name)) {
@@ -576,6 +593,10 @@ final class Sp5Import {
             Object g = groups.getOrDefault(k(a.get("GROUPID")), "ignore");
             if (!"ignore".equals(g)) {
                 member.computeIfAbsent(k(a.get("EMPLOYEEID")), x -> new ArrayList<>()).add(g);
+                if (g instanceof Set<?> && groupName.containsKey(k(a.get("GROUPID")))) {
+                    groupNamesOf.computeIfAbsent(k(a.get("EMPLOYEEID")), x -> new TreeSet<>())
+                            .add(groupName.get(k(a.get("GROUPID"))));
+                }
                 memberIds.putIfAbsent(k(a.get("EMPLOYEEID")), a.get("EMPLOYEEID"));
             }
         }
@@ -1788,7 +1809,9 @@ final class Sp5Import {
             warn(loose + " Mitarbeiter ohne Bereich aus Gruppen haben in den " + historyMonths + " Monaten davor "
                     + "zugeordnete Schichten gearbeitet");
         }
-        Integer n = areasFromHistory;
+        // in "history" and "reserve" the threshold of the areas from history replaces areasFromHistory
+        boolean byGroups = "groups".equals(areaSource);
+        Integer n = byGroups ? areasFromHistory : Integer.valueOf(historyAreaDuties);
         int added = 0;
         int extra = 0;
         if (n != null && n != 0) {
@@ -1831,6 +1854,113 @@ final class Sp5Import {
             warn("Bereiche aus Diensten (mindestens " + n + "): " + added + " Bereiche ergänzt, davon für " + extra
                     + " Mitarbeiter ohne Bereich aus Gruppen, die damit übernommen werden");
         }
+        if (!byGroups) {
+            areasFromHistory(counts, areas, group);
+        }
+        areaSources(counts, areas, group);
+    }
+
+    /**
+     * "history" and "reserve" (Dispofold only): the areas with at least historyAreaDuties duties stay; the group areas
+     * below that go ("history") or stay as a reserve whose shifts {@link #reserveRestrictions} puts on request
+     * ("reserve"). A person who reaches the threshold in no area keeps the group areas as they are.
+     */
+    @SuppressWarnings("unchecked")
+    void areasFromHistory(Counter counts, List<String> areas, Map<Object, Set<String>> group) {
+        int fromHistory = 0;
+        int kept = 0;
+        int dropped = 0;
+        int without = 0;
+        for (Map<String, Object> p : personBySp5.values()) {
+            Set<String> own = group.getOrDefault(p.get("id"), Set.of());
+            List<String> hist = new ArrayList<>();
+            for (String a : areas) {
+                if (historyMonths != 0 && counts.n(t(p.get("id"), a)) >= historyAreaDuties) {
+                    hist.add(a);
+                }
+            }
+            if (hist.isEmpty()) {
+                without++;
+                continue;
+            }
+            fromHistory += hist.size();
+            List<String> ids = new ArrayList<>();
+            Set<String> spare = new LinkedHashSet<>();
+            for (String a : areas) {
+                if (hist.contains(a)) {
+                    ids.add(a);
+                } else if (own.contains(a)) {
+                    if ("reserve".equals(areaSource)) {
+                        ids.add(a);
+                        spare.add(a);
+                    } else {
+                        dropped++;
+                    }
+                }
+            }
+            kept += spare.size();
+            if (!spare.isEmpty()) {
+                reserve.put((String) p.get("id"), spare);
+            }
+            p.put("areaIds", ids);
+        }
+        areaCounts.put("fromHistory", fromHistory);
+        areaCounts.put("reserve", kept);
+        areaCounts.put("droppedGroupAreas", dropped);
+        areaCounts.put("peopleWithoutHistory", without);
+        warn("Bereiche einer Person aus der Historie (ab " + historyAreaDuties + " Diensten"
+                + ("reserve".equals(areaSource) ? ", Gruppen als Reserve" : "") + "): " + fromHistory
+                + " Bereiche aus der Historie, " + kept + " aus Gruppen als Reserve nur auf Anfrage, " + dropped
+                + " aus Gruppen weggelassen; " + without + " Mitarbeiter ohne Bereich mit " + historyAreaDuties
+                + " Diensten behalten die Bereiche aus Gruppen");
+    }
+
+    /** Where each area of each person comes from: its groups and its duties in the history months. */
+    @SuppressWarnings("unchecked")
+    void areaSources(Counter counts, List<String> areas, Map<Object, Set<String>> group) {
+        int fromGroups = 0;
+        for (Map.Entry<Object, Map<String, Object>> e : personBySp5.entrySet()) {
+            Map<String, Object> p = e.getValue();
+            Map<String, String> sources = new LinkedHashMap<>();
+            for (String a : (List<String>) p.get("areaIds")) {
+                List<String> parts = new ArrayList<>();
+                if (group.getOrDefault(p.get("id"), Set.of()).contains(a)) {
+                    fromGroups++;
+                    Set<String> names = new TreeSet<>(groupNamesOf.getOrDefault(e.getKey(), Set.of()));
+                    parts.add(names.isEmpty() ? "Gruppe" : (names.size() == 1 ? "Gruppe " : "Gruppen ")
+                            + String.join(", ", names));
+                }
+                long c = counts.n(t(p.get("id"), a));
+                if (historyMonths != 0 && c != 0) {
+                    parts.add("Historie: " + c + (c == 1 ? " Dienst" : " Dienste"));
+                }
+                sources.put(a, String.join("; ", parts));
+            }
+            areaSources.put((String) p.get("id"), sources);
+        }
+        areaCounts.putIfAbsent("fromGroups", fromGroups);
+    }
+
+    /** "reserve": every shift of a reserve area on request, unless the person has a whole-week restriction on it. */
+    List<Map<String, Object>> reserveRestrictions(List<Map<String, Object>> restrictions) {
+        Set<Object> wholeWeek = new HashSet<>();
+        for (Map<String, Object> r : restrictions) {
+            if (Py.eq(r.get("weekday"), 0L)) {
+                wholeWeek.add(t(r.get("personId"), r.get("shiftId")));
+            }
+        }
+        List<Map<String, Object>> result = new ArrayList<>();
+        reserve.forEach((pid, spare) -> {
+            for (Map<String, Object> s : shiftBySp5.values()) {
+                if (spare.contains(s.get("areaId")) && !wholeWeek.contains(t(pid, s.get("id")))) {
+                    result.add(restriction(pid, (String) s.get("id"), 0L, "ON_REQUEST"));
+                }
+            }
+        });
+        if (!reserve.isEmpty()) {
+            warn("Bereiche aus Gruppen als Reserve: " + result.size() + " Einschränkungen 'nur auf Anfrage' ergänzt");
+        }
+        return result;
     }
 
     // ── shifts from history ─────────────────────────────────
@@ -2057,6 +2187,7 @@ final class Sp5Import {
         List<Map<String, Object>> restrictions = new ArrayList<>(restrictions());
         restrictions.addAll(shiftsFromDuties());
         restrictions.addAll(areasNoLongerWorked(restrictions));
+        restrictions.addAll(reserveRestrictions(restrictions));
         restrictions.sort(RESTRICTION_ORDER);
         shiftMix();
         personReport(restrictions);

@@ -17,15 +17,20 @@ import app.dispofold.plugin.api.PluginErrors;
 /**
  * The plugin's settings (version 1):
  * {@code {"root", "path", "mapping", "options": {historyMonths, areasFromHistory, shiftsFromHistory, demand,
- * mixMinDuties, shiftMix, hiddenShiftsMonths, recentMonths, nightsFair}}}. The options are those of sp5_export.py with
- * its defaults ({@code --no-shift-mix} is {@code shiftMix: false}); {@code nightsFair} (default off) marks night
- * shifts whose mapping rule leaves {@code unpopular} empty, as sp5_export.py always does. {@code "proposals":
+ * mixMinDuties, shiftMix, hiddenShiftsMonths, recentMonths, nightsFair, areaSource, historyAreaDuties}}}. The options
+ * are those of sp5_export.py with its defaults ({@code --no-shift-mix} is {@code shiftMix: false}); {@code nightsFair}
+ * (default off) marks night shifts whose mapping rule leaves {@code unpopular} empty, as sp5_export.py always does.
+ * {@code areaSource} (Dispofold only) is where a person's areas come from: "groups" (as sp5_export.py, with
+ * areasFromHistory adding areas), "history" or "reserve" (the areas with at least historyAreaDuties duties, the group
+ * areas below that left out or kept on request; areasFromHistory then has no effect). New settings start with
+ * "reserve"; stored settings from before the option keep "groups", so that they compute as before. {@code "proposals":
  * {share, minDuties, months, restWords, discarded, familyShare, familyMinDuties, familyRatio}} are the settings of the mapping proposals ({@link Sp5Proposals});
  * the discarded keys change only through their own routes, a save keeps the stored ones.
  */
 final class Sp5Settings {
 
     static final int MAX_HISTORY_MONTHS = 24;
+    static final List<String> AREA_SOURCES = List.of("groups", "history", "reserve");
 
     private Sp5Settings() {
     }
@@ -45,6 +50,8 @@ final class Sp5Settings {
         o.put("hiddenShiftsMonths", 3);
         o.put("recentMonths", 3);
         o.put("nightsFair", false);
+        o.put("areaSource", "reserve");
+        o.put("historyAreaDuties", 3);
         ObjectNode p = s.putObject("proposals");
         p.put("share", 80);
         p.put("minDuties", 3);
@@ -57,10 +64,16 @@ final class Sp5Settings {
         return s;
     }
 
-    /** The stored settings with every missing key at its default. */
+    /**
+     * The stored settings with every missing key at its default; settings stored before the option areaSource keep
+     * the areas from the groups.
+     */
     static ObjectNode withDefaults(ObjectMapper mapper, JsonNode stored) {
         ObjectNode s = defaults(mapper);
         if (stored != null && stored.isObject()) {
+            if (!stored.path("options").has("areaSource")) {
+                ((ObjectNode) s.get("options")).put("areaSource", "groups");
+            }
             stored.fields().forEachRemaining(e -> {
                 if (e.getKey().equals("options") || e.getKey().equals("proposals")) {
                     if (e.getValue().isObject()) {
@@ -117,6 +130,12 @@ final class Sp5Settings {
         }
         if (!o.get("nightsFair").isBoolean()) {
             throw invalid("nightsFair");
+        }
+        if (!o.get("areaSource").isTextual() || !AREA_SOURCES.contains(o.get("areaSource").asText())) {
+            throw invalid("areaSource");
+        }
+        if (!intIn(o.get("historyAreaDuties"), 1, Integer.MAX_VALUE)) {
+            throw invalid("historyAreaDuties");
         }
         JsonNode p = s.get("proposals");
         if (!intIn(p.get("share"), 1, 100)) {
@@ -180,6 +199,8 @@ final class Sp5Settings {
             Map.entry("mixMinDuties", "Gewohnte Verteilung ab … Diensten (ab 1)"),
             Map.entry("hiddenShiftsMonths", "Ausgeblendete Schichten mit Diensten in den … Monaten davor (ab 0)"),
             Map.entry("recentMonths", "Bereiche ohne Dienst in den letzten … Monaten nur auf Anfrage (ab 0)"),
+            Map.entry("areaSource", "Bereiche einer Person aus"),
+            Map.entry("historyAreaDuties", "Bereich aus der Historie ab … Diensten (ab 1)"),
             Map.entry("shiftMix", "Gewohnte Verteilung übernehmen"),
             Map.entry("nightsFair", "Nachtschichten automatisch fair verteilen"),
             Map.entry("proposals.share", "Anteil für eine Schicht (1 bis 100 %)"),

@@ -111,6 +111,11 @@ public class Sp5Resource {
         question.set("args", mapper.valueToTree(args(request)));
         // sp5_export.py has no such option: it always marks night shifts whose rule has no "unpopular"
         question.put("nightsFair", request.nightsFair());
+        // nor this one: where a person's areas come from; with "history" or "reserve" sp5_export.py cannot reproduce
+        // the run, the counts of the areas by their source say what it did (numbers only)
+        question.put("areaSource", request.areaSource());
+        question.put("historyAreaDuties", request.historyAreaDuties());
+        question.set("areaCounts", mapper.valueToTree(result.areaCounts()));
         question.put("mapping", "mapping.json");
         if (request.corrections() != null) {
             question.put("corrections", Sp5Plugin.CORRECTIONS_FILE);

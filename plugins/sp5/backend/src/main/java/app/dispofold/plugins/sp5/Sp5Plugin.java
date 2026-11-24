@@ -138,7 +138,8 @@ public class Sp5Plugin implements Plugin, ImportSource {
                 optionalInt(options.path("shiftsFromHistory")), options.path("demand").asText(),
                 options.path("shiftMix").asBoolean() ? options.path("mixMinDuties").asInt() : null,
                 options.path("hiddenShiftsMonths").asInt(), options.path("recentMonths").asInt(), mapping,
-                corrections, options.path("nightsFair").asBoolean()), mappingFile, correctionsFile, options);
+                corrections, options.path("nightsFair").asBoolean(), options.path("areaSource").asText(),
+                options.path("historyAreaDuties").asInt()), mappingFile, correctionsFile, options);
     }
 
     /**

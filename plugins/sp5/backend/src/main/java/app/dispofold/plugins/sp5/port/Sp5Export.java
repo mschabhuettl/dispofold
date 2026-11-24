@@ -51,14 +51,34 @@ public final class Sp5Export {
     /**
      * @param nightsFair a mapping rule without {@code unpopular} marks night shifts (as sp5_export.py does); off, such
      *        a shift is not marked
+     * @param areaSource where a person's areas come from (Dispofold only): "groups" as sp5_export.py, "history" or
+     *        "reserve" with historyAreaDuties (see {@link Sp5Import#areaSource})
      */
     public record Request(Path folder, String month, String to, int historyMonths, Integer areasFromHistory,
             Integer shiftsFromHistory, String demand, Integer mixMinDuties, int hiddenShiftsMonths, int recentMonths,
-            Map<String, Object> mapping, Map<String, Object> corrections, boolean nightsFair) {
+            Map<String, Object> mapping, Map<String, Object> corrections, boolean nightsFair, String areaSource,
+            int historyAreaDuties) {
+
+        /** The areas from the groups, as sp5_export.py. */
+        public Request(Path folder, String month, String to, int historyMonths, Integer areasFromHistory,
+                Integer shiftsFromHistory, String demand, Integer mixMinDuties, int hiddenShiftsMonths,
+                int recentMonths, Map<String, Object> mapping, Map<String, Object> corrections, boolean nightsFair) {
+            this(folder, month, to, historyMonths, areasFromHistory, shiftsFromHistory, demand, mixMinDuties,
+                    hiddenShiftsMonths, recentMonths, mapping, corrections, nightsFair, "groups", 3);
+        }
     }
 
-    /** The dataset (with appliedCorrections), the report rows (29 columns each, sorted) and the warnings. */
-    public record Result(Map<String, Object> dataset, List<List<Object>> reportRows, List<String> warnings) {
+    /**
+     * The dataset (with appliedCorrections), the report rows (29 columns each, sorted) and the warnings; besides, for
+     * Dispofold only and not in the files: where each person's areas come from (person id -> area -> text) and the
+     * counts of the areas by their source.
+     */
+    public record Result(Map<String, Object> dataset, List<List<Object>> reportRows, List<String> warnings,
+            Map<String, Map<String, String>> areaSources, Map<String, Integer> areaCounts) {
+
+        public Result(Map<String, Object> dataset, List<List<Object>> reportRows, List<String> warnings) {
+            this(dataset, reportRows, warnings, Map.of(), Map.of());
+        }
     }
 
     private Sp5Export() {
@@ -297,6 +317,8 @@ public final class Sp5Export {
         Sp5Import job = new Sp5Import(q.folder(), months, q.mapping(), history, q.areasFromHistory(),
                 q.shiftsFromHistory(), q.demand(), q.mixMinDuties(), q.hiddenShiftsMonths(), q.recentMonths(),
                 q.nightsFair());
+        job.areaSource = q.areaSource();
+        job.historyAreaDuties = q.historyAreaDuties();
         Map<String, Object> dataset = job.run();
         List<List<Object>> rows = new ArrayList<>();
         if (q.corrections() != null) {
@@ -346,7 +368,7 @@ public final class Sp5Export {
                 .thenComparing(person::get)
                 .thenComparing(r -> (String) r.get(2), Py::compareStr)
                 .thenComparing(r -> (String) r.get(3), Py::compareStr));
-        return new Result(dataset, report, job.warnings);
+        return new Result(dataset, report, job.warnings, job.areaSources, job.areaCounts);
     }
 
     /** The dataset file: json.dump(dataset, ensure_ascii=False, indent=1) and a newline, UTF-8. */

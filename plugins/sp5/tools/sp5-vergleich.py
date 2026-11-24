@@ -46,6 +46,7 @@ SCHEMA_KEYS = {
 WARNING = "Warnung: "
 SECTIONS = {"areas": "Bereiche", "shifts": "Schichten", "groups": "Gruppen", "compensatoryRest": "Ersatzruhe"}
 BASIS = {"groups": "Gruppen", "families": "Schichtnamen"}
+AREA_SOURCE = {"groups": "Gruppen", "history": "Historie", "reserve": "Historie, Gruppen als Reserve"}
 
 
 def run_python(checkout: Path, data: Path, work: Path, request: dict) -> tuple[int, str]:
@@ -230,6 +231,17 @@ def main(argv: list[str] | None = None) -> int:
             (work / "mapping.json").write_text(json.dumps(mapping, ensure_ascii=False), encoding="utf-8")
             lines.append("Nachtschichten nicht automatisch fair verteilt: für sp5_export.py hat jede Schichtregel ohne "
                          "Angabe „unpopular: false“")
+        if request.get("areaSource", "groups") != "groups":
+            # since 0.25.0: areas from history (Dispofold only); sp5_export.py computes the areas from the groups, so
+            # people's areas and restrictions differ by design. The counts say what Dispofold did.
+            counts = request.get("areaCounts") or {}
+            lines.append(f"Bereiche einer Person aus: {AREA_SOURCE.get(request['areaSource'], request['areaSource'])} "
+                         f"(ab {request.get('historyAreaDuties')} Diensten); sp5_export.py kennt nur Gruppen, "
+                         "Unterschiede bei Bereichen und Einschränkungen sind deshalb zu erwarten")
+            lines.append(f"Bereiche: {counts.get('fromGroups', 0)} aus Gruppen, {counts.get('fromHistory', 0)} aus der "
+                         f"Historie, {counts.get('reserve', 0)} aus Gruppen als Reserve, "
+                         f"{counts.get('droppedGroupAreas', 0)} aus Gruppen weggelassen; "
+                         f"{counts.get('peopleWithoutHistory', 0)} Personen ohne Bereich aus der Historie")
         code, stderr = run_python(checkout, Path(args.daten).resolve(), work, request)
         if code != 0:
             lines.append(f"sp5_export.py endete mit Fehler (Code {code}); kein Vergleich möglich")
