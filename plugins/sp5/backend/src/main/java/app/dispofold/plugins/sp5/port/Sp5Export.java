@@ -335,9 +335,6 @@ public final class Sp5Export {
         job.areaSource = q.areaSource();
         job.historyAreaDuties = q.historyAreaDuties();
         Map<String, Object> dataset = job.run();
-        if (q.demand().equals("history") && DEMAND_MAX_MIN.equals(q.demandMax())) {
-            withMaxAtMinimum(dataset);
-        }
         List<List<Object>> rows = new ArrayList<>();
         if (q.corrections() != null) {
             Corrections.Applied applied = Corrections.apply(dataset, q.corrections());
@@ -367,6 +364,10 @@ public final class Sp5Export {
             }
         }
         dataset.put("appliedCorrections", Corrections.section(q.corrections(), rows));
+        // after the corrections, which compare with the demand as sp5_export.py computes it: corrected demand too
+        if (q.demand().equals("history") && DEMAND_MAX_MIN.equals(q.demandMax())) {
+            withMaxAtMinimum(dataset);
+        }
         List<List<Object>> report = new ArrayList<>();
         for (List<Object> r : job.reportRows) {
             List<Object> padded = new ArrayList<>(r);

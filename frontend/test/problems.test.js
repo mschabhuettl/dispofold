@@ -43,3 +43,11 @@ test('filters by rule, person and day combine', () => {
   assert.deepEqual(filterProblems(entries, { person: '' }).map((e) => e.hit.constraintId), ['overstaffing']);
   assert.deepEqual(filterProblems(entries, { day: '2030-03-03', person: 'P2' }).map((e) => e.hit.constraintId), ['uselessDuty']);
 });
+
+test('staffing above the minimum belongs to no person: no chip, but always in the list', () => {
+  const constraints = [{ id: 'overMinimum', level: 'SOFT', score: -900000, matches: 3 },
+    { id: 'blockLength', level: 'SOFT', score: -1000, matches: 1 }];
+  const entries = problemEntries([hit(null, 'overMinimum', 'SOFT', '2030-03-06', -4000)], constraints, people);
+  assert.equal(entries.length, 1);
+  assert.equal(entries[0].person, null);
+});

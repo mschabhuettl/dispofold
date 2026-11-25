@@ -1,20 +1,20 @@
 // The problem list of the Prüfen page: rule violations, overstaffing and the quality rules the Dienstplan points at,
 // filtered and grouped by rule, person or day. Pure, no DOM.
 import { personName } from './grid-model.js';
-import { problemConstraints } from './plan-status.js';
+import { PERSONLESS, problemConstraints } from './plan-status.js';
 
 const LEVELS = { HARD: 0, MEDIUM: 1, SOFT: 2 };
 
 /**
  * Entries from GET .../problems: every penalty of a hard or medium rule, and of the soft rules that the chips of
- * the Dienstplan show (problemConstraints of the analysis). Each { hit, person } with person null for a match of no
- * person (overstaffing); hits of people not in the dataset are dropped. Sorted by level, day and name.
+ * the Dienstplan show (problemConstraints of the analysis), and always of the soft rules of no person (staffing above
+ * the minimum). Each { hit, person } with person null for a match of no person (overstaffing); hits of people not in the dataset are dropped. Sorted by level, day and name.
  */
 export function problemEntries(problems, constraints, people) {
   const soft = new Set(problemConstraints(constraints).filter((c) => c.level === 'SOFT').map((c) => c.id));
   const byId = new Map(people.map((p) => [p.id, p]));
   return problems
-    .filter((x) => x.score < 0 && (x.level !== 'SOFT' || soft.has(x.constraintId)) && (x.personId == null || byId.has(x.personId)))
+    .filter((x) => x.score < 0 && (x.level !== 'SOFT' || soft.has(x.constraintId) || PERSONLESS.has(x.constraintId)) && (x.personId == null || byId.has(x.personId)))
     .map((hit) => ({ hit, person: hit.personId == null ? null : byId.get(hit.personId) }))
     .sort((a, b) => (LEVELS[a.hit.level] ?? 3) - (LEVELS[b.hit.level] ?? 3) || (a.hit.date ?? '').localeCompare(b.hit.date ?? '')
       || name(a).localeCompare(name(b), 'de'));

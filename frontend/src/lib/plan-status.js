@@ -55,11 +55,17 @@ export const SOFT_CHIPS = 5;
  */
 export function problemConstraints(constraints = []) {
   const hard = constraints.filter((c) => c.level === 'HARD' && c.matches > 0).sort((a, b) => b.matches - a.matches);
-  const soft = constraints.filter((c) => c.level === 'SOFT' && c.score < 0 && c.matches > 0);
+  const soft = constraints.filter((c) => c.level === 'SOFT' && c.score < 0 && c.matches > 0 && !PERSONLESS.has(c.id));
   const total = soft.reduce((sum, c) => sum + c.score, 0);
   const high = soft.filter((c) => c.score / total >= SOFT_SHARE).sort((a, b) => a.score - b.score).slice(0, SOFT_CHIPS);
   return [...hard, ...high];
 }
+
+/**
+ * Quality rules whose matches belong to no person (an area and a day): no chip, whose list shows people's hits; the
+ * Prüfen page lists them always (see problems.js).
+ */
+export const PERSONLESS = new Set(['overMinimum']);
 
 /** The fairness rules compare everybody in one match: their match count says nothing. */
 const COMPARISONS = new Set(['fairNights', 'fairWeekends', 'fairHolidays', 'fairUnpopular']);

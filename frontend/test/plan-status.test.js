@@ -67,3 +67,9 @@ test('headline: never green for an empty plan or where no area asks for anyone',
   assert.equal(planHeadline({ hard: 0, gaps: 0, uncoveredHours: 0, duties: 120, areas: 4, areasWithoutDemand: 0 }).level, 'good');
   assert.equal(areasWithoutDemand({ areas: [{ id: 'A' }, { id: 'B' }], demand: [{ areaId: 'A', min: 1 }, { areaId: 'B', min: 0 }] }), 1);
 });
+
+test('a quality rule of no person gets no chip, whose list shows people', () => {
+  const list = problemConstraints([{ id: 'overMinimum', level: 'SOFT', score: -900000, matches: 30 },
+    { id: 'blockLength', level: 'SOFT', score: -100000, matches: 5 }]);
+  assert.deepEqual(list.map((c) => c.id), ['blockLength']);
+});
