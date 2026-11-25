@@ -10,7 +10,10 @@ import { t } from '../lib/texts.js';
 export function emptyStart(ctx) {
   const result = h('div', { 'aria-live': 'polite' });
   const { button, runImport } = importSteps(ctx, result);
-  const withPages = ctx.plugins.filter((p) => p.pages?.length);
+  // a switched on plugin: its import source (Daten → Übernehmen), else its first page
+  const withPages = ctx.plugins.filter((p) => p.importSource || p.pages?.length);
+  const pluginLink = (p) => (p.importSource ? { href: `#/uebernehmen/${p.id}`, label: t(p.importSource.label) }
+    : { href: `#/${pagePath(p.id, p.pages[0].path)}`, label: t(typeof p.group === 'object' && p.group ? p.group.label : p.pages[0].tab) });
   return h('section.empty-start', { id: 'empty-start', 'aria-labelledby': 'h-empty-start' },
     h('h2', { id: 'h-empty-start' }, t('start.empty.title')),
     h('p', {}, t('start.empty.text')),
@@ -23,9 +26,7 @@ export function emptyStart(ctx) {
         ctx.setMonth(!s.months?.length || s.months.includes(ctx.month) ? ctx.month : s.months[0]);
       }, true),
       h('a.btn.btn-secondary', { href: '#/uebernehmen' }, t('start.empty.import')),
-      // a switched on plugin: its first page, named like its menu entry
-      withPages.map((p) => h('a.btn.btn-secondary', { href: `#/${pagePath(p.id, p.pages[0].path)}`, 'data-plugin': p.id },
-        t(typeof p.group === 'object' && p.group ? p.group.label : p.pages[0].tab)))),
+      withPages.map((p) => h('a.btn.btn-secondary', { href: pluginLink(p).href, 'data-plugin': p.id }, pluginLink(p).label))),
     !withPages.length && h('p.muted', {}, t('start.empty.plugins'), ' ', h('a', { href: '#/erweiterungen' }, t('start.empty.pluginsLink'))),
     result);
 }

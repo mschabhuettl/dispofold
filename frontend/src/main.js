@@ -114,8 +114,9 @@ const ctx = {
   invalidateDataset: () => datasetCache.invalidate(),
   navigate: (path) => { location.hash = `#/${path}`; },
   /**
-   * Switches the planning month, e.g. to the month of freshly imported data. quiet: on a page that does not belong to
-   * a month, only the month is chosen and the page stays as it is (with what it shows, e.g. the result of an import).
+   * Switches the planning month, e.g. to the month of freshly imported data. quiet: only on a page that does not
+   * belong to a month, which then stays as it is (with what it shows, e.g. the result of an import); on a month page
+   * nothing is switched and false returned (the page offers the switch itself).
    */
   setMonth: (month, { quiet = false } = {}) => setMonth(month, quiet),
   /** Set by a view with unsaved changes; asked before leaving the view or changing the month. */
@@ -160,7 +161,7 @@ function parseHash() {
     history.replaceState(null, '', `#/${moved.join('/')}`);
   }
   const route = ROUTES.find((r) => r.path === path) ?? ROUTES[0];
-  // an unknown or hidden page (e.g. Import/Export for viewers) shows the first page under its own address
+  // an unknown or hidden page (e.g. Daten for viewers) shows the first page under its own address
   if (route.path !== path && path) history.replaceState(null, '', `#/${route.path}`);
   const decode = (x) => { try { return decodeURIComponent(x); } catch { return x; } };
   return { route, params: rest.map(decode) };
@@ -242,6 +243,7 @@ function renderMonthOptions(center) {
 }
 
 function setMonth(month, quiet = false) {
+  if (quiet && parseHash().route.month) return false;
   if (!MONTH_RE.test(month ?? '') || (ctx.month && month !== ctx.month && !quiet && !mayLeave())) {
     monthInput.value = ctx.month ?? '';
     return;
@@ -250,7 +252,8 @@ function setMonth(month, quiet = false) {
   renderMonthOptions(month);
   monthInput.value = month;
   sessionStorage.setItem('month', month);
-  if (!quiet || parseHash().route.month) render();
+  if (!quiet) render();
+  return true;
 }
 
 async function start() {

@@ -21,7 +21,7 @@ export function importSteps(ctx, result, current = () => null) {
       list(e.body.warnings.map(messageText))] : null);
   const busy = (btn, fn) => async () => {
     btn.disabled = true;
-    try { await fn(); } finally { btn.disabled = false; }
+    try { await fn(); } finally { btn.disabled = Boolean(btn.off); }
   };
   const button = (label, fn, primary = false, disabled = false) => {
     const b = h(`button.btn.${primary ? 'btn-primary' : 'btn-secondary'}`, { type: 'button', disabled }, label);
@@ -80,9 +80,9 @@ export function importSteps(ctx, result, current = () => null) {
   const showSummary = (s) => {
     if (!s) return;
     ctx.invalidateDataset();
-    // the first imported month is chosen; the page and this result stay
+    // the first imported month is chosen and the page and this result stay; a page of a month offers the switch
     const first = s.months?.[0];
-    if (first && first !== ctx.month) ctx.setMonth(first, { quiet: true });
+    const chosen = !first || first === ctx.month || ctx.setMonth(first, { quiet: true }) !== false;
 
     result.replaceChildren(h('div.alert', {},
       h('strong', {}, t('import.summaryTitle', { source: s.source })), t('import.summary', { people: s.people, areas: s.areas, shifts: s.shifts, months: s.months.join(', ') || '–' }),
@@ -90,7 +90,8 @@ export function importSteps(ctx, result, current = () => null) {
       // what the import made of the people's areas, all at once
       s.people ? h('p', {}, h('a', { href: '#/bereiche', id: 'import-check-areas' }, t('import.checkAreas'))) : null,
       s.warnings?.length ? [h('p', {}, h('strong', {}, t('import.warnings', { count: s.warnings.length }))), h('ul', {}, s.warnings.map((w) => h('li', {}, messageText(w))))] : null,
-      first ? h('p', { id: 'import-month' }, t('import.monthChosen', { month: monthLabel(first) }), ' ', h('a', { href: '#/plan' }, t('import.toPlan'))) : null));
+      first && chosen ? h('p', { id: 'import-month' }, t('import.monthChosen', { month: monthLabel(first) }), ' ', h('a', { href: '#/plan' }, t('import.toPlan'))) : null,
+      first && !chosen ? h('p', {}, button(t('import.switchMonth', { month: monthLabel(first) }), () => ctx.setMonth(first))) : null));
   };
 
   return { button, errorAlert, list, exportDataset, runImport, previewKeep, showSummary };
@@ -138,7 +139,10 @@ export function importFlow(ctx, id, request, { result = null, current, label = t
   const hint = correctionsHint(ctx);
   const element = h('div', {}, hint, toolbar, own);
   // a page with two steps enables this one only after the first: element.setEnabled(on)
-  element.setEnabled = (on) => { run.disabled = !on; };
+  element.setEnabled = (on) => {
+    run.off = !on;
+    run.disabled = !on;
+  };
   return element;
 }
 

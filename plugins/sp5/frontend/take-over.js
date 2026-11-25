@@ -105,6 +105,9 @@ function draw(root, ctx, api, { settings: stored, last: lastRun, months: knownMo
     const body = months.value();
     if (!body) return toast(t('plugin.sp5.run.noMonth'), true);
     readButton.disabled = true;
+    // nothing to take over while reading (or after reading failed): the run shown before is not what was asked for
+    flow.setEnabled(false);
+    what.textContent = t('plugin.sp5.take.first');
     try {
       // the stored options: the run names them
       last = await api.post('lauf', body);
@@ -126,16 +129,18 @@ function draw(root, ctx, api, { settings: stored, last: lastRun, months: knownMo
     { label: t('plugin.sp5.take'), confirmFirst: false });
   stepsBox.append(
     h('div.steps', {},
-      h('section.step', {}, h('h3', {}, t('plugin.sp5.step1')), months.element,
+      h('section.step', {}, h('h2', {}, t('plugin.sp5.step1')), months.element,
         h('div.toolbar', {}, readButton, h('span.muted', { id: 'sp5-run-note' }, t('plugin.sp5.run.note'))), result),
-      h('section.step', {}, h('h3', { id: 'h-sp5-import', tabindex: '-1' }, t('plugin.sp5.step2')), what, closedBox, flow)));
+      h('section.step', {}, h('h2', { id: 'h-sp5-import', tabindex: '-1' }, t('plugin.sp5.step2')), what, closedBox, flow)));
 
   /** After a change of the folder or an option: the run shown was made otherwise; read again first. */
+  let whatText = '';
   function stale() {
-    if (!last) return;
+    if (!last || !whatText) return;
     const fits = runMatches(last, settings) && !folderChanged;
     flow.setEnabled(fits);
-    if (!fits) what.replaceChildren(h('span.alert.alert-warn', { id: 'sp5-run-stale', role: 'note' }, t('plugin.sp5.run.stale')));
+    if (fits) what.textContent = whatText;
+    else what.replaceChildren(h('span.alert.alert-warn', { id: 'sp5-run-stale', role: 'note' }, t('plugin.sp5.run.stale')));
   }
 
   async function showRun() {
@@ -180,8 +185,9 @@ function draw(root, ctx, api, { settings: stored, last: lastRun, months: knownMo
     }
     // what Übernehmen will change
     const current = await ctx.dataset().catch(() => null);
-    what.textContent = t('plugin.sp5.take.what', { people: r.counts?.people ?? 0, areas: r.counts?.areas ?? 0, months: monthText,
+    whatText = t('plugin.sp5.take.what', { people: r.counts?.people ?? 0, areas: r.counts?.areas ?? 0, months: monthText,
       replaces: current?.people?.length ? t('plugin.sp5.take.replaces', { source: current.source || '–' }) : t('plugin.sp5.take.empty') });
+    what.textContent = whatText;
     flow.setEnabled(true);
     stale();
     // a closed month of the run: the import would be refused if it changed it; the way on before trying

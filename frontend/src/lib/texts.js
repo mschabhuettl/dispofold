@@ -1142,6 +1142,7 @@ export const TEXTS = {
   'import.summary': '{people|Person|Personen}, {areas|Bereich|Bereiche}, {shifts|Schicht|Schichten}, Monate {months}.',
   'import.warnings': '{count|Warnung|Warnungen}:',
   'import.monthChosen': 'Gewählt ist jetzt {month}.',
+  'import.switchMonth': 'Zu {month} wechseln',
   'import.toPlan': 'Zum Dienstplan',
   'takeOver.source': 'Quelle',
   'takeOver.source.file': 'Datensatz-Datei',

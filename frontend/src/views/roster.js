@@ -85,7 +85,7 @@ export async function render(root, ctx) {
         } }, NAME_MODES.map((m) => h('option', { value: m, selected: m === nameMode }, NAME_LABELS[m])))),
       h('span.spacer', {}),
       outputMenu(() => [printItem(), canEdit && exportItems(api, month, state.solving),
-        // planners close the month here as well as under Import/Export
+        // planners close the month here as well as under Daten → Monate
         canEdit && !closed() && h('button', { type: 'button', disabled: state.solving, onclick: () => closeMonth(ctx) }, t('import.finalize'))])),
     canEdit && h('div.toolbar.plan-actions', {},
       h('div.btn-row', {}, btnSolve, btnStop, btnPin, btnUnpin, info(t('help.plan.pinAll'), t('roster.pinAll'))),

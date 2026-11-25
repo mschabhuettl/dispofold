@@ -25,7 +25,7 @@ export async function render(root, ctx, params = []) {
     // a dataset file back (a backup): the same two steps as on Übernehmen
     root.append(h('section.section', { 'aria-labelledby': 'h-import' }, h('h2', { id: 'h-import' }, t('data.import.heading'), info(t('help.import.dataset'), t('data.import.heading'))),
       h('p.muted', {}, t('backup.import.intro')),
-      fileSource(ctx, current, { demo: false })));
+      fileSource(ctx, current, { demo: false, level: 'h3' })));
   }
 
   // exports are for planners only (viewers get 403) and blocked while a solve runs

@@ -75,8 +75,8 @@ try {
   await page.reload();
   await start.waitFor();
   const pluginLink = start.locator(`a[data-plugin="${plugin.id}"]`);
-  check('plugin on: its first page in the empty start', await pluginLink.count() === 1
-    && (await pluginLink.getAttribute('href')).startsWith(`#/plugin/${plugin.id}/`), await pluginLink.getAttribute('href') ?? '');
+  check('plugin on: its import source in the empty start', await pluginLink.count() === 1
+    && (await pluginLink.getAttribute('href')) === `#/uebernehmen/${plugin.id}`, await pluginLink.getAttribute('href') ?? '');
   check('plugin on: no link to Erweiterungen', await start.locator('a[href="#/erweiterungen"]').count() === 0);
   await page.evaluate((id) => fetch(`/api/extensions/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ enabled: false }) }), plugin.id);

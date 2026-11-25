@@ -104,8 +104,15 @@ try {
     && (await api(page, 'GET', '/api/dataset')).body.people.length === fixture.people.length);
   check('Übernehmen says what it changes', (await page.locator('#dataset-take-what').innerText()).startsWith('40 Personen, ')
     && (await page.locator('#dataset-take-what').innerText()).includes('Jänner 2027; ersetzt die Daten aus'), await page.locator('#dataset-take-what').innerText());
-  await page.evaluate(() => sessionStorage.setItem('month', '2027-04'));
-  await go('#/uebernehmen', '#dataset-read-run');
+  // another month chosen in the picker, then the page without a reload (a reload would choose January again)
+  const inApril = async (hash, ready) => {
+    await go('#/plan', '#month');
+    await page.selectOption('#month', '2027-04');
+    await page.waitForFunction(() => sessionStorage.getItem('month') === '2027-04');
+    await page.evaluate((x) => { location.hash = x; }, hash);
+    await page.waitForSelector(ready);
+  };
+  await inApril('#/uebernehmen', '#dataset-read-run');
   await page.setInputFiles('#dataset-file', { name: 'datensatz.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(other)) });
   await page.click('#dataset-read-run');
   await page.waitForSelector('#dataset-read-result');
@@ -116,6 +123,18 @@ try {
     && (await page.locator('#import-month').innerText()).includes('Jänner 2027'));
   await page.setInputFiles('#dataset-file', { name: 'x.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(fixture)) });
   check('another file: Einlesen again first', await page.isDisabled('#dataset-take'));
+  // on Sichern (a page of a month) another month is not switched to under the result: the switch is offered
+  await inApril('#/sichern', '#dataset-read-run');
+  await page.setInputFiles('#dataset-file', { name: 'datensatz.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(other)) });
+  await page.click('#dataset-read-run');
+  await page.waitForSelector('#dataset-read-result');
+  await page.click('#dataset-take');
+  await page.waitForSelector('#import-check-areas');
+  const offer = main.getByRole('button', { name: 'Zu Jänner 2027 wechseln' });
+  check('Sichern: the result stays, the switch to the month is offered', await offer.count() === 1 && (await page.evaluate(() => sessionStorage.getItem('month'))) === '2027-04',
+    await page.evaluate(() => sessionStorage.getItem('month')));
+  await offer.click();
+  await page.waitForFunction((m) => sessionStorage.getItem('month') === m, month);
   await api(page, 'POST', '/api/import/demo?replace=true');
 
   // ---- Monate: open and closed months, closed and opened again here ----

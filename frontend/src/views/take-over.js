@@ -26,7 +26,7 @@ export const replacesText = (current) => (current?.people?.length
  * A dataset file in two steps: Einlesen (read, counts, nothing changes), then Übernehmen (the import, keeping the
  * changes made in Dispofold if chosen). demo: the demo data under "Erweitert".
  */
-export function fileSource(ctx, current, { demo = true } = {}) {
+export function fileSource(ctx, current, { demo = true, level = 'h2' } = {}) {
   const { api } = ctx;
   const result = h('div', { 'aria-live': 'polite' });
   const { button, runImport, previewKeep, showSummary } = importSteps(ctx, result, () => current);
@@ -69,10 +69,10 @@ export function fileSource(ctx, current, { demo = true } = {}) {
   readButton.id = 'dataset-read-run';
   return h('div', {},
     h('div.steps', {},
-      h('section.step', {}, h('h3', {}, t('takeOver.step1')),
+      h('section.step', {}, h(level, {}, t('takeOver.step1')),
         h('div.toolbar', {}, h('div.field', {}, h('label', { for: 'dataset-file' }, t('import.dataset.label')), input), readButton),
         h('p.muted', {}, t('takeOver.read.note')), read),
-      h('section.step', {}, h('h3', {}, t('takeOver.step2')), what,
+      h('section.step', {}, h(level, {}, t('takeOver.step2')), what,
         h('div.toolbar', {}, h('label.check-inline', {}, keep, t('data.import.keep')), info(t('help.import.keep'), t('data.import.keep')), take))),
     result,
     // demo data are for trying the program out: collapsed
@@ -108,7 +108,7 @@ export async function render(root, ctx, params = []) {
     const request = chosen.plugin.importSource.render(box, ctx);
     // a source that only gives its request: the core's step Übernehmen below its form
     if (typeof request === 'function') {
-      body.append(h('h3', {}, t('takeOver.step2')), h('p.muted', {}, replacesText(current)),
+      body.append(h('h2', {}, t('takeOver.step2')), h('p.muted', {}, replacesText(current)),
         importFlow(ctx, chosen.id, request, { current }));
     }
   };
@@ -119,7 +119,11 @@ export async function render(root, ctx, params = []) {
       sources.map((s) => {
         const radio = h('input', { type: 'radio', name: 'take-over-source', id: `source-${s.id}`, value: s.id, checked: s === chosen });
         radio.addEventListener('change', () => {
-          if (!radio.checked || (ctx.isDirty?.() && !ctx.mayLeave())) return;
+          if (!radio.checked) return;
+          if (ctx.isDirty?.() && !ctx.mayLeave()) {
+            document.getElementById(`source-${chosen.id}`).checked = true;
+            return;
+          }
           chosen = s;
           try { localStorage.setItem(SOURCE, s.id); } catch { /* not remembered */ }
           ctx.isDirty = null;

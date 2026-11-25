@@ -160,7 +160,8 @@ export default async function run({ base, browser, check, shots }) {
   await page.fill('#sp5-historyMonths', '6');
   await page.locator('#sp5-historyMonths').dispatchEvent('change');
   await page.waitForFunction(() => !document.querySelector('[data-import-run="sp5"]')?.disabled);
-  check('the option as it was: Übernehmen again', true);
+  check('the option as it was: Übernehmen again, the note gone, what it changes said again', await page.locator('#sp5-run-stale').count() === 0
+    && (await text(page, '#sp5-take-what'))?.startsWith('150 Personen'), await text(page, '#sp5-take-what'));
   await open(page, T, '#sp5-run-summary');
   check('the option is used next time too', (await page.inputValue('#sp5-historyMonths')) === '6' && await page.isEnabled('[data-import-run="sp5"]'));
   await shot(page, 'sp5-uebersicht');
@@ -171,8 +172,12 @@ export default async function run({ base, browser, check, shots }) {
   check('Vergleich: nothing imported yet, the upload is offered', (await text(page, '#sp5-no-baseline'))?.includes('Noch nichts importiert'));
 
   // ---- Übernehmen, then the first month of the run is chosen ----
-  await page.evaluate(() => sessionStorage.setItem('month', '2027-03'));
-  await open(page, T, '#sp5-run-summary');
+  // another month chosen in the picker, then the page without a reload (a reload would choose January again)
+  await open(page, '#/plan', '#month');
+  await page.selectOption('#month', '2027-03');
+  await page.waitForFunction(() => sessionStorage.getItem('month') === '2027-03');
+  await page.evaluate((x) => { location.hash = x; }, T);
+  await page.waitForSelector('#sp5-run-summary');
   check('keep changes is off without changes', !(await page.isChecked('#plugin-keep-sp5')));
   await page.waitForSelector('#take-over-source .corrections-hint .alert');
   check('without any corrections the step says so, with the way to load a file',
@@ -556,6 +561,7 @@ export default async function run({ base, browser, check, shots }) {
   if (shots) await page.locator('#sp5-assistant').screenshot({ path: join(shots, 'sp5-assistent.png') });
   await page.click('#sp5-assistant-take');
   await page.waitForSelector('#sp5-assistant-done');
+  check('the focus on what was done', (await page.evaluate(() => document.activeElement?.id)) === 'sp5-assistant-done');
   const oneClick = (await api(page, 'GET', '/api/plugins/sp5/einstellungen')).body.mapping;
   check('one click: taken and saved, nothing left unsaved', oneClick?.areas?.length > 0 && await page.isHidden('#sp5-map-dirty'), await text(page, '#sp5-assistant-done'));
   await api(page, 'PUT', '/api/plugins/sp5/einstellungen', { ...before, path: 'familien', mapping: null });

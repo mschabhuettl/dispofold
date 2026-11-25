@@ -402,7 +402,10 @@ export async function render(root, ctx) {
     const body = { ...settings, proposals: { ...proposalSettings(), share: value('share'), minDuties: value('minDuties'), months: value('months'),
       familyShare: value('familyShare'), familyMinDuties: value('familyMinDuties'), familyRatio: value('familyRatio'), ignoreUntimed: untimed.checked,
       restWords: words.value.split(',').map((w) => w.trim()).filter(Boolean) } };
-    const saved = await guarded(() => api.put('einstellungen', body), t('plugin.sp5.propose.settingsSaved'));
+    // on top of the settings as they are now (options or the folder may have been saved meanwhile on Übernehmen)
+    const fresh = await guarded(() => api.get('einstellungen'));
+    if (!fresh) return;
+    const saved = await guarded(() => api.put('einstellungen', { ...fresh, proposals: body.proposals }), t('plugin.sp5.propose.settingsSaved'));
     if (saved) {
       settings = { ...settings, proposals: saved.proposals };
       if (proposals) await propose();
@@ -484,18 +487,28 @@ export async function render(root, ctx) {
     const take = h('button.btn.btn-primary', { id: 'sp5-assistant-take', type: 'button' }, t('plugin.sp5.assistant.take'));
     take.addEventListener('click', async () => {
       take.disabled = true;
-      const taken = takeEvery(mapping, found);
+      // the proposals for the mapping as it is now (some may have been taken below meanwhile), from the basis chosen
+      let fresh;
+      try {
+        fresh = await api.post(basis ? `zuordnung/vorschlaege?basis=${basis}` : 'zuordnung/vorschlaege', mapping);
+      } catch (e) {
+        guarded(() => Promise.reject(e));
+        take.disabled = false;
+        return;
+      }
+      const taken = takeEvery(mapping, fresh);
       codes = null;
       changed();
       draw();
       if (await store(t('plugin.sp5.assistant.saved', { count: taken.count }))) {
         const left = proposalCount(taken.left);
-        assistant.replaceChildren(h('h2', { id: 'h-sp5-assistant' }, t('plugin.sp5.assistant.title')),
-          h('p.alert', { id: 'sp5-assistant-done', role: 'status' }, t('plugin.sp5.assistant.done', { count: taken.count }),
-            left ? ` ${t('plugin.sp5.assistant.left', { count: left })}` : ''));
+        const done = h('p.alert', { id: 'sp5-assistant-done', role: 'status', tabindex: '-1' }, t('plugin.sp5.assistant.done', { count: taken.count }),
+          left ? ` ${t('plugin.sp5.assistant.left', { count: left })}` : '');
+        assistant.replaceChildren(h('h2', { id: 'h-sp5-assistant' }, t('plugin.sp5.assistant.title')), done);
+        done.focus();
         await propose();
         await check();
-      } else take.disabled = false;
+      } else await showAssistant(); // not saved: the mapping holds the proposals now, the assistant counts again
     });
     assistant.hidden = false;
     assistant.replaceChildren(h('h2', { id: 'h-sp5-assistant' }, t('plugin.sp5.assistant.title')),
