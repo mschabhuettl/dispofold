@@ -125,10 +125,10 @@ function draw(root, ctx, api, { settings: stored, last: lastRun, months: knownMo
   const flow = importFlow(ctx, ID, () => (last ? { ...last.request, run: last.id } : null),
     { label: t('plugin.sp5.take'), confirmFirst: false });
   stepsBox.append(
-    h('ol.steps', {},
-      h('li', {}, h('h3', {}, t('plugin.sp5.step1')), months.element,
+    h('div.steps', {},
+      h('section.step', {}, h('h3', {}, t('plugin.sp5.step1')), months.element,
         h('div.toolbar', {}, readButton, h('span.muted', { id: 'sp5-run-note' }, t('plugin.sp5.run.note'))), result),
-      h('li', {}, h('h3', { id: 'h-sp5-import', tabindex: '-1' }, t('plugin.sp5.step2')), what, closedBox, flow)));
+      h('section.step', {}, h('h3', { id: 'h-sp5-import', tabindex: '-1' }, t('plugin.sp5.step2')), what, closedBox, flow)));
 
   /** After a change of the folder or an option: the run shown was made otherwise; read again first. */
   function stale() {

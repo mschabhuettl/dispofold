@@ -68,11 +68,11 @@ export function fileSource(ctx, current, { demo = true } = {}) {
   });
   readButton.id = 'dataset-read-run';
   return h('div', {},
-    h('ol.steps', {},
-      h('li', {}, h('h3', {}, t('takeOver.step1')),
+    h('div.steps', {},
+      h('section.step', {}, h('h3', {}, t('takeOver.step1')),
         h('div.toolbar', {}, h('div.field', {}, h('label', { for: 'dataset-file' }, t('import.dataset.label')), input), readButton),
         h('p.muted', {}, t('takeOver.read.note')), read),
-      h('li', {}, h('h3', {}, t('takeOver.step2')), what,
+      h('section.step', {}, h('h3', {}, t('takeOver.step2')), what,
         h('div.toolbar', {}, h('label.check-inline', {}, keep, t('data.import.keep')), info(t('help.import.keep'), t('data.import.keep')), take))),
     result,
     // demo data are for trying the program out: collapsed

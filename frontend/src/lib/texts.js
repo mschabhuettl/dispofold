@@ -1169,7 +1169,7 @@ export const TEXTS = {
   'months.plan.SOLVED': 'Entwurf',
   'months.plan.STOPPED': 'Entwurf (abgebrochen)',
   'months.plan.FAILED': 'Planung fehlgeschlagen',
-  'months.plan.CLOSED': 'abgeschlossen',
+  'months.plan.CLOSED': 'nur lesen',
   'months.col.month': 'Monat',
   'months.col.state': 'Zustand',
   'months.col.plan': 'Plan',

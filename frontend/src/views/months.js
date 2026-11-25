@@ -46,7 +46,7 @@ export async function render(root, ctx) {
   };
   root.append(
     h('p.muted', {}, t('months.intro'), info(t('help.import.finalize'), t('nav.months'))),
-    h('table.table', { id: 'months-table' },
+    h('table.data', { id: 'months-table' },
       h('thead', {}, h('tr', {}, [t('months.col.month'), t('months.col.state'), t('months.col.plan'), ''].map((x) => h('th', { scope: 'col' }, x)))),
       h('tbody', {}, [...months].reverse().map(row))));
 }
