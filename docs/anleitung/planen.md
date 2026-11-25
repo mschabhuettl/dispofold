@@ -14,7 +14,7 @@ verwendbar ist, und **Prüfen** listet alles auf, was nicht stimmt. Wie man einz
    Monats gehen erst danach.
 3. Die Planung endet von selbst nach der **Schrittzahl**, spätestens nach dem **Zeitlimit**. Beide legt die
    **Gründlichkeit** unter [Regeln, Erweitert](einstellungen.md#erweitert) fest: normal (Standard) 1 000 000
-   Schritte, Zeitlimit 1200 Sekunden. Mit den Demodaten dauert das auf einem üblichen Rechner einige Minuten,
+   Schritte, Zeitlimit 3600 Sekunden. Mit den Demodaten dauert das auf einem üblichen Rechner einige Minuten,
    mit „schnell“ ein bis zwei. **Stopp** beendet sie früher; der beste Stand bis dahin bleibt erhalten. Am Ende meldet das Programm
    „Planung beendet“.
 
@@ -49,7 +49,7 @@ Unter **Erweitert** (zugeklappt) steuert man einen einzelnen Lauf. Alle Felder s
    Zeitlimit endet. Ein anderer Startwert ergibt einen anderen, ähnlich guten Plan. **Wann ändern:** wenn man
    eine zweite Variante sehen will.
 2. **Zeitlimit (s):** wie viele Sekunden die Planung höchstens rechnet, mindestens 5; leer nach der
-   Gründlichkeit (normal 1200). Ein Sicherheitsnetz für langsame Rechner.
+   Gründlichkeit (normal 3600). Ein Sicherheitsnetz für langsame Rechner.
 3. **Schrittzahl:** nach wie vielen geprüften Änderungen die Planung aufhört; leer nach der Gründlichkeit (normal
    1 000 000). Unabhängig von der
    Geschwindigkeit des Rechners, deshalb wiederholbar. **Wann ändern:** mehr Schritte für einen etwas besseren

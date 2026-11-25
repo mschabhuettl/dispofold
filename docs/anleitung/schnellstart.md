@@ -97,7 +97,7 @@ So sieht es aus, wenn es geklappt hat: Beide neuen Zeilen sind markiert, bis man
 
 ## 8. Planen
 
-Im Menü **Dienstplan**, dann **Planen** (1) klicken und warten. Das dauert mit den Demodaten ein bis zwei Minuten.
+Im Menü **Dienstplan**, dann **Planen** (1) klicken und warten. Das dauert mit den Demodaten etwa sieben Minuten.
 
 ![Der Dienstplan nach dem Planen](../screenshots/schnellstart-08-planen.png)
 

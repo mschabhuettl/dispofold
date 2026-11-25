@@ -58,7 +58,8 @@ class RosterAnalyzerTest {
 
     /**
      * Recorded before the fairness loads were added to the figures: the analysis does not change the scoring. Recorded
-     * again with the rules of version 0.28 (switches between day and night, night blocks).
+     * again with the rules of version 0.28: the difference of 36000 is the block length alone (three blocks of one
+     * duty, 6000 to 18000 each); the new rules have no hit here.
      */
     @Test
     void theScoreOfAFixedPlanIsUnchanged() {

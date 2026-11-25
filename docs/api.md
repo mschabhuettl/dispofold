@@ -166,6 +166,15 @@ und `Rules.averagingPeriod` (`"HALF_YEAR"`, Standard, oder `"ROLLING"` über `av
 sie `null` (Regeln aus älteren Versionen), gilt der Standard, und sie werden dann auch nicht geschrieben. Siehe
 [regeln.md](regeln.md), Regelverstoß.
 
+Ab 0.28.0, ebenso optional (fehlt ein Feld oder ist es `null`, gilt der Standard): `Rules.nightRestDays` (freie
+Tage nach Nächten, 0 bis 4, Standard 2), `Rules.dayToNightDays` (vor der ersten Nacht, 0 bis 4, Standard 0),
+`Rules.nightBlockMin` und `Rules.nightBlockMax` (Nachtblöcke, Standard 2 und 4; der längste mindestens 1 und nicht
+kürzer als der kürzeste, sonst `400` mit `rules.nightBlock`), `Rules.nightMixMonths` (Monate des gewohnten
+Nachtanteils, 1 bis 12, Standard 3) und `Rules.thoroughness` (`"FAST"`, `"NORMAL"`, Standard, oder `"THOROUGH"`:
+250 000, 1 000 000 oder 3 000 000 Züge und 1800, 3600 oder 10800 Sekunden als Zeitlimit, wenn weder der Body von
+`solve` noch `SOLVER_MOVE_LIMIT` und `SOLVER_TIME_LIMIT_SECONDS` andere setzen). Die Gründlichkeit zählt nicht zum
+Stand, nach dem ein Plan veraltet. Neue Regel-Ids: `dayNightSwitch`, `dayNightSwitches`, `nightBlock`.
+
 ## Planungsmonate
 
 | Methode | Pfad | Antwort |
@@ -182,7 +191,7 @@ sie, antwortet das Backend mit `428` `period.revisionMissing`; hat inzwischen je
 
 | Methode | Pfad | Antwort |
 |---|---|---|
-| `GET` | `/api/plans/{month}` | `PlanState`: `{ "plan", "solving", "elapsedMillis", "hardViolations", "stale", "previousMonthChanged", "previousFromPlan" }` |
+| `GET` | `/api/plans/{month}` | `PlanState`: `{ "plan", "solving", "elapsedMillis", "hardViolations", "stale", "previousMonthChanged", "previousFromPlan", "improvedMillis" }`; `improvedMillis`: während der Planung die Zeit in der Planung, zu der zuletzt ein besserer Plan gefunden wurde (0: noch keiner, ebenso wenn nicht geplant wird) |
 | `POST` | `/api/plans/{month}/solve` | startet die Planung im Hintergrund, Antwort sofort `202` mit `PlanState`. Body optional: `{ "seed", "timeLimitSeconds", "moveLimit", "coldStart" }` |
 | `POST` | `/api/plans/{month}/stop` | beendet die Planung, der beste Stand bleibt |
 | `PUT` | `/api/plans/{month}/cells` | ändert eine Zelle, Body `PlanAssignment`; eine von Hand gesetzte Zelle ist normalerweise `pinned: true`. Antwort `Plan` |

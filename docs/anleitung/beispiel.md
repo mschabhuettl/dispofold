@@ -103,7 +103,7 @@ gewünscht hat, soll er sicher frei haben.
 
 1. **Dienstplan**, Reiter **Personen**.
 2. **Planen** klicken. Die Zeile über dem Plan zeigt „Planung läuft“ (2) mit der Laufzeit; **Stopp** (1) würde
-   früher beenden. Mit den Standardwerten dauert das bei den Demodaten ein bis zwei Minuten.
+   früher beenden. Mit den Standardwerten (Gründlichkeit normal) dauert das bei den Demodaten etwa sieben Minuten.
 
 ![Die Planung läuft](../screenshots/beispiel-planen.png)
 

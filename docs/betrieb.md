@@ -76,7 +76,7 @@ die Werte selbst wählen wie oben.
 | `DB_PASSWORD` | (Pflicht) | Passwort der Datenbank |
 | `APP_USERS` | (Pflicht) | Benutzer, siehe oben |
 | `SESSION_ENCRYPTION_KEY` | (Pflicht) | Schlüssel für das Anmelde-Cookie, mindestens 32 Zeichen |
-| `SOLVER_TIME_LIMIT_SECONDS` | leer | Zeitlimit einer Planung als Sicherheitsnetz, wenn in der Oberfläche keines eingetragen ist. Leer: nach der Gründlichkeit unter Regeln (schnell 300, normal 1200, gründlich 3600) |
+| `SOLVER_TIME_LIMIT_SECONDS` | leer | Zeitlimit einer Planung als Sicherheitsnetz, wenn in der Oberfläche keines eingetragen ist. Leer: nach der Gründlichkeit unter Regeln (schnell 1800, normal 3600, gründlich 10800). Das ist etwa das Acht- bis Zehnfache der gemessenen Dauer mit 150 Personen (etwa 2, 7 und 21 Minuten), damit die Planung auch auf einem deutlich langsameren Rechner nach der Schrittzahl endet und nicht am Zeitlimit; nur dann ergibt derselbe Startwert denselben Plan |
 | `SOLVER_UNIMPROVED_SECONDS` | `30` | Planung endet früher, wenn sich das Ergebnis so lange nicht verbessert. Wirkt nur mit `SOLVER_MOVE_LIMIT=0` |
 | `SOLVER_SEED` | `1` | Startwert, wenn in der Oberfläche keiner eingetragen ist |
 | `SOLVER_MOVE_LIMIT` | leer | Planung endet nach so vielen Zügen (0: aus). Leer: nach der Gründlichkeit unter Regeln (schnell 250000, normal 1000000, gründlich 3000000). Gleicher Startwert, gleiche Daten und gleiches Zuglimit ergeben denselben Plan, sofern die Planung vor dem Zeitlimit endet |

@@ -44,8 +44,8 @@ streng nacheinander zählen:
    sein. Ein Plan mit Regelverstößen darf so nicht verwendet werden.
 2. **Bedarf:** fehlende Besetzung ([Lücken](begriffe.md#lücke)) und [Überbesetzung](begriffe.md#überbesetzung),
    in Personenminuten. Eine fehlende Minute wiegt schwerer als jeder ganze Dienst über dem Bedarf.
-3. **[Qualität](begriffe.md#qualität):** Stunden treffen, faire Verteilung, Wünsche, Dienstblöcke, Familienregeln,
-   gewohnte Verteilung und weitere Regeln, jede mit einem einstellbaren [Gewicht](begriffe.md#gewicht).
+3. **[Qualität](begriffe.md#qualität):** Stunden treffen, faire Verteilung, Wünsche, Dienstblöcke, Wechsel
+   zwischen Tag und Nacht, Familienregeln, gewohnte Verteilung und weitere Regeln, jede mit einem einstellbaren [Gewicht](begriffe.md#gewicht).
 
 Ein Plan mit weniger Regelverstößen ist immer besser, egal wie es um Bedarf und Qualität steht; bei gleich vielen
 Regelverstößen entscheidet der Bedarf, erst dann die Qualität. Reicht das Personal nicht, bleibt deshalb eine

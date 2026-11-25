@@ -267,7 +267,8 @@ Die dritte Gruppe der [Bewertung](#bewertung) eines Plans: wie gut der Plan ist,
 den Bedarf deckt. Die Qualitätsregeln heißen im Programm so, auch auf den Knöpfen über dem Dienstplan
 ([Regeln mit Treffern](#regeln-mit-treffern)): **Stunden treffen**, **Fairness Nachtdienste**, **Fairness
 Wochenenden**, **Fairness Feiertage**, **Fairness fair verteilte Dienste**, **Wünsche**, **Dienstblöcke**,
-**Einzelne freie Tage**, **Vorwärtsrotation**, **Ganze Wochenenden frei**, **Ersatzruhe abbauen**, **Abwechslung
+**Einzelne freie Tage**, **Vorwärtsrotation**, **Abstand zwischen Tag und Nacht**, **Wechsel zwischen Tag und
+Nacht**, **Nachtblöcke**, **Ganze Wochenenden frei**, **Ersatzruhe abbauen**, **Abwechslung
 Dienste**, **Abwechslung Bereiche**, **Gewohnte Verteilung**, **Familienregel**, **Dienst nur von Hand**.
 Treffer dieser Regeln sind keine Fehler: Der Plan ist trotzdem verwendbar. Siehe
 [Wie das Programm plant](wie-plant.md).

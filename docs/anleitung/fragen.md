@@ -81,7 +81,7 @@ Fehlt der Austritt im Quellsystem und lässt sich die Person nicht entfernen, **
 öffnen**, ändern, prüfen und wieder abschließen. Ist schon der Folgemonat abgeschlossen, zuerst diesen öffnen.
 
 **Die Planung dauert lange.** Mit der Gründlichkeit normal endet sie nach 1 000 000 Schritten, spätestens nach
-1200 Sekunden; mit etwa 150 Personen dauert das etwa 7 Minuten. Man kann in der Zwischenzeit weiterarbeiten oder
+3600 Sekunden; mit etwa 150 Personen dauert das etwa 7 Minuten. Man kann in der Zwischenzeit weiterarbeiten oder
 mit **Stopp** den bisher besten Stand behalten. Für einen schnellen Entwurf unter
 **Einstellungen > Regeln > Erweitert** die Gründlichkeit „schnell“ wählen oder über dem Plan unter **Erweitert**
 eine kleinere Schrittzahl eintragen.

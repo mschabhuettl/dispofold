@@ -21,8 +21,8 @@ Bildern.
    **Personen**. Siehe [Daten](daten.md#übernehmen).
 2. **Eingaben erfassen:** unter **Eingaben** die Abwesenheiten (Urlaub, Krankenstand), die Wünsche und die
    Vorgaben des Monats eintragen und **Speichern**. Siehe [Eingaben](eingaben.md).
-3. **Planen:** im **Dienstplan** auf **Planen** klicken. Der Solver rechnet im Hintergrund, mit den Demodaten ein
-   bis zwei Minuten. Siehe [Planen](planen.md#planen).
+3. **Planen:** im **Dienstplan** auf **Planen** klicken. Der Solver rechnet im Hintergrund, mit den Demodaten etwa
+   sieben Minuten. Siehe [Planen](planen.md#planen).
 4. **Prüfen:** Die Überschrift über dem Plan sagt in Farbe, ob er verwendbar ist. **Prüfen** sagt oben, was zuerst
    zu tun ist, und listet darunter die Regelverstöße, den offenen Bedarf mit den Personen, die man fragen kann,
    die Hinweise zur Qualität und Auffälligkeiten in den Stammdaten. Siehe [Prüfen](planen.md#probleme) und

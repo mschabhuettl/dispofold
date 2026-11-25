@@ -21,7 +21,8 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
   arbeiten. 1 stellt das alte Verhalten ein.
 - **Gründlichkeit der Planung:** Unter Regeln, Erweitert: schnell (wie bisher, 250 000 Schritte), normal (neuer
   Standard, 1 000 000) oder gründlich (3 000 000). Gleiche Daten, gleicher Startwert und gleiche Gründlichkeit
-  ergeben weiter denselben Plan. Die Zeile über dem Plan zeigt, wann die Planung zuletzt einen besseren Plan fand.
+  ergeben weiter denselben Plan; das Zeitlimit (1800, 3600 und 10800 Sekunden) ist nur ein Sicherheitsnetz weit über
+  der gemessenen Dauer. Die Zeile über dem Plan zeigt, wann die Planung zuletzt einen besseren Plan fand.
   **Beim Update:** `SOLVER_TIME_LIMIT_SECONDS=300` und `SOLVER_MOVE_LIMIT=250000` aus einer älteren `.env` leeren,
   sonst wirkt die Gründlichkeit nicht.
 - **Bereiche aller Personen:** Kopfzeile und Namensspalte bleiben beim Blättern stehen. Ein Umschalter zeigt Personen
