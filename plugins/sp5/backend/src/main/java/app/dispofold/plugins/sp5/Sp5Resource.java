@@ -329,6 +329,8 @@ public class Sp5Resource {
             throw PluginErrors.error(Status.BAD_REQUEST, "plugin.sp5.dataset", Map.of(),
                     "Die Datei ist kein Datensatz von Dispofold");
         }
+        // a file with area states (as the pages read the data): compared as their rows
+        old = app.dispofold.model.AreaStates.expand(old);
         return Sp5Comparison.compare(mapper, "datei", corrections, old,
                 corrections ? run.dataset : run.withoutCorrections(), run.months());
     }

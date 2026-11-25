@@ -6,7 +6,7 @@ import { dayLabel, monthLabel } from '../lib/dates.js';
 import { append, fmt, guarded, h, toast } from '../lib/dom.js';
 import { NAME_MODES, personLabel, printParts } from '../lib/functions-model.js';
 import { NEUTRAL_ABSENCE, buildGrid, cellRequest, cellsEditable, personName } from '../lib/grid-model.js';
-import { chipCount, planHeadline, problemConstraints, scoreWords } from '../lib/plan-status.js';
+import { areasWithoutDemand, chipCount, planHeadline, problemConstraints, scoreWords } from '../lib/plan-status.js';
 import { info } from '../lib/info.js';
 import { printHeader, printStatus } from '../lib/print.js';
 import { needsRulesForCategories, onRequestTest } from '../lib/restrictions.js';
@@ -111,7 +111,8 @@ export async function render(root, ctx) {
     const hard = state.solving ? state.hardViolations : (analysis?.hardViolations ?? state.hardViolations);
     const headline = planHeadline({ solving: state.solving, seconds: Math.round(state.elapsedMillis / 1000),
       planned: plan.assignments.length > 0, hard, gaps: state.solving ? null : (analysis?.gaps?.length ?? null),
-      uncoveredHours: figures?.uncovered ?? null });
+      uncoveredHours: figures?.uncovered ?? null, duties: plan.assignments.filter((a) => a.shiftId).length,
+      areas: dataset.areas.length, areasWithoutDemand: areasWithoutDemand(dataset) });
     // the score in words under "Erweitert", the raw score as its tooltip
     scoreText.textContent = scoreWords({ score: plan.score, hard, uncovered: figures?.uncovered, overstaffed: figures?.overstaffed });
     scoreText.title = plan.score ?? '';

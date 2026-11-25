@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { chipCount, closeChecklist, planHeadline, problemConstraints, scoreWords } from '../src/lib/plan-status.js';
+import { areasWithoutDemand, chipCount, closeChecklist, planHeadline, problemConstraints, scoreWords } from '../src/lib/plan-status.js';
 
 test('headline: usable plan, gaps, rule violations, both', () => {
   assert.deepEqual(planHeadline({ hard: 0, gaps: 0, uncoveredHours: 0 }),
@@ -50,4 +50,17 @@ test('score in words: violations counted, staff in person hours, the quality ded
   assert.equal(scoreWords({ score: '-120hard/-2000000060medium/-5soft', hard: 2, uncovered: 2 / 60, overstaffed: 1 }),
     'Regelverstöße 2, fehlende Besetzung 0 Personenstunden, Überbesetzung 1 Personenstunden, Qualität: Abzüge 5');
   assert.equal(scoreWords({ score: null }), '–');
+});
+
+test('headline: never green for an empty plan or where no area asks for anyone', () => {
+  // no minimum demand in any area: nobody was planned
+  assert.deepEqual(planHeadline({ hard: 0, gaps: 0, uncoveredHours: 0, duties: 0, areas: 4, areasWithoutDemand: 4 }),
+    { level: 'warn', text: 'Kein Bereich hat Mindestbedarf: es wurde niemand eingeteilt.' });
+  // some areas without demand: named, not green
+  assert.deepEqual(planHeadline({ hard: 0, gaps: 0, uncoveredHours: 0, duties: 120, areas: 4, areasWithoutDemand: 1 }),
+    { level: 'warn', text: '1 Bereich ohne Mindestbedarf: dort wird niemand eingeteilt' });
+  assert.equal(planHeadline({ hard: 0, gaps: 0, duties: 0, areas: 4, areasWithoutDemand: 0 }).level, 'warn');
+  // normal: green
+  assert.equal(planHeadline({ hard: 0, gaps: 0, uncoveredHours: 0, duties: 120, areas: 4, areasWithoutDemand: 0 }).level, 'good');
+  assert.equal(areasWithoutDemand({ areas: [{ id: 'A' }, { id: 'B' }], demand: [{ areaId: 'A', min: 1 }, { areaId: 'B', min: 0 }] }), 1);
 });

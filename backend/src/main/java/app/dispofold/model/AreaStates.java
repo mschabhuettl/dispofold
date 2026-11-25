@@ -39,8 +39,8 @@ public final class AreaStates {
     }
 
     /**
-     * The canonical form: for each area of a person whose every shift has whole-day restrictions of one kind only, the
-     * state of that kind in place of those rows; rows a stated area repeats are dropped; a state for an area the person
+     * The canonical form: for each area of a person whose every shift has a whole-day restriction of one kind (NEVER
+     * before ON_REQUEST), the state of that kind in place of those rows; rows a stated area repeats are dropped; a state for an area the person
      * no longer has is dropped. Everything else stays a restriction (an exception). Idempotent.
      */
     public static Dataset fold(Dataset d) {
@@ -60,20 +60,18 @@ public final class AreaStates {
                 RestrictionKind stated = p.areaStates() == null ? null : p.areaStates().get(a);
                 RestrictionKind kind = stated;
                 if (kind == null && !shifts.isEmpty()) {
-                    // every shift of the area has whole-day rows, all of one kind
-                    Set<RestrictionKind> kinds = new HashSet<>();
-                    boolean all = true;
-                    for (String s : shifts) {
-                        boolean any = false;
-                        for (Restriction r : own) {
-                            if (s.equals(r.shiftId()) && whole(r)) {
-                                kinds.add(r.kind());
-                                any = true;
-                            }
+                    // a kind whose whole-day rows cover every shift of the area; NEVER first, as it is the stricter
+                    // (rows of the other kind stay exceptions: the meaning is the same)
+                    for (RestrictionKind k : List.of(RestrictionKind.NEVER, RestrictionKind.ON_REQUEST)) {
+                        boolean all = true;
+                        for (String s : shifts) {
+                            all &= own.stream().anyMatch(r -> s.equals(r.shiftId()) && whole(r) && r.kind() == k);
                         }
-                        all &= any;
+                        if (all) {
+                            kind = k;
+                            break;
+                        }
                     }
-                    kind = all && kinds.size() == 1 ? kinds.iterator().next() : null;
                 }
                 if (kind != null) {
                     states.put(a, kind);

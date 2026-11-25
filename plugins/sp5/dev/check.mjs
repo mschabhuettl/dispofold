@@ -196,6 +196,17 @@ export default async function run({ base, browser, check, shots }) {
   await open(page, `${P}/bericht`, '#sp5-report-count');
   check('the report says on top what to look at first', (await text(page, '#sp5-report-verdict'))?.startsWith('Zuerst ansehen: 1 Schicht ohne Bereich')
     && (await text(page, '#sp5-report-verdict'))?.includes('2 Zeilen mit rotem Hinweis'), await text(page, '#sp5-report-verdict'));
+  // areas without minimum demand: never "in Ordnung", all or some named, the note in the accent colour
+  const runBody = (await api(page, 'GET', '/api/plugins/sp5/lauf')).body.request;
+  for (const [options, expected] of [[{ demand: 'sp5' }, 'für keinen Bereich gibt es einen Mindestbedarf'], [{ historyMonths: 1 }, 'für 1 Bereich gibt es keinen Mindestbedarf']]) {
+    await api(page, 'POST', '/api/plugins/sp5/lauf', { month: runBody.month, to: runBody.to, options: { ...runBody.options, ...options } });
+    await open(page, `${P}/bericht`, '#sp5-report-count');
+    check(`no minimum demand named on top of the report: ${JSON.stringify(options)}`, (await text(page, '#sp5-report-verdict'))?.includes(expected)
+      && (await text(page, '#sp5-report-verdict'))?.includes('Option Bedarf prüfen') && await page.locator('#sp5-report-verdict.alert-warn').count() === 1,
+    await text(page, '#sp5-report-verdict'));
+  }
+  await api(page, 'POST', '/api/plugins/sp5/lauf', runBody);
+  await open(page, `${P}/bericht`, '#sp5-report-count');
   const types = await page.$$eval('#main section[data-type]', (s) => s.map((x) => x.dataset.type));
   check('one section per row type, unknown ones too', types.join(',') === 'bedarf,bereich,schicht,person,nicht_zugeordnet,ignoriert,verworfen,wochenstunden,korrektur,ausgeblendet,nicht_mehr,sonderfall', types.join(','));
   const korrHeads = await page.$$eval('#sp5-type-korrektur th', (ths) => ths.map((th) => [th.textContent.replace(/[▲▼]/g, '').trim(), th.querySelector('button')?.title]));

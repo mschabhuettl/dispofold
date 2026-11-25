@@ -227,7 +227,7 @@ public class MasterDataService {
                 Person p = (Person) item;
                 item = p.withAreaStates(null);
                 master.items(kind).add(item);
-                setStates(master, Map.of(), List.of(), p.id(), p.areaIds(), p.areaStates());
+                setStates(master, List.of(), List.of(), p.id(), p.areaIds(), p.areaStates());
                 return new Result(key, item, 0);
             }
             if (kind == Kind.SHIFTS) {
@@ -250,17 +250,28 @@ public class MasterDataService {
      * The restrictions of a person: those of the old view that are no whole-area state (the exceptions), and one
      * undated every-day row per shift of each area in states; old states not given again are dropped.
      *
-     * @param oldStates the person's states as the pages saw them before
+     * @param oldAreaIds the person's areas before: whole-day rows left on an area the person did not have (an older
+     *        version kept them when an area was removed) go when it is chosen again, its state is the one given now
      * @param oldExceptions the person's restrictions that are no state
      */
-    private static void setStates(Master master, Map<String, RestrictionKind> oldStates, List<Restriction> oldExceptions,
+    private static void setStates(Master master, List<String> oldAreaIds, List<Restriction> oldExceptions,
             String personId, List<String> areaIds, Map<String, RestrictionKind> states) {
-        List<Restriction> own = new ArrayList<>(oldExceptions);
+        Set<String> added = new java.util.HashSet<>(list(areaIds));
+        added.removeAll(list(oldAreaIds));
+        Set<String> addedShifts = new java.util.HashSet<>();
+        master.shifts.stream().filter(s -> added.contains(s.areaId())).forEach(s -> addedShifts.add(s.id()));
+        List<Restriction> own = new ArrayList<>(oldExceptions.stream().filter(r -> !(addedShifts.contains(r.shiftId())
+                && r.weekday() == 0 && r.validFrom() == null && r.validTo() == null)).toList());
         Set<Restriction> present = new java.util.HashSet<>(own);
         if (states != null) {
             states.forEach((a, kind) -> {
                 if (kind == null || !list(areaIds).contains(a)) {
                     return;
+                }
+                if (master.shifts.stream().noneMatch(s -> a.equals(s.areaId()))) {
+                    // a state is its rows: without a shift there is nothing to hold it
+                    throw ApiErrors.error(Status.BAD_REQUEST, "masterdata.areaWithoutShifts",
+                            PlanService.params("area", a), "Ein Bereich ohne Schichten kann nur planbar sein");
                 }
                 for (ShiftType s : master.shifts) {
                     Restriction r = new Restriction(personId, s.id(), null, 0, kind, null, null);
@@ -316,7 +327,7 @@ public class MasterDataService {
                 master.people.set(index, new Person(p.id(), p.firstName(), p.lastName(), p.shortName(),
                         p.weeklyHours(), areas, p.hoursAccount(), p.compRestBalance(), p.familyRules(), p.externalId(),
                         p.entryDate(), p.exitDate(), mix, p.excludedFrom(), p.areaSources(), null));
-                setStates(master, statesIn(view, p.id()), exceptionsIn(view, p.id()), p.id(), areas,
+                setStates(master, p.areaIds(), exceptionsIn(view, p.id()), p.id(), areas,
                         row.areaStates());
             }
             return new Result(String.valueOf(rows.size()), null, 0);
@@ -341,10 +352,30 @@ public class MasterDataService {
                 Dataset view = view(master);
                 Map<String, RestrictionKind> states = object(kind, body).has("areaStates") ? p.areaStates()
                         : statesIn(view, key);
+                List<String> before = master.people.get(index).areaIds();
                 item = p.withAreaStates(null);
                 master.items(kind).set(index, item);
-                setStates(master, statesIn(view, key), exceptionsIn(view, key), key, p.areaIds(), states);
+                setStates(master, before, exceptionsIn(view, key), key, p.areaIds(), states);
                 return new Result(key, item, 0);
+            }
+            if (kind == Kind.SHIFTS) {
+                // a shift moved to another area: it leaves the states of its old area and takes those of the new one
+                ShiftType old = master.shifts.get(index);
+                ShiftType moved = (ShiftType) item;
+                if (!Objects.equals(old.areaId(), moved.areaId())) {
+                    Dataset view = view(master);
+                    for (Person p : list(view.people())) {
+                        RestrictionKind was = p.areaStates() == null ? null : p.areaStates().get(old.areaId());
+                        RestrictionKind now = p.areaStates() == null ? null : p.areaStates().get(moved.areaId());
+                        if (was != null) {
+                            master.restrictions.remove(new Restriction(p.id(), moved.id(), null, 0, was, null, null));
+                        }
+                        Restriction row = new Restriction(p.id(), moved.id(), null, 0, now, null, null);
+                        if (now != null && !master.restrictions.contains(row)) {
+                            master.restrictions.add(row);
+                        }
+                    }
+                }
             }
             master.items(kind).set(index, item);
             return new Result(key, item, 0);
@@ -363,7 +394,7 @@ public class MasterDataService {
             // the exceptions as the pages send them; the states of the areas stay (rows of the whole area)
             Dataset view = view(master);
             Person p = master.people.get(indexOf(Kind.PEOPLE, master, personId));
-            setStates(master, statesIn(view, personId), own, personId, p.areaIds(), statesIn(view, personId));
+            setStates(master, p.areaIds(), own, personId, p.areaIds(), statesIn(view, personId));
             return new Result(personId, own, 0);
         });
     }

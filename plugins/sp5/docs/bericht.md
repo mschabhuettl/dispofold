@@ -6,9 +6,10 @@ Schichtplaner 5, wie in Dispofold), Bereichs- und Schichtkürzel und Zahlen.
 
 ![Der Bericht mit der Suche und den Personen](img/bericht.png)
 
-Oben sagt ein Satz, ob der Lauf in Ordnung aussieht und was man zuerst ansieht: Schichten ohne Bereich (sie fehlen
-im Plan, bis die Zuordnung sie trifft) und Zeilen mit rotem Hinweis (eine ungültige Korrektur oder eine fehlende
-Person), danach die Warnungen. Gibt es beides nicht, heißt es „Der Lauf sieht in Ordnung aus“.
+Oben sagt ein Satz, ob der Lauf in Ordnung aussieht und was man zuerst ansieht: Bereiche ohne Mindestbedarf (dort
+würde niemand eingeteilt; dann die Option **Bedarf** prüfen, etwa weil die Historie zu kurz ist), Schichten ohne
+Bereich (sie fehlen im Plan, bis die Zuordnung sie trifft) und Zeilen mit rotem Hinweis (eine ungültige Korrektur
+oder eine fehlende Person), danach die Warnungen. Gibt es nichts davon, heißt es „Der Lauf sieht in Ordnung aus“.
 
 ## Suchen, filtern, sortieren
 

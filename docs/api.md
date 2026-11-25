@@ -319,6 +319,7 @@ Anfrage und Daten:
 | `masterdata.conflict` | 409 | `revision` |
 | `masterdata.invalid` | 400 | `count`; dazu `errors` und `warnings` |
 | `masterdata.format` | 400 | `kind` |
+| `masterdata.areaWithoutShifts` | 400 | `area` |
 | `masterdata.idMissing` | 400 | `kind` |
 | `masterdata.idMismatch` | 400 | `kind`, `key` |
 | `masterdata.idTaken` | 400 | `kind`, `key` |

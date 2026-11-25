@@ -40,7 +40,7 @@ class AreaStatesTest {
                 r("P0002", "AN-T", 0, RestrictionKind.NEVER), dated, night,
                 // half an area: stays rows
                 r("P0004", "DR-T", 0, RestrictionKind.NEVER),
-                // an area with both kinds on every day: no state
+                // an area with both kinds on every day: "nie", the other row stays an exception
                 r("P0006", "AN-T", 0, RestrictionKind.NEVER), r("P0006", "AN-T", 0, RestrictionKind.ON_REQUEST)));
         Dataset folded = AreaStates.fold(d);
         assertThat(person(folded, "P0002").areaStates()).containsExactly(
@@ -48,9 +48,9 @@ class AreaStatesTest {
         // the exceptions: a weekday, a date, a category
         assertThat(folded.restrictions()).containsExactlyInAnyOrder(r("P0002", "DR-N", 5, RestrictionKind.NEVER),
                 dated, night, r("P0004", "DR-T", 0, RestrictionKind.NEVER),
-                r("P0006", "AN-T", 0, RestrictionKind.NEVER), r("P0006", "AN-T", 0, RestrictionKind.ON_REQUEST));
+                r("P0006", "AN-T", 0, RestrictionKind.ON_REQUEST));
         assertThat(person(folded, "P0004").areaStates()).isNull();
-        assertThat(person(folded, "P0006").areaStates()).isNull();
+        assertThat(person(folded, "P0006").areaStates()).containsExactly(Map.entry("AN", RestrictionKind.NEVER));
         // the same meaning back: the rows of before (as a set), and folding twice changes nothing
         Dataset back = AreaStates.expand(folded);
         assertThat(new HashSet<>(back.restrictions())).isEqualTo(new HashSet<>(d.restrictions()));
@@ -59,6 +59,24 @@ class AreaStatesTest {
         // nothing to fold: the same object
         Dataset plain = with(List.of(r("P0004", "DR-T", 0, RestrictionKind.NEVER)));
         assertThat(AreaStates.fold(plain)).isSameAs(plain);
+    }
+
+    @Test
+    void aWholeDayExceptionOfTheOtherKindDoesNotHideTheState() {
+        // every shift of DR "nur von Hand", DR-T also "nie": the state stays, the stricter row an exception
+        Dataset d = with(List.of(r("P0002", "DR-T", 0, RestrictionKind.ON_REQUEST),
+                r("P0002", "DR-N", 0, RestrictionKind.ON_REQUEST), r("P0002", "DR-T", 0, RestrictionKind.NEVER)));
+        Dataset folded = AreaStates.fold(d);
+        assertThat(person(folded, "P0002").areaStates()).containsExactly(Map.entry("DR", RestrictionKind.ON_REQUEST));
+        assertThat(folded.restrictions()).containsExactly(r("P0002", "DR-T", 0, RestrictionKind.NEVER));
+        // "nie" on every shift wins over "nur von Hand" on every shift
+        Dataset both = with(List.of(r("P0002", "DR-T", 0, RestrictionKind.ON_REQUEST), r("P0002", "DR-N", 0,
+                RestrictionKind.ON_REQUEST), r("P0002", "DR-T", 0, RestrictionKind.NEVER), r("P0002", "DR-N", 0,
+                        RestrictionKind.NEVER)));
+        assertThat(person(AreaStates.fold(both), "P0002").areaStates()).containsExactly(
+                Map.entry("DR", RestrictionKind.NEVER));
+        assertThat(new HashSet<>(AreaStates.expand(AreaStates.fold(both)).restrictions()))
+                .isEqualTo(new HashSet<>(both.restrictions()));
     }
 
     @Test

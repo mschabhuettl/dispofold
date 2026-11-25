@@ -88,7 +88,8 @@ const main = document.getElementById('main');
 const monthInput = document.getElementById('month');
 let cleanup = null;
 // the pages see the area states as read and `restrictions` with them as rows, as the server plans (lib/area-states.js)
-const datasetCache = createDatasetCache(() => api.dataset().then(withEffectiveRestrictions));
+// (planners only: viewers get no restrictions and see the states only on Personen → Bereiche)
+const datasetCache = createDatasetCache(() => api.dataset().then((d) => (ctx.canEdit ? withEffectiveRestrictions(d) : { ...d, exceptions: [] })));
 let renderCount = 0;
 let currentHash = location.hash;
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;

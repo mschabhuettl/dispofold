@@ -292,9 +292,11 @@ function editor(root, ctx, initial, personId, rules) {
     dataset.areas.map((a) => {
       const id = `f-area-${a.id}`;
       const value = !(values.areaIds ?? []).includes(a.id) ? '' : states[a.id] ?? 'PLAN';
+      // an area without shifts can only be planbar: a state is held by its shifts
+      const shiftless = !dataset.shifts.some((s) => s.areaId === a.id);
       const select = h('select', { id, 'data-area-state': a.id },
         [['', t('areaState.out')], ['PLAN', t('areaState.plannable')], ['ON_REQUEST', t('areaState.manual')], ['NEVER', t('areaState.never')]]
-          .map(([v, label]) => h('option', { value: v, selected: v === value }, label)));
+          .map(([v, label]) => h('option', { value: v, selected: v === value, disabled: shiftless && (v === 'ON_REQUEST' || v === 'NEVER') }, label)));
       const row = { list: h('ul.area-exceptions', {}), source: h('span.muted', { 'data-area-source': a.id }) };
       areaRows.set(a.id, row);
       return h('div.area-state', { 'data-area': a.id }, h('div.field', {}, h('label', { for: id }, `${a.name} (${a.id})`), select), row.source, row.list);
@@ -339,7 +341,10 @@ function editor(root, ctx, initial, personId, rules) {
   /** The areas and their states as the form shows them. */
   const readAreas = () => {
     const selects = [...form.querySelectorAll('select[data-area-state]')].filter((x) => x.value);
-    return { areaIds: selects.map((x) => x.dataset.areaState),
+    // the order the person had (its first area is its row in the plan), new ones after it
+    const chosenIds = selects.map((x) => x.dataset.areaState);
+    const before = (base?.areaIds ?? []).filter((a) => chosenIds.includes(a));
+    return { areaIds: [...before, ...chosenIds.filter((a) => !before.includes(a))],
       areaStates: Object.fromEntries(selects.filter((x) => x.value !== 'PLAN').map((x) => [x.dataset.areaState, x.value])) };
   };
 

@@ -269,9 +269,49 @@ public class ImportResource {
         }
         Dataset raw = result.dataset();
         DatasetValidator.Result merged = kept == null || kept.changes().isEmpty() ? result
-                : validated(Corrections.apply(kept.changes(), raw));
+                : validated(carryStates(store.dataset().orElse(null), Corrections.apply(kept.changes(), raw)));
         return plans.withMonths(raw.periods().stream().map(Period::month).toList(),
                 () -> saveChecked(raw, merged, kept, applied));
+    }
+
+    /**
+     * Changes kept from Dispofold carry a person's restrictions as rows; a state of an area ("nur von Hand", "nie") that
+     * still covers every shift the area had here gets the rows of the area's new shifts too, so that it stays a state.
+     */
+    static Dataset carryStates(Dataset before, Dataset merged) {
+        if (before == null) {
+            return merged;
+        }
+        Dataset view = AreaStates.fold(before);
+        Map<String, List<String>> oldShifts = new HashMap<>();
+        list(before.shifts()).forEach(s -> oldShifts.computeIfAbsent(s.areaId(), k -> new ArrayList<>()).add(s.id()));
+        Map<String, Person> now = new HashMap<>();
+        list(merged.people()).forEach(p -> now.put(p.id(), p));
+        List<Restriction> rows = new ArrayList<>(list(merged.restrictions()));
+        Set<Restriction> present = new HashSet<>(rows);
+        for (Person p : list(view.people())) {
+            Person q = now.get(p.id());
+            if (p.areaStates() == null || q == null) {
+                continue;
+            }
+            p.areaStates().forEach((area, kind) -> {
+                boolean carried = list(q.areaIds()).contains(area) && oldShifts.getOrDefault(area, List.of()).stream()
+                        .noneMatch(s -> !present.contains(new Restriction(p.id(), s, null, 0, kind, null, null)));
+                if (!carried) {
+                    return;
+                }
+                for (ShiftType s : list(merged.shifts())) {
+                    Restriction r = new Restriction(p.id(), s.id(), null, 0, kind, null, null);
+                    if (area.equals(s.areaId()) && present.add(r)) {
+                        rows.add(r);
+                    }
+                }
+            });
+        }
+        return rows.size() == list(merged.restrictions()).size() ? merged
+                : new Dataset(merged.format(), merged.version(), merged.source(), merged.areas(), merged.shifts(),
+                        merged.demand(), merged.holidays(), merged.absenceTypes(), merged.people(), rows,
+                        merged.history(), merged.periods());
     }
 
     /** Called with the locks of all imported months held, so no solve or closing can start in between. */

@@ -321,6 +321,19 @@ try {
   const stateIn = (d, pid, aid) => d.people.find((p) => p.id === pid).areaStates?.[aid];
   check('the matrix saves like the person page', stateIn(afterMatrix, one.id, a1) === 'ON_REQUEST' && stateIn(afterMatrix, two.id, a1) === 'ON_REQUEST'
     && stateIn(afterMatrix, one.id, a2) === 'ON_REQUEST', JSON.stringify(afterMatrix.people.filter((p) => [one.id, two.id].includes(p.id)).map((p) => p.areaStates)));
+  // with the area filter: the bulk change and the arrow keys stay inside the shown column
+  await page.locator('table.area-matrix').waitFor();
+  await page.selectOption('#area-matrix-area', a2);
+  await cellOf(one.id, a2).focus();
+  await page.keyboard.press('ArrowRight');
+  check('the arrow keys do not leave the shown column', (await page.evaluate(() => document.activeElement?.dataset.area)) === a2);
+  const beforeA1 = await cellOf(two.id, a1).innerText();
+  await page.check('#area-matrix-all-rows');
+  await page.selectOption('#area-matrix-bulk-state', 'NEVER');
+  await page.click('#area-matrix-bulk');
+  check('the bulk change only sets the shown column', (await cellOf(two.id, a2).innerText()).includes('nie')
+    && (await cellOf(two.id, a1).innerText()) === beforeA1, await cellOf(two.id, a1).innerText());
+  await page.goto(`${base}/#/person`); // leaving asks about the unsaved changes; the dialog is accepted
   const matrixViewer = await login('ansicht');
   await matrixViewer.goto(`${base}/#/bereiche`);
   await matrixViewer.locator('table.area-matrix').waitFor();

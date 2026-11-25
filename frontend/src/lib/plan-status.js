@@ -10,13 +10,19 @@ const hours = (v) => (v == null ? '–' : Number(v).toLocaleString('de-AT', { ma
  * 'solving' or 'none' (no plan yet, or no analysis to judge it). gaps is the number of gaps of the analysis, null
  * without one (while solving only the uncovered person hours of the score are known).
  */
-export function planHeadline({ solving = false, seconds = 0, planned = true, hard = 0, gaps = null, uncoveredHours = null }) {
+export function planHeadline({ solving = false, seconds = 0, planned = true, hard = 0, gaps = null, uncoveredHours = null,
+  duties = null, areas = 0, areasWithoutDemand = 0 }) {
   const parts = [];
   if (hard > 0) parts.push(t('roster.headline.hard', { count: hard }));
   if (gaps > 0) parts.push(t('roster.headline.gaps', { count: gaps, hours: hours(uncoveredHours) }));
   else if (gaps == null && uncoveredHours > 0) parts.push(t('roster.headline.uncovered', { hours: hours(uncoveredHours) }));
   if (solving) return { level: 'solving', text: [t('roster.headline.solving', { seconds }), ...parts].join(', ') };
   if (!planned) return { level: 'none', text: t('common.noPlan') };
+  // no gap is no reassurance where no area asks for anyone: an empty plan or areas without minimum demand
+  if (areas > 0 && areasWithoutDemand >= areas) {
+    parts.push(duties === 0 ? t('roster.headline.noDemandEmpty') : t('roster.headline.noDemand'));
+  } else if (areasWithoutDemand > 0) parts.push(t('roster.headline.someWithoutDemand', { count: areasWithoutDemand }));
+  else if (duties === 0) parts.push(t('roster.headline.empty'));
   if (parts.length) return { level: hard > 0 ? 'bad' : 'warn', text: parts.join(', ') };
   // usable only when the analysis says so
   return gaps === 0 ? { level: 'good', text: t('roster.headline.good') } : { level: 'none', text: t('roster.headline.unknown') };
@@ -72,3 +78,7 @@ export function closeChecklist(state, analysis) {
     { ok: !stale, text: stale ? t('closeMonth.stale') : t('closeMonth.current') },
   ];
 }
+
+/** How many areas have no minimum demand at all (no demand rule asks for at least one person): nobody is planned there. */
+export const areasWithoutDemand = (dataset) => (dataset.areas ?? [])
+  .filter((a) => !(dataset.demand ?? []).some((d) => d.areaId === a.id && Number(d.min) > 0)).length;

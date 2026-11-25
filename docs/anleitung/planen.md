@@ -64,7 +64,11 @@ Personenstunden und die Abzüge der Planqualität; die Rohzahl zeigt der Tooltip
 ![Die Zeile über dem Plan, nummeriert](../screenshots/statuszeile.png)
 
 1. **Überschrift** in Farbe: grün „Plan verwendbar: keine Regelverstöße, keine Lücken“, gelb die Zahl der Lücken
-   mit den fehlenden Personenstunden (fehlende Personen mal Stunden), rot die Zahl der Regelverstöße.
+   mit den fehlenden Personenstunden (fehlende Personen mal Stunden), rot die Zahl der Regelverstöße. Nie grün ist
+   ein Plan ohne einen Dienst oder einer, in dem ein Bereich keinen Mindestbedarf hat: dort wird niemand eingeteilt,
+   und eine „Lücke“ kann es gar nicht geben. Gelb steht dann „Kein Bereich hat Mindestbedarf: es wurde niemand
+   eingeteilt.“ oder die Zahl der Bereiche ohne Mindestbedarf; den Bedarf ändert man unter
+   [Bereiche, Schichten und Bedarf](stammdaten.md).
 2. **Regeln mit Treffern:** je Regel mit Regelverstößen (rot) und, nach „Qualität, kein Fehler:“, je
    Qualitätsregel mit großem Anteil an der Bewertung (höchstens die fünf größten) ein Knopf mit der Zahl der
    Treffer. Ein Klick listet Person und Tag mit

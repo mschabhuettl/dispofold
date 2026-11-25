@@ -260,6 +260,48 @@ class MasterDataTest {
     }
 
     @Test
+    void theStatesHoldThroughExceptionsMovedShiftsAndAreasWithoutShifts() throws Exception {
+        // a whole-day "nie" on DR-T, then DR "nur von Hand" and that exception removed: the state stays
+        at(revision()).body(List.of(Map.of("shiftId", "DR-T", "weekday", 0, "kind", "NEVER")))
+                .put("/api/dataset/people/P0002/restrictions").then().statusCode(200);
+        ObjectNode p = person("P0002");
+        p.putObject("areaStates").put("DR", "ON_REQUEST");
+        update("people", "P0002", p).statusCode(200);
+        at(revision()).body(List.of()).put("/api/dataset/people/P0002/restrictions").then().statusCode(200);
+        assertThat(rows("P0002")).containsExactly("DR-N 0 ON_REQUEST", "DR-T 0 ON_REQUEST");
+        // a shift moved into an area with a state takes it, the old area's row goes
+        p = person("P0004");
+        p.putObject("areaStates").put("AN", "NEVER");
+        update("people", "P0004", p).statusCode(200);
+        ObjectNode shift = (ObjectNode) dataset().path("shifts").get(1); // DR-T
+        assertThat(shift.path("id").asText()).isEqualTo("DR-T");
+        shift.put("areaId", "AN");
+        update("shifts", "DR-T", shift).statusCode(200);
+        assertThat(rows("P0004")).containsExactlyInAnyOrder("AN-T 0 NEVER", "DR-T 0 NEVER");
+        assertThat(person("P0004").path("areaStates").path("AN").asText()).isEqualTo("NEVER");
+        assertThat(rows("P0002")).containsExactly("DR-N 0 ON_REQUEST");
+        // an area without shifts can only be planbar
+        create("areas", Map.of("id", "ZZ", "name", "Leer", "color", "#123456")).statusCode(200);
+        p = person("P0006");
+        ((com.fasterxml.jackson.databind.node.ArrayNode) p.withArray("areaIds")).add("ZZ");
+        p.putObject("areaStates").put("ZZ", "NEVER");
+        update("people", "P0006", p).statusCode(400).body("code", equalTo("masterdata.areaWithoutShifts"));
+    }
+
+    @Test
+    void aChosenAgainAreaLosesTheRowsLeftFromBefore() throws Exception {
+        // P0001 has only AN; rows of DR left from before (an older version kept them when DR was removed)
+        at(revision()).body(List.of(Map.of("shiftId", "DR-T", "weekday", 0, "kind", "NEVER"), Map.of("shiftId", "DR-N",
+                "weekday", 0, "kind", "NEVER"))).put("/api/dataset/people/P0001/restrictions").then().statusCode(200);
+        ObjectNode p = person("P0001");
+        ((com.fasterxml.jackson.databind.node.ArrayNode) p.withArray("areaIds")).add("DR");
+        update("people", "P0001", p).statusCode(200);
+        // chosen as planbar: planbar, not "nie"
+        assertThat(rows("P0001")).isEmpty();
+        assertThat(person("P0001").path("areaStates").isMissingNode()).isTrue();
+    }
+
+    @Test
     void restrictionsAndFamilyRulesBelongToThePerson() throws Exception {
         List<Map<String, Object>> restrictions = List.of(
                 Map.of("personId", "OTHER", "shiftId", "DR-N", "weekday", 0, "kind", "NEVER"),

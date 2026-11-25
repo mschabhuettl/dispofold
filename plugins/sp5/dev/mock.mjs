@@ -372,7 +372,9 @@ export function mock() {
       const months = [x.request.month, ...(x.request.to && x.request.to > x.request.month ? [x.request.to] : [])];
       run = { request: x.request, months, ranAt: new Date().toISOString().replace(/\.\d+Z$/, 'Z'),
         counts: { people: 150, areas: 2, shifts: 5, demandRules: 17, duties: 812, previousDuties: 40, absences: 300,
-          warnings: WARNINGS.length, reportRows: ROWS.length, corrections: ROWS.filter((r) => r.pruefung === 'korrektur').length },
+          warnings: WARNINGS.length, reportRows: ROWS.length, corrections: ROWS.filter((r) => r.pruefung === 'korrektur').length,
+          // invented: demand from SP5 leaves both areas without minimum demand, one month of history one of them
+          areasWithoutDemand: x.request.options.demand === 'sp5' ? 2 : x.request.options.historyMonths === 1 ? 1 : 0 },
         corrections: true };
       return ok(run);
     }

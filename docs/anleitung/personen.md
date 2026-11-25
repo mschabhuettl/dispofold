@@ -57,6 +57,9 @@ Je Bereich wählt man einen Zustand:
 - **nie:** Ein Dienst in dem Bereich ist ein Regelverstoß.
 - **nicht dabei:** Der Bereich gehört nicht zur Person.
 
+Ein Bereich ohne Schichten kann nur planbar oder nicht dabei sein: Der Zustand hängt an seinen Schichten. Kommt
+später eine Schicht dazu oder wird eine in den Bereich verschoben, gilt der Zustand der Personen auch für sie.
+
 Unter einem Bereich stehen nur seine [Ausnahmen](#einschränkungen), eine Zeile je Schicht, mit den Wochentagen und
 Zeiten, etwa „R4 Disposition Nacht: nur von Hand (Mo, Di, Fr)“. Daneben steht, woher der Bereich kommt, wenn ein
 Import es mitgegeben hat: „Herkunft: Gruppe Team Annahme“, „Herkunft: Historie: 14 Dienste“ oder „Herkunft: von

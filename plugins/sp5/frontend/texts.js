@@ -98,6 +98,8 @@ export const TEXTS = {
   'plugin.sp5.report.title': 'Bericht',
   'plugin.sp5.report.fine': 'Der Lauf sieht in Ordnung aus: jede Schicht mit Diensten hat einen Bereich, keine Korrektur ist ungültig. Zuerst die {warnings|Warnung|Warnungen} unten überfliegen.',
   'plugin.sp5.report.first': 'Zuerst ansehen: {what}. Danach die {warnings|Warnung|Warnungen} unten.',
+  'plugin.sp5.report.first.noDemandAll': 'für keinen Bereich gibt es einen Mindestbedarf: niemand würde eingeteilt; die Option Bedarf prüfen',
+  'plugin.sp5.report.first.noDemand': 'für {count|Bereich|Bereiche} gibt es keinen Mindestbedarf: dort würde niemand eingeteilt; die Option Bedarf prüfen',
   'plugin.sp5.report.first.unmapped': '{count|Schicht|Schichten} ohne Bereich (fehlen im Plan, bis die Zuordnung sie trifft)',
   'plugin.sp5.report.first.notices': '{count|Zeile|Zeilen} mit rotem Hinweis (ungültige Korrektur oder fehlende Person)',
   'plugin.sp5.report.search': 'Suchen',

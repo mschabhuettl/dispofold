@@ -8,7 +8,7 @@ import { ID, noRun, orNoRun } from './shared.js';
 
 export async function render(root, ctx) {
   const api = ctx.api.plugin(ID);
-  const [report, dataset] = await Promise.all([orNoRun(() => api.get('lauf/bericht')), ctx.dataset().catch(() => null)]);
+  const [report, dataset, run] = await Promise.all([orNoRun(() => api.get('lauf/bericht')), ctx.dataset().catch(() => null), orNoRun(() => api.get('lauf'))]);
   root.append(h('h1', {}, t('plugin.sp5.report.title')));
   if (!report) {
     root.append(noRun());
@@ -20,8 +20,12 @@ export async function render(root, ctx) {
   const unmapped = groups.find((g) => g.type === 'nicht_zugeordnet')?.rows.length ?? 0;
   const notices = (report.rows ?? []).filter((r) => NOTICE_STATUSES.has(r.status)).length;
   const warned = (report.warnings ?? []).length;
-  const first = [unmapped && t('plugin.sp5.report.first.unmapped', { count: unmapped }), notices && t('plugin.sp5.report.first.notices', { count: notices })].filter(Boolean);
-  root.append(h('p.alert', { id: 'sp5-report-verdict', role: 'note' }, first.length
+  // areas without minimum demand: nobody would be planned there, never "in Ordnung"
+  const noDemand = run?.counts?.areasWithoutDemand ?? 0;
+  const allAreas = run?.counts?.areas ?? 0;
+  const first = [noDemand && (noDemand >= allAreas ? t('plugin.sp5.report.first.noDemandAll') : t('plugin.sp5.report.first.noDemand', { count: noDemand })),
+    unmapped && t('plugin.sp5.report.first.unmapped', { count: unmapped }), notices && t('plugin.sp5.report.first.notices', { count: notices })].filter(Boolean);
+  root.append(h(noDemand ? 'p.alert.alert-warn' : 'p.alert', { id: 'sp5-report-verdict', role: 'note' }, first.length
     ? t('plugin.sp5.report.first', { what: first.join('; '), warnings: warned })
     : t('plugin.sp5.report.fine', { warnings: warned })));
   const sorted = (values) => [...new Set(values)].sort((a, b) => a.localeCompare(b, 'de', { numeric: true }));
@@ -59,7 +63,8 @@ export async function render(root, ctx) {
     return { g, table, heading, element };
   });
 
-  const warnings = report.warnings ?? [];
+  // the export program's words shown with today's (the file keeps them, for the comparison byte for byte)
+  const warnings = (report.warnings ?? []).map((w) => w.replaceAll('nur auf Anfrage', 'nur von Hand'));
   const kinds = sorted(warnings.map(warningKind));
   const kindFilter = select('sp5-warning-kind', t('plugin.sp5.report.warningKind'), t('plugin.sp5.report.all'),
     kinds.map((k) => [k, `${k} (${warnings.filter((w) => warningKind(w) === k).length})`]));
@@ -86,8 +91,7 @@ export async function render(root, ctx) {
       && names(w, filter.person) && names(w, filter.area));
     warningHeading.replaceChildren(t('plugin.sp5.report.warnings'), ' ', h('span.muted', {}, list.length === warnings.length
       ? `(${warnings.length})` : t('plugin.sp5.report.some', { shown: list.length, total: warnings.length })));
-    // the export program's words, shown with today's (the file keeps them, for the comparison byte for byte)
-    warningList.replaceChildren(...list.map((w) => h('li', {}, w.replaceAll('nur auf Anfrage', 'nur von Hand'))));
+    warningList.replaceChildren(...list.map((w) => h('li', {}, w)));
     if (!list.length) warningList.append(h('li.muted', {}, warnings.length ? t('plugin.sp5.report.noMatch') : t('plugin.sp5.report.noWarnings')));
   }
 

@@ -8,6 +8,7 @@ import { exceptionLines } from '../lib/area-states.js';
 import { h, toast } from '../lib/dom.js';
 import { personName } from '../lib/grid-model.js';
 import { t } from '../lib/texts.js';
+import { problemAlert } from './masterdata.js';
 
 const CYCLE = ['PLAN', 'ON_REQUEST', 'NEVER', ''];
 const MARK = { PLAN: '●', ON_REQUEST: '◐', NEVER: '✕', '': '·' };
@@ -17,16 +18,21 @@ const CATEGORY = { EARLY: t('masterdata.category.early'), DAY: t('masterdata.cat
 /** The state of an area for a person as the cell shows it. */
 export const cellState = (person, areaId) => (!(person.areaIds ?? []).includes(areaId) ? '' : person.areaStates?.[areaId] ?? 'PLAN');
 
-/** The next state of a click. */
-export const nextState = (state) => CYCLE[(CYCLE.indexOf(state) + 1) % CYCLE.length];
+/** The next state of a click; an area without shifts can only be planbar or out (a state is held by its shifts). */
+export const nextState = (state, shiftless = false) => (shiftless ? (state ? '' : 'PLAN') : CYCLE[(CYCLE.indexOf(state) + 1) % CYCLE.length]);
 
-/** The row to save for a person from the states of its cells, in the order of the areas. */
-export function rowOf(personId, areas, states) {
-  const areaIds = areas.map((a) => a.id).filter((a) => states[a]);
+/**
+ * The row to save for a person from the states of its cells: its areas in the order it had them (the first is its
+ * row in the plan), new ones after them in the order of the areas.
+ */
+export function rowOf(personId, areas, states, before = []) {
+  const chosen = areas.map((a) => a.id).filter((a) => states[a]);
+  const areaIds = [...before.filter((a) => chosen.includes(a)), ...chosen.filter((a) => !before.includes(a))];
   return { personId, areaIds, areaStates: Object.fromEntries(areaIds.filter((a) => states[a] !== 'PLAN').map((a) => [a, states[a]])) };
 }
 
-export async function render(root, ctx) {
+/** pending: changes kept from before a conflict, { personId: { areaId: state } }, laid onto the newer data. */
+export async function render(root, ctx, params = [], pending = null) {
   const { api } = ctx;
   const dataset = await ctx.dataset();
   const canEdit = ctx.canEdit;
@@ -36,6 +42,10 @@ export async function render(root, ctx) {
   // per person the current state of each area; the changes against the read ones
   const states = new Map(people.map((p) => [p.id, Object.fromEntries(areas.map((a) => [a.id, cellState(p, a.id)]))]));
   const read = new Map([...states].map(([id, s]) => [id, { ...s }]));
+  for (const [pid, own] of Object.entries(pending ?? {})) {
+    for (const [aid, state] of Object.entries(own)) if (states.has(pid) && aid in states.get(pid)) states.get(pid)[aid] = state;
+  }
+  const shiftless = new Set(areas.filter((a) => !(dataset.shifts ?? []).some((sh) => sh.areaId === a.id)).map((a) => a.id));
   const changed = () => people.filter((p) => areas.some((a) => states.get(p.id)[a.id] !== read.get(p.id)[a.id]));
   const exceptions = new Map(people.map((p) => [p.id, exceptionLines(dataset.exceptions ?? [], p.id, shifts, CATEGORY, areas.map((a) => a.id))]));
 
@@ -96,6 +106,8 @@ export async function render(root, ctx) {
     return tr;
   });
   body.append(...rows);
+  const cellIndex = new Map([...body.querySelectorAll('button[data-person]')].map((b) => [`${b.dataset.person}|${b.dataset.area}`, b]));
+  const visibleCols = () => areas.map((a, j) => (areaFilter.value && a.id !== areaFilter.value ? null : j)).filter((j) => j != null);
   const table = h('table.data.area-matrix', { 'aria-label': t('areaMatrix.title') }, h('thead', {}, head), body);
 
   /** Shows the state of a cell anew after a change. */
@@ -122,7 +134,7 @@ export async function render(root, ctx) {
     table.addEventListener('click', (e) => {
       const cell = e.target.closest('button[data-row]');
       if (!cell) return;
-      set(cell, nextState(states.get(cell.dataset.person)[cell.dataset.area]));
+      set(cell, nextState(states.get(cell.dataset.person)[cell.dataset.area], shiftless.has(cell.dataset.area)));
       focusCell(cell);
       markDirty();
     });
@@ -136,8 +148,11 @@ export async function render(root, ctx) {
       const move = { ArrowRight: [0, 1], ArrowLeft: [0, -1], ArrowDown: [1, 0], ArrowUp: [-1, 0] }[e.key];
       if (move) {
         e.preventDefault();
+        // only the shown rows and columns
+        const cols = visibleCols();
         const row = shownRows[Math.min(shownRows.length - 1, Math.max(0, at + move[0]))];
-        focusCell(cellAt(row, Math.min(areas.length - 1, Math.max(0, j + move[1]))));
+        const col = cols[Math.min(cols.length - 1, Math.max(0, cols.indexOf(j) + move[1]))];
+        focusCell(cellAt(row, col));
       } else if (e.key === ' ' || e.key === 'Enter') {
         e.preventDefault();
         cell.click();
@@ -158,16 +173,26 @@ export async function render(root, ctx) {
       tr.hidden = !visible(people[i]);
       if (!tr.hidden) shown += 1;
     });
-    // the area filter also narrows the columns
+    count.textContent = t('areaMatrix.count', { shown, total: people.length });
+    // the cell reached with Tab stays a shown one
+    const current = table.querySelector('button[data-row][tabindex="0"]');
+    if (canEdit && (!current || current.closest('tr').hidden || current.closest('td').hidden)) {
+      const first = rows.findIndex((tr) => !tr.hidden);
+      const col = visibleCols()[0];
+      if (current) current.tabIndex = -1;
+      if (first >= 0 && col != null) cellAt(first, col).tabIndex = 0;
+    }
+  };
+  // the area filter also narrows the columns (once per change, not per typed letter)
+  const applyColumns = () => {
     table.querySelectorAll('[data-col-area], [data-area]').forEach((el) => {
       const a = el.dataset.colArea ?? el.dataset.area;
-      const cell = el.closest('td') ?? el;
-      cell.hidden = Boolean(areaFilter.value) && a !== areaFilter.value;
+      (el.closest('td') ?? el).hidden = Boolean(areaFilter.value) && a !== areaFilter.value;
     });
-    count.textContent = t('areaMatrix.count', { shown, total: people.length });
+    apply();
   };
   nameFilter.addEventListener('input', apply);
-  areaFilter.addEventListener('change', apply);
+  areaFilter.addEventListener('change', applyColumns);
   stateFilter.addEventListener('change', apply);
 
   // ---- bulk and save ----
@@ -175,8 +200,9 @@ export async function render(root, ctx) {
   const bulkButton = h('button.btn.btn-secondary', { type: 'button', id: 'area-matrix-bulk', disabled: true });
   function updateBulk() {
     const r = [...rowBoxes].filter(([, b]) => b.checked && !b.closest('tr').hidden).length;
-    const c = [...colBoxes].filter(([, b]) => b.checked).length;
-    const cells = (r || rows.filter((tr) => !tr.hidden).length) * (c || areas.length);
+    const shownCols = visibleCols().map((j) => areas[j].id);
+    const c = [...colBoxes].filter(([id, b]) => b.checked && shownCols.includes(id)).length;
+    const cells = (r || rows.filter((tr) => !tr.hidden).length) * (c || shownCols.length);
     bulkButton.disabled = !r && !c;
     bulkButton.textContent = t('areaMatrix.bulk', { count: r || c ? cells : 0 });
   }
@@ -184,12 +210,15 @@ export async function render(root, ctx) {
     const value = bulkState.value === 'OUT' ? '' : bulkState.value;
     const pickedRows = [...rowBoxes].filter(([, b]) => b.checked && !b.closest('tr').hidden).map(([id]) => id);
     const targetRows = pickedRows.length ? pickedRows : people.filter((p, i) => !rows[i].hidden).map((p) => p.id);
-    const pickedCols = [...colBoxes].filter(([, b]) => b.checked).map(([id]) => id);
-    const targetCols = pickedCols.length ? pickedCols : areas.map((a) => a.id);
+    // only shown columns: an area filter narrows them
+    const shownCols = visibleCols().map((j) => areas[j].id);
+    const pickedCols = [...colBoxes].filter(([id, b]) => b.checked && shownCols.includes(id)).map(([id]) => id);
+    const targetCols = pickedCols.length ? pickedCols : shownCols;
     for (const pid of targetRows) {
       for (const aid of targetCols) {
-        const cell = table.querySelector(`button[data-person="${CSS.escape(pid)}"][data-area="${CSS.escape(aid)}"]`);
-        if (cell) set(cell, value);
+        const cell = cellIndex.get(`${pid}|${aid}`);
+        // an area without shifts can only be planbar or out
+        if (cell) set(cell, shiftless.has(aid) && value && value !== 'PLAN' ? 'PLAN' : value);
       }
     }
     markDirty();
@@ -203,13 +232,24 @@ export async function render(root, ctx) {
     dirtyNote.textContent = t('areaMatrix.unsaved', { count: n });
   }
   ctx.isDirty = () => changed().length > 0;
+  const problems = h('div.form-problems', { 'aria-live': 'polite' });
   save.addEventListener('click', async () => {
-    const list = changed().map((p) => rowOf(p.id, areas, states.get(p.id)));
+    const list = changed().map((p) => rowOf(p.id, areas, states.get(p.id), p.areaIds ?? []));
     save.disabled = true;
     try {
       await api.saveAreaStates(list, dataset.revision ?? 0);
     } catch (e) {
-      toast(e.code === 'masterdata.conflict' ? t('areaMatrix.conflict') : e.message, true);
+      if (e.code === 'masterdata.conflict') {
+        // someone else saved meanwhile: read anew, keep the own changes on top, save again
+        const own = Object.fromEntries(changed().map((p) => [p.id, Object.fromEntries(areas.filter((a) => states.get(p.id)[a.id] !== read.get(p.id)[a.id])
+          .map((a) => [a.id, states.get(p.id)[a.id]]))]));
+        ctx.invalidateDataset();
+        root.replaceChildren();
+        await render(root, ctx, params, own);
+        toast(t('areaMatrix.conflict'), true);
+        return;
+      }
+      problems.replaceChildren(problemAlert(e));
       save.disabled = false;
       return;
     }
@@ -226,8 +266,9 @@ export async function render(root, ctx) {
       h('div.field', {}, h('label', { for: 'area-matrix-area' }, t('areaMatrix.filterArea')), areaFilter),
       h('div.field', {}, h('label', { for: 'area-matrix-state' }, t('areaMatrix.filterState')), stateFilter)),
     canEdit ? h('div.toolbar', {}, h('div.field', {}, h('label', { for: 'area-matrix-bulk-state' }, t('areaMatrix.bulkState')), bulkState), bulkButton, save, dirtyNote) : '',
-    count, h('div.area-matrix-wrap', {}, table), status);
+    problems, count, h('div.area-matrix-wrap', {}, table), status);
   apply();
   updateBulk();
+  if (pending) markDirty();
   return () => { ctx.isDirty = null; };
 }

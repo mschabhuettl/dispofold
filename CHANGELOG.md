@@ -14,6 +14,9 @@ und Update: [docs/betrieb.md](docs/betrieb.md).
   Ein Klick oder die Leertaste schaltet eine Zelle weiter, mehrere Personen und Bereiche lassen sich auf einmal
   setzen; ein Stern zeigt Ausnahmen, die Zeile darunter die Herkunft. Wer nur lesen darf, sieht sie ohne Ändern.
   Nach einem Import führt „Bereiche prüfen“ dorthin.
+- **Keine falsche Entwarnung:** Die Zeile über dem Plan ist nie grün, wenn der Plan keinen Dienst hat oder ein
+  Bereich keinen Mindestbedarf hat (dort wird niemand eingeteilt); sie sagt dann, wie viele Bereiche das sind. Der
+  Bericht der Import-Erweiterung nennt solche Bereiche ebenso oben, mit dem Hinweis, die Option Bedarf zu prüfen.
 - **Neues Wort:** „Nur auf Anfrage“ heißt jetzt überall „nur von Hand“, die Liste „Auf Anfrage verfügbar“ heißt
   „Von Hand einsetzbar“. Gemeint ist dasselbe.
 

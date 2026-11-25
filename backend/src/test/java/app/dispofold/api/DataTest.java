@@ -108,6 +108,38 @@ class DataTest {
     }
 
     @Test
+    void aStateKeptFromDispofoldTakesTheNewShiftsOfItsArea() throws Exception {
+        // P0002 "nie" in DR (DR-T, DR-N) in Dispofold; the next file has a new shift DR-X in DR
+        JsonNode d = mapper.readTree(given().get("/api/dataset").then().statusCode(200).extract().asString());
+        ObjectNode p = null;
+        for (JsonNode x : d.path("people")) {
+            if (x.path("id").asText().equals("P0002")) {
+                p = (ObjectNode) x;
+            }
+        }
+        p.putObject("areaStates").put("DR", "NEVER");
+        given().contentType(ContentType.JSON).header("If-Match", d.path("revision").asText()).body(p)
+                .put("/api/dataset/people/P0002").then().statusCode(200);
+        Dataset next = TestData.dataset(MONTH);
+        List<app.dispofold.model.ShiftType> shifts = new ArrayList<>(next.shifts());
+        shifts.add(new app.dispofold.model.ShiftType("DR-X", "DR", "R9", "Disposition neu", java.time.LocalTime.of(9, 0),
+                java.time.LocalTime.of(17, 0), app.dispofold.model.ShiftCategory.DAY, "#DDEBF7", false));
+        importDataset(new Dataset(next.format(), next.version(), next.source(), next.areas(), shifts, next.demand(),
+                next.holidays(), next.absenceTypes(), next.people(), next.restrictions(), next.history(), next.periods()),
+                "?keep=true").statusCode(200);
+        java.util.Set<String> rows = new java.util.TreeSet<>();
+        store.dataset().orElseThrow().restrictions().stream().filter(r -> r.personId().equals("P0002"))
+                .forEach(r -> rows.add(r.shiftId() + " " + r.kind()));
+        assertThat(rows).containsExactly("DR-N NEVER", "DR-T NEVER", "DR-X NEVER");
+        JsonNode read = mapper.readTree(given().get("/api/dataset").then().extract().asString());
+        for (JsonNode x : read.path("people")) {
+            if (x.path("id").asText().equals("P0002")) {
+                assertThat(x.path("areaStates").path("DR").asText()).isEqualTo("NEVER");
+            }
+        }
+    }
+
+    @Test
     void whereTheAreasComeFromStaysThroughAnEditAndIsNoChange() throws Exception {
         Dataset d = TestData.dataset(MONTH);
         Person first = d.people().get(0);

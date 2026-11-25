@@ -101,6 +101,9 @@ public class Sp5Runs {
             counts.put("areas", size(dataset.areas()));
             counts.put("shifts", size(dataset.shifts()));
             counts.put("demandRules", size(dataset.demand()));
+            // areas no demand rule asks anyone for: nobody would be planned there
+            counts.put("areasWithoutDemand", (int) dataset.areas().stream().filter(a -> dataset.demand().stream()
+                    .noneMatch(d -> a.id().equals(d.areaId()) && d.min() > 0)).count());
             counts.put("duties", dataset.periods().stream().mapToInt(p -> size(p.fixed())).sum());
             counts.put("previousDuties", dataset.periods().stream().mapToInt(p -> size(p.previousDuties())).sum());
             counts.put("absences", dataset.periods().stream().mapToInt(p -> size(p.absences())).sum());

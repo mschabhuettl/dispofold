@@ -605,3 +605,5 @@ button.area-cell:focus-visible { outline: 2px solid var(--focus); outline-offset
 .area-mark { margin-left: .15rem; }
 .area-state { display: flex; flex-wrap: wrap; align-items: end; gap: .2rem .8rem; margin-bottom: .4rem; }
 .area-state ul.area-exceptions { flex-basis: 100%; margin: 0 0 0 1rem; }
+/* a note that needs attention, not an error: the accent colour (yellow-brown) */
+.alert.alert-warn { border-left-color: var(--accent); }
