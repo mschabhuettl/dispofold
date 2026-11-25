@@ -19,7 +19,11 @@ for (const file of [join(root, 'frontend', 'src', 'lib', 'texts.js'),
   } catch {
     continue;
   }
-  texts.push(...Object.values(module.TEXTS));
+  // labels only: help texts, rule descriptions, hits and messages name things in passing, and an old word in one of
+  // them would let a renamed button pass
+  // them would let a renamed button pass; a short one is a label too (a link text such as "Mehr dazu in der Anleitung")
+  texts.push(...Object.entries(module.TEXTS).filter(([key, text]) => String(text).split(/\s+/).length <= 5
+    || !/^(help|hit|error)\.|\.(description|intro\w*|help\w*)$/.test(key)).map(([, text]) => text));
 }
 /** A text as the interface shows it, without placeholders, plural forms and quotes. */
 const plain = (s) => String(s).replace(/\{[^}]*\}/g, ' ').replace(/[„“"]/g, '').replace(/\s+/g, ' ').trim();
@@ -32,7 +36,8 @@ const patterns = texts.filter((s) => /\{[^}]*\}/.test(s) && plain(s).replace(/[^
 const inUi = (term) => ui.some((text) => text.includes(term)) || patterns.some((re) => re.test(term));
 const exact = new Set(ui);
 
-/** Words in bold that are the guide's own: examples, roles, values of the demo data, glossary terms. */
+/** Words in bold that are the guide's own: run-in headings such as "Wann ändern", keys, glossary terms, words of the
+ * operating system; a new one goes here on purpose. */
 const GUIDE_WORDS = new Set(JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), 'guide-words.json'), 'utf8')));
 
 const problems = [];
@@ -56,9 +61,11 @@ for (const name of readdirSync(guide).filter((f) => f.endsWith('.md'))) {
       }
     }
     for (const [, bold] of line.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').matchAll(/\*\*([^*]+)\*\*/g)) {
-      // run-in headings end in ":", "." or "?"; a trailing comma belongs to the sentence
-      if (/[:.?]\s*$/.test(bold) || / > | → /.test(bold)) continue;
-      const term = plain(bold).replace(/,$/, '');
+      // run-in headings end in ".", "?" or ":"; one of at most three words before ":" is mostly a field name and is
+      // checked; a trailing comma belongs to the sentence
+      if (/[.?]\s*$/.test(bold) || / > | → /.test(bold)) continue;
+      if (/:\s*$/.test(bold) && bold.trim().split(/\s+/).length > 3) continue;
+      const term = plain(bold).replace(/[,:]$/, '');
       if (!term || !/[A-Za-zÄÖÜäöü]/.test(term)) continue;
       terms++;
       if (!inUi(term) && !GUIDE_WORDS.has(term)) problems.push(`${where}: **${term}** is no text of the interface`);

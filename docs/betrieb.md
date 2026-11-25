@@ -204,7 +204,9 @@ nie von allein.
 2. Neue Images bereitstellen: Archiv prüfen und `docker load -i ...`, oder nach Schritt 3 `docker compose pull`.
 3. In `.env` `TAG` auf die neue Version setzen (in Portainer bei den Umgebungsvariablen des Stacks). Die
    `docker-compose.yml` aus dem Release übernehmen; neue Einträge aus `env.example` in die eigene `.env`
-   übertragen.
+   übertragen. Ab 0.28: `SOLVER_TIME_LIMIT_SECONDS=300` und `SOLVER_MOVE_LIMIT=250000` aus älteren Vorlagen leeren
+   (`SOLVER_TIME_LIMIT_SECONDS=` und `SOLVER_MOVE_LIMIT=`), sonst gelten sie für jede Planung und die Gründlichkeit
+   unter Regeln wirkt nicht.
 4. `docker compose up -d` (in Portainer: den Stack neu bereitstellen). Das Backend spielt Datenbankänderungen beim
    Start selbst ein.
 5. Prüfen: `docker compose ps` zeigt alle Dienste „healthy“, `docker compose logs backend` enthält die Zeile

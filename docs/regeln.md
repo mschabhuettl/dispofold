@@ -375,7 +375,8 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
   Für die Fairness Nachtdienste (den Nachtausgleich) entscheidet die Nachtverteilung (siehe unten). Wer eine
   Verteilung je Bereich hat, zählt nicht für die Abwechslung der Bereiche. Wochenenden, Feiertage und
   fair verteilte Dienste bleiben gleichmäßig verteilt. Personen ohne Verteilung werden geplant wie bisher.
-- **Nachtanteil über mehrere Monate** (`nightMixMonths`, Standard 3, ab 0.28.0): Der Nachtanteil gilt über diesen
+- **Nachtanteil über mehrere Monate** (`nightMixMonths`, Standard 3, ab 0.28.0, nur bei der Nachtverteilung „Wie
+  bisher“; bei „Gleichmäßig“ zählt der Nachtanteil ohnehin nicht): Der Nachtanteil gilt über diesen
   Monat und die Vormonate davor, soweit die Historie sie hat, nicht in jedem einzelnen Monat. Erwartet sind
   diesen Monat: Anteil mal alle Dienste des Zeitraums minus die Nächte der Vormonate, höchstens alle Dienste des
   Monats, mindestens 0. Die Dienste der Vormonate schätzt die Planung aus ihren Stunden und der mittleren

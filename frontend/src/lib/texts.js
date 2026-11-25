@@ -963,7 +963,7 @@ export const TEXTS = {
   'rules.law.holiday': 'Ein Feiertagsdienst ergibt Ersatzruhe',
   'rules.law.noHoliday': 'Ein Feiertagsdienst ergibt keine Ersatzruhe',
   'rules.advanced.title': 'Erweitert',
-  'rules.advanced.help': 'Die Nachtzeit, die Gewichte aller Qualitätsregeln mit Standardwert und alle Regeln mit ihrer Beschreibung.',
+  'rules.advanced.help': 'Die Nachtzeit, die Gründlichkeit der Planung, die Gewichte aller Qualitätsregeln mit Standardwert und alle Regeln mit ihrer Beschreibung.',
   'rules.nightWindow': 'Nachtzeit',
   'rules.thoroughness': 'Gründlichkeit',
   'rules.always': 'immer einzuhalten',

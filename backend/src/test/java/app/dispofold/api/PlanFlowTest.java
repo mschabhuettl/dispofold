@@ -226,6 +226,19 @@ class PlanFlowTest {
         given().get("/api/plans/" + MONTH).then().body("stale", equalTo(false))
                 .body("previousMonthChanged", equalTo(false)).body("previousFromPlan", equalTo(false));
 
+        // another thoroughness says how long to search, not what a good plan is: the plan stays current, and the next
+        // solve takes its budget
+        String rules = given().get("/api/rules").then().extract().asString();
+        String thorough = rules.replaceFirst("\\}$", ",\"thoroughness\":\"THOROUGH\"}");
+        given().contentType(ContentType.JSON).body(thorough).put("/api/rules").then().statusCode(200);
+        given().get("/api/plans/" + MONTH).then().body("stale", equalTo(false));
+        given().contentType(ContentType.JSON).body("{}").post("/api/plans/" + MONTH + "/solve").then()
+                .statusCode(202);
+        assertThat(facade.lastOptions().moveLimit())
+                .isEqualTo(app.dispofold.planning.SolveBudget.of(app.dispofold.model.Thoroughness.THOROUGH).moves());
+        await().atMost(Duration.ofSeconds(10)).until(() -> !solving());
+        given().contentType(ContentType.JSON).body(rules).put("/api/rules").then().statusCode(200);
+
         // the planning month changes after the solve: the plan is stale until it is solved again
         String period = "{\"month\":null,\"absences\":[{\"personId\":\"P0004\",\"date\":\"" + MONTH.atDay(12)
                 + "\",\"typeCode\":\"U\"}],\"wishes\":[],\"fixed\":[],\"previousDuties\":[]}";

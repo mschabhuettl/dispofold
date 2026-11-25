@@ -41,6 +41,7 @@ import app.dispofold.model.PlanAnalysis;
 import app.dispofold.model.PlanAssignment;
 import app.dispofold.model.PlanStatus;
 import app.dispofold.model.PreviousDuty;
+import app.dispofold.model.Rules;
 import app.dispofold.model.ShiftType;
 import app.dispofold.planning.PlanningFacade;
 import app.dispofold.planning.PlanningInput;
@@ -240,8 +241,10 @@ public class PlanService {
                 .filter(a -> a.date().isAfter(month.atDay(1).minusDays(15))
                         && a.date().isBefore(month.atEndOfMonth().plusDays(15)))
                 .toList();
-        return boundary.isEmpty() ? hash(List.of(relevant, in.period(), in.rules()))
-                : hash(List.of(relevant, in.period(), in.rules(), boundary));
+        // The thoroughness only says how long to search, not what a good plan is: a plan stays current when it changes.
+        Rules rules = in.rules().withThoroughness(null);
+        return boundary.isEmpty() ? hash(List.of(relevant, in.period(), rules))
+                : hash(List.of(relevant, in.period(), rules, boundary));
     }
 
     String previousHash(YearMonth month) {

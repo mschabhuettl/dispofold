@@ -138,6 +138,16 @@ public record Rules(double minDailyRestHours, double minWeeklyRestHours, double 
                 nightBlockMax, nightMixMonths, thoroughness);
     }
 
+    /** These rules with another thoroughness (null: the default). */
+    public Rules withThoroughness(Thoroughness newThoroughness) {
+        return new Rules(minDailyRestHours, minWeeklyRestHours, maxDutyHours, maxWeekHours, maxAverageWeekHours,
+                minBlock, maxBlock, maxWishesPerPerson, holidayWorkEarnsCompRest, nightStart, nightEnd,
+                nightMinHours, accountCarryShare, historyMonths, weights, timeZone, averagingWeeks,
+                maxOverTargetPercent, minFreeSundays, nightDistribution, averageTolerancePercent, freeInsideAbsence,
+                averagingPeriod, accountBalancing, carryMinusRest, nightRestDays, dayToNightDays, nightBlockMin,
+                nightBlockMax, nightMixMonths, newThoroughness);
+    }
+
     /** {@link #nightRestDays()} with the default for rules saved without it. */
     public int nightRest() {
         return nightRestDays != null ? nightRestDays : DEFAULT_NIGHT_REST_DAYS;

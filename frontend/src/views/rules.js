@@ -104,6 +104,8 @@ export async function render(root, ctx) {
 
   // 1. Planning goals
   const nightWarning = h('div', { 'aria-live': 'polite' });
+  // the months of the usual night share matter only while each person keeps their share (HABIT)
+  const mixMonths = h('p', {}, sentence(t('rules.night.months')));
   const goalOf = Object.fromEntries(GOALS.map(([group, title]) => [group, title]));
   form.append(h('section.section', { 'aria-labelledby': 'h-goals' }, h('h2', { id: 'h-goals' }, t('rules.goals.title')),
     h('p.muted', {}, t('rules.goals.help')),
@@ -111,7 +113,7 @@ export async function render(root, ctx) {
       NIGHT_MODES.map(([mode, label]) => h('label.choice', {},
         h('input', { type: 'radio', name: 'nightDistribution', value: mode, checked: params.nightDistribution === mode, disabled: !canEdit,
           oninput: () => { params.nightDistribution = mode; } }), ' ', label))),
-      h('p', {}, sentence(t('rules.night.months'))), nightWarning),
+      mixMonths, nightWarning),
     GOALS.map(([group, title, texts]) => {
       const importance = importanceControl(group, title);
       return h('div.goal', { 'data-group': group }, h('div', {}, h('h3', {}, title, info(GOAL_HELP[group], title)), texts.map((text) => h('p', {}, sentence(text)))), importance);
@@ -243,6 +245,7 @@ export async function render(root, ctx) {
       input.checked = current === level;
       if (level === CUSTOM) input.parentElement.hidden = current !== CUSTOM;
     }
+    mixMonths.hidden = params.nightDistribution === 'EVEN';
     nightWarning.replaceChildren(nightRuleMissing(params.nightDistribution, weights) ? h('p.alert.alert-error', {}, t('rules.night.warning')) : '');
   }
 

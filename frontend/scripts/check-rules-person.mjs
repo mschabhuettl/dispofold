@@ -241,12 +241,14 @@ try {
   }
   await page.getByLabel('Gleichmäßig: Nachtdienste fair auf alle verteilen').check();
   check('no warning in EVEN', await warning.count() === 0);
+  check('the months of the night share are hidden in EVEN', !(await page.locator('#param-nightMixMonths').isVisible()));
   const even = await putBody();
   check('the night setting is saved', even.nightDistribution === 'EVEN' && even.weights.shiftMix === 0, even.nightDistribution);
   await openRules();
   check('the night setting is loaded', await nightMode() === 'EVEN');
   await page.getByLabel('Wie bisher: jede Person behält ihren gewohnten Nachtanteil').check();
   check('back to HABIT warns again', await warning.isVisible());
+  check('the months of the night share are back in HABIT', await page.locator('#param-nightMixMonths').isVisible());
   await advanced.locator('summary').click();
   await page.locator('.rule-row:has(#w-shiftMix)').getByRole('button', { name: /zurücksetzen/ }).click();
   check('reset of the weight ends the warning', await warning.count() === 0);

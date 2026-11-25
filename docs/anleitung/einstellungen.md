@@ -32,7 +32,7 @@ wenn ein Plan in einer Richtung auffällt.
 - **Gleichmäßig:** Nachtdienste werden fair auf alle verteilt. Der Nachtanteil der gewohnten Verteilung zählt
   nicht: Die Person ist im Nachtausgleich, die übrigen Anteile gelten für ihre Dienste außer Nächten.
 - In beiden Fällen ist nicht im Nachtausgleich, wer [nie Nacht](begriffe.md#nie-nacht) macht.
-- **Gewohnter Nachtanteil über 3 Monate** (Standard 3): Der Nachtanteil einer Person gilt über diesen Monat und die
+- **Gewohnter Nachtanteil über 3 Monate** (Standard 3, nur bei „Wie bisher“ zu sehen): Der Nachtanteil einer Person gilt über diesen Monat und die
   Vormonate in der Historie zusammen, nicht in jedem einzelnen Monat. Wer in den zwei Monaten davor viele Nächte
   hatte, bekommt jetzt wenige, und umgekehrt; so wechseln in einem Monat weniger Personen zwischen Tag und
   Nacht. 1 heißt: jeder Monat für sich, wie bis Version 0.27.
