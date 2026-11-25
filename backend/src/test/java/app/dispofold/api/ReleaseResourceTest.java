@@ -59,7 +59,7 @@ class ReleaseResourceTest {
     void plannersSeeTheReleaseFoundOnStart() {
         org.awaitility.Awaitility.await().atMost(Duration.ofSeconds(20)).until(() -> "99.0.0".equals(
                 given().get("/api/release").then().statusCode(200).extract().path("available.version")));
-        given().get("/api/release").then().body("current", equalTo("0.28.0"))
+        given().get("/api/release").then().body("current", equalTo("0.29.0"))
                 .body("available.title", equalTo("Dispofold 99.0.0")).body("available.notes", equalTo("Neu"))
                 .body("available.url", equalTo("https://github.com/mschabhuettl/dispofold/releases/tag/v99.0.0"));
     }

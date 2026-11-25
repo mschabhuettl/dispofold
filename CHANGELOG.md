@@ -3,7 +3,7 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
-## 0.29.0 (2026-11-26)
+## 0.29.0 (2026-11-25)
 
 - **Weniger Wechsel zwischen Tag und Nacht:** Die Regel **Wechsel zwischen Tag und Nacht** wiegt zehnmal so viel
   (30000 statt 3000). Eine Person mit kleinem gewohntem Nachtanteil bekommt dadurch eher keine Nacht als eine
