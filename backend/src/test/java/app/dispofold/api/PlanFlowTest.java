@@ -17,7 +17,6 @@ import java.util.Map;
 
 import jakarta.inject.Inject;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -48,11 +47,9 @@ class PlanFlowTest {
     @Inject
     FakePlanningFacade facade;
 
-    @ConfigProperty(name = "app.solver.move-limit")
-    long defaultMoveLimit;
-
-    @ConfigProperty(name = "app.solver.time-limit-seconds")
-    int defaultTimeLimit;
+    /** The budget of the default thoroughness (no limits in the configuration). */
+    static final app.dispofold.planning.SolveBudget BUDGET =
+            app.dispofold.planning.SolveBudget.of(app.dispofold.model.Thoroughness.NORMAL);
 
     @BeforeEach
     void importData() throws Exception {
@@ -85,9 +82,9 @@ class PlanFlowTest {
                 .body("plan.status", equalTo("SOLVING"));
         assertThat(facade.lastOptions().seed()).isEqualTo(42);
         assertThat(facade.lastOptions().timeLimitSeconds()).isEqualTo(5);
-        // reproducible by default: a move limit from the configuration, no stop on missing improvement
-        assertThat(facade.lastOptions().moveLimit()).isEqualTo(defaultMoveLimit);
-        assertThat(facade.lastOptions().unimprovedSeconds()).isEqualTo(defaultMoveLimit > 0 ? 0 : 30);
+        // reproducible by default: a move limit from the thoroughness of the rules, no stop on missing improvement
+        assertThat(facade.lastOptions().moveLimit()).isEqualTo(BUDGET.moves());
+        assertThat(facade.lastOptions().unimprovedSeconds()).isZero();
         await().atMost(Duration.ofSeconds(10)).until(() -> !solving());
 
         Plan solved = plan();
@@ -162,7 +159,7 @@ class PlanFlowTest {
             assertThat(p.wishes()).isEmpty();
         });
         assertThat(facade.lastOptions().seed()).isEqualTo(1);
-        assertThat(facade.lastOptions().timeLimitSeconds()).isEqualTo(defaultTimeLimit);
+        assertThat(facade.lastOptions().timeLimitSeconds()).isEqualTo(BUDGET.seconds());
         await().atMost(Duration.ofSeconds(10)).until(() -> !facade.isSolving(MONTH.plusMonths(1)));
         // the closed month's plan gives the next month's previous duties
         assertThat(facade.lastInput().period().previousDuties())

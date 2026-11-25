@@ -259,8 +259,9 @@ class NightDistributionTest {
         }
         // 4 early, 4 day (area AN), 2 nights (area DR): the categories match, the area mix 80:20 counts all duties.
         assertThat(RosterConstraints.mixDeviation(s, cells)).isZero();
-        // The same duties for the person out of the pool for the mix: the nights count, 1 expected instead of 2,
-        // early and day 4.5 expected instead of 4.
+        // The same duties for the person out of the pool for the mix, the night share in this month alone
+        // (nightMixMonths 1): the nights count, 1 expected instead of 2, early and day 4.5 expected instead of 4.
+        habitMix.setNightWindow(Staff.NightWindow.NONE);
         assertThat(RosterConstraints.mixDeviation(habitMix, cells)).isEqualTo(10 * 10 + 2 * 5 * 5);
     }
 

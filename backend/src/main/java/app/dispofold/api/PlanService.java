@@ -14,6 +14,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -43,6 +44,7 @@ import app.dispofold.model.PreviousDuty;
 import app.dispofold.model.ShiftType;
 import app.dispofold.planning.PlanningFacade;
 import app.dispofold.planning.PlanningInput;
+import app.dispofold.planning.SolveBudget;
 import app.dispofold.planning.SolveOptions;
 import app.dispofold.planning.SolveProgress;
 import app.dispofold.store.Store;
@@ -65,9 +67,10 @@ public class PlanService {
      * @param previousMonthChanged the previous month's plan changed after this month was planned
      * @param previousFromPlan the previous duties come from the stored plan of the previous month (else from the
      *        import)
+     * @param improvedMillis while solving: the time into the solve of the last better plan (0: none yet)
      */
     public record PlanState(Plan plan, boolean solving, long elapsedMillis, int hardViolations, boolean stale,
-            boolean previousMonthChanged, boolean previousFromPlan) {
+            boolean previousMonthChanged, boolean previousFromPlan, long improvedMillis) {
     }
 
     /**
@@ -81,7 +84,9 @@ public class PlanService {
     /** A running solve. Callbacks of the solver thread synchronise on it. */
     private static final class Run {
         final long seed;
+        final long started = System.nanoTime();
         volatile boolean stopRequested;
+        /** Elapsed at the last progress, which comes with a better plan. */
         volatile long elapsedMillis;
         volatile int hardViolations;
         boolean finished;
@@ -101,8 +106,9 @@ public class PlanService {
     @Inject
     ObjectMapper mapper;
 
+    /** Empty: from the thoroughness of the rules. */
     @ConfigProperty(name = "app.solver.time-limit-seconds")
-    int defaultTimeLimit;
+    Optional<Integer> defaultTimeLimit;
 
     @ConfigProperty(name = "app.solver.unimproved-seconds")
     int unimprovedSeconds;
@@ -110,8 +116,9 @@ public class PlanService {
     @ConfigProperty(name = "app.solver.seed")
     long defaultSeed;
 
+    /** Empty: from the thoroughness of the rules; 0: the time limit only. */
     @ConfigProperty(name = "app.solver.move-limit")
-    long defaultMoveLimit;
+    Optional<Long> defaultMoveLimit;
 
     private final Map<YearMonth, Run> runs = new ConcurrentHashMap<>();
     private final Map<YearMonth, Object> locks = new ConcurrentHashMap<>();
@@ -170,10 +177,11 @@ public class PlanService {
                 && !stored.previousHash().equals(previousHash(month));
         boolean fromPlan = previousPlan(month) != null;
         if (run != null) {
-            return new PlanState(plan, true, run.elapsedMillis, run.hardViolations, stale, previousChanged, fromPlan);
+            return new PlanState(plan, true, Math.max(run.elapsedMillis, (System.nanoTime() - run.started) / 1_000_000),
+                    run.hardViolations, stale, previousChanged, fromPlan, run.elapsedMillis);
         }
         return new PlanState(plan, isSolving(month), stored == null ? 0 : stored.elapsedMillis(),
-                stored == null ? 0 : stored.hardViolations(), stale, previousChanged, fromPlan);
+                stored == null ? 0 : stored.hardViolations(), stale, previousChanged, fromPlan, 0);
     }
 
     // Planning input
@@ -264,10 +272,11 @@ public class PlanService {
                     : current.assignments();
             PlanningInput input = input(month, start);
             long seed = request != null && request.seed() != null ? request.seed() : defaultSeed;
+            SolveBudget budget = SolveBudget.of(input.rules().searchDepth());
             int limit = request != null && request.timeLimitSeconds() != null && request.timeLimitSeconds() > 0
-                    ? request.timeLimitSeconds() : defaultTimeLimit;
+                    ? request.timeLimitSeconds() : defaultTimeLimit.orElse(budget.seconds());
             long moveLimit = request != null && request.moveLimit() != null && request.moveLimit() > 0
-                    ? request.moveLimit() : defaultMoveLimit;
+                    ? request.moveLimit() : defaultMoveLimit.orElse(budget.moves());
             StoredPlan before = store.plan(month).orElse(null);
             store.savePlan(new Plan(Plan.FORMAT, 1, month, PlanStatus.SOLVING, current.score(), seed, Instant.now(),
                     current.assignments()), before == null ? 0 : before.hardViolations(), 0);

@@ -75,6 +75,13 @@ public class RulesResource {
         if (r.minBlock() < 1 || r.maxBlock() < r.minBlock()) {
             return "rules.block";
         }
+        if (r.nightRest() < 0 || r.nightRest() > Rules.MAX_SWITCH_DAYS || r.dayToNight() < 0
+                || r.dayToNight() > Rules.MAX_SWITCH_DAYS || r.nightMixWindow() < 1 || r.nightMixWindow() > 12) {
+            return "rules.values";
+        }
+        if (r.nightMin() < 0 || r.nightMax() < 1 || r.nightMax() < r.nightMin()) {
+            return "rules.nightBlock";
+        }
         if (r.accountCarryShare() < 0 || r.accountCarryShare() > 1) {
             return "rules.accountShare";
         }

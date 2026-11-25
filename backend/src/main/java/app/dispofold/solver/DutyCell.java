@@ -323,6 +323,11 @@ public class DutyCell {
         return shift != null && !shift.isCompRest();
     }
 
+    /** A duty of category NIGHT. */
+    public boolean isNightDuty() {
+        return isWork() && shift.getCategory() == app.dispofold.model.ShiftCategory.NIGHT;
+    }
+
     public boolean isCompRest() {
         return shift != null && shift.isCompRest();
     }

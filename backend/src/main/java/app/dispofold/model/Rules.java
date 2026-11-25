@@ -44,6 +44,16 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  *        {@link AccountBalancing#PERIOD_END}
  * @param carryMinusRest with {@link AccountBalancing#PERIOD_END}: a minus balance at the end of a period carries
  *        into the next one (a plus balance never does); null in rules saved before it existed means no (dropped)
+ * @param nightRestDays free days wished after the last night of a block before a duty that is no night (soft rule
+ *        dayNightSwitch, 0..4); null means {@link #DEFAULT_NIGHT_REST_DAYS}
+ * @param dayToNightDays free days wished after a duty that is no night before the first night (0..4); null means 0
+ * @param nightBlockMin preferred minimum number of consecutive nights (soft rule nightBlock); null means
+ *        {@link #DEFAULT_NIGHT_BLOCK_MIN}
+ * @param nightBlockMax preferred maximum number of consecutive nights; null means {@link #DEFAULT_NIGHT_BLOCK_MAX}
+ * @param nightMixMonths the night share of a usual mix is met over this many months (the month and the months before
+ *        it in the history), 1: in every month; null means {@link #DEFAULT_NIGHT_MIX_MONTHS}
+ * @param thoroughness how long a planning searches (see {@link Thoroughness}); null means
+ *        {@link Thoroughness#NORMAL}
  */
 public record Rules(double minDailyRestHours, double minWeeklyRestHours, double maxDutyHours, double maxWeekHours,
         double maxAverageWeekHours, int minBlock, int maxBlock, int maxWishesPerPerson,
@@ -54,7 +64,13 @@ public record Rules(double minDailyRestHours, double minWeeklyRestHours, double 
         @JsonInclude(JsonInclude.Include.NON_NULL) Boolean freeInsideAbsence,
         @JsonInclude(JsonInclude.Include.NON_NULL) AveragingPeriod averagingPeriod,
         @JsonInclude(JsonInclude.Include.NON_NULL) AccountBalancing accountBalancing,
-        @JsonInclude(JsonInclude.Include.NON_NULL) Boolean carryMinusRest) {
+        @JsonInclude(JsonInclude.Include.NON_NULL) Boolean carryMinusRest,
+        @JsonInclude(JsonInclude.Include.NON_NULL) Integer nightRestDays,
+        @JsonInclude(JsonInclude.Include.NON_NULL) Integer dayToNightDays,
+        @JsonInclude(JsonInclude.Include.NON_NULL) Integer nightBlockMin,
+        @JsonInclude(JsonInclude.Include.NON_NULL) Integer nightBlockMax,
+        @JsonInclude(JsonInclude.Include.NON_NULL) Integer nightMixMonths,
+        @JsonInclude(JsonInclude.Include.NON_NULL) Thoroughness thoroughness) {
 
     public static final String DEFAULT_TIME_ZONE = "Europe/Vienna";
     /** Planning never goes below this daily rest; a shortened rest is for operations only. */
@@ -62,6 +78,12 @@ public record Rules(double minDailyRestHours, double minWeeklyRestHours, double 
     public static final double DEFAULT_OVER_TARGET_PERCENT = 10;
     public static final int DEFAULT_FREE_SUNDAYS = 2;
     public static final double DEFAULT_AVERAGE_TOLERANCE = 10;
+    public static final int DEFAULT_NIGHT_REST_DAYS = 2;
+    public static final int DEFAULT_NIGHT_BLOCK_MIN = 2;
+    public static final int DEFAULT_NIGHT_BLOCK_MAX = 4;
+    public static final int DEFAULT_NIGHT_MIX_MONTHS = 3;
+    /** Upper bound of the free days of the rule dayNightSwitch. */
+    public static final int MAX_SWITCH_DAYS = 4;
 
     /** Rules without the parameters added later (null): their accessors give the defaults. */
     public Rules(double minDailyRestHours, double minWeeklyRestHours, double maxDutyHours, double maxWeekHours,
@@ -88,7 +110,62 @@ public record Rules(double minDailyRestHours, double minWeeklyRestHours, double 
                 maxBlock, maxWishesPerPerson, holidayWorkEarnsCompRest, nightStart, nightEnd, nightMinHours,
                 accountCarryShare, historyMonths, weights, timeZone, averagingWeeks, maxOverTargetPercent,
                 minFreeSundays, nightDistribution, averageTolerancePercent, freeInsideAbsence, averagingPeriod, null,
-                null);
+                null, null, null, null, null, null, null);
+    }
+
+    /** Rules without the parameters of night switches, night blocks, the night mix window and the thoroughness. */
+    public Rules(double minDailyRestHours, double minWeeklyRestHours, double maxDutyHours, double maxWeekHours,
+            double maxAverageWeekHours, int minBlock, int maxBlock, int maxWishesPerPerson,
+            boolean holidayWorkEarnsCompRest, LocalTime nightStart, LocalTime nightEnd, double nightMinHours,
+            double accountCarryShare, int historyMonths, Map<String, Long> weights, String timeZone,
+            int averagingWeeks, Double maxOverTargetPercent, Integer minFreeSundays,
+            NightDistribution nightDistribution, Double averageTolerancePercent, Boolean freeInsideAbsence,
+            AveragingPeriod averagingPeriod, AccountBalancing accountBalancing, Boolean carryMinusRest) {
+        this(minDailyRestHours, minWeeklyRestHours, maxDutyHours, maxWeekHours, maxAverageWeekHours, minBlock,
+                maxBlock, maxWishesPerPerson, holidayWorkEarnsCompRest, nightStart, nightEnd, nightMinHours,
+                accountCarryShare, historyMonths, weights, timeZone, averagingWeeks, maxOverTargetPercent,
+                minFreeSundays, nightDistribution, averageTolerancePercent, freeInsideAbsence, averagingPeriod,
+                accountBalancing, carryMinusRest, null, null, null, null, null, null);
+    }
+
+    /** These rules with other weights. */
+    public Rules withWeights(Map<String, Long> newWeights) {
+        return new Rules(minDailyRestHours, minWeeklyRestHours, maxDutyHours, maxWeekHours, maxAverageWeekHours,
+                minBlock, maxBlock, maxWishesPerPerson, holidayWorkEarnsCompRest, nightStart, nightEnd,
+                nightMinHours, accountCarryShare, historyMonths, newWeights, timeZone, averagingWeeks,
+                maxOverTargetPercent, minFreeSundays, nightDistribution, averageTolerancePercent, freeInsideAbsence,
+                averagingPeriod, accountBalancing, carryMinusRest, nightRestDays, dayToNightDays, nightBlockMin,
+                nightBlockMax, nightMixMonths, thoroughness);
+    }
+
+    /** {@link #nightRestDays()} with the default for rules saved without it. */
+    public int nightRest() {
+        return nightRestDays != null ? nightRestDays : DEFAULT_NIGHT_REST_DAYS;
+    }
+
+    /** {@link #dayToNightDays()} with the default for rules saved without it. */
+    public int dayToNight() {
+        return dayToNightDays != null ? dayToNightDays : 0;
+    }
+
+    /** {@link #nightBlockMin()} with the default for rules saved without it. */
+    public int nightMin() {
+        return nightBlockMin != null ? nightBlockMin : DEFAULT_NIGHT_BLOCK_MIN;
+    }
+
+    /** {@link #nightBlockMax()} with the default for rules saved without it. */
+    public int nightMax() {
+        return nightBlockMax != null ? nightBlockMax : DEFAULT_NIGHT_BLOCK_MAX;
+    }
+
+    /** {@link #nightMixMonths()} with the default for rules saved without it. */
+    public int nightMixWindow() {
+        return nightMixMonths != null ? nightMixMonths : DEFAULT_NIGHT_MIX_MONTHS;
+    }
+
+    /** {@link #thoroughness()} with the default for rules saved without it. */
+    public Thoroughness searchDepth() {
+        return thoroughness != null ? thoroughness : Thoroughness.NORMAL;
     }
 
     /** {@link #accountBalancing()} with the default for rules saved without it. */
@@ -142,6 +219,6 @@ public record Rules(double minDailyRestHours, double minWeeklyRestHours, double 
     public static Rules defaults() {
         return new Rules(11, 36, 12, 60, 46.16, 2, 4, 6, true, LocalTime.of(22, 0), LocalTime.of(6, 0), 2, 0.25, 3,
                 Map.of(), DEFAULT_TIME_ZONE, 52, DEFAULT_OVER_TARGET_PERCENT,
-                DEFAULT_FREE_SUNDAYS, NightDistribution.HABIT, null, null, null);
+                DEFAULT_FREE_SUNDAYS, NightDistribution.HABIT, null, null, null, null, null);
     }
 }

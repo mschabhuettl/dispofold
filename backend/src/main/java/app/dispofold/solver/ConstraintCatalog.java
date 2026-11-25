@@ -40,6 +40,9 @@ public final class ConstraintCatalog {
     public static final String BLOCK_LENGTH = "blockLength";
     public static final String ISOLATED_DAY_OFF = "isolatedDayOff";
     public static final String FORWARD_ROTATION = "forwardRotation";
+    public static final String DAY_NIGHT_SWITCH = "dayNightSwitch";
+    public static final String DAY_NIGHT_SWITCHES = "dayNightSwitches";
+    public static final String NIGHT_BLOCK = "nightBlock";
     public static final String SPLIT_WEEKEND = "splitWeekend";
     public static final String COMP_REST_USE = "compRestUse";
     public static final String SHIFT_VARIETY = "shiftVariety";
@@ -70,14 +73,51 @@ public final class ConstraintCatalog {
             new ConstraintInfo(DEMAND, MEDIUM, DEMAND_WEIGHT, false), new ConstraintInfo(OVERSTAFFING, MEDIUM, 1, false),
             new ConstraintInfo(USELESS_DUTY, MEDIUM, 1, false),
             soft(TARGET_HOURS, 20), soft(FAIR_NIGHTS, 3), soft(FAIR_WEEKENDS, 3), soft(FAIR_HOLIDAYS, 3),
-            soft(FAIR_UNPOPULAR, 2), soft(WISHES, 300), soft(BLOCK_LENGTH, 6000), soft(ISOLATED_DAY_OFF, 10000),
-            soft(FORWARD_ROTATION, 500), soft(SPLIT_WEEKEND, 300), soft(COMP_REST_USE, 500),
+            soft(FAIR_UNPOPULAR, 2), soft(WISHES, 300), soft(BLOCK_LENGTH, 18000), soft(ISOLATED_DAY_OFF, 30000),
+            soft(FORWARD_ROTATION, 500), soft(DAY_NIGHT_SWITCH, 10000), soft(DAY_NIGHT_SWITCHES, 3000),
+            soft(NIGHT_BLOCK, 6000), soft(SPLIT_WEEKEND, 300), soft(COMP_REST_USE, 500),
             soft(SHIFT_VARIETY, 5), soft(AREA_VARIETY, 1), soft(SHIFT_MIX, 100), soft(FAMILY, 800),
             // On-request duties are never chosen by the solver (see RosterBuilder); the constraint only marks
             // duties set by planners, so its weight is not a setting.
             new ConstraintInfo(ON_REQUEST, SOFT, 1000, false));
 
+    /**
+     * Default weights before version 0.28 that have changed since. Stored rules saved before then hold every tunable
+     * weight (the rules page saves them all), so a stored weight that is the old default, or the old default at a
+     * Wichtigkeit level of the goal, was never set by hand: {@link #upgradeWeights} moves it to the new default.
+     */
+    static final Map<String, Long> DEFAULTS_BEFORE_0_28 = Map.of(BLOCK_LENGTH, 6000L, ISOLATED_DAY_OFF, 10000L);
+    /** The Wichtigkeit factors of the goal "Blöcke" (frontend lib/rule-groups.js). */
+    private static final double[] LEVEL_FACTORS = { 1, 0.5, 2 };
+
     private ConstraintCatalog() {
+    }
+
+    /**
+     * Weights stored before version 0.28 with the new defaults: when the changed weights all stand at the old default
+     * times one Wichtigkeit factor, they get the new default times that factor; weights set by hand otherwise, and
+     * all other weights, stay as stored.
+     */
+    public static Map<String, Long> upgradeWeights(Map<String, Long> stored) {
+        if (stored == null || stored.isEmpty()) {
+            return stored;
+        }
+        for (double factor : LEVEL_FACTORS) {
+            boolean level = DEFAULTS_BEFORE_0_28.entrySet().stream().noneMatch(e -> {
+                Long w = stored.get(e.getKey());
+                return w != null && w != Math.round(e.getValue() * factor);
+            });
+            if (level) {
+                Map<String, Long> upgraded = new java.util.LinkedHashMap<>(stored);
+                for (String id : DEFAULTS_BEFORE_0_28.keySet()) {
+                    if (upgraded.containsKey(id)) {
+                        upgraded.put(id, Math.round(get(id).defaultWeight() * factor));
+                    }
+                }
+                return upgraded;
+            }
+        }
+        return stored;
     }
 
     private static ConstraintInfo hard(String id) {

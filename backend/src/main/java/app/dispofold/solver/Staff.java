@@ -35,6 +35,7 @@ public final class Staff {
     private String nightExclusion;
     /** The category shares of the mix are without the night share and apply to the duties that are not nights. */
     private boolean nightsOutsideMix;
+    private NightWindow nightWindow = NightWindow.NONE;
     /** Target the soft rule aims at: the target scaled to the work the demand needs (see RosterBuilder). */
     private int scaledTargetMinutes;
 
@@ -45,7 +46,23 @@ public final class Staff {
      * @param maxSundaysWorked Sundays of the month with work allowed at most: Sundays minus the free ones required
      */
     public record Limits(int dailyRest, int weeklyRest, int maxDuty, int maxWeek, int minBlock, int maxBlock,
-            int maxMonth, int maxSundaysWorked) {
+            int maxMonth, int maxSundaysWorked, int nightRest, int dayToNight, int nightMin, int nightMax) {
+
+        /** Limits with the default free days around nights and night blocks. */
+        public Limits(int dailyRest, int weeklyRest, int maxDuty, int maxWeek, int minBlock, int maxBlock,
+                int maxMonth, int maxSundaysWorked) {
+            this(dailyRest, weeklyRest, maxDuty, maxWeek, minBlock, maxBlock, maxMonth, maxSundaysWorked,
+                    app.dispofold.model.Rules.DEFAULT_NIGHT_REST_DAYS, 0, app.dispofold.model.Rules.DEFAULT_NIGHT_BLOCK_MIN,
+                    app.dispofold.model.Rules.DEFAULT_NIGHT_BLOCK_MAX);
+        }
+    }
+
+    /**
+     * The months before this one in the window of the usual night share (see {@code nightMixMonths}): how many of them
+     * the history has, and their nights and worked minutes.
+     */
+    public record NightWindow(int months, int nights, long minutes) {
+        public static final NightWindow NONE = new NightWindow(0, 0, 0);
     }
 
     /** Sums over the history months counted for fairness; {@code months} is the number of those months. */
@@ -182,6 +199,14 @@ public final class Staff {
 
     public void setNightsOutsideMix(boolean nightsOutsideMix) {
         this.nightsOutsideMix = nightsOutsideMix;
+    }
+
+    public NightWindow getNightWindow() {
+        return nightWindow;
+    }
+
+    public void setNightWindow(NightWindow nightWindow) {
+        this.nightWindow = nightWindow;
     }
 
     /** The person has usual shares per area: they replace area variety. */

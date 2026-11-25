@@ -23,6 +23,7 @@ import ai.timefold.solver.core.api.score.stream.common.ConnectedRange;
 import ai.timefold.solver.core.api.score.stream.common.ConnectedRangeChain;
 import ai.timefold.solver.core.api.score.stream.common.Sequence;
 import ai.timefold.solver.core.api.score.stream.common.SequenceChain;
+import ai.timefold.solver.core.api.score.stream.bi.BiConstraintStream;
 import ai.timefold.solver.core.api.score.stream.uni.UniConstraintStream;
 
 /**
@@ -42,7 +43,8 @@ public class RosterConstraints implements ConstraintProvider {
                 qualification(f), absence(f), freeInsideAbsence(f), employment(f), neverRestriction(f), compRestBalance(f), missingShift(f),
                 demand(f), overstaffing(f), uselessDuty(f),
                 targetHours(f), fairNights(f), fairWeekends(f), fairHolidays(f), fairUnpopular(f), wishes(f),
-                blockLength(f), isolatedDayOff(f), forwardRotation(f), splitWeekend(f), compRestUse(f),
+                blockLength(f), isolatedDayOff(f), forwardRotation(f), dayNightSwitch(f), dayNightSwitches(f),
+                nightBlock(f), splitWeekend(f), compRestUse(f),
                 shiftVariety(f), areaVariety(f), shiftMix(f), family(f), onRequest(f)
         };
     }
@@ -400,6 +402,85 @@ public class RosterConstraints implements ConstraintProvider {
                 .asConstraint(ConstraintCatalog.FORWARD_ROTATION);
     }
 
+    /**
+     * Two duties of a person that follow each other (days without duty between them skipped; absences and
+     * compensatory rest count as such days), one of them a night and the other not; duties of the previous month
+     * count, the second duty is in the month.
+     */
+    private static BiConstraintStream<DutyCell, DutyCell> switches(ConstraintFactory f) {
+        BiConstraintStream<DutyCell, DutyCell> nextDay = work(f)
+                .join(work(f), equal(DutyCell::getStaff), equal(c -> c.getDay() + 1, DutyCell::getDay));
+        BiConstraintStream<DutyCell, DutyCell> afterFreeDays = work(f)
+                .groupBy(DutyCell::getStaff, toConsecutiveSequences(c -> (int) c.getDay()))
+                .flattenLast(SequenceChain::getBreaks)
+                .map((s, gap) -> gap.getPreviousSequenceEnd(), (s, gap) -> gap.getNextSequenceStart());
+        return nextDay.concat(afterFreeDays)
+                .filter((a, b) -> b.isInMonth() && a.isNightDuty() != b.isNightDuty());
+    }
+
+    /**
+     * Free days between a night block and a duty that is no night (wished: nightRest), and between a duty that is no
+     * night and the first night (wished: dayToNight). Penalty: each day missing.
+     */
+    Constraint dayNightSwitch(ConstraintFactory f) {
+        return switches(f)
+                .filter((a, b) -> missingFreeDays(a, b) > 0)
+                .penalize(SOFT, RosterConstraints::missingFreeDays)
+                .justifyWith((a, b, s) -> hit(b, "fromShiftId", a.getShift().getId(), "toShiftId",
+                        b.getShift().getId(), "previousDate", a.getDate().toString(), "freeDays",
+                        b.getDay() - a.getDay() - 1, "wantedDays", wantedFreeDays(a)))
+                .asConstraint(ConstraintCatalog.DAY_NIGHT_SWITCH);
+    }
+
+    static long missingFreeDays(DutyCell a, DutyCell b) {
+        return Math.max(0, wantedFreeDays(a) - (b.getDay() - a.getDay() - 1));
+    }
+
+    /** Free days wished after duty a when the next duty is of the other kind (night or not). */
+    static int wantedFreeDays(DutyCell a) {
+        Staff.Limits l = a.getStaff().getLimits();
+        return a.isNightDuty() ? l.nightRest() : l.dayToNight();
+    }
+
+    /** Each change between nights and duties that are no night, so that there are few of them. */
+    Constraint dayNightSwitches(ConstraintFactory f) {
+        return switches(f)
+                .penalize(SOFT)
+                .justifyWith((a, b, s) -> hit(b, "fromShiftId", a.getShift().getId(), "toShiftId",
+                        b.getShift().getId(), "previousDate", a.getDate().toString()))
+                .asConstraint(ConstraintCatalog.DAY_NIGHT_SWITCHES);
+    }
+
+    /**
+     * Consecutive nights (category NIGHT) between nightMin and nightMax; a block that ends on the last day of the
+     * month may continue and is not too short. Penalty: each night below or above.
+     */
+    Constraint nightBlock(ConstraintFactory f) {
+        return work(f)
+                .filter(DutyCell::isNightDuty)
+                .groupBy(DutyCell::getStaff, toConsecutiveSequences(c -> (int) c.getDay()))
+                .flattenLast(SequenceChain::getConsecutiveSequences)
+                .filter((s, seq) -> seq.getLastItem().isInMonth() && nightBlockExcess(s, seq) > 0)
+                .penalize(SOFT, RosterConstraints::nightBlockExcess)
+                .justifyWith((s, seq, score) -> Hit.of(s.getId(), seq.getFirstItem().getDate(),
+                        "nights", seq.getCount()))
+                .asConstraint(ConstraintCatalog.NIGHT_BLOCK);
+    }
+
+    static long nightBlockExcess(Staff s, Sequence<DutyCell, Integer> seq) {
+        return nightBlockExcess(s, seq.getCount(), seq.getLastItem().isMonthEnd());
+    }
+
+    static long nightBlockExcess(Staff s, int n, boolean endsAtMonthEnd) {
+        if (n > s.getLimits().nightMax()) {
+            return n - s.getLimits().nightMax();
+        }
+        if (n < s.getLimits().nightMin() && !endsAtMonthEnd) {
+            return s.getLimits().nightMin() - n;
+        }
+        return 0;
+    }
+
     Constraint splitWeekend(ConstraintFactory f) {
         return f.forEachIncludingUnassigned(DutyCell.class)
                 .filter(c -> c.getWeekend() >= 0)
@@ -455,7 +536,8 @@ public class RosterConstraints implements ConstraintProvider {
     /**
      * People with a usual mix: per category and per area the planned duties follow the shares (expected = share x
      * the person's duties of the month). Penalty: the squared deviation in tenths of a duty, summed over categories
-     * and areas, so a few duties off cost little and a 50:50 month for a 90:10 person costs a lot.
+     * and areas, so a few duties off cost little and a 50:50 month for a 90:10 person costs a lot. The night share is
+     * met over several months when the rules say so and the history has some of them (see mixDeviation).
      */
     Constraint shiftMix(ConstraintFactory f) {
         return monthWork(f)
@@ -474,9 +556,11 @@ public class RosterConstraints implements ConstraintProvider {
      */
     static long mixDeviation(Staff s, java.util.List<DutyCell> cells) {
         java.util.Map<Object, Integer> planned = new java.util.HashMap<>();
+        long minutes = 0;
         for (DutyCell c : cells) {
             planned.merge(c.getShift().getCategory(), 1, Integer::sum);
             planned.merge("area:" + c.getAreaId(), 1, Integer::sum);
+            minutes += c.getDurationMinutes();
         }
         int n = cells.size();
         long sum = 0;
@@ -485,11 +569,25 @@ public class RosterConstraints implements ConstraintProvider {
             if (s.isNightsOutsideMix()) {
                 counted -= planned.getOrDefault(app.dispofold.model.ShiftCategory.NIGHT, 0);
             }
+            java.util.Map<app.dispofold.model.ShiftCategory, Double> shares = s.getMix().categoriesOrEmpty();
+            double nightShare = s.isNightsOutsideMix() ? 0
+                    : shares.getOrDefault(app.dispofold.model.ShiftCategory.NIGHT, 0.0);
+            Staff.NightWindow window = s.getNightWindow();
+            boolean overMonths = window.months() > 0 && nightShare > 0 && nightShare < 1 && minutes > 0;
+            int nights = planned.getOrDefault(app.dispofold.model.ShiftCategory.NIGHT, 0);
+            if (overMonths) {
+                // Over the window: the share of all its duties (those of the months before estimated from their
+                // minutes and this month's mean duty length) minus the nights already done, within this month's duties.
+                double before = (double) window.minutes() * n / minutes;
+                double expected = Math.max(0, Math.min(n, nightShare * (n + before) - window.nights()));
+                sum += square(Math.round(10 * (nights - expected)));
+                counted = n - nights;
+            }
             for (app.dispofold.model.ShiftCategory category : app.dispofold.model.ShiftCategory.values()) {
-                if (s.isNightsOutsideMix() && category == app.dispofold.model.ShiftCategory.NIGHT) {
+                if (category == app.dispofold.model.ShiftCategory.NIGHT && (s.isNightsOutsideMix() || overMonths)) {
                     continue;
                 }
-                double share = s.getMix().categoriesOrEmpty().getOrDefault(category, 0.0);
+                double share = shares.getOrDefault(category, 0.0) / (overMonths ? 1 - nightShare : 1);
                 sum += square(Math.round(10 * (planned.getOrDefault(category, 0) - share * counted)));
             }
         }

@@ -56,10 +56,13 @@ class RosterAnalyzerTest {
         return new PlanningInput(d, d.periods().get(0), Rules.defaults(), cells);
     }
 
-    /** Recorded before the fairness loads were added to the figures: the analysis does not change the scoring. */
+    /**
+     * Recorded before the fairness loads were added to the figures: the analysis does not change the scoring. Recorded
+     * again with the rules of version 0.28 (switches between day and night, night blocks).
+     */
     @Test
     void theScoreOfAFixedPlanIsUnchanged() {
-        assertThat(FACADE.analyze(fairnessInput()).score()).isEqualTo("-1hard/-61200000000000medium/-48739236soft");
+        assertThat(FACADE.analyze(fairnessInput()).score()).isEqualTo("-1hard/-61200000000000medium/-48775236soft");
     }
 
     /** The loads in the figures are those the rules compare: the hits name the same loads, in thousandths. */

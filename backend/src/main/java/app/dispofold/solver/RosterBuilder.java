@@ -133,6 +133,7 @@ public final class RosterBuilder {
             Staff s = staff(p, own, counted.size(), Math.max(0, balance - preEnteredCompRest),
                     available(p, absences), previousCounts(before));
             nights(s, p, ownRestrictions);
+            s.setNightWindow(nightWindow(own, month, rules.nightMixWindow()));
             staff.add(s);
             cells.addAll(previousCells(s, before));
             cells.addAll(monthCells(p, s, ownRestrictions, counted, absences, around,
@@ -213,7 +214,8 @@ public final class RosterBuilder {
                 (int) Math.round(rules.minWeeklyRestHours() * 60), (int) Math.round(rules.maxDutyHours() * 60),
                 (int) Math.round(rules.maxWeekHours() * 60), rules.minBlock(), rules.maxBlock(),
                 goal.limitMinutes(),
-                rules.freeSundays() == 0 ? Integer.MAX_VALUE : Math.max(0, sundays() - rules.freeSundays()));
+                rules.freeSundays() == 0 ? Integer.MAX_VALUE : Math.max(0, sundays() - rules.freeSundays()),
+                rules.nightRest(), rules.dayToNight(), rules.nightMin(), rules.nightMax());
         Staff.History h = history(history, month, rules.historyMonths());
         boolean nights = false;
         boolean unpopular = false;
@@ -397,6 +399,21 @@ public final class RosterBuilder {
             }
         }
         return new Staff.History(nights, weekends, hol, unpopular, wishes, met, counted);
+    }
+
+    /** Nights and worked minutes of the history months in the window of the usual night share before this month. */
+    static Staff.NightWindow nightWindow(List<HistoryEntry> entries, YearMonth month, int months) {
+        int found = 0, nights = 0;
+        long minutes = 0;
+        for (HistoryEntry e : entries) {
+            YearMonth m = YearMonth.parse(e.month());
+            if (m.isBefore(month) && !m.isBefore(month.minusMonths(months - 1L))) {
+                found++;
+                nights += e.nights();
+                minutes += Math.round(e.hours() * 60);
+            }
+        }
+        return found == 0 ? Staff.NightWindow.NONE : new Staff.NightWindow(found, nights, minutes);
     }
 
     /** The first {@code max} wishes by date. */
