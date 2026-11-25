@@ -203,6 +203,7 @@ function codes(m) {
       const ignored = pattern('ignoreAbsences', a.code);
       return { ...a, result: rest >= 0 ? { kind: 'compensatoryRest', index: rest } : ignored >= 0 ? { kind: 'ignored', index: ignored } : { kind: 'none' } };
     }),
+    people: 150, // the rows of the folder's table of employees (invented)
   };
 }
 

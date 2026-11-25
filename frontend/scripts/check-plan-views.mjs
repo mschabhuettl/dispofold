@@ -404,8 +404,7 @@ try {
   const list = await page.locator('dialog .checklist li').allInnerTexts();
   check('checklist of three items', list.length === 3, list.join(' | '));
   const after = await page.locator('#close-month-after').innerText();
-  check('the dialog says what follows: read only, where to reopen', after.includes('nur noch lesbar') && after.includes('„Einstellungen > Daten“')
-    && after.includes('„Monat wieder öffnen“'), after);
+  check('the dialog says what follows: read only, where to reopen', after.includes('nur noch lesbar') && after.includes('„Daten > Monate“'), after);
   check('plan out of date is open', await page.locator('dialog .checklist li.open').filter({ hasText: 'Plan veraltet' }).count() === 1);
   const confirmButton = page.locator('dialog').getByRole('button', { name: 'Monat abschließen' });
   check('closing needs the second confirm', await confirmButton.isDisabled());

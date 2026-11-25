@@ -1,6 +1,6 @@
 // Playwright check of the terms: every page, for planners and viewers, shows none of the old names (Sollstunden,
 // Fixe Dienste, Eingaben geändert, Schichtmix, Familienwunsch, hart/weich, Strafe, ...) in its text, tooltips or labels; the
-// plan status reads Entwurf or abgeschlossen. Also: the menu has the groups Dienstplan, Prüfen, Eingaben, Personen and Einstellungen, viewers get Dienstplan, Personen and Fairness only, the address of Daten
+// plan status reads Entwurf or abgeschlossen. Also: the menu has the groups Dienstplan, Eingaben, Prüfen, Personen, Daten and Einstellungen, viewers get Dienstplan, Personen and Fairness only, the address of Daten
 // shows viewers the Dienstplan, the month picker shows on month pages only, the people list names the areas, the mix fields have labels, the note on the
 // night fairness is shown in the person form and next to the mix on the person page, the import page shows no paths.
 // Demo data of the dev server (mock API), month 2027-01 planned.
@@ -93,11 +93,11 @@ try {
     await page.waitForTimeout(500);
   }
   const routes = await pages(page);
-  check('planner navigation has Daten', routes.includes('import'), routes.join(' '));
-  check('planner menu', (await page.locator('#nav').innerText()).split('\n').join(' | ') === 'Dienstplan | Prüfen | Eingaben | Personen | Einstellungen | Anleitung',
+  check('planner navigation has Daten', ['uebernehmen', 'monate', 'sichern'].every((x) => routes.includes(x)) && !routes.includes('import'), routes.join(' '));
+  check('planner menu', (await page.locator('#nav').innerText()).split('\n').join(' | ') === 'Dienstplan | Eingaben | Prüfen | Personen | Daten | Einstellungen | Anleitung',
     await page.locator('#nav').innerText());
   // the month picker shows on month pages only
-  for (const [path, shown] of [['plan', true], ['eingaben', true], ['regeln', false], ['stammdaten', false], ['import', true]]) {
+  for (const [path, shown] of [['plan', true], ['eingaben', true], ['regeln', false], ['stammdaten', false], ['uebernehmen', false], ['monate', false], ['sichern', true]]) {
     await open(page, path);
     check(`month picker on ${path}: ${shown}`, await page.locator('.month-picker').isVisible() === shown);
   }
@@ -150,8 +150,8 @@ try {
   check('night note in the person form', (await form.innerText()).includes('Nachtausgleich'));
   await scan(page, 'person form');
 
-  // Import page: no repository paths or format strings, demo data under Erweitert
-  await open(page, 'import');
+  // Übernehmen: no repository paths or format strings, demo data under Erweitert
+  await open(page, 'uebernehmen');
   const importText = await page.locator('#main').innerText();
   check('import page without paths and format strings', !PATHS.test(importText), importText.match(PATHS)?.[0]);
   check('demo data under Erweitert', await page.locator('details.advanced button', { hasText: 'Demodaten laden' }).count() === 1);
@@ -159,7 +159,7 @@ try {
   // Viewers: no Import/Export, its address shows the Dienstplan; every other page without old terms
   const viewer = await login('ansicht');
   const viewerRoutes = await pages(viewer);
-  check('viewer navigation: Dienstplan, Personen, Fairness', !viewerRoutes.includes('import')
+  check('viewer navigation: Dienstplan, Personen, Fairness', !viewerRoutes.includes('uebernehmen') && !viewerRoutes.includes('sichern')
     && (await viewer.locator('#nav').innerText()).split('\n').join(' | ') === 'Dienstplan | Personen | Fairness | Anleitung', viewerRoutes.join(' '));
   await open(viewer, 'import');
   check('viewer address of Import/Export shows the Dienstplan', viewer.url().endsWith('#/plan')

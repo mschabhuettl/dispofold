@@ -5,8 +5,8 @@
 // editor's mapping does not meet yet, each with its reason: taken into the editor (saved only with "Zuordnung
 // speichern") or discarded (remembered by the server until the reset).
 import { guarded, h, info, saveBlob, sortableTable, t, toast } from '../../../frontend/src/lib/plugin-api.js';
-import { ENTRY_LISTS, KNOWN_KEYS, PATTERN_LISTS, PROPOSAL_SECTIONS, hitsBySection, isObject, mappingJson, moveEntry, newEntry, proposalTitle,
-  resultText, sectionList, setOptional, takeProposal, toggleArea, unmatched } from './model.js';
+import { ENTRY_LISTS, KNOWN_KEYS, PATTERN_LISTS, PROPOSAL_SECTIONS, hitsBySection, isObject, mappingJson, moveEntry, newEntry, proposalCount,
+  proposalTitle, resultText, sectionList, setOptional, takeEvery, takeProposal, toggleArea, unmatched } from './model.js';
 import { ID, problem } from './shared.js';
 
 const CATEGORIES = ['EARLY', 'DAY', 'LATE', 'NIGHT'];
@@ -435,6 +435,18 @@ export async function render(root, ctx) {
   const parse = (textValue) => {
     try { return JSON.parse(textValue); } catch { return undefined; }
   };
+  /** Saves the mapping on top of the settings as they are now (options may have been saved meanwhile). */
+  async function store(done = t('plugin.sp5.map.saved')) {
+    const fresh = await guarded(() => api.get('einstellungen'));
+    if (!fresh) return false;
+    const saved = await guarded(() => api.put('einstellungen', { ...fresh, mapping }), done);
+    if (!saved) return false;
+    settings = saved;
+    dirty = false;
+    marker.hidden = true;
+    none?.remove(); // a mapping is saved now
+    return true;
+  }
   const save = h('button.btn.btn-primary', { id: 'sp5-map-save', type: 'button' }, t('plugin.sp5.map.save'));
   save.addEventListener('click', async () => {
     // the newer of the two is saved: the JSON typed last, or the editor changed after it
@@ -446,14 +458,53 @@ export async function render(root, ctx) {
       rawEdited = false;
       raw.value = mappingJson(mapping);
     }
-    const saved = await guarded(() => api.put('einstellungen', { ...settings, mapping }), t('plugin.sp5.map.saved'));
-    if (!saved) return undefined;
-    settings = saved;
-    dirty = false;
-    marker.hidden = true;
-    none?.remove(); // a mapping is saved now
+    await store();
     return undefined;
   });
+
+  // the assistant: with proposals for what the mapping does not meet yet, all of them taken and saved with one click
+  const assistant = h('section.section.assistant', { id: 'sp5-assistant', 'aria-labelledby': 'h-sp5-assistant', hidden: true });
+  async function showAssistant() {
+    if (!settings.root) return;
+    let found;
+    try {
+      found = await api.post('zuordnung/vorschlaege', mapping);
+    } catch {
+      return; // the proposals section below says what is wrong
+    }
+    const count = proposalCount(found);
+    if (!count) {
+      assistant.hidden = true;
+      return;
+    }
+    // the areas the proposals bring, for a look before taking them
+    const trial = structuredClone(mapping);
+    const { areas } = takeEvery(trial, structuredClone(found));
+    const brought = sectionList(trial, 'areas').filter((a) => isObject(a) && areas.includes(a.id));
+    const take = h('button.btn.btn-primary', { id: 'sp5-assistant-take', type: 'button' }, t('plugin.sp5.assistant.take'));
+    take.addEventListener('click', async () => {
+      take.disabled = true;
+      const taken = takeEvery(mapping, found);
+      codes = null;
+      changed();
+      draw();
+      if (await store(t('plugin.sp5.assistant.saved', { count: taken.count }))) {
+        const left = proposalCount(taken.left);
+        assistant.replaceChildren(h('h2', { id: 'h-sp5-assistant' }, t('plugin.sp5.assistant.title')),
+          h('p.alert', { id: 'sp5-assistant-done', role: 'status' }, t('plugin.sp5.assistant.done', { count: taken.count }),
+            left ? ` ${t('plugin.sp5.assistant.left', { count: left })}` : ''));
+        await propose();
+        await check();
+      } else take.disabled = false;
+    });
+    assistant.hidden = false;
+    assistant.replaceChildren(h('h2', { id: 'h-sp5-assistant' }, t('plugin.sp5.assistant.title')),
+      h('p', { id: 'sp5-assistant-count' }, t('plugin.sp5.assistant.found', { count })),
+      ...(brought.length ? [h('p', {}, t('plugin.sp5.assistant.areas')),
+        h('ul', { id: 'sp5-assistant-areas' }, brought.map((a) => h('li', {}, `${a.id} ${a.name ?? ''}`.trim())))] : []),
+      h('div.toolbar', {}, take),
+      h('p.muted', {}, t('plugin.sp5.assistant.experts')));
+  }
   const download = button(t('plugin.sp5.map.download'), () => saveBlob(new Blob([mappingJson(mapping)], { type: 'application/json' }), 'mapping.json'),
     { id: 'sp5-map-download' });
   const file = h('input', { id: 'sp5-map-file', type: 'file', accept: '.json,application/json' });
@@ -488,18 +539,22 @@ export async function render(root, ctx) {
     h('p', { id: 'sp5-map-intro' }, t('plugin.sp5.map.intro')),
     jumps,
     none ?? '',
-    h('div.toolbar', {}, save, marker, download,
-      h('div', {}, h('label', { for: 'sp5-map-file' }, t('plugin.sp5.map.file')), ' ', file)), // not a .field: its input would be too narrow
+    assistant,
+    h('div.toolbar', {}, save, marker),
     h('section.section', { 'aria-labelledby': 'h-sp5-map-check' }, h('h2', { id: 'h-sp5-map-check' }, t('plugin.sp5.map.check'),
       info(t('plugin.sp5.map.check.help'), t('plugin.sp5.map.check'))), problems),
     proposalSection,
     editor,
     h('section.section', { 'aria-labelledby': 'h-sp5-map-raw' }, h('h2', { id: 'h-sp5-map-raw' }, t('plugin.sp5.map.json'),
       info(t('plugin.sp5.map.json.help'), t('plugin.sp5.map.json'))),
-    h('details.advanced', {}, h('summary', {}, t('plugin.sp5.map.json.show')), raw, h('div.toolbar', {}, applyRaw))),
+    h('details.advanced', { id: 'sp5-map-experts' }, h('summary', {}, t('plugin.sp5.map.json.show')),
+      h('div.toolbar', {}, download,
+        h('div', {}, h('label', { for: 'sp5-map-file' }, t('plugin.sp5.map.file')), ' ', file)), // not a .field: its input would be too narrow
+      raw, h('div.toolbar', {}, applyRaw))),
     h('section.section', { 'aria-labelledby': 'h-sp5-codes' }, h('h2', { id: 'h-sp5-codes', tabindex: '-1' }, t('plugin.sp5.codes.title'),
       info(t('plugin.sp5.codes.title.help'), t('plugin.sp5.codes.title'))), codesBox));
   draw();
   await check();
+  await showAssistant();
   return () => clearTimeout(timer);
 }

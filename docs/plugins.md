@@ -115,22 +115,26 @@ import { folderPicker, guarded, h, info, t } from '../../../frontend/src/lib/plu
 export default {
   id: 'beispiel',
   texts: { 'plugin.beispiel.group': 'Beispiel', /* … */ },
-  group: { label: 'plugin.beispiel.group' },  // eigener Menüeintrag oder die Id einer Gruppe des Kerns; nur mit pages
-  pages: [{ path: 'start', tab: '…', intro: '…', help: 'beispiel', viewer: true, render(root, ctx, params) {} }],
+  group: { label: 'plugin.beispiel.group' },  // eigener Menüeintrag oder die Id einer Gruppe des Kerns ('data', …); nur mit pages
+  pages: [{ path: 'start', tab: '…', intro: '…', help: 'beispiel', viewer: true, after: null, render(root, ctx, params) {} }],
+  moved: { alt: 'uebernehmen/beispiel' },     // frühere Seiten: #/plugin/<id>/alt führt dorthin
   settings: { render(root, ctx) {} },        // unter Einstellungen → Erweiterungen, solange eingeschaltet
-  importSource: { label: '…', render(root, ctx) { return () => anfrage; } },  // auf der Seite Daten
+  importSource: { label: '…', render(root, ctx) { return () => anfrage; } },  // eine Quelle unter Daten → Übernehmen
+  backup: { label: '…', render(root, ctx) {} },  // unter Daten → Sichern, „Für Fachleute“
   help: [{ page: 'beispiel', title: 'Beispiel-Erweiterung' }],
 };
 ```
 
 | Erweiterungspunkt | Wo | Bewiesen von |
 |---|---|---|
-| Menüeintrag | eigene Gruppe oder als Reiter einer Gruppe des Kerns | `frontend/scripts/check-plugins.mjs`, `frontend/test/plugins.test.js` |
+| Menüeintrag | eigene Gruppe oder als Reiter einer Gruppe des Kerns, mit `after` nach einem bestimmten Reiter (etwa `after: 'uebernehmen'` unter **Daten**) | `frontend/scripts/check-plugins.mjs`, `frontend/test/plugins.test.js` |
+| Umgezogene Seiten | `moved`: alte Adressen und Lesezeichen führen zur neuen Adresse | `plugins/sp5/dev/check.mjs` |
 | Seiten | `#/plugin/<id>/<seite>`, mit Einleitung und Link in die Hilfe; `viewer: true` auch für „nur lesen“ | ebenda |
 | Einstellungen | unter dem Eintrag der Erweiterung in **Einstellungen → Erweiterungen** | ebenda |
-| Import | eigener Abschnitt auf der Seite **Daten**; das Formular liefert die Anfrage, der Rest ist der Import des Kerns | ebenda |
+| Import | eine Quelle unter **Daten → Übernehmen**. Gibt `render` eine Funktion zurück, liefert das Formular die Anfrage und der Kern setzt seinen Schritt **Übernehmen** darunter. Gibt es nichts zurück, zeichnet die Erweiterung ihre Schritte selbst (**Einlesen**, das nichts ändert, dann **Übernehmen** mit `importFlow`) | ebenda; `plugins/sp5/dev/check.mjs` |
+| Sichern | `backup`: ein Abschnitt unter **Daten → Sichern**, „Für Fachleute“ | `plugins/sp5/dev/check.mjs` |
 | Ordner | `folderPicker(ctx, { id, files })`: freigegebene Ordner und darunter, am eigenen Rechner mit Ordnerdialog | ebenda, auch im Desktop-Modus |
-| Import auf eigener Seite | `importFlow(ctx, '<id>', () => anfrage, { result, current })`: derselbe Import wie auf **Daten** (Vorschau, „Änderungen behalten“, Konflikte, Zusammenfassung, Fehler); gibt das Element für die Seite zurück | `frontend/test/import-flow.test.js`, `frontend/scripts/check-data.mjs` und `check-plugins.mjs` für die Seite **Daten** |
+| Import auf eigener Seite | `importFlow(ctx, '<id>', () => anfrage, { result, current, label, confirmFirst, onDone })`: derselbe Import wie unter **Übernehmen** (Vorschau, „Änderungen behalten“, Konflikte, Zusammenfassung mit dem ersten Monat gewählt, Fehler); gibt das Element für die Seite zurück, `element.setEnabled(an)` sperrt den Schritt bis zum Einlesen | `frontend/test/import-flow.test.js`, `frontend/scripts/check-data.mjs` und `check-plugins.mjs` |
 | Tabellen | `sortableTable(spalten, { label, sort })`: `table.data`, die sich per Klick oder Tastatur auf die Spaltenköpfe sortiert, Zahlen als Zahlen, Text in deutscher Reihenfolge; `searchTerms` und `matchesTerms` für eine Suche aus mehreren Wörtern | `frontend/test/table.test.js` |
 | Hilfeseiten | `docs/<seite>.md`, in der Anleitung als `plugin-<id>-<seite>`, nach den Seiten des Kerns; Bilder aus `docs/img/` | ebenda; die Website im CI-Job `docs` |
 | Texte und Styles | Texte unter `plugin.<id>.`, keine eigenen Styles | `frontend/test/plugins.test.js`, `scripts/build.mjs` |

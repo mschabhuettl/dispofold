@@ -1,68 +1,31 @@
-// Daten: dataset import (optionally keeping the changes made in Dispofold), exports, corrections file, anonymised
-// export, demo data, plan import, finalize month.
+// Daten → Sichern: dataset export and import (a backup back), plan export and import, corrections file, pseudonymised
+// export, and what plugins offer for experts (backup slots).
 import { monthLabel } from '../lib/dates.js';
 import { guarded, h, saveBlob, toast } from '../lib/dom.js';
 import { CORRECTIONS_FILE, anonymizedFiles, correctionsBlob, fieldLabel, noteText, shortNames } from '../lib/data-files.js';
-import { importFlow, importSteps } from '../lib/import-flow.js';
+import { importSteps } from '../lib/import-flow.js';
 import { info } from '../lib/info.js';
 import { t } from '../lib/texts.js';
-import { EXPORT_FORMATS, closeMonth, exportPlanFile } from './plan-output.js';
+import { EXPORT_FORMATS, exportPlanFile } from './plan-output.js';
+import { fileSource, readJson } from './take-over.js';
 
-export async function render(root, ctx) {
+export async function render(root, ctx, params = []) {
   const { api, month, canEdit } = ctx;
   const result = h('div', { 'aria-live': 'polite' });
   const state = await api.planState(month).catch(() => null);
   const solving = Boolean(state?.solving);
-  const closed = state?.plan?.status === 'CLOSED';
   const current = canEdit ? await ctx.dataset().catch(() => null) : null;
 
-  const { button, errorAlert, list, exportDataset, runImport, previewKeep, showSummary } = importSteps(ctx, result, () => current);
+  const { button, errorAlert, list, exportDataset } = importSteps(ctx, result, () => current);
 
-  const readJson = (input) => new Promise((resolve, reject) => {
-    const file = input.files[0];
-    if (!file) return reject(new Error(t('import.pickFile')));
-    file.text().then((text) => {
-      try { resolve(JSON.parse(text)); } catch { reject(new Error(t('import.invalidJson'))); }
-    }, reject);
-  });
-
-  const datasetFile = h('input', { id: 'dataset-file', type: 'file', accept: '.json,application/json' });
-  const keep = h('input', { id: 'dataset-keep', type: 'checkbox', checked: Boolean(current?.changedSinceImport) });
   const planFile = h('input', { id: 'plan-file', type: 'file', accept: '.json,application/json' });
-  root.append(h('h1', {}, t('nav.import')), result);
+  root.append(h('h1', {}, t('nav.backup')), result);
 
   if (canEdit) {
-    root.append(
-      h('section.section', { 'aria-labelledby': 'h-import' }, h('h2', { id: 'h-import' }, t('data.import.heading'), info(t('help.import.dataset'), t('data.import.heading'))),
-        h('p.muted', {}, t('import.dataset.help')),
-        h('div.toolbar', {},
-          h('div.field', {}, h('label', { for: 'dataset-file' }, t('import.dataset.label')), datasetFile),
-          h('label.check-inline', {}, keep, t('data.import.keep')), info(t('help.import.keep'), t('data.import.keep')),
-          button(t('import.dataset.import'), async () => {
-            const data = await guarded(() => readJson(datasetFile));
-            if (!data) return;
-            if (keep.checked) return previewKeep(data);
-            if (!confirm(t('import.dataset.confirm'))) return;
-            showSummary(await runImport((replace) => api.importDataset(data, replace), false, () => previewKeep(data)));
-          }, true)),
-        // demo data are for trying the program out: collapsed
-        h('details.advanced', {}, h('summary', {}, t('roster.advanced')),
-          h('div.toolbar', {},
-            button(t('import.demo'), async () => {
-              if (!confirm(t('import.demo.confirm'))) return;
-              showSummary(await runImport((replace) => api.importDemo(replace)));
-            }), info(t('help.import.demo'), t('import.demo'))))),
-      // the import sources of the switched on plugins: their own form, then the same steps as a dataset file
-      ...ctx.plugins.filter((p) => p.importSource).map((p) => {
-        const form = h('div', {});
-        const request = p.importSource.render(form, ctx);
-        return h('section.section', { 'aria-labelledby': `h-plugin-${p.id}` },
-          h('h2', { id: `h-plugin-${p.id}` }, t(p.importSource.label)),
-          h('p.muted', {}, t('data.plugin.help')),
-          form,
-          importFlow(ctx, p.id, request, { result, current }));
-      }),
-    );
+    // a dataset file back (a backup): the same two steps as on Übernehmen
+    root.append(h('section.section', { 'aria-labelledby': 'h-import' }, h('h2', { id: 'h-import' }, t('data.import.heading'), info(t('help.import.dataset'), t('data.import.heading'))),
+      h('p.muted', {}, t('backup.import.intro')),
+      fileSource(ctx, current, { demo: false })));
   }
 
   // exports are for planners only (viewers get 403) and blocked while a solve runs
@@ -140,22 +103,23 @@ export async function render(root, ctx) {
               return;
             }
             if (confirm(t('import.plan.confirm', { month: monthLabel(month) }))) await guarded(() => api.importPlan(month, plan), t('import.plan.done'));
-          }))),
-      closed
-        ? h('section.section', { 'aria-labelledby': 'h-final' }, h('h2', { id: 'h-final' }, t('import.reopen'), info(t('help.import.reopen'), t('import.reopen'))),
-          h('p.muted', {}, t('import.reopen.help', { month: monthLabel(month) })),
-          button(t('import.reopen'), async () => {
-            if (!confirm(t('import.reopen.confirm', { month: monthLabel(month) }))) return;
-            const ok = await guarded(() => api.reopen(month));
-            if (ok !== undefined) {
-              toast(t('import.reopen.done', { month: monthLabel(month) }));
-              ctx.setMonth(month); // draw again with the new status
-            }
-          }))
-        : h('section.section', { 'aria-labelledby': 'h-final' }, h('h2', { id: 'h-final' }, t('import.finalize'), info(t('help.import.finalize'), t('import.finalize'))),
-          h('p.muted', {}, t('import.finalize.help')),
-          button(t('import.finalize'), () => closeMonth(ctx), false, solving)),
-    );
+          }))));
+    // what plugins offer here: for experts, collapsed
+    const slots = ctx.plugins.filter((p) => p.backup);
+    if (slots.length) {
+      root.append(h('section.section', { 'aria-labelledby': 'h-experts' },
+        h('details.advanced', { id: 'backup-experts' }, h('summary', { id: 'h-experts' }, t('backup.experts')),
+          slots.map((p) => {
+            const box = h('div', { 'data-backup': p.id });
+            p.backup.render(box, ctx);
+            return h('div', {}, h('h3', {}, t(p.backup.label)), box);
+          }))));
+    }
+  }
+  // from a link to the corrections file (e.g. the note before an import): there
+  if (params[0] === 'korrekturen') {
+    const target = document.getElementById('corrections-file') ?? root.querySelector('#corrections-file');
+    setTimeout(() => { target?.scrollIntoView({ block: 'center' }); target?.focus(); }, 0);
   }
 }
 

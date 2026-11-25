@@ -22,7 +22,7 @@ export function emptyStart(ctx) {
         toast(t('start.empty.loaded'));
         ctx.setMonth(!s.months?.length || s.months.includes(ctx.month) ? ctx.month : s.months[0]);
       }, true),
-      h('a.btn.btn-secondary', { href: '#/import' }, t('start.empty.import')),
+      h('a.btn.btn-secondary', { href: '#/uebernehmen' }, t('start.empty.import')),
       // a switched on plugin: its first page, named like its menu entry
       withPages.map((p) => h('a.btn.btn-secondary', { href: `#/${pagePath(p.id, p.pages[0].path)}`, 'data-plugin': p.id },
         t(typeof p.group === 'object' && p.group ? p.group.label : p.pages[0].tab)))),

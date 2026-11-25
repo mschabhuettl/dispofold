@@ -103,6 +103,8 @@ final class Sp5Codes {
         codes.put("shifts", shifts);
         codes.put("groups", groups);
         codes.put("absenceTypes", types);
+        // the people of the folder (rows of its table of employees), for a line such as "86 Personen gefunden"
+        codes.put("people", table(folder, "5EMPL").size());
         return codes;
     }
 

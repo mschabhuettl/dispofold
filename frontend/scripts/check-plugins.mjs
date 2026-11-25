@@ -1,7 +1,7 @@
 // Playwright check of the plugin system with the test-only example plugin (plugins/beispiel), on the dev server's
 // mock API: Einstellungen → Erweiterungen lists it off, switching it on after a confirmation shows its menu entry,
 // page (with intro and help link), settings (saved, refused with the plugin's own error text) and its import source
-// on the Daten page with the folder picker; readers see its page but neither the switch nor the settings; a build
+// on Daten → Übernehmen with the folder picker; readers see its page but neither the switch nor the settings; a build
 // without test plugins has none. Desktop: the folder dialog of the window and the plugin's page in the built-in guide.
 //   node scripts/build.mjs && node scripts/build.mjs --test-plugins --out dist-plugins && node scripts/check-plugins.mjs
 // SHOTS=<folder> also saves screenshots of the Erweiterungen page and the example page there.
@@ -90,9 +90,10 @@ try {
   const help = await planner.$eval('.page-intro a', (a) => a.getAttribute('href')).catch(() => '');
   check('its help link opens its page of the built-in guide', help === '#/anleitung/plugin-beispiel-beispiel', help);
   if (shots) await planner.screenshot({ path: join(shots, 'beispiel-seite.png'), fullPage: true });
-  // the import source: folder picker below the allowed folder, then the same steps as a dataset file
-  await open(planner, s.base, 'import');
-  check('the Daten page has its import source', (await text(planner, '#h-plugin-beispiel')) === 'Aus der Beispiel-Erweiterung');
+  // the import source: a source on Daten → Übernehmen; folder picker below the allowed folder, then the core's step
+  await open(planner, s.base, 'uebernehmen/beispiel');
+  check('Daten → Übernehmen has its import source, chosen', (await text(planner, 'label[for="source-beispiel"]'))?.trim() === 'Aus der Beispiel-Erweiterung'
+    && await planner.isChecked('#source-beispiel'), await text(planner, '#take-over-sources'));
   await planner.waitForFunction(() => document.querySelector('#beispiel-file option')?.value === '/srv/dispofold/quellen');
   // a double click opens the folder once (the second click acts on the folder its button was shown in)
   await planner.dblclick('.folder-picker button:text("2027/")');
@@ -102,7 +103,7 @@ try {
     && !(await text(planner, '#toast'))?.includes('nicht gefunden'), await text(planner, '.folder-picker p'));
   await planner.click('.folder-picker button:text("daten.json")');
   await planner.waitForFunction(() => document.querySelector('.folder-picker p')?.textContent.includes('2027/daten.json'));
-  await planner.click('section:has(#h-plugin-beispiel) .toolbar button.btn-primary');
+  await planner.click('[data-import-run="beispiel"]');
   await planner.waitForSelector('#main .alert strong');
   check('the import runs and shows its summary', (await text(planner, '#main .alert strong'))?.includes('Import'), await text(planner, '#main .alert'));
   if (shots) await planner.screenshot({ path: join(shots, 'beispiel-import.png'), fullPage: true });
@@ -130,7 +131,7 @@ try {
   check('desktop: Updates and Erweiterungen are tabs', deskTabs.includes('Updates') && deskTabs.includes('Erweiterungen'), deskTabs.join(', '));
   await Promise.all([desk.waitForEvent('load'), desk.check('#ext-beispiel')]);
   await desk.waitForSelector('#beispiel-greeting');
-  await open(desk, d.base, 'import');
+  await open(desk, d.base, 'uebernehmen/beispiel');
   check('desktop: no folder before one is picked', (await text(desk, '.folder-picker p')) === 'Noch kein Ordner gewählt.', await text(desk, '.folder-picker p'));
   await desk.click('.folder-picker button:text("Ordner wählen …")');
   await desk.waitForFunction(() => document.querySelector('#beispiel-file option')?.value === '/home/lokal/Quellen');

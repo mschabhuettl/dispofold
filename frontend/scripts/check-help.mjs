@@ -167,7 +167,7 @@ try {
   }
   const sections = { funktionen: 'plan-bearbeiten/plan-nach-funktion', zeitachse: 'plan-bearbeiten/bereichs-zeitachse',
     pruefen: 'planen/probleme', fairness: 'auswertungen/fairness', eingaben: 'eingaben', person: 'personen',
-    regeln: 'einstellungen', stammdaten: 'stammdaten', import: 'daten' };
+    regeln: 'einstellungen', stammdaten: 'stammdaten', uebernehmen: 'daten/übernehmen', monate: 'daten/monate', sichern: 'daten/sichern' };
   for (const [path, target] of Object.entries(sections)) {
     await open(page, path);
     const href = await page.locator('#main h1 + p.page-intro a').getAttribute('href');

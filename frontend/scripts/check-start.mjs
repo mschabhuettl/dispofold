@@ -46,7 +46,7 @@ try {
   await start.waitFor();
   check('the data are empty', (await page.evaluate(async () => (await (await fetch('/api/dataset')).json()).people.length)) === 0);
   check('empty start: demo button', await start.getByRole('button', { name: 'Demodaten zum Ausprobieren laden' }).count() === 1);
-  check('empty start: import links to Daten', await start.getByRole('link', { name: 'Datensatz importieren' }).getAttribute('href') === '#/import');
+  check('empty start: import links to Daten', await start.getByRole('link', { name: 'Datensatz importieren' }).getAttribute('href') === '#/uebernehmen');
   check('empty start: no plugin on, a link to Erweiterungen', await start.locator('a[href="#/erweiterungen"]').count() === 1
     && await start.locator('a[data-plugin]').count() === 0);
   check('empty start: no grid and no legend', await page.locator('.roster-wrap').count() === 0 && await page.locator('details.legend-box').count() === 0);
@@ -62,7 +62,7 @@ try {
   await page.goto(`${base}/#/plan`);
   await start.waitFor();
   await start.getByRole('link', { name: 'Datensatz importieren' }).click();
-  await page.waitForURL((u) => u.hash === '#/import');
+  await page.waitForURL((u) => u.hash === '#/uebernehmen');
   await page.locator('#dataset-file').waitFor();
   check('"Datensatz importieren" opens Daten', true);
 

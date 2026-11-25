@@ -257,7 +257,9 @@ try {
     : p.id === two.id ? { ...p, areaIds: [a1, a2], areaSources: { [a1]: 'Historie: 22 Dienste' } } : p));
   const withRequest = [...current.restrictions.filter((r) => r.personId !== one.id && r.personId !== two.id),
     ...shiftsIn(a2).map((shiftId) => ({ personId: one.id, shiftId, weekday: 0, kind: 'ON_REQUEST' })),
-    { personId: two.id, shiftId: shiftsIn(a2)[0], weekday: 0, kind: 'ON_REQUEST' }];
+    { personId: two.id, shiftId: shiftsIn(a2)[0], weekday: 0, kind: 'ON_REQUEST' },
+    // a category exception (every shift of one kind on Wednesdays): it marks the areas with a shift of that kind
+    { personId: one.id, category: current.shifts.find((sh) => sh.areaId === a1).category, weekday: 3, kind: 'NEVER' }];
   const imported = await page.evaluate(async (body) => (await fetch('/api/import/dataset?replace=true', { method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body) })).status, { ...current, version: 2, people, restrictions: withRequest });
   check('a dataset with area sources is imported', imported === 200, String(imported));
@@ -290,6 +292,7 @@ try {
   check('a cell shows its state as a sign and a word', (await cellOf(one.id, a2).innerText()).includes('nur von Hand')
     && (await cellOf(one.id, a1).innerText()).includes('planbar'), await cellOf(one.id, a2).innerText());
   check('a mark for exceptions', await cellOf(two.id, a2).locator('sup').count() === 1);
+  check('… also for an exception of a category the area has a shift of', await cellOf(one.id, a1).locator('sup').count() === 1);
   await cellOf(two.id, a2).focus();
   check('the source and the exceptions of the focused cell below the table', (await page.textContent('#area-matrix-status')).includes('Herkunft: von Hand')
     && (await page.textContent('#area-matrix-status')).includes('Ausnahmen:'), await page.textContent('#area-matrix-status'));

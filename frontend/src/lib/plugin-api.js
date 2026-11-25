@@ -9,7 +9,7 @@ export { t } from './texts.js';
 export { folderPicker } from './folder-picker.js';
 export { compareValues, matchesTerms, searchTerms, sortRows, sortableTable } from './table.js';
 export { importFlow } from './import-flow.js';
-export { WEEKDAY_SHORT, monthLabel } from './dates.js';
+export { WEEKDAY_SHORT, addMonths, monthLabel } from './dates.js';
 export { fieldLabel } from './data-files.js';
 export { familyText, restrictionText } from './masterdata-edit.js';
 export { mixText } from './shift-mix.js';

@@ -1,52 +1,53 @@
 # Daten und Korrekturdatei
 
-Unter **Einstellungen**, **Daten** lädt und sichert man Daten: einen Datensatz importieren oder exportieren, den
-Plan eines Monats exportieren oder importieren, Änderungen als Korrekturdatei für das Exportprogramm speichern,
-Daten pseudonymisiert weitergeben und einen Monat abschließen. Die Seite gehört zum gewählten Monat. Die Rolle
-„nur lesen“ sieht sie nicht.
+Das Menü **Daten** ist für die Arbeit jeden Monat:
 
-![Die Seite Daten, nummeriert](../screenshots/daten.png)
+- **Übernehmen** holt die Daten für die Planung, siehe [Übernehmen](#übernehmen).
+- **Zuordnung** gibt es nur mit einer Erweiterung, die sie braucht (siehe [Erweiterungen](erweiterungen.md)).
+- **Monate** zeigt die Monate, offen oder abgeschlossen, siehe [Monate](#monate).
+- **Sichern** exportiert und holt Sicherungen zurück, siehe [Sichern](#sichern).
 
-1. **Datensatz (JSON)** und **Datensatz importieren**, siehe [Import](#import).
-2. **Änderungen aus Dispofold behalten**, siehe
+Die Rolle „nur lesen“ sieht das Menü nicht.
+
+## Übernehmen
+
+![Daten, Übernehmen mit einer Datensatz-Datei, nummeriert](../screenshots/daten.png)
+
+1. **Quelle**: eine Datensatz-Datei oder, mit einer eingeschalteten Erweiterung, deren Quelle. Die Wahl bleibt für
+   das nächste Mal.
+2. **1. Einlesen**: die Datei wählen, im Format von [datenformat.md](../datenformat.md) (vom Exportprogramm oder aus
+   **Datensatz exportieren**), und **Einlesen**. Das ändert noch nichts in Dispofold. Darunter steht, was gelesen
+   wurde: Personen, Bereiche, Schichten und Monate.
+3. **2. Übernehmen**: erst nach dem Einlesen. Darüber steht, was sich ändert, etwa „150 Personen, 5 Bereiche, Jänner
+   2027; ersetzt die Daten aus …“. Mit dem Häkchen **Änderungen aus Dispofold behalten**, siehe
    [Neuer Datensatz, Änderungen aus Dispofold behalten](#neuer-datensatz-änderungen-aus-dispofold-behalten).
-3. **Export**: Datensatz und Plan als Datei, siehe [Exportieren](#exportieren).
-4. **Korrekturdatei**, siehe [Korrekturdatei](#korrekturdatei) und
-   [Korrekturdatei laden](#korrekturdatei-laden).
 
-Weiter unten folgen [Pseudonymisieren](#pseudonymisieren), [Plan importieren](#plan-importieren) und **Monat
-abschließen** oder **Monat wieder öffnen** (siehe [Monat abschließen](monatsabschluss.md)).
+Nach dem Übernehmen nennt die Seite, was übernommen wurde („Import aus „…“: 150 Personen, 5 Bereiche, 13
+Schichten, Monate 2027-01.“), wählt den ersten Monat der Daten und bietet **Bereiche prüfen** an (siehe
+[Bereiche aller Personen](personen.md#bereiche-aller-personen)).
 
-## Import
-
-1. Unter **Datensatz (JSON)** die Datei wählen, im Format von [datenformat.md](../datenformat.md). Sie kommt vom
-   Exportprogramm oder aus **Datensatz exportieren**.
-2. **Datensatz importieren**. Das Programm fragt „Der Datensatz ersetzt die Stammdaten. Fortfahren?“.
-3. Der Import prüft die ganze Datei. Danach nennt die Seite, was importiert wurde („Import aus „…“: 150 Personen, 5
-   Bereiche, 13 Schichten, Monate 2027-01.“), und bietet bei Bedarf an, zum Monat der Datei zu wechseln.
-
-- Ein Import ersetzt die Stammdaten und die Planungsmonate, die in der Datei stehen. Vorhandene Pläne bleiben.
+- Übernehmen ersetzt die Stammdaten und die Planungsmonate, die in der Datei stehen. Vorhandene Pläne bleiben.
 - Ein abgeschlossener Monat kann nicht überschrieben werden.
-- Während einer Planung eines Monats aus der Datei kann nicht importiert werden.
-- **Warnungen** (etwa zwei Abwesenheiten einer Person am selben Tag) stehen unter der Meldung; der Import läuft
+- Während einer Planung eines Monats aus der Datei kann nicht übernommen werden.
+- **Warnungen** (etwa zwei Abwesenheiten einer Person am selben Tag) stehen unter der Meldung; übernommen wird
   trotzdem.
 
 **Wenn etwas falsch ist,** wird nichts übernommen, und die Liste aller Fehler erscheint, nur mit Ids, ohne Namen:
 
 ![Ein abgelehnter Import mit der Liste der Fehler](../screenshots/daten-fehler.png)
 
-Die Fehler sind im Quellsystem oder in der Datei zu beheben, dann neu importieren. Häufige Fehler und ihre
-Bedeutung stehen unter [Häufige Fragen und Fehlerbehebung](fragen.md#import).
+Die Fehler sind im Quellsystem oder in der Datei zu beheben, dann neu einlesen und übernehmen. Häufige Fehler und
+ihre Bedeutung stehen unter [Häufige Fragen und Fehlerbehebung](fragen.md#import).
 
 **Wenn Stammdaten in Dispofold geändert wurden** und das Häkchen **Änderungen aus Dispofold behalten** nicht gesetzt
-ist, würde der Import diese Änderungen überschreiben. Das Programm fragt dann nach:
+ist, würde das Übernehmen diese Änderungen überschreiben. Das Programm fragt dann nach:
 
 ![Die Rückfrage, wenn Stammdaten in Dispofold geändert wurden](../screenshots/daten-rueckfrage.png)
 
 - **Datensatz exportieren** sichert den jetzigen Stand als Datei.
 - **Änderungen behalten** zeigt die Vorschau wie mit dem Häkchen.
 - **Trotzdem importieren** ersetzt die Stammdaten; die Änderungen gehen verloren.
-- **Abbrechen** importiert nichts.
+- **Abbrechen** übernimmt nichts.
 
 **Demodaten:** **Demodaten laden (Jänner 2027)** unter **Erweitert** lädt 150 erfundene Personen in fünf
 Bereichen mit Eingaben für Jänner 2027, gut zum Ausprobieren (siehe [Ein Monat Schritt für Schritt](beispiel.md)).
@@ -61,9 +62,9 @@ Wer Personen, Einschränkungen oder Bedarf in Dispofold ändert und später eine
 Quellsystem importiert, würde diese Änderungen überschreiben. Dafür gibt es zwei Wege, die man auch zusammen
 verwenden kann:
 
-1. **Beim Import behalten:** unter **Einstellungen**, **Daten** den neuen Datensatz wählen, das Häkchen
+1. **Beim Übernehmen behalten:** unter **Daten**, **Übernehmen** den neuen Datensatz einlesen, das Häkchen
    **Änderungen aus Dispofold behalten** setzen (es ist gesetzt, sobald seit dem letzten Import etwas geändert
-   wurde) und **Datensatz importieren**. Eine Vorschau nennt, wie viele Änderungen übernommen werden, wo auch der
+   wurde) und **Übernehmen**. Eine Vorschau nennt, wie viele Änderungen übernommen werden, wo auch der
    neue Datensatz etwas geändert hat (dort gilt der Wert aus Dispofold; hat der neue Datensatz schon denselben
    Wert, etwa über die Korrekturdatei, steht das Feld nicht dort) und was nicht übernommen werden kann.
    **Jetzt importieren** führt den Import aus.
@@ -96,7 +97,22 @@ mehr aus dem Quellsystem übernommen werden (oder wieder), und der Bedarf je Ber
 angelegte Personen, geänderte Namen und Kürzel sowie Änderungen an Bereichen, Schichten, Abwesenheitsarten und
 Feiertagen.
 
-## Exportieren
+## Monate
+
+![Daten, Monate](../screenshots/daten-monate.png)
+
+Die Monate mit Daten oder Plan, je Zeile der Zustand (**offen** oder **abgeschlossen**) und der Stand des Plans.
+**Monat abschließen …** zeigt dieselbe Prüfliste wie auf dem Dienstplan, **Monat wieder öffnen** öffnet einen
+abgeschlossenen Monat nach einer Rückfrage. Ein Klick auf den Monat wählt ihn und öffnet den Dienstplan. Mehr dazu
+unter [Monat abschließen](monatsabschluss.md).
+
+## Sichern
+
+Sicherungen und Dateien, für den gewählten Monat: einen Datensatz zurückholen (dieselben zwei Schritte wie unter
+Übernehmen), exportieren, die Korrekturdatei, pseudonymisieren und einen Plan zurückholen. Eine Erweiterung kann
+unter **Für Fachleute** eigene Dateien anbieten.
+
+### Exportieren
 
 - **Datensatz exportieren** speichert alle Stammdaten und Planungsmonate als Datei im Format von
   [datenformat.md](../datenformat.md). Die Datei lässt sich später wieder importieren. Sie enthält personenbezogene
@@ -110,7 +126,7 @@ Feiertagen.
   Verstößen“ und trägt den Hinweis „Achtung: … Regelverstöße, Plan nicht verwendbar“; in CSV steht dieser Hinweis
   in der ersten Zeile.
 
-## Korrekturdatei
+### Korrekturdatei
 
 ![Die Meldung nach dem Speichern der Korrekturdatei](../screenshots/beispiel-korrekturdatei.png)
 
@@ -138,7 +154,7 @@ viele Personen wieder übernommen werden.
 **Wann:** nach jeder Änderung an Personen, Einschränkungen oder Bedarf, spätestens vor dem nächsten Export aus dem
 Quellsystem. Die Datei bekommt die IT oder wer das Exportprogramm betreut.
 
-### Korrekturdatei laden
+#### Korrekturdatei laden
 
 Wer bisher mit einem Exportprogramm und einer Korrekturdatei gearbeitet hat und nun über eine Erweiterung direkt
 importiert (siehe [Erweiterungen](erweiterungen.md)), bringt diese Datei einmal nach Dispofold, am besten vor dem
@@ -172,7 +188,7 @@ So wirkt die geladene Datei:
   Zusammenfassung.
 - Erneutes Laden ersetzt die geladene Datei (die Schaltfläche heißt dann **Laden und die geladene Datei
   ersetzen**). **Geladene Datei entfernen** nimmt sie zurück, solange kein Import sie angewendet hat.
-- Ein Import einer Datensatz-Datei unter **Import** ändert an der geladenen Datei nichts und wendet sie nicht an.
+- Das Übernehmen einer Datensatz-Datei ändert an der geladenen Datei nichts und wendet sie nicht an.
 - Bis zum Import bekommt auch **Änderungen als Korrekturdatei exportieren** die geladene Datei mit den Änderungen
   aus Dispofold darüber, auch auf einer leeren Datenbank.
 
@@ -180,7 +196,7 @@ Gibt es gar keine Korrekturen (keine geladene Datei, keine Änderung in Dispofol
 Import), steht über jedem Import einer Importquelle ein Hinweis mit dem Weg hierher, auf dieser Seite und auf den
 Seiten einer Erweiterung, die importiert.
 
-## Pseudonymisieren
+### Pseudonymisieren
 
 > **Für den Anfang überspringen:** Nur nötig, wenn Daten für eine Fehlersuche weitergegeben werden.
 
@@ -194,7 +210,7 @@ Weitergeben. **Schlüssel speichern** speichert die Zuordnung der Pseudonyme zu 
 Planung und wird nie weitergegeben. Steht nach dem Pseudonymisieren noch ein Name in den Dateien, exportiert das
 Programm nichts und nennt die Stelle.
 
-## Plan importieren
+### Plan importieren
 
 > **Für den Anfang überspringen:** Nur nötig, um einen früher exportierten Plan zurückzuholen.
 
@@ -202,8 +218,3 @@ Programm nichts und nennt die Stelle.
 im JSON-Format, nach einer Rückfrage. Gehört die Datei zu einem anderen Monat, meldet das Programm „Die Datei
 enthält den Plan für …, gewählt ist …“; dann zuerst den Planungsmonat umstellen. **Wann:** um einen früheren Stand
 zurückzuholen, etwa nach einer missglückten Planung.
-
-## Monat abschließen und wieder öffnen
-
-Ganz unten auf der Seite: **Monat abschließen** oder, in einem abgeschlossenen Monat, **Monat wieder öffnen**. Siehe
-[Monat abschließen](monatsabschluss.md).

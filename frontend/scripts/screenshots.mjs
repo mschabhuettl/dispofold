@@ -239,18 +239,17 @@ async function serverPhase() {
   // Schnellstart 4: menu, link to the guide, the line above the plan
   await mark(fresh, [['#nav a[data-group="plan"]', 1, 'end'], ['#main h1 + p.page-intro a', 2, 'right'], ['.statusbar', 3]]);
   await shot(fresh, 'schnellstart-04-rundgang');
-  // 1. demo data from Daten, Erweitert, in a month without data: the summary offers to change to their month
+  // 1. demo data from Daten, Übernehmen, Erweitert, in a month without data: their month is chosen after it
   await fresh.evaluate((m) => sessionStorage.setItem('month', m), startMonth);
   await fresh.reload();
-  await open(fresh, base, 'import', '#h-import');
-  await fresh.locator('section[aria-labelledby="h-import"] details.advanced summary').click();
+  await open(fresh, base, 'uebernehmen', '#dataset-read-run');
+  await fresh.locator('#take-over-source details.advanced summary').click();
   await fresh.getByRole('button', { name: 'Demodaten laden (Jänner 2027)', exact: true }).click();
-  const switchMonth = fresh.locator('#main div[aria-live] .alert').getByRole('button', { name: /^Zu .* wechseln$/ });
-  await switchMonth.waitFor({ timeout: 60000 });
-  await mark(fresh, [[fresh.getByRole('button', { name: 'Demodaten laden (Jänner 2027)', exact: true }), 1], ['#main div[aria-live] .alert', 2],
-    [switchMonth, 3, 'right']]);
+  const chosen = fresh.locator('#import-month');
+  await chosen.waitFor({ timeout: 60000 });
+  await mark(fresh, [[fresh.getByRole('button', { name: 'Demodaten laden (Jänner 2027)', exact: true }), 1], ['#take-over-source div[aria-live] .alert', 2],
+    [chosen, 3, 'right']]);
   await shot(fresh, 'beispiel-demodaten');
-  await switchMonth.click();
   await fresh.context().close();
 
   const page = await newPage(origin);
@@ -471,7 +470,7 @@ async function serverPhase() {
   await clip(page, 'beispiel-abgeschlossen', ['.statusbar']);
 
   // 11. the corrections file
-  await open(page, base, 'import', '#h-corrections');
+  await open(page, base, 'sichern', '#h-corrections');
   await page.getByRole('button', { name: 'Änderungen als Korrekturdatei exportieren', exact: true }).click();
   await page.locator('section[aria-labelledby="h-corrections"] .alert').waitFor();
   await page.locator('#h-corrections').evaluate((e) => e.scrollIntoView());
@@ -488,12 +487,12 @@ async function serverPhase() {
   await clip(page, 'korrekturdatei-laden', ['#corrections-confirm']);
   await page.locator('#corrections-confirm').getByRole('button', { name: 'Abbrechen' }).click();
 
-  // open the month again for the screens below
-  await open(page, base, 'import', '#h-final');
-  await page.locator('#h-final').evaluate((e) => e.scrollIntoView());
-  await clip(page, 'monat-oeffnen', ['section[aria-labelledby="h-final"]']);
-  await page.locator('section[aria-labelledby="h-final"] button.btn').click();
-  await page.waitForTimeout(2000);
+  // Daten, Monate with the closed month; open the month again for the screens below
+  await open(page, base, 'monate', '#months-table');
+  await shot(page, 'daten-monate');
+  await clip(page, 'monat-oeffnen', ['#months-table']);
+  await page.locator('#months-table [data-reopen]').first().click();
+  await page.locator('#months-table [data-close]').first().waitFor({ timeout: 30000 });
 
   // "Niemand passt." if the sick note did not show it: the duty of the small area on the 19th freed (where the only
   // person of the demo data who does it on request has compensatory rest), then put back
@@ -682,10 +681,9 @@ async function serverPhase() {
   await page.locator('.rule-row').first().evaluate((e) => e.scrollIntoView({ block: 'center' }));
   await shot(page, 'regeln-erweitert');
 
-  // Daten: the page, the preview of an import keeping the changes, the question before replacing them, an error list
-  await open(page, base, 'import', '#h-import');
-  await mark(page, [['#dataset-file', 1], ['#dataset-keep', 2, 'top'], ['#h-export', 3], ['#h-corrections', 4]]);
-  await shot(page, 'daten');
+  // Daten, Übernehmen: a file read (Einlesen), the preview of an import keeping the changes, the question before
+  // replacing them, an error list
+  await open(page, base, 'uebernehmen', '#dataset-read-run');
   const exported = await page.evaluate(async () => (await fetch('/api/dataset/export')).text());
   const good = join(work, 'datensatz.json');
   writeFileSync(good, exported);
@@ -694,22 +692,29 @@ async function serverPhase() {
   broken.demand[0].areaId = 'XX';
   const bad = join(work, 'datensatz-fehler.json');
   writeFileSync(bad, JSON.stringify(broken));
-  await page.setInputFiles('#dataset-file', good);
+  const read = async (file) => {
+    await page.setInputFiles('#dataset-file', file);
+    await page.locator('#dataset-read-run').click();
+    await page.locator('#dataset-read-result, #dataset-read .alert-error').first().waitFor({ timeout: 30000 });
+  };
+  await read(good);
+  await mark(page, [['#dataset-read-run', 1], ['#dataset-read-result', 2], ['#dataset-take-what', 3, 'top'], ['#dataset-keep', 4, 'top']]);
+  await shot(page, 'daten');
   await page.locator('#dataset-keep').check();
-  await page.getByRole('button', { name: 'Datensatz importieren', exact: true }).click();
+  await page.locator('#dataset-take').click();
   await page.locator('#import-preview').waitFor({ timeout: 30000 });
   await clip(page, 'daten-vorschau', ['#import-preview']);
   await page.locator('#import-preview').getByRole('button', { name: 'Abbrechen', exact: true }).click();
   await page.locator('#dataset-keep').uncheck();
-  await page.getByRole('button', { name: 'Datensatz importieren', exact: true }).click();
+  await page.locator('#dataset-take').click();
   await page.locator('#main div[aria-live] .alert[role=alert]').first().waitFor({ timeout: 30000 });
   await clip(page, 'daten-rueckfrage', ['#main div[aria-live] .alert[role=alert]']);
   await page.locator('#main div[aria-live] .alert[role=alert]').getByRole('button', { name: 'Abbrechen', exact: true }).click();
-  await page.setInputFiles('#dataset-file', bad);
-  await page.getByRole('button', { name: 'Datensatz importieren', exact: true }).click();
+  await read(bad);
+  await page.locator('#dataset-take').click();
   await page.locator('#main .alert-error').first().waitFor({ timeout: 30000 });
   await clip(page, 'daten-fehler', ['#main .alert-error']);
-  await open(page, base, 'import', '#h-anonymize');
+  await open(page, base, 'sichern', '#h-anonymize');
   await page.locator('section[aria-labelledby="h-anonymize"] button.btn').first().click();
   await page.locator('section[aria-labelledby="h-anonymize"] .alert').waitFor({ timeout: 30000 });
   await page.locator('#h-anonymize').evaluate((e) => e.scrollIntoView());

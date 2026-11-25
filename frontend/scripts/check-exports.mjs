@@ -36,7 +36,7 @@ try {
     await fetch(`/api/plans/${m}/solve`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{"seed":1,"timeLimitSeconds":1}' });
   }, month);
   await page.waitForTimeout(1500);
-  for (const view of ['import', 'plan']) {
+  for (const view of ['sichern', 'plan']) {
     await page.goto(`${base}/#/${view}`);
     for (const format of ['xlsx', 'csv', 'json']) {
       let button = page.getByRole('button', { name: format.toUpperCase(), exact: true });

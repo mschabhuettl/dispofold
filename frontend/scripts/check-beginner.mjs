@@ -50,7 +50,7 @@ try {
   check('month picker labelled Planungsmonat', await label.isVisible() && await label.textContent() === 'Planungsmonat');
 
   // file fields: as wide as their text, not cut off
-  await open('import');
+  await open('sichern');
   const files = await page.locator('#main input[type=file]').evaluateAll((inputs) => inputs.map((i) => ({ id: i.id, width: i.getBoundingClientRect().width })));
   check('file fields shown whole', files.length >= 2 && files.every((f) => f.width >= 180), JSON.stringify(files));
 

@@ -1,4 +1,4 @@
-// Bericht: the report of the last run (GET lauf/bericht), one section per row type with its own columns, a search
+// Bericht (inside the result of Einlesen on Daten → Übernehmen): the report of the last run (GET lauf/bericht), one section per row type with its own columns, a search
 // over all columns, filters by row type, person and area, sorting by a click on a header; then the warnings with the
 // same search and the person and area filters. "Bericht als CSV" saves the file as the export writes it.
 import { guarded, h, info, matchesTerms, saveBlob, searchTerms, sortableTable, t } from '../../../frontend/src/lib/plugin-api.js';
@@ -6,28 +6,34 @@ import { NOTICE_STATUSES, cellText, columnLabel, isNumberColumn, reportGroups, r
   names, warningKind } from './model.js';
 import { ID, noRun, orNoRun } from './shared.js';
 
+/**
+ * In plain words, for the top of a run's result: whether the run looks fine and what to look at first, from the run's
+ * own rows and warnings; areas without minimum demand (nobody would be planned there) are never "in Ordnung".
+ */
+export function verdict(report, run) {
+  const groups = reportGroups(report.columns ?? [], report.rows ?? []);
+  const unmapped = groups.find((g) => g.type === 'nicht_zugeordnet')?.rows.length ?? 0;
+  const notices = (report.rows ?? []).filter((r) => NOTICE_STATUSES.has(r.status)).length;
+  const warned = (report.warnings ?? []).length;
+  const noDemand = run?.counts?.areasWithoutDemand ?? 0;
+  const allAreas = run?.counts?.areas ?? 0;
+  const first = [noDemand && (noDemand >= allAreas ? t('plugin.sp5.report.first.noDemandAll') : t('plugin.sp5.report.first.noDemand', { count: noDemand })),
+    unmapped && t('plugin.sp5.report.first.unmapped', { count: unmapped }), notices && t('plugin.sp5.report.first.notices', { count: notices })].filter(Boolean);
+  return h(noDemand ? 'p.alert.alert-warn' : 'p.alert', { id: 'sp5-report-verdict', role: 'note' }, first.length
+    ? t('plugin.sp5.report.first', { what: first.join('; '), warnings: warned })
+    : t('plugin.sp5.report.fine', { warnings: warned }));
+}
+
+/** The report of the last run, inside the result of Einlesen (its verdict stands on top of that result). */
 export async function render(root, ctx) {
   const api = ctx.api.plugin(ID);
-  const [report, dataset, run] = await Promise.all([orNoRun(() => api.get('lauf/bericht')), ctx.dataset().catch(() => null), orNoRun(() => api.get('lauf'))]);
-  root.append(h('h1', {}, t('plugin.sp5.report.title')));
+  const [report, dataset] = await Promise.all([orNoRun(() => api.get('lauf/bericht')), ctx.dataset().catch(() => null)]);
   if (!report) {
     root.append(noRun());
     return;
   }
   const people = new Set((dataset?.people ?? []).map((p) => p.id));
   const groups = reportGroups(report.columns ?? [], report.rows ?? []);
-  // in plain words on top: whether the run looks fine and what to look at first, from the run's own rows and warnings
-  const unmapped = groups.find((g) => g.type === 'nicht_zugeordnet')?.rows.length ?? 0;
-  const notices = (report.rows ?? []).filter((r) => NOTICE_STATUSES.has(r.status)).length;
-  const warned = (report.warnings ?? []).length;
-  // areas without minimum demand: nobody would be planned there, never "in Ordnung"
-  const noDemand = run?.counts?.areasWithoutDemand ?? 0;
-  const allAreas = run?.counts?.areas ?? 0;
-  const first = [noDemand && (noDemand >= allAreas ? t('plugin.sp5.report.first.noDemandAll') : t('plugin.sp5.report.first.noDemand', { count: noDemand })),
-    unmapped && t('plugin.sp5.report.first.unmapped', { count: unmapped }), notices && t('plugin.sp5.report.first.notices', { count: notices })].filter(Boolean);
-  root.append(h(noDemand ? 'p.alert.alert-warn' : 'p.alert', { id: 'sp5-report-verdict', role: 'note' }, first.length
-    ? t('plugin.sp5.report.first', { what: first.join('; '), warnings: warned })
-    : t('plugin.sp5.report.fine', { warnings: warned })));
   const sorted = (values) => [...new Set(values)].sort((a, b) => a.localeCompare(b, 'de', { numeric: true }));
 
   const select = (id, label, all, options) => h('div.field', {}, h('label', { for: id }, label),
@@ -57,7 +63,7 @@ export async function render(root, ctx) {
     const id = `sp5-type-${g.type.replace(/[^a-z0-9_-]/gi, '')}`;
     const table = sortableTable(g.columns.map((c) => ({ label: columnLabel(c), title: c, num: isNumberColumn(c),
       value: (row) => sortValue(c, row[c]), cell: (row) => cell(c, row) })), { label: typeLabel(g.type) });
-    const heading = h('h2', { id: `h-${id}` });
+    const heading = h('h4', { id: `h-${id}` });
     const element = h('section.section', { id, 'aria-labelledby': `h-${id}`, 'data-type': g.type }, heading,
       h('p.muted', {}, typeHelp(g.type)), table.element);
     return { g, table, heading, element };
@@ -68,7 +74,7 @@ export async function render(root, ctx) {
   const kinds = sorted(warnings.map(warningKind));
   const kindFilter = select('sp5-warning-kind', t('plugin.sp5.report.warningKind'), t('plugin.sp5.report.all'),
     kinds.map((k) => [k, `${k} (${warnings.filter((w) => warningKind(w) === k).length})`]));
-  const warningHeading = h('h2', { id: 'h-sp5-warnings' });
+  const warningHeading = h('h4', { id: 'h-sp5-warnings' });
   const warningList = h('ul', { id: 'sp5-warnings' });
 
   function apply() {

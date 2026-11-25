@@ -19,6 +19,16 @@ test('whole-area rows fold into a state and expand back to the same rows (as the
   assert.deepEqual(expandRestrictions({ shifts, people: [{ id: 'P1', areaIds: ['Y'], areaStates: { X: 'NEVER' } }], restrictions: [] }), []);
 });
 
+test('a whole-day row of the other kind does not hide the state; both kinds on every shift: nie (as the backend)', () => {
+  const people = [{ id: 'P1', areaIds: ['X'] }];
+  const some = foldDataset({ shifts, people, restrictions: [r('X-T'), r('X-N'), r('X-T', 'NEVER')] });
+  assert.deepEqual(some.people[0].areaStates, { X: 'ON_REQUEST' });
+  assert.deepEqual(some.restrictions, [r('X-T', 'NEVER')]);
+  const both = foldDataset({ shifts, people, restrictions: [r('X-T'), r('X-N'), r('X-T', 'NEVER'), r('X-N', 'NEVER')] });
+  assert.deepEqual(both.people[0].areaStates, { X: 'NEVER' });
+  assert.deepEqual(both.restrictions, [r('X-T'), r('X-N')]);
+});
+
 test('the exceptions fold into one line per shift with weekdays and dates', () => {
   const byId = new Map(shifts.map((s) => [s.id, s]));
   const lines = exceptionLines([r('X-N', 'ON_REQUEST', { weekday: 1 }), r('X-N', 'ON_REQUEST', { weekday: 2 }), r('X-N', 'ON_REQUEST', { weekday: 5 }),

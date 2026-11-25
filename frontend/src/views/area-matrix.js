@@ -48,6 +48,9 @@ export async function render(root, ctx, params = [], pending = null) {
   const shiftless = new Set(areas.filter((a) => !(dataset.shifts ?? []).some((sh) => sh.areaId === a.id)).map((a) => a.id));
   const changed = () => people.filter((p) => areas.some((a) => states.get(p.id)[a.id] !== read.get(p.id)[a.id]));
   const exceptions = new Map(people.map((p) => [p.id, exceptionLines(dataset.exceptions ?? [], p.id, shifts, CATEGORY, areas.map((a) => a.id))]));
+  // an exception of the area: of one of its shifts, or of a category (e.g. every night shift) the area has a shift of
+  const categories = new Map(areas.map((a) => [a.id, new Set((dataset.shifts ?? []).filter((sh) => sh.areaId === a.id).map((sh) => sh.category))]));
+  const inArea = (a) => (l) => l.areaId === a.id || (l.areaId == null && l.rows[0]?.category != null && categories.get(a.id).has(l.rows[0].category));
 
   root.append(h('h1', {}, t('areaMatrix.title')));
   if (!people.length || !areas.length) {
@@ -58,13 +61,13 @@ export async function render(root, ctx, params = [], pending = null) {
   const describe = (p, a) => {
     const state = states.get(p.id)[a.id];
     const source = state && p.areaSources ? p.areaSources[a.id] || t('people.area.byHand') : null;
-    const own = (exceptions.get(p.id) ?? []).filter((l) => l.areaId === a.id).map((l) => l.text);
+    const own = (exceptions.get(p.id) ?? []).filter(inArea(a)).map((l) => l.text);
     return [`${personName(p)}, ${a.name}: ${word(state)}`, source && t('people.area.source', { source }),
       own.length && t('areaMatrix.exceptions', { list: own.join('; ') })].filter(Boolean).join('. ');
   };
   const cellContent = (p, a) => {
     const state = states.get(p.id)[a.id];
-    const marked = (exceptions.get(p.id) ?? []).some((l) => l.areaId === a.id) && state;
+    const marked = (exceptions.get(p.id) ?? []).some(inArea(a)) && state;
     return [h('span', { 'aria-hidden': 'true' }, MARK[state]), ` ${word(state)}`, marked ? h('sup.area-mark', { title: t('areaMatrix.hasExceptions') }, '*') : ''];
   };
   const cellAttrs = (p, a, i, j) => ({ 'data-person': p.id, 'data-area': a.id, 'data-row': i, 'data-col': j, title: describe(p, a),

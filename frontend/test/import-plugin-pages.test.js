@@ -183,6 +183,34 @@ test('a taken proposal adds its entry and the new area it needs, once', () => {
   assert.equal(own.areas.length, 1);
 });
 
+test('taking every proposal at once gives the mapping of "Alle übernehmen" in each section, choices left', () => {
+  const TA = { id: 'TA', name: 'Team Annahme', color: '#B45309' };
+  const TD = { id: 'TD', name: 'Team Disposition', color: '#15803D' };
+  const proposals = () => ({
+    areas: [{ ...TA, group: 'Team Annahme' }, { ...TD, group: 'Team Disposition' }],
+    shifts: [{ kind: 'rule', match: 'A1', areaId: 'TA', newAreas: [TA] }, { kind: 'choice', match: 'M1', choices: [{ areaId: 'TA' }, { areaId: 'TD' }], newAreas: [TA, TD] },
+      { kind: 'ignored', match: 'X[*]' }, { kind: 'rule', match: 'D1', areaId: 'TD', newAreas: [TD] }],
+    groups: [{ kind: 'rule', match: 'Team Annahme', areaIds: ['TA'], newAreas: [TA] }, { kind: 'ignored', match: 'Gesamt' }],
+    compensatoryRest: [{ match: 'ER' }],
+  });
+  // today's way: per section "Alle übernehmen" (no choices), an area taken with a rule leaves the area proposals
+  const byHand = { areas: [], shifts: [], groups: [] };
+  const list = proposals();
+  for (const section of m.PROPOSAL_SECTIONS) {
+    for (const p of [...list[section]].filter((x) => x.kind !== 'choice')) {
+      const added = m.takeProposal(byHand, section, p);
+      if (section !== 'areas') list.areas = list.areas.filter((a) => !added.includes(a.id));
+    }
+  }
+  const once = { areas: [], shifts: [], groups: [] };
+  const r = m.takeEvery(once, proposals());
+  assert.deepEqual(once, byHand);
+  assert.equal(r.count, 8);
+  assert.deepEqual(r.areas, ['TA', 'TD']);
+  assert.deepEqual(r.left.shifts.map((p) => p.match), ['M1']);
+  assert.equal(m.proposalCount(r.left), 1);
+});
+
 test('the titles and the count of proposals', () => {
   assert.equal(m.proposalTitle('shifts', { code: 'A1', name: 'Früh', kind: 'rule', areaId: 'TA' }), 'A1 Früh → TA');
   assert.equal(m.proposalTitle('shifts', { code: 'M1', name: 'Mitte', kind: 'choice', choices: [{ areaId: 'TA' }, { areaId: 'TD' }] }), 'M1 Mitte: TA, TD zur Wahl');

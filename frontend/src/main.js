@@ -6,7 +6,7 @@ import { addMonths, monthLabel } from './lib/dates.js';
 import { restartAndReload, frontEndMode, showPage } from './lib/desktop.js';
 import { guarded, h, toast } from './lib/dom.js';
 import { EXTRA_PAGES, guideHref, SECTIONS } from './lib/guide.js';
-import { helpPages, register, routes as pluginRoutes } from './lib/plugins.js';
+import { helpPages, pagePath, register, routes as pluginRoutes } from './lib/plugins.js';
 import { askForChecks, showReleaseNotice } from './lib/release.js';
 import { applyTexts, t } from './lib/texts.js';
 import { initThemeToggle } from './lib/theme.js';
@@ -20,7 +20,9 @@ import * as check from './views/check.js';
 import * as rules from './views/rules.js';
 import * as inputs from './views/inputs.js';
 import * as masterdata from './views/masterdata.js';
-import * as importExport from './views/import.js';
+import * as backup from './views/backup.js';
+import * as months from './views/months.js';
+import * as takeOver from './views/take-over.js';
 import * as settings from './views/settings.js';
 import * as guide from './views/guide.js';
 import { view as extensionsView } from './views/extensions.js';
@@ -36,15 +38,22 @@ const ROUTES = [
   { path: 'plan', group: 'plan', label: t('nav.plan'), tab: t('nav.tab.people'), view: roster, month: true, viewer: 'plan' },
   { path: 'funktionen', group: 'plan', label: t('nav.functions'), tab: t('nav.tab.functions'), view: functions, month: true, viewer: 'plan' },
   { path: 'zeitachse', group: 'plan', label: t('nav.timeline'), tab: t('nav.tab.timeline'), view: timeline, month: true, viewer: 'plan' },
+  { path: 'eingaben', group: 'inputs', label: t('nav.inputs'), view: inputs, month: true },
   { path: 'pruefen', group: 'check', label: t('nav.check'), tab: t('nav.tab.problems'), view: check, month: true },
   { path: 'fairness', group: 'check', label: t('nav.fairness'), tab: t('nav.tab.fairness'), view: fairness, month: true, viewer: 'fairness' },
-  { path: 'eingaben', group: 'inputs', label: t('nav.inputs'), view: inputs, month: true },
-  { path: 'person', group: 'people', label: t('nav.person'), tab: t('nav.tab.people'), view: person, month: true, viewer: 'people' },
+  { path: 'person', group: 'people', label: t('nav.person'), tab: t('nav.tab.peopleList'), view: person, month: true, viewer: 'people' },
   { path: 'bereiche', group: 'people', label: t('nav.areaMatrix'), tab: t('nav.tab.areaMatrix'), view: areaMatrix, viewer: 'people' },
+  // the monthly work with data: take data over, the months, backups (plugins may add pages, e.g. a mapping)
+  { path: 'uebernehmen', group: 'data', label: t('nav.takeOver'), tab: t('nav.tab.takeOver'), view: takeOver },
+  { path: 'monate', group: 'data', label: t('nav.months'), tab: t('nav.tab.months'), view: months },
+  { path: 'sichern', group: 'data', label: t('nav.backup'), tab: t('nav.tab.backup'), view: backup, month: true },
   { path: 'regeln', group: 'settings', label: t('nav.rules'), tab: t('nav.tab.rules'), view: rules },
   { path: 'stammdaten', group: 'settings', label: t('nav.masterdata'), tab: t('nav.tab.masterdata'), view: masterdata },
-  { path: 'import', group: 'settings', label: t('nav.import'), tab: t('nav.tab.data'), view: importExport, month: true },
 ];
+/** Old addresses (bookmarks, links of older versions) and where they lead now; plugins add their own (moved). */
+const MOVED = { import: 'uebernehmen' };
+/** The settings tab used last: the menu entry Einstellungen opens it again. */
+const SETTINGS_TAB = 'settingsTab';
 const SETTINGS_ROUTE = { path: 'einstellungen', group: 'settings', label: t('nav.settings'), tab: t('nav.tab.updates'), view: settings };
 // planners: the plugins, switched on and off; a change shows the program anew with the plugin's pages or without
 const EXTENSIONS_ROUTE = { path: 'erweiterungen', group: 'settings', label: t('nav.extensions'), tab: t('nav.tab.extensions'),
@@ -54,10 +63,11 @@ const GUIDE_ROUTE = { path: 'anleitung', group: 'guide', label: t('nav.guide'), 
 /** The intro under the title of each page, by path. */
 const INTROS = { plan: t('help.page.plan'), funktionen: t('help.page.funktionen'), zeitachse: t('help.page.zeitachse'),
   pruefen: t('help.page.pruefen'), fairness: t('help.page.fairness'), eingaben: t('help.page.eingaben'), person: t('help.page.person'), bereiche: t('help.page.bereiche'),
-  regeln: t('help.page.regeln'), stammdaten: t('help.page.stammdaten'), import: t('help.page.import'), einstellungen: t('help.page.einstellungen'),
+  regeln: t('help.page.regeln'), stammdaten: t('help.page.stammdaten'), uebernehmen: t('help.page.uebernehmen'), monate: t('help.page.monate'),
+  sichern: t('help.page.sichern'), einstellungen: t('help.page.einstellungen'),
   erweiterungen: t('help.page.erweiterungen'), anleitung: t('help.page.anleitung') };
 const GROUPS = { plan: t('nav.group.plan'), check: t('nav.group.check'), inputs: t('nav.group.inputs'), people: t('nav.group.people'),
-  fairness: t('nav.group.fairness'), settings: t('nav.group.settings'), guide: t('nav.guide') };
+  fairness: t('nav.group.fairness'), data: t('nav.group.data'), settings: t('nav.group.settings'), guide: t('nav.guide') };
 
 let desktop = false;
 let frontEnd = 'window'; // desktop only: 'window' or 'browser' (GET /__shell/mode)
@@ -103,8 +113,11 @@ const ctx = {
   dataset: () => datasetCache.get(),
   invalidateDataset: () => datasetCache.invalidate(),
   navigate: (path) => { location.hash = `#/${path}`; },
-  /** Switches the planning month, e.g. to the month of freshly imported data. */
-  setMonth: (month) => setMonth(month),
+  /**
+   * Switches the planning month, e.g. to the month of freshly imported data. quiet: on a page that does not belong to
+   * a month, only the month is chosen and the page stays as it is (with what it shows, e.g. the result of an import).
+   */
+  setMonth: (month, { quiet = false } = {}) => setMonth(month, quiet),
   /** Set by a view with unsaved changes; asked before leaving the view or changing the month. */
   isDirty: null,
   mayLeave: () => mayLeave(),
@@ -139,7 +152,13 @@ function defaultMonth(months) {
 function parseHash() {
   const parts = location.hash.replace(/^#\/?/, '').split('/');
   // a plugin page: #/plugin/<id>/<page>/<params>
-  const [path, ...rest] = parts[0] === 'plugin' ? [parts.slice(0, 3).join('/'), ...parts.slice(3)] : parts;
+  let [path, ...rest] = parts[0] === 'plugin' ? [parts.slice(0, 3).join('/'), ...parts.slice(3)] : parts;
+  // an old address: the page it moved to, under that page's address
+  const moved = Object.hasOwn(MOVED, path) ? MOVED[path].split('/') : null;
+  if (moved && ROUTES.some((r) => r.path === moved[0])) {
+    [path, ...rest] = moved;
+    history.replaceState(null, '', `#/${moved.join('/')}`);
+  }
   const route = ROUTES.find((r) => r.path === path) ?? ROUTES[0];
   // an unknown or hidden page (e.g. Import/Export for viewers) shows the first page under its own address
   if (route.path !== path && path) history.replaceState(null, '', `#/${route.path}`);
@@ -169,6 +188,11 @@ async function render() {
     else a.removeAttribute('aria-current');
   }
   document.querySelector('.month-picker').hidden = !route.month;
+  if (route.group === 'settings') {
+    try { localStorage.setItem(SETTINGS_TAB, route.path); } catch { /* the default tab then */ }
+    const link = document.querySelector('#nav a[data-group="settings"]');
+    if (link) link.setAttribute('href', `#/${route.path}`);
+  }
   currentHash = location.hash;
   if (cleanup) cleanup();
   cleanup = null;
@@ -217,8 +241,8 @@ function renderMonthOptions(center) {
   monthInput.replaceChildren(...months.map((m) => h('option', { value: m }, monthLabel(m))));
 }
 
-function setMonth(month) {
-  if (!MONTH_RE.test(month ?? '') || (ctx.month && month !== ctx.month && !mayLeave())) {
+function setMonth(month, quiet = false) {
+  if (!MONTH_RE.test(month ?? '') || (ctx.month && month !== ctx.month && !quiet && !mayLeave())) {
     monthInput.value = ctx.month ?? '';
     return;
   }
@@ -226,7 +250,7 @@ function setMonth(month) {
   renderMonthOptions(month);
   monthInput.value = month;
   sessionStorage.setItem('month', month);
-  render();
+  if (!quiet || parseHash().route.month) render();
 }
 
 async function start() {
@@ -240,9 +264,14 @@ async function start() {
   const enabled = new Set(listed.filter((x) => x.enabled).map((x) => x.id));
   if (ctx.canEdit) ROUTES.push(EXTENSIONS_ROUTE);
   for (const r of pluginRoutes(PLUGINS, enabled, GROUPS, t)) {
-    const last = ROUTES.findLastIndex((x) => x.group === r.group);
+    // after the page it names, else after the last page of its group
+    const after = r.after ? ROUTES.findIndex((x) => x.path === r.after && x.group === r.group) : -1;
+    const last = after >= 0 ? after : ROUTES.findLastIndex((x) => x.group === r.group);
     if (last < 0) ROUTES.push(r);
     else ROUTES.splice(last + 1, 0, r);
+  }
+  for (const p of PLUGINS.filter((x) => enabled.has(x.id))) {
+    for (const [from, to] of Object.entries(p.moved ?? {})) MOVED[pagePath(p.id, from)] = to;
   }
   EXTRA_PAGES.push(...helpPages(PLUGINS, enabled));
   ctx.plugins = PLUGINS.filter((p) => enabled.has(p.id));
@@ -276,6 +305,11 @@ async function start() {
   ROUTES.push(GUIDE_ROUTE);
   const first = new Map();
   for (const r of ROUTES) if (!first.has(r.group)) first.set(r.group, r);
+  // Einstellungen: the tab used last
+  let settingsTab = null;
+  try { settingsTab = localStorage.getItem(SETTINGS_TAB); } catch { /* none */ }
+  const remembered = ROUTES.find((r) => r.group === 'settings' && r.path === settingsTab);
+  if (remembered) first.set('settings', remembered);
   const items = [...first.values()].map((r) => h('li', {}, h('a', { href: `#/${r.path}`, 'data-group': r.group }, GROUPS[r.group])));
   document.getElementById('nav').replaceChildren(...items);
 

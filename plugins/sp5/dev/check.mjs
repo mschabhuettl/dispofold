@@ -1,16 +1,20 @@
 // Browser check of the plugin's pages on the dev server with dev/mock.mjs (run by frontend/scripts/check-plugin-pages.mjs):
-// the empty state before a run, missing settings and a bad option, a run and its summary, the report (sections, filters,
-// search, sorting by mouse and keyboard, person links, the CSV), the mapping editor (an invalid rule, a rule that
-// matches nothing, moving and removing rows with the keyboard, saving, JSON in and out, unknown keys, leaving with
-// unsaved changes), the comparison (no import yet, with and without the corrections, an uploaded file), the import from
-// Lauf und Import (also keeping changes, a closed month), no import section on Daten, page titles as their tabs, month
-// fields wide enough, readers without the group, and the light and dark theme.
+// the source under Daten → Übernehmen (old addresses lead there, the card under Erweiterungen only links to it, the
+// result as files under Sichern), its Quelle (folder and people found, the mapping's state, the stored options saved
+// at once, a bad one refused), Einlesen (nothing changes; the result on top, the options it used, the codes without a
+// rule, the minimum demand in all, some or no areas) and Übernehmen (only after Einlesen, off after an option changed,
+// keeping changes, the first month chosen, a closed month with the way to Monate), the report and the comparison as
+// fold-outs of the result, the mapping editor (an invalid rule, a rule that matches nothing, moving and removing rows
+// with the keyboard, saving, JSON in and out for experts, unknown keys, leaving with unsaved changes), the assistant
+// (one click gives the mapping of "Alle übernehmen" in every section), readers without the menu Daten, and the light
+// and dark theme.
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { MAPPING } from './mock.mjs';
 
 const MONTH = '2027-01';
 const P = '#/plugin/sp5';
+const T = '#/uebernehmen/sp5';
 let loads = 0;
 
 export default async function run({ base, browser, check, shots }) {
@@ -50,84 +54,86 @@ export default async function run({ base, browser, check, shots }) {
 
   const page = await session('planung');
   await api(page, 'PUT', '/api/extensions/sp5', { enabled: true });
-  await open(page, `${P}/uebersicht`, '#h-sp5-run');
+  await open(page, T, '#sp5-run');
   const menu = await page.$$eval('#nav a', (as) => as.map((a) => a.textContent));
-  check('own menu group', menu.includes('Schichtplaner 5'), menu.join(', '));
+  check('no own menu group: the source is under Daten', menu.includes('Daten') && !menu.includes('Schichtplaner 5'), menu.join(', '));
   const tabs = await page.$$eval('.page-tabs a', (as) => as.map((a) => a.textContent));
-  check('four pages as tabs', tabs.join('|') === 'Lauf und Import|Bericht|Zuordnung|Vergleich', tabs.join('|'));
+  check('Daten: Übernehmen, Zuordnung, Monate, Sichern', tabs.join('|') === 'Übernehmen|Zuordnung|Monate|Sichern', tabs.join('|'));
   check('intro with help link', (await page.locator('.page-intro a').count()) === 1);
-  for (const path of ['uebersicht', 'bericht', 'zuordnung', 'lauf-vergleich']) {
-    await open(page, `${P}/${path}`, '#main h1');
-    const [title, tab] = [await text(page, '#main h1'), await text(page, '.page-tabs a[aria-current="page"]')];
-    check(`${path}: the page title is the name of its tab`, title === tab, `${title} / ${tab}`);
+  check('the source is chosen', await page.isChecked('#source-sp5'));
+  // the pages of earlier versions lead here
+  for (const path of ['uebersicht', 'bericht', 'lauf-vergleich']) {
+    await open(page, `${P}/${path}`, '#sp5-run');
+    check(`the old page ${path} leads to Daten → Übernehmen`, page.url().endsWith(T), page.url());
   }
-  await open(page, `${P}/uebersicht`, '#h-sp5-run');
-  const widths = await page.$$eval('#sp5-run-month, #sp5-run-to', (xs) => xs.map((x) => {
-    const free = document.createElement('input');
-    free.type = 'month';
-    document.body.append(free);
-    const w = free.offsetWidth;
-    free.remove();
-    return x.offsetWidth >= w;
-  }));
-  check('the month fields are not cut off (at least as wide as a month field on its own)', widths.length === 2 && widths.every(Boolean));
-  await open(page, '#/import', '#main h1');
-  await page.waitForTimeout(300);
-  check('one import place: no import section of the plugin on Daten', (await page.locator('#h-plugin-sp5').count()) === 0);
-  await open(page, `${P}/uebersicht`, '#h-sp5-run');
+  await open(page, '#/import', '#sp5-run');
+  check('the old Daten page leads to Übernehmen, the source chosen last', page.url().endsWith('#/uebernehmen'), page.url());
+  await open(page, `${P}/zuordnung`, '#main h1');
+  check('Zuordnung: the page title is the name of its tab', (await text(page, '#main h1')) === (await text(page, '.page-tabs a[aria-current="page"]')));
+  // the card under Erweiterungen: on/off and a link, no fields
+  await open(page, '#/erweiterungen', '#sp5-set-up');
+  check('the card under Erweiterungen only links to Übernehmen', (await page.getAttribute('#sp5-set-up', 'href')) === T
+    && (await page.locator('.extension-settings input, .extension-settings select, .extension-settings textarea').count()) === 0);
+  // Sichern: the result as files, for experts
+  await open(page, '#/sichern', '#backup-experts');
+  check('the result as files is under Sichern → Für Fachleute', !(await page.$eval('#backup-experts', (d) => d.open)) && (await page.locator('#backup-experts #sp5-result').count()) === 1);
+  await page.click('#backup-experts summary');
+  const zip = await download(page, () => page.click('#sp5-result'));
+  check('"Ergebnis speichern" downloads the ZIP', zip.name === 'dispofold-sp5-ergebnis-2027-01.zip', zip.name);
 
   // ---- before the first run ----
-  check('Übersicht: empty state without a run', (await text(page, '#sp5-no-run'))?.includes('Noch kein Lauf'), await text(page, '#sp5-summary'));
-  check('Übersicht: no import without a run', (await text(page, '#h-sp5-import + div'))?.includes('Erst ausführen'));
-  await open(page, `${P}/bericht`, '#main h1');
-  await page.waitForSelector('#sp5-no-run');
-  check('Bericht: empty state links to Übersicht', (await page.getAttribute('#sp5-no-run a', 'href')) === `${P}/uebersicht`);
-  await open(page, `${P}/lauf-vergleich`, '#sp5-compare');
-  await page.waitForSelector('#sp5-compare #sp5-no-run');
-  check('Vergleich: empty state without a run', true);
+  await open(page, T, '#sp5-run');
+  check('the months as names of the program', (await page.$eval('#sp5-run-month', (x) => x.selectedOptions[0]?.textContent)) === 'Jänner 2027'
+    && (await page.$eval('#sp5-run-to', (x) => x.selectedOptions[0]?.textContent)) === 'nur der erste Monat');
+  check('Einlesen says it changes nothing', (await text(page, '#sp5-run-note')) === 'ändert noch nichts in Dispofold');
+  check('no Übernehmen without Einlesen', await page.isDisabled('[data-import-run="sp5"]') && (await text(page, '#sp5-take-what'))?.includes('Erst nach dem Einlesen'));
 
   // ---- missing mapping, bad option ----
   await api(page, 'PUT', '/api/plugins/sp5/einstellungen', { root: '/srv/dispofold/quellen', path: '2027', mapping: null });
-  await open(page, `${P}/uebersicht`, '#h-sp5-run');
-  check('a missing mapping shows with a link to the page Zuordnung', (await text(page, '#main .alert-error'))?.includes('Die Zuordnung fehlt')
-    && (await page.getAttribute('#main .alert-error a', 'href')) === `${P}/zuordnung`);
+  await open(page, T, '#sp5-run');
+  check('without a mapping the source is open and says so, with a link to Zuordnung', await page.$eval('#sp5-source', (d) => d.open)
+    && (await text(page, '#sp5-mapping-line'))?.includes('noch keine') && (await page.getAttribute('#sp5-mapping-line a', 'href')) === `${P}/zuordnung`);
   await page.click('#sp5-run');
   await page.waitForSelector('#sp5-summary .alert-error');
-  check('a run without mapping is refused', (await text(page, '#sp5-summary'))?.includes('Die Zuordnung fehlt'));
-  await page.click('#main .alert-error a');
+  check('Einlesen without mapping is refused, with a link to Zuordnung', (await text(page, '#sp5-summary'))?.includes('Die Zuordnung fehlt')
+    && (await page.getAttribute('#sp5-summary .alert-error a', 'href')) === `${P}/zuordnung`);
+  await page.click('#sp5-summary .alert-error a');
   await page.waitForSelector('#sp5-codes-summary, #sp5-propose');
   check('"Zur Zuordnung" opens the tab Zuordnung', page.url().endsWith(`${P}/zuordnung`)
     && (await text(page, '.page-tabs a[aria-current="page"]')) === 'Zuordnung', page.url());
   check('without a saved mapping the page says so', await page.isVisible('#sp5-map-none'));
-  await page.click('summary:text("JSON anzeigen und bearbeiten")');
+  await page.click('#sp5-map-experts summary');
   await page.fill('#sp5-map-json', JSON.stringify(MAPPING));
   await page.click('#sp5-map-apply');
   await page.click('#sp5-map-save');
   await page.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('Zuordnung gespeichert'));
   check('saved, the page no longer says that no mapping is saved', await page.isHidden('#sp5-map-none'));
-  await api(page, 'PUT', '/api/plugins/sp5/einstellungen', { root: '/srv/dispofold/quellen', path: '2027', mapping: MAPPING });
-  await open(page, `${P}/uebersicht`, '#h-sp5-run');
-  check('options prefilled from the settings', (await page.inputValue('#sp5-run-historyMonths')) === '12');
-  check('the areas of a person from history with the groups as a reserve, recommended', (await page.inputValue('#sp5-run-areaSource')) === 'reserve'
-    && (await page.textContent('#sp5-run-areaSource option[value="reserve"]'))?.includes('(empfohlen)') && (await page.inputValue('#sp5-run-historyAreaDuties')) === '3',
-  `${await page.inputValue('#sp5-run-areaSource')} ${await page.inputValue('#sp5-run-historyAreaDuties')}`);
-  check('the options a beginner never needs are collapsed under Erweitert', !(await page.$eval('#sp5-run-advanced', (d) => d.open))
-    && (await page.locator('#sp5-run-advanced #sp5-run-recentMonths').count()) === 1 && (await page.locator('#sp5-run-advanced #sp5-run-historyMonths').count()) === 0);
-  await page.click('details.advanced summary');
-  if (shots) await page.locator('section[aria-labelledby="h-sp5-run"]').screenshot({ path: join(shots, 'sp5-lauf-optionen.png') });
-  await page.fill('#sp5-run-historyMonths', '30');
-  await page.click('#sp5-run');
-  await page.waitForSelector('#sp5-summary .alert-error');
-  check('a bad option is refused with its name on the page', (await text(page, '#sp5-summary'))?.includes('ungültig: Monate Historie (0 bis 24)'), await text(page, '#sp5-summary'));
-  await page.fill('#sp5-run-historyMonths', '6');
-  await page.click('#sp5-run-default');
-  await page.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('als Standard gespeichert'));
+  await open(page, T, '#sp5-run');
+  await page.waitForFunction(() => document.querySelector('#sp5-source-line')?.textContent.includes('gefunden'));
+  check('set up, the source is collapsed with one line: the folder and the people found', !(await page.$eval('#sp5-source', (d) => d.open))
+    && (await text(page, '#sp5-source-line')) === 'Ordner /srv/dispofold/quellen/2027: 150 Personen gefunden', await text(page, '#sp5-source-line'));
+  await page.click('#sp5-source summary');
+  check('options as stored', (await page.inputValue('#sp5-historyMonths')) === '12');
+  check('the areas of a person from history with the groups as a reserve, recommended', (await page.inputValue('#sp5-areaSource')) === 'reserve'
+    && (await page.textContent('#sp5-areaSource option[value="reserve"]'))?.includes('(empfohlen)') && (await page.inputValue('#sp5-historyAreaDuties')) === '3');
+  check('the options a beginner never needs are collapsed under Erweitert, shifts from history empty', !(await page.$eval('#sp5-advanced', (d) => d.open))
+    && (await page.locator('#sp5-advanced #sp5-recentMonths').count()) === 1 && (await page.inputValue('#sp5-shiftsFromHistory')) === '');
+  await page.click('#sp5-advanced summary');
+  await shotOf(page, '#sp5-source', 'sp5-lauf-optionen');
+  await page.click('#sp5-advanced summary');
+  check('no options per run and no "Als Standard speichern"', (await page.locator('#sp5-run-historyMonths, #sp5-run-default').count()) === 0);
+  await page.fill('#sp5-historyMonths', '30');
+  await page.locator('#sp5-historyMonths').dispatchEvent('change');
+  await page.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('ungültig'));
+  check('a bad option is refused with its name', (await text(page, '#toast'))?.includes('ungültig: Monate Historie (0 bis 24)'), await text(page, '#toast'));
+  await page.fill('#sp5-historyMonths', '6');
+  await page.locator('#sp5-historyMonths').dispatchEvent('change');
+  await page.waitForFunction(() => document.querySelector('#sp5-options-saved')?.textContent === 'gespeichert');
   const saved = await api(page, 'GET', '/api/plugins/sp5/einstellungen');
-  check('"Als Standard speichern" keeps the rest of the settings', saved.body.options.historyMonths === 6 && saved.body.root === '/srv/dispofold/quellen'
+  check('a changed option is saved at once, the rest of the settings kept', saved.body.options.historyMonths === 6 && saved.body.root === '/srv/dispofold/quellen'
     && saved.body.mapping?.areas?.length === 2);
 
-  // ---- a run, started with the keyboard ----
-  await page.fill('#sp5-run-month', MONTH);
+  // ---- Einlesen, started with the keyboard ----
   await page.focus('#sp5-run');
   await page.keyboard.press('Enter');
   await page.waitForSelector('#sp5-run-summary');
@@ -135,78 +141,102 @@ export default async function run({ base, browser, check, shots }) {
   check('the run names its months and the corrections, once', (await text(page, '#sp5-run-summary'))?.includes('Jänner 2027')
     && (await text(page, '#sp5-run-corrections')) === 'Die Korrekturdatei wurde angewendet: 5 Korrekturen.'
     && !(await text(page, '#sp5-run-summary'))?.includes('noch keine'), await text(page, '#sp5-run-summary'));
-  await page.waitForSelector(`#sp5-run-summary a[href="${P}/zuordnung"]`);
-  check('a link to the mapping for codes without a rule', (await text(page, `#sp5-run-summary a[href="${P}/zuordnung"]`))?.includes('2 Kürzel ohne Regel'));
-  await page.waitForSelector('#sp5-run-proposals');
-  check('the number of new proposals with a link', (await text(page, '#sp5-run-proposals')) === 'Zuordnung: 2 neue Vorschläge');
+  check('the run names the options it used', (await text(page, '#sp5-run-options'))?.includes('Monate Historie: 6'), await text(page, '#sp5-run-options'));
   const lauf = await api(page, 'GET', '/api/plugins/sp5/lauf');
-  check('the run used the options of the page', lauf.body.request.options.historyMonths === 6, JSON.stringify(lauf.body.request));
-  check('the import names the run', (await text(page, '#sp5-import-request'))?.includes('Jänner 2027'));
-  const zip = await download(page, () => page.click('#sp5-run-result'));
-  check('"Ergebnis speichern" downloads the ZIP', zip.name === 'dispofold-sp5-ergebnis-2027-01.zip', zip.name);
+  check('the run used the stored options', lauf.body.request.options.historyMonths === 6, JSON.stringify(lauf.body.request));
+  check('the result in plain words on top', (await text(page, '#sp5-run-summary #sp5-report-verdict'))?.startsWith('Zuerst ansehen: 1 Schicht ohne Bereich')
+    && (await text(page, '#sp5-report-verdict'))?.includes('2 Zeilen mit rotem Hinweis'), await text(page, '#sp5-report-verdict'));
+  await page.waitForSelector('#sp5-details-mapping:not([hidden])');
+  check('the codes without a rule, named, with the way to the mapping', (await text(page, '#sp5-details-mapping summary')) === 'Zuordnung: 2 Kürzel ohne Regel');
+  await page.click('#sp5-details-mapping summary');
+  check('… T1 and the group Projekt', (await text(page, '#sp5-unmatched'))?.includes('T1') && (await text(page, '#sp5-unmatched'))?.includes('Gruppe Projekt'), await text(page, '#sp5-unmatched'));
+  check('Übernehmen says what it changes', await page.isEnabled('[data-import-run="sp5"]')
+    && (await text(page, '#sp5-take-what'))?.startsWith('150 Personen, 2 Bereiche, Jänner 2027; ersetzt die Daten aus'), await text(page, '#sp5-take-what'));
+  // an option changed after Einlesen: Übernehmen waits for a new Einlesen; back as it was, it fits again
+  await page.fill('#sp5-historyMonths', '7');
+  await page.locator('#sp5-historyMonths').dispatchEvent('change');
+  await page.waitForSelector('#sp5-run-stale');
+  check('an option changed after Einlesen: Übernehmen is off until read again', await page.isDisabled('[data-import-run="sp5"]'));
+  await page.fill('#sp5-historyMonths', '6');
+  await page.locator('#sp5-historyMonths').dispatchEvent('change');
+  await page.waitForFunction(() => !document.querySelector('[data-import-run="sp5"]')?.disabled);
+  check('the option as it was: Übernehmen again', true);
+  await open(page, T, '#sp5-run-summary');
+  check('the option is used next time too', (await page.inputValue('#sp5-historyMonths')) === '6' && await page.isEnabled('[data-import-run="sp5"]'));
   await shot(page, 'sp5-uebersicht');
 
   // ---- Vergleich before any import ----
-  await open(page, `${P}/lauf-vergleich`, '#sp5-compare');
+  await page.click('#sp5-details-compare summary');
   await page.waitForSelector('#sp5-no-baseline');
   check('Vergleich: nothing imported yet, the upload is offered', (await text(page, '#sp5-no-baseline'))?.includes('Noch nichts importiert'));
 
-  // ---- the import from Übersicht, as on Daten ----
-  await open(page, `${P}/uebersicht`, '#sp5-import-request');
+  // ---- Übernehmen, then the first month of the run is chosen ----
+  await page.evaluate(() => sessionStorage.setItem('month', '2027-03'));
+  await open(page, T, '#sp5-run-summary');
   check('keep changes is off without changes', !(await page.isChecked('#plugin-keep-sp5')));
-  await page.waitForSelector('#h-sp5-import ~ div .corrections-hint .alert');
-  check('without any corrections the import box says so, with the way to load a file',
-    (await text(page, '#h-sp5-import ~ div .corrections-hint'))?.includes('keine Korrekturen')
-    && (await page.getAttribute('#h-sp5-import ~ div .corrections-hint a', 'href')) === '#/import');
-  await page.click('#h-sp5-import ~ div button.btn-primary');
-  await page.waitForSelector('#h-sp5-import ~ div .alert:not(.corrections-hint > .alert) strong');
-  check('the import of the run shows the summary', (await text(page, '#h-sp5-import ~ div .alert:not(.corrections-hint > .alert)'))?.includes('Import aus'), await text(page, '#h-sp5-import ~ div'));
+  await page.waitForSelector('#take-over-source .corrections-hint .alert');
+  check('without any corrections the step says so, with the way to load a file',
+    (await text(page, '#take-over-source .corrections-hint'))?.includes('keine Korrekturen')
+    && (await page.getAttribute('#take-over-source .corrections-hint a', 'href')) === '#/sichern/korrekturen');
+  await page.click('[data-import-run="sp5"]');
+  await page.waitForSelector('#import-check-areas');
+  const done = await text(page, '#take-over-source');
+  check('Übernehmen without a question, the summary with "Bereiche prüfen"', done?.includes('Import aus') && (await page.getAttribute('#import-check-areas', 'href')) === '#/bereiche', done);
+  check('the first month of the run is chosen, the result stays', (await page.evaluate(() => sessionStorage.getItem('month'))) === MONTH
+    && (await text(page, '#import-month'))?.includes('Jänner 2027') && await page.isVisible('#import-check-areas'), await text(page, '#import-month'));
   const p1 = (await api(page, 'GET', '/api/dataset')).body.people[0];
   await api(page, 'PUT', `/api/dataset/people/${p1.id}`, { ...p1, weeklyHours: 30 });
   const state = page.waitForResponse((r) => r.url().endsWith('/api/data/corrections/state'));
-  await open(page, `${P}/uebersicht`, '#sp5-import-request');
+  await open(page, T, '#sp5-run-summary');
   await page.waitForFunction(() => document.querySelector('#plugin-keep-sp5')?.checked);
   check('keep changes is on after a change in Dispofold', true);
   const answered = await (await state).json();
   await page.waitForTimeout(200);
   check('with a change in Dispofold there is no hint', answered.none === false && await page.locator('.corrections-hint .alert').count() === 0);
-  await page.click('#h-sp5-import ~ div button.btn-primary');
+  await page.click('[data-import-run="sp5"]');
   await page.waitForSelector('#import-preview');
   check('the preview comes first', (await text(page, '#import-preview'))?.includes('Vorschau'));
   await page.click('#import-preview button.btn-primary');
-  await page.waitForFunction(() => document.querySelector('#h-sp5-import ~ div .alert:not(.corrections-hint > .alert)')?.textContent.includes('aus Dispofold übernommen'));
+  await page.waitForFunction(() => document.querySelector('#take-over-source')?.textContent.includes('aus Dispofold übernommen'));
   check('the import keeps the changes', true);
-  // a closed month of the run: the note with the next step before the import
+  // a closed month of the run: the note with the next step, on Daten → Monate
   await api(page, 'POST', `/api/plans/${MONTH}/finalize`);
-  await open(page, `${P}/uebersicht`, '#sp5-import-request');
+  await open(page, T, '#sp5-run-summary');
   await page.waitForSelector('#sp5-import-closed .alert');
   check('a closed month of the run: the note says the next step', (await text(page, '#sp5-import-closed'))?.includes('Abgeschlossen: Jänner 2027')
-    && (await text(page, '#sp5-import-closed'))?.includes('Monat wieder öffnen')
-    && (await page.getAttribute('#sp5-import-closed a', 'href')) === '#/import', await text(page, '#sp5-import-closed'));
+    && (await page.getAttribute('#sp5-import-closed a', 'href')) === '#/monate', await text(page, '#sp5-import-closed'));
   await page.click('#sp5-import-closed a');
-  await page.waitForSelector('#h-final');
-  check('its link leads to "Monat wieder öffnen" for that month', (await text(page, '#h-final'))?.includes('Monat wieder öffnen')
-    && (await text(page, '#h-final + p'))?.includes('Jänner 2027'), await text(page, '#h-final + p'));
-  await api(page, 'POST', `/api/plans/${MONTH}/reopen`);
-  await open(page, `${P}/uebersicht`, '#sp5-import-request');
+  await page.waitForSelector('#months-table');
+  check('Monate: the month closed, with "Monat wieder öffnen"', (await text(page, `#months-table tr[data-month="${MONTH}"]`))?.includes('abgeschlossen')
+    && (await page.locator(`[data-reopen="${MONTH}"]`).count()) === 1);
+  await page.click(`[data-reopen="${MONTH}"]`);
+  await page.waitForSelector(`[data-close="${MONTH}"]`);
+  check('opened again on Monate', (await text(page, `#months-table tr[data-month="${MONTH}"]`))?.includes('offen'));
+  await open(page, T, '#sp5-run-summary');
   await page.waitForTimeout(300);
   check('an open month: no note', (await page.locator('#sp5-import-closed .alert').count()) === 0);
 
-  // ---- Bericht ----
-  await open(page, `${P}/bericht`, '#sp5-report-count');
-  check('the report says on top what to look at first', (await text(page, '#sp5-report-verdict'))?.startsWith('Zuerst ansehen: 1 Schicht ohne Bereich')
-    && (await text(page, '#sp5-report-verdict'))?.includes('2 Zeilen mit rotem Hinweis'), await text(page, '#sp5-report-verdict'));
-  // areas without minimum demand: never "in Ordnung", all or some named, the note in the accent colour
-  const runBody = (await api(page, 'GET', '/api/plugins/sp5/lauf')).body.request;
-  for (const [options, expected] of [[{ demand: 'sp5' }, 'für keinen Bereich gibt es einen Mindestbedarf'], [{ historyMonths: 1 }, 'für 1 Bereich gibt es keinen Mindestbedarf']]) {
-    await api(page, 'POST', '/api/plugins/sp5/lauf', { month: runBody.month, to: runBody.to, options: { ...runBody.options, ...options } });
-    await open(page, `${P}/bericht`, '#sp5-report-count');
-    check(`no minimum demand named on top of the report: ${JSON.stringify(options)}`, (await text(page, '#sp5-report-verdict'))?.includes(expected)
-      && (await text(page, '#sp5-report-verdict'))?.includes('Option Bedarf prüfen') && await page.locator('#sp5-report-verdict.alert-warn').count() === 1,
-    await text(page, '#sp5-report-verdict'));
+  // ---- areas without minimum demand (stored options): never "in Ordnung", all or some named, in the accent colour ----
+  const stored0 = (await api(page, 'GET', '/api/plugins/sp5/einstellungen')).body;
+  // (each run differs from the one before in the options it names: the wait is for the new one)
+  for (const [options, expected, named] of [[{ demand: 'sp5' }, 'für keinen Bereich gibt es einen Mindestbedarf', 'Bedarf: aus Schichtplaner 5'],
+    [{ historyMonths: 1 }, 'für 1 Bereich gibt es keinen Mindestbedarf', 'Monate Historie: 1;'], [{}, null, 'Monate Historie: 6;']]) {
+    await api(page, 'PUT', '/api/plugins/sp5/einstellungen', { ...stored0, options: { ...stored0.options, ...options } });
+    await open(page, T, '#sp5-run');
+    await page.click('#sp5-run');
+    await page.waitForFunction((o) => document.querySelector('#sp5-run-options')?.textContent.includes(o), named);
+    await page.waitForSelector('#sp5-report-verdict');
+    const verdict = await text(page, '#sp5-report-verdict');
+    check(`the minimum demand on top of the result: ${JSON.stringify(options)}`, expected
+      ? verdict?.includes(expected) && verdict.includes('Option Bedarf prüfen') && await page.locator('#sp5-report-verdict.alert-warn').count() === 1
+      : !verdict?.includes('Mindestbedarf') && await page.locator('#sp5-report-verdict.alert-warn').count() === 0, verdict);
+    if (shots && options.demand) await page.locator('#sp5-run-summary').screenshot({ path: join(shots, 'sp5-mindestbedarf.png') });
   }
-  await api(page, 'POST', '/api/plugins/sp5/lauf', runBody);
-  await open(page, `${P}/bericht`, '#sp5-report-count');
+
+  // ---- Bericht, in the result ----
+  await open(page, T, '#sp5-run-summary');
+  await page.click('#sp5-details-report summary');
+  await page.waitForSelector('#sp5-report-count');
   const types = await page.$$eval('#main section[data-type]', (s) => s.map((x) => x.dataset.type));
   check('one section per row type, unknown ones too', types.join(',') === 'bedarf,bereich,schicht,person,nicht_zugeordnet,ignoriert,verworfen,wochenstunden,korrektur,ausgeblendet,nicht_mehr,sonderfall', types.join(','));
   const korrHeads = await page.$$eval('#sp5-type-korrektur th', (ths) => ths.map((th) => [th.textContent.replace(/[▲▼]/g, '').trim(), th.querySelector('button')?.title]));
@@ -304,9 +334,10 @@ export default async function run({ base, browser, check, shots }) {
     && stored.mapping.shifts.length === 3 && stored.options.historyMonths === 6 && stored.root === '/srv/dispofold/quellen', JSON.stringify(stored.mapping.groups));
   check('saved: no longer marked', await page.isHidden('#sp5-map-dirty'));
   // JSON: download, unknown keys and an entry that is no object through the JSON view, upload
+  check('mapping.json in and out only for experts, collapsed', !(await page.$eval('#sp5-map-experts', (d) => d.open)) && await page.isHidden('#sp5-map-download'));
+  await page.click('#sp5-map-experts summary');
   const json = await download(page, () => page.click('#sp5-map-download'));
   check('mapping.json with two spaces and a final newline', json.name === 'mapping.json' && json.text.endsWith('}\n') && json.text.includes('\n  "areas": ['));
-  await page.click('summary:text("JSON anzeigen und bearbeiten")');
   await page.fill('#sp5-map-json', JSON.stringify({ ...MAPPING, areas: [...MAPPING.areas, 7], extra: { a: 1 } }));
   await page.click('#sp5-map-apply');
   await page.waitForSelector('#sp5-map-unknown');
@@ -335,7 +366,9 @@ export default async function run({ base, browser, check, shots }) {
   check('the JSON view shows what was saved', (await page.inputValue('#sp5-map-json')).includes('"U*"'));
   await page.fill('[data-key="ignoreShifts.0.pattern"]', 'W*');
   await page.fill('#sp5-map-json', JSON.stringify({ ...MAPPING, ignoreShifts: ['J*'] }));
+  const put = page.waitForResponse((r) => r.url().endsWith('/api/plugins/sp5/einstellungen') && r.request().method() === 'PUT');
   await page.click('#sp5-map-save');
+  await put;
   await page.waitForFunction(() => document.querySelector('[data-key="ignoreShifts.0.pattern"]')?.value === 'J*');
   check('JSON typed after an editor change is what is saved', JSON.stringify((await api(page, 'GET', '/api/plugins/sp5/einstellungen')).body.mapping.ignoreShifts) === '["J*"]');
   await page.fill('[data-key="ignoreShifts.0.pattern"]', 'T*');
@@ -344,11 +377,13 @@ export default async function run({ base, browser, check, shots }) {
   page.removeAllListeners('dialog');
   let asked = '';
   page.once('dialog', (d) => { asked = d.message(); d.dismiss(); });
-  await page.click('.page-tabs a:text("Bericht")');
+  await page.click('.page-tabs a:text("Monate")');
   await page.waitForTimeout(300);
   check('leaving with unsaved changes asks', asked.includes('ungespeicherte Änderungen') && page.url().includes('zuordnung'), asked);
   page.on('dialog', (d) => d.accept());
-  await page.click('.page-tabs a:text("Vergleich")');
+  await page.click('.page-tabs a:text("Übernehmen")');
+  await page.waitForSelector('#sp5-run-summary');
+  await page.click('#sp5-details-compare summary');
   await page.waitForSelector('#sp5-cmp-against');
 
   // ---- Vergleich ----
@@ -362,7 +397,8 @@ export default async function run({ base, browser, check, shots }) {
   check('a removed person in Dispofold links to the person', (await page.locator('[data-section="removed"] a[href="#/person/P0150"]').count()) === 1);
   check('no note on a removed person still taken over', !(await text(page, '[data-section="removed"] tbody'))?.includes('ausgeschlossen'));
   await api(page, 'PUT', '/api/dataset/people/P0150/excluded', true);
-  await page.reload();
+  await open(page, T, '#sp5-run-summary');
+  await page.click('#sp5-details-compare summary');
   await page.waitForSelector('[data-section="removed"] tbody');
   check('a removed person excluded in Dispofold: the import keeps her', (await text(page, '[data-section="removed"] tbody'))?.includes('in Dispofold ausgeschlossen'),
     await text(page, '[data-section="removed"] tbody'));
@@ -392,7 +428,7 @@ export default async function run({ base, browser, check, shots }) {
     const rgb = (v) => { const d = document.createElement('div'); d.style.color = v; document.body.append(d); const c = getComputedStyle(d).color; d.remove(); return c; };
     return { theme: document.documentElement.dataset.theme, body: getComputedStyle(document.body).backgroundColor, bg: rgb(css.getPropertyValue('--bg')),
       th: getComputedStyle(document.querySelector('#main table.data th')).backgroundColor, surface2: rgb(css.getPropertyValue('--surface-2')),
-      text: getComputedStyle(document.querySelector('#main h2')).color, textVar: rgb(css.getPropertyValue('--text')),
+      text: getComputedStyle(document.querySelector('#main h1')).color, textVar: rgb(css.getPropertyValue('--text')),
       styled: [...document.querySelectorAll('#main [style]')].filter((e) => e.style.length && !e.closest('table.data') && e.style.overflowX !== 'auto')
         .map((e) => `${e.tagName}.${e.className}[${e.getAttribute('style')}]`) };
   });
@@ -510,13 +546,40 @@ export default async function run({ base, browser, check, shots }) {
   await page.emulateMedia({ colorScheme: 'dark' });
   await shotOf(page, 'section[aria-labelledby="h-sp5-propose"]', 'sp5-zuordnung-familien-dunkel');
   await page.emulateMedia({ colorScheme: 'light' });
+  // ---- the assistant: the proposals for a check, one click takes and saves them as "Alle übernehmen" in every section does ----
+  await api(page, 'PUT', '/api/plugins/sp5/einstellungen', { ...before, path: 'familien', mapping: null });
+  await open(page, `${P}/zuordnung`, '#sp5-assistant-take');
+  check('the assistant on top: the number of proposals and the areas they bring', (await text(page, '#sp5-assistant-count'))?.match(/^\d+ Vorschläge/)
+    && (await page.locator('#sp5-assistant-areas li').count()) > 0
+    && (await page.evaluate(() => document.querySelector('#sp5-assistant').compareDocumentPosition(document.querySelector('#sp5-map-editor')) === Node.DOCUMENT_POSITION_FOLLOWING)),
+  await text(page, '#sp5-assistant'));
+  if (shots) await page.locator('#sp5-assistant').screenshot({ path: join(shots, 'sp5-assistent.png') });
+  await page.click('#sp5-assistant-take');
+  await page.waitForSelector('#sp5-assistant-done');
+  const oneClick = (await api(page, 'GET', '/api/plugins/sp5/einstellungen')).body.mapping;
+  check('one click: taken and saved, nothing left unsaved', oneClick?.areas?.length > 0 && await page.isHidden('#sp5-map-dirty'), await text(page, '#sp5-assistant-done'));
+  await api(page, 'PUT', '/api/plugins/sp5/einstellungen', { ...before, path: 'familien', mapping: null });
+  await open(page, `${P}/zuordnung`, '#sp5-codes-summary');
+  await page.click('#sp5-propose');
+  await page.waitForSelector('#sp5-proposals-summary');
+  for (const section of ['areas', 'shifts', 'groups', 'compensatoryRest']) {
+    if (await page.locator(`[data-take-all="${section}"]`).count()) await page.click(`[data-take-all="${section}"]`);
+  }
+  await page.click('#sp5-map-save');
+  await page.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('Zuordnung gespeichert'));
+  const byHand = (await api(page, 'GET', '/api/plugins/sp5/einstellungen')).body.mapping;
+  check('one click gives the mapping of "Alle übernehmen" in every section', JSON.stringify(oneClick) === JSON.stringify(byHand),
+    `${JSON.stringify(oneClick)} / ${JSON.stringify(byHand)}`);
   await api(page, 'PUT', '/api/plugins/sp5/einstellungen', before);
 
   // ---- readers ----
   const reader = await session('ansicht');
-  await reader.goto(`${base}/${P}/uebersicht`);
-  await reader.waitForFunction(() => document.querySelector('#main h1'));
-  const readerMenu = await reader.$$eval('#nav a', (as) => as.map((a) => a.textContent));
-  check('readers see neither the group nor the pages', !readerMenu.includes('Schichtplaner 5') && !reader.url().includes('plugin/sp5'), `${readerMenu.join(', ')} ${reader.url()}`);
+  for (const old of [`${P}/uebersicht`, T, `${P}/zuordnung`]) {
+    await reader.goto(`${base}/${old}`);
+    await reader.waitForFunction(() => document.querySelector('#main h1'));
+    const readerMenu = await reader.$$eval('#nav a', (as) => as.map((a) => a.textContent));
+    check(`readers see neither Daten nor the pages: ${old}`, !readerMenu.includes('Daten') && !reader.url().includes('plugin/sp5') && !reader.url().includes('uebernehmen'),
+      `${readerMenu.join(', ')} ${reader.url()}`);
+  }
   check('readers get 403 from the routes', (await api(reader, 'GET', '/api/plugins/sp5/lauf')).status === 403);
 }

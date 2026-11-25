@@ -4,11 +4,16 @@
 //
 // A plugin's front end:
 // { id, texts: { 'plugin.<id>.…': '…', 'error.plugin.<id>.…': '…' },
-//   group: { id, label } (own menu entry; label a text key) or the id of a core group ('settings', ...),
-//   pages: [{ path, tab, intro, help, viewer, render(root, ctx, params) }] (text keys; help: '<page>' or
-//     '<page>#<anchor>' of its help pages; viewer: readers see the page too),
+//   group: { id, label } (own menu entry; label a text key) or the id of a core group ('data', 'settings', ...),
+//   pages: [{ path, tab, intro, help, viewer, after, render(root, ctx, params) }] (text keys; help: '<page>' or
+//     '<page>#<anchor>' of its help pages; viewer: readers see the page too; after: the path of the page of its
+//     group it follows, e.g. 'uebernehmen'),
+//   moved: { '<old page path>': '<address>' } (pages that moved: an old bookmark #/plugin/<id>/<old> leads there),
 //   settings: { render(root, ctx) } (Einstellungen → Erweiterungen, while switched on),
-//   importSource: { label, render(root, ctx) → () => request | null } (Daten; the request goes to its import source),
+//   importSource: { label, render(root, ctx) } (Daten → Übernehmen, a source to choose): render returns
+//     () => request | null, and the core adds its step "Übernehmen" (the request goes to its import source); or it
+//     returns nothing and draws its steps itself (with importFlow of lib/plugin-api.js),
+//   backup: { label, render(root, ctx) } (Daten → Sichern, under "Für Fachleute"),
 //   help: [{ page, title }] (plugins/<id>/docs/<page>.md, in the guide as plugin-<id>-<page>) }
 import { TEXTS } from './texts.js';
 
@@ -58,7 +63,7 @@ export function routes(plugins, enabled, groups, t) {
     if (own) groups[group] = t(own.label);
     for (const page of p.pages ?? []) {
       const label = t(page.tab);
-      out.push({ path: pagePath(p.id, page.path), group, label, tab: label, view: { render: page.render },
+      out.push({ path: pagePath(p.id, page.path), group, label, tab: label, view: { render: page.render }, after: page.after,
         intro: page.intro ? t(page.intro) : '', section: helpSection(p, page.help), viewer: page.viewer ? group : undefined });
     }
   }

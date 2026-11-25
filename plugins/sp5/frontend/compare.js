@@ -1,4 +1,4 @@
-// Vergleich: what the last run would change against the last import (or an earlier dataset file): counts per section,
+// Vergleich (inside the result of Einlesen on Daten → Übernehmen): what the last run would change against the last import (or an earlier dataset file): counts per section,
 // people added and removed, changed fields and restrictions, duties per month and area, changed demand. With the
 // corrections the run is what the import would load; without them their effect shows up too.
 import { h, info, monthLabel, sortableTable, t } from '../../../frontend/src/lib/plugin-api.js';
@@ -27,7 +27,7 @@ export async function render(root, ctx) {
     : name ? `${name} (${id})` : id);
   const none = () => h('p.muted', {}, t('plugin.sp5.compare.same'));
   const section = (key, content, help = null) => h('section.section', { 'aria-labelledby': `h-sp5-cmp-${key}`, 'data-section': key },
-    h('h2', { id: `h-sp5-cmp-${key}` }, t(`plugin.sp5.compare.${key}`), help && info(help, t(`plugin.sp5.compare.${key}`))), content);
+    h('h4', { id: `h-sp5-cmp-${key}` }, t(`plugin.sp5.compare.${key}`), help && info(help, t(`plugin.sp5.compare.${key}`))), content);
   const table = (key, columns, rows) => {
     if (!rows.length) return none();
     const x = sortableTable(columns, { label: t(`plugin.sp5.compare.${key}`) });
@@ -128,7 +128,7 @@ export async function render(root, ctx) {
     load();
   });
 
-  root.append(h('h1', {}, t('plugin.sp5.compare.title')),
+  root.append(
     h('div.toolbar', {},
       h('label.check-inline', {}, corrections, t('plugin.sp5.compare.corrections')),
       info(t('plugin.sp5.compare.corrections.help'), t('plugin.sp5.compare.corrections'))),

@@ -319,5 +319,27 @@ export function proposalTitle(section, p) {
   return t('plugin.sp5.propose.rule', { what, areas: p.areaId ?? (p.areaIds ?? []).join(', ') });
 }
 
+/**
+ * Takes every proposal that needs no choice into the mapping (in place), section by section, as "Alle übernehmen" of
+ * each section does: an area that came along with a rule is no proposal of its own any more. Returns what was taken
+ * ({ count, areas: the areas added }) and the proposals left (those with a choice of areas).
+ */
+export function takeEvery(mapping, proposals) {
+  const left = Object.fromEntries(PROPOSAL_SECTIONS.map((s) => [s, [...(proposals?.[s] ?? [])]]));
+  const areas = [];
+  let count = 0;
+  for (const section of PROPOSAL_SECTIONS) {
+    for (const p of left[section].filter((x) => x.kind !== 'choice')) {
+      if (!left[section].includes(p)) continue;
+      const added = takeProposal(mapping, section, p);
+      areas.push(...added);
+      count += 1;
+      left[section] = left[section].filter((x) => x !== p);
+      if (section !== 'areas') left.areas = left.areas.filter((a) => !added.includes(a.id));
+    }
+  }
+  return { count, areas, left };
+}
+
 /** How many proposals there are. */
 export const proposalCount = (proposals) => PROPOSAL_SECTIONS.reduce((n, s) => n + (proposals?.[s]?.length ?? 0), 0);

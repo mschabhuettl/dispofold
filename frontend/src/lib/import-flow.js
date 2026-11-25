@@ -80,6 +80,9 @@ export function importSteps(ctx, result, current = () => null) {
   const showSummary = (s) => {
     if (!s) return;
     ctx.invalidateDataset();
+    // the first imported month is chosen; the page and this result stay
+    const first = s.months?.[0];
+    if (first && first !== ctx.month) ctx.setMonth(first, { quiet: true });
 
     result.replaceChildren(h('div.alert', {},
       h('strong', {}, t('import.summaryTitle', { source: s.source })), t('import.summary', { people: s.people, areas: s.areas, shifts: s.shifts, months: s.months.join(', ') || '–' }),
@@ -87,7 +90,7 @@ export function importSteps(ctx, result, current = () => null) {
       // what the import made of the people's areas, all at once
       s.people ? h('p', {}, h('a', { href: '#/bereiche', id: 'import-check-areas' }, t('import.checkAreas'))) : null,
       s.warnings?.length ? [h('p', {}, h('strong', {}, t('import.warnings', { count: s.warnings.length }))), h('ul', {}, s.warnings.map((w) => h('li', {}, messageText(w))))] : null,
-      s.months?.length && !s.months.includes(ctx.month) ? h('p', {}, button(t('import.switchMonth', { month: monthLabel(s.months[0]) }), () => ctx.setMonth(s.months[0]))) : null));
+      first ? h('p', { id: 'import-month' }, t('import.monthChosen', { month: monthLabel(first) }), ' ', h('a', { href: '#/plan' }, t('import.toPlan'))) : null));
   };
 
   return { button, errorAlert, list, exportDataset, runImport, previewKeep, showSummary };
@@ -100,7 +103,7 @@ export function importSteps(ctx, result, current = () => null) {
  * incomplete. Without result the outcome shows below the button (a live region); without current the dataset comes
  * from ctx.dataset(). Returns the element to place on the page.
  */
-export function importFlow(ctx, id, request, { result = null, current } = {}) {
+export function importFlow(ctx, id, request, { result = null, current, label = t('data.plugin.run'), confirmFirst = true, onDone = null } = {}) {
   const own = result ? null : h('div', { 'aria-live': 'polite' });
   let dataset = current ?? null;
   const steps = importSteps(ctx, result ?? own, () => dataset);
@@ -115,19 +118,28 @@ export function importFlow(ctx, id, request, { result = null, current } = {}) {
     }, () => {});
   }
   const via = (req) => ({ preview: () => api.pluginImportPreview(id, req), run: () => api.pluginImport(id, req, false, true) });
+  // done: the summary, then onDone (e.g. a page that offers the next step)
+  const summary = (s) => {
+    steps.showSummary(s);
+    if (s && onDone) onDone(s);
+  };
+  const run = steps.button(label, async () => {
+    const req = request();
+    if (!req) return guarded(() => Promise.reject(new Error(t('data.plugin.incomplete'))));
+    // the short names of the preview from the data as they are now, also after an import from this box
+    if (current === undefined) dataset = await ctx.dataset().catch(() => dataset);
+    if (keep.checked) return steps.previewKeep(null, { ...via(req), run: async () => { const s = await via(req).run(); if (s && onDone) onDone(s); return s; } });
+    if (confirmFirst && !confirm(t('import.dataset.confirm'))) return undefined;
+    return summary(await steps.runImport((replace) => api.pluginImport(id, req, replace), false, () => steps.previewKeep(null, via(req))));
+  }, true);
+  run.setAttribute('data-import-run', id);
   const toolbar = h('div.toolbar', {},
-    h('label.check-inline', {}, keep, t('data.import.keep')), info(t('help.import.keep'), t('data.import.keep')),
-    steps.button(t('data.plugin.run'), async () => {
-      const req = request();
-      if (!req) return guarded(() => Promise.reject(new Error(t('data.plugin.incomplete'))));
-      // the short names of the preview from the data as they are now, also after an import from this box
-      if (current === undefined) dataset = await ctx.dataset().catch(() => dataset);
-      if (keep.checked) return steps.previewKeep(null, via(req));
-      if (!confirm(t('import.dataset.confirm'))) return undefined;
-      return steps.showSummary(await steps.runImport((replace) => api.pluginImport(id, req, replace), false, () => steps.previewKeep(null, via(req))));
-    }, true));
+    h('label.check-inline', {}, keep, t('data.import.keep')), info(t('help.import.keep'), t('data.import.keep')), run);
   const hint = correctionsHint(ctx);
-  return h('div', {}, hint, toolbar, own);
+  const element = h('div', {}, hint, toolbar, own);
+  // a page with two steps enables this one only after the first: element.setEnabled(on)
+  element.setEnabled = (on) => { run.disabled = !on; };
+  return element;
 }
 
 /**
@@ -139,9 +151,9 @@ export function correctionsHint(ctx) {
   const box = h('div.corrections-hint', {});
   const fill = () => ctx.api.correctionsState?.().then((s) => {
     if (!s?.none) return box.replaceChildren();
-    const here = typeof location !== 'undefined' && location.hash.startsWith('#/import');
+    const here = typeof location !== 'undefined' && location.hash.startsWith('#/sichern');
     const link = here ? h('button.btn-link', { type: 'button', onclick: () => document.getElementById('corrections-file')?.focus() }, t('data.corrections.hintLink'))
-      : h('a', { href: '#/import' }, t('data.corrections.hintLink'));
+      : h('a', { href: '#/sichern/korrekturen' }, t('data.corrections.hintLink'));
     return box.replaceChildren(h('div.alert', { role: 'note' }, h('p', {}, t('data.corrections.hint')), h('p', {}, link)));
   }, () => {});
   fill();

@@ -1,4 +1,6 @@
-// Playwright check of the Daten page (mock API): sections with intros, corrections file of the corrections in effect
+// Playwright check of the menu Daten (mock API): the menus of planners and viewers, the tabs, old addresses, Einstellungen
+// opening on its tab used last; Übernehmen with a dataset file in two steps (Einlesen changes nothing) and the month of
+// the data chosen after it; Monate closing and opening a month; Sichern: sections with intros, corrections file of the corrections in effect
 // (earlier ones and the changes made in Dispofold), loading a corrections file with its summary, import keeping those changes (preview with conflicts, also from
 // the "master data changed" warning), pseudonymised export with a separate key, and viewers refused.
 //   npm run build && node scripts/check-data.mjs     (Chromium via `npx playwright install chromium`)
@@ -42,7 +44,7 @@ try {
   };
   const open = async (page) => {
     // reloaded: the same address again would not draw the page anew
-    await page.goto(`${base}/#/import`);
+    await page.goto(`${base}/#/sichern`);
     await page.reload();
     await page.waitForSelector('#h-anonymize');
   };
@@ -57,16 +59,85 @@ try {
 
   const page = await login('planung');
   await api(page, 'POST', '/api/import/demo');
-  await open(page);
   const main = page.locator('#main');
 
-  // sections, each with a short intro; demo data under Erweitert
+  // ---- the menu: Daten for the monthly work, Einstellungen for the rare things ----
+  const go = async (hash, ready = '#main h1') => {
+    await page.goto(`${base}/?n=${Math.random()}${hash}`);
+    await page.waitForSelector(ready);
+  };
+  await go('#/plan');
+  const menu = await page.$$eval('#nav a', (as) => as.map((a) => a.textContent));
+  check('the menu of planners', menu.join('|') === 'Dienstplan|Eingaben|Prüfen|Personen|Daten|Einstellungen|Anleitung', menu.join('|'));
+  const tabsOf = async (hash) => {
+    await go(hash);
+    return (await page.$$eval('.page-tabs a', (as) => as.map((a) => a.textContent))).join('|');
+  };
+  for (const [hash, expected] of [['#/plan', 'Personen|Funktionen|Zeitachse'], ['#/pruefen', 'Probleme|Fairness'], ['#/person', 'Liste|Bereiche'],
+    ['#/uebernehmen', 'Übernehmen|Monate|Sichern'], ['#/regeln', 'Regeln|Stammdaten|Erweiterungen']]) {
+    const tabs = await tabsOf(hash);
+    check(`the tabs of ${hash}`, tabs === expected, tabs);
+  }
+  // old addresses lead to the new pages
+  await go('#/import', '#main h1');
+  check('the old Daten page leads to Übernehmen', page.url().endsWith('#/uebernehmen') && (await page.locator('#main h1').innerText()) === 'Daten übernehmen', page.url());
+  // Einstellungen opens on the tab used last, also after a new start
+  await go('#/stammdaten');
+  await go('#/plan');
+  check('Einstellungen opens on the tab used last', (await page.getAttribute('#nav a[data-group="settings"]', 'href')) === '#/stammdaten');
+  await page.click('#nav a[data-group="settings"]');
+  await page.waitForFunction(() => location.hash === '#/stammdaten');
+  await go('#/regeln');
+  check('… and again the other one', (await page.getAttribute('#nav a[data-group="settings"]', 'href')) === '#/regeln');
+
+  // ---- Übernehmen: a dataset file in two steps ----
+  await go('#/uebernehmen', '#dataset-read-run');
+  check('without plugins the source is the file, no choice to make', await page.locator('#take-over-sources').count() === 0);
+  check('demo data under Erweitert', await page.locator('#take-over-source details.advanced button', { hasText: 'Demodaten laden' }).count() === 1);
+  check('no Übernehmen before Einlesen', await page.isDisabled('#dataset-take') && (await page.locator('#dataset-take-what').innerText()).includes('Erst nach dem Einlesen'));
+  const other = structuredClone(fixture);
+  other.people = other.people.slice(0, 40);
+  await page.setInputFiles('#dataset-file', { name: 'datensatz.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(other)) });
+  await page.click('#dataset-read-run');
+  await page.waitForSelector('#dataset-read-result');
+  check('Einlesen shows what came and changes nothing', (await page.locator('#dataset-read-result').innerText()).includes('40 Personen')
+    && (await api(page, 'GET', '/api/dataset')).body.people.length === fixture.people.length);
+  check('Übernehmen says what it changes', (await page.locator('#dataset-take-what').innerText()).startsWith('40 Personen, ')
+    && (await page.locator('#dataset-take-what').innerText()).includes('Jänner 2027; ersetzt die Daten aus'), await page.locator('#dataset-take-what').innerText());
+  await page.evaluate(() => sessionStorage.setItem('month', '2027-04'));
+  await go('#/uebernehmen', '#dataset-read-run');
+  await page.setInputFiles('#dataset-file', { name: 'datensatz.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(other)) });
+  await page.click('#dataset-read-run');
+  await page.waitForSelector('#dataset-read-result');
+  await page.click('#dataset-take');
+  await page.waitForSelector('#import-check-areas');
+  check('Übernehmen imports, offers "Bereiche prüfen"', (await api(page, 'GET', '/api/dataset')).body.people.length === 40);
+  check('the first month of the data is chosen, the result stays', (await page.evaluate(() => sessionStorage.getItem('month'))) === month
+    && (await page.locator('#import-month').innerText()).includes('Jänner 2027'));
+  await page.setInputFiles('#dataset-file', { name: 'x.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(fixture)) });
+  check('another file: Einlesen again first', await page.isDisabled('#dataset-take'));
+  await api(page, 'POST', '/api/import/demo?replace=true');
+
+  // ---- Monate: open and closed months, closed and opened again here ----
+  await go('#/monate', '#months-table');
+  check('Monate lists the month, open', (await page.locator(`#months-table tr[data-month="${month}"]`).innerText()).includes('offen'));
+  await page.click(`[data-close="${month}"]`);
+  await page.waitForSelector('dialog[open]');
+  if (await page.locator('#close-anyway').count()) await page.check('#close-anyway');
+  await page.locator('dialog[open] button.btn-primary').click();
+  await page.waitForSelector(`[data-reopen="${month}"]`);
+  check('closed on Monate', (await page.locator(`#months-table tr[data-month="${month}"]`).innerText()).includes('abgeschlossen'));
+  await page.click(`[data-reopen="${month}"]`);
+  await page.waitForSelector(`[data-close="${month}"]`);
+  check('opened again on Monate', (await page.locator(`#months-table tr[data-month="${month}"]`).innerText()).includes('offen'));
+
+  // ---- Sichern: sections, each with a short intro ----
+  await open(page);
   const headings = await main.locator('h2').allInnerTexts();
   check('sections Import, Export, Korrekturdatei, Pseudonymisieren', ['Import', 'Export', 'Korrekturdatei', 'Pseudonymisieren'].every((x) => headings.includes(x)), headings.join(' | '));
   for (const id of ['h-import', 'h-export', 'h-corrections', 'h-anonymize']) {
     check(`intro in ${id}`, await page.locator(`section[aria-labelledby=${id}] > p.muted`).count() >= 1);
   }
-  check('demo data under Erweitert', await page.locator('section[aria-labelledby=h-import] details.advanced button', { hasText: 'Demodaten laden' }).count() === 1);
   check('keep option off without changes', !(await page.locator('#dataset-keep').isChecked()));
 
   // loading a corrections file: refused with its reason, else a summary to confirm, the file sent as it is
@@ -120,8 +191,13 @@ try {
   upload.people[0].weeklyHours = 35;
   upload.people[1].weeklyHours = 20;
   const setUpload = () => page.setInputFiles('#dataset-file', { name: 'datensatz.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(upload)) });
+  const take = async () => {
+    await page.click('#dataset-read-run');
+    await page.waitForSelector('#dataset-read-result');
+    await page.click('#dataset-take');
+  };
   await setUpload();
-  await main.getByRole('button', { name: 'Datensatz importieren' }).click();
+  await take();
   const preview = page.locator('#import-preview');
   await preview.waitFor();
   const previewText = await preview.innerText();
@@ -139,7 +215,7 @@ try {
   await open(page);
   await page.locator('#dataset-keep').uncheck();
   await setUpload();
-  await main.getByRole('button', { name: 'Datensatz importieren' }).click();
+  await take();
   await main.getByText('Stammdaten wurden geändert.').waitFor();
   await main.getByRole('button', { name: 'Änderungen behalten' }).click();
   await preview.waitFor();
@@ -189,8 +265,15 @@ try {
   check('taken back: a file without entries replaces it', Object.keys(empty.people).length === 0
     && await main.getByText('Korrekturdatei ohne Einträge gespeichert').count() === 1, JSON.stringify(empty.people));
 
-  // viewers: refused by the server, no Daten page
+  // viewers: refused by the server, no menu Daten, its pages lead to the first page
   const viewer = await login('ansicht');
+  const viewerMenu = await viewer.$$eval('#nav a', (as) => as.map((a) => a.textContent));
+  check('the menu of viewers', !viewerMenu.includes('Daten') && !viewerMenu.includes('Einstellungen'), viewerMenu.join('|'));
+  for (const hash of ['#/uebernehmen', '#/monate', '#/sichern', '#/import']) {
+    await viewer.goto(`${base}/?v=${Math.random()}${hash}`);
+    await viewer.waitForSelector('#main h1');
+    check(`viewers: ${hash} leads to the first page`, viewer.url().endsWith('#/plan'), viewer.url());
+  }
   const refused = await Promise.all([api(viewer, 'GET', '/api/data/corrections'), api(viewer, 'GET', `/api/data/anonymized?month=${month}`),
     api(viewer, 'POST', '/api/import/preview', upload), api(viewer, 'POST', '/api/import/dataset?keep=true', upload)]);
   check('viewer refused', refused.every((r) => r.status === 403), refused.map((r) => r.status).join(' '));
@@ -199,4 +282,4 @@ try {
   server.kill();
 }
 if (failed) process.exit(1);
-console.log('Daten page checked');
+console.log('Daten checked');

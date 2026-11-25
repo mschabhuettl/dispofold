@@ -40,8 +40,8 @@ export function expandRestrictions(dataset) {
 }
 
 /**
- * The folded view (as the backend's AreaStates.fold): per person the areas whose every shift has whole-day rows of one
- * kind only become a state, those rows leave the restrictions. For the dev server's mock.
+ * The folded view (as the backend's AreaStates.fold): per person the areas whose every shift has a whole-day row of
+ * one kind (NEVER before ON_REQUEST) become a state, those rows leave the restrictions. For the dev server's mock.
  */
 export function foldDataset(dataset) {
   const byArea = shiftsByArea(dataset);
@@ -53,13 +53,8 @@ export function foldDataset(dataset) {
       const shifts = byArea.get(a) ?? [];
       let kind = p.areaStates?.[a] ?? null;
       if (!kind && shifts.length) {
-        const kinds = new Set();
-        const all = shifts.every((s) => {
-          const rows = own.filter((r) => r.shiftId === s && whole(r));
-          rows.forEach((r) => kinds.add(r.kind));
-          return rows.length > 0;
-        });
-        kind = all && kinds.size === 1 ? [...kinds][0] : null;
+        // a kind whose whole-day rows cover every shift of the area, NEVER first (rows of the other kind stay exceptions)
+        kind = ['NEVER', 'ON_REQUEST'].find((k) => shifts.every((s) => own.some((r) => r.shiftId === s && whole(r) && r.kind === k))) ?? null;
       }
       if (kind) {
         states[a] = kind;

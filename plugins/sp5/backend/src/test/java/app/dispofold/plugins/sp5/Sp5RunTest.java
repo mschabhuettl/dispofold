@@ -250,6 +250,9 @@ class Sp5RunTest {
     void codesSayWhichRuleMatches() throws Exception {
         JsonNode codes = post("zuordnung/codes", Sp5ExportTest.MAPPING);
         assertThat(codes.path("errors").isEmpty()).isTrue();
+        // the people of the folder, every row of its table of employees (the run may leave some out)
+        assertThat(codes.path("people").asInt()).isGreaterThanOrEqualTo(post("lauf", RUN).path("counts").path("people").asInt())
+                .isPositive();
         assertThat(shift(codes, "A1")).isEqualTo(mapper.readTree("{\"sp5Id\": \"1\", \"code\": \"A1\", \"name\":"
                 + " \"Dienst A1\", \"hidden\": false, \"result\": {\"kind\": \"rule\", \"index\": 0, \"areaId\":"
                 + " \"AN\", \"category\": null}}"));
