@@ -152,7 +152,18 @@ Tabelle. Jede Zelle zeigt den Zustand mit Zeichen und Wort: ● planbar, ◐ nur
   sie, außer man wählt **Änderungen aus Dispofold behalten**; dann kommen die Bereiche und ihre Zustände über die
   [Korrekturdatei](daten.md#korrekturdatei) wieder dazu.
 
-Wer nur lesen darf, sieht die Tabelle ohne Ändern.
+Die Kopfzeile und die Namen bleiben beim Blättern stehen. Unter **Ansicht** gibt es drei Ansichten; das Programm
+merkt sich die gewählte:
+
+- **Personen als Zeilen:** die Tabelle wie oben.
+- **Bereiche als Zeilen:** dieselbe Tabelle, Zeilen und Spalten getauscht. Ändern, Filtern, viele auf einmal und
+  Speichern gehen genauso.
+- **Ein Bereich:** Einen Bereich wählen; seine Personen stehen in vier Gruppen mit ihrer Zahl: planbar, nur von
+  Hand, nie, nicht dabei. Ein Klick oder die Leertaste schaltet eine Person weiter wie in der Tabelle; sie wechselt
+  dann in die nächste Gruppe. So sieht man auf einen Blick, wer in einem Bereich ist.
+
+Ungespeicherte Änderungen bleiben beim Wechsel der Ansicht erhalten. Wer nur lesen darf, sieht alle Ansichten ohne
+Ändern.
 
 ## Person anlegen
 
