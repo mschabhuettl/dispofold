@@ -152,8 +152,8 @@ Zugeklappt. Darin:
 
 | Wahl | Schritte | Dauer mit etwa 150 Personen | Wann |
 |---|---|---|---|
-| schnell | 250 000 | etwa 1,5 Minuten | zum Ausprobieren; so plante Dispofold bis Version 0.27 |
-| normal (Standard) | 1 000 000 | etwa 6 bis 7 Minuten | für den Monatsplan |
+| schnell | 250 000 | etwa 2 Minuten | zum Ausprobieren; so plante Dispofold bis Version 0.27 |
+| normal (Standard) | 1 000 000 | etwa 7 Minuten | für den Monatsplan |
 | gründlich | 3 000 000 | etwa 20 Minuten | wenn der Plan noch besser werden soll, etwa über Nacht |
 
 Die Dauer hängt vom Rechner und von der Größe des Monats ab, mit weniger Personen ist sie kürzer. Die Zahl der
