@@ -23,8 +23,8 @@ nicht gespeichert ist, steht **Ungespeicherte Änderungen** neben dem Knopf; wer
 wechselt oder den Browser schließt, wird gefragt, ob die Änderungen verloren gehen sollen.
 
 Nach dem Speichern zeigt ein schon geplanter Monat „Plan veraltet: neu planen“: Der Plan kennt die neuen Eingaben
-noch nicht. In einem abgeschlossenen Monat sind die Eingaben nur lesbar; zum Ändern den Monat zuerst wieder öffnen
-(siehe [Monat abschließen](monatsabschluss.md#monat-wieder-öffnen)).
+noch nicht. In einem abgeschlossenen Monat sind die Eingaben nur lesbar; zum Ändern den Monat zuerst unter **Daten**,
+**Monate** wieder öffnen (siehe [Monat abschließen](monatsabschluss.md#monat-wieder-öffnen)).
 
 ## Abwesenheiten
 

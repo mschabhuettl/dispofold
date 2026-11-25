@@ -1,9 +1,10 @@
 # Regeln einstellen
 
 **Einstellungen** hat die Reiter **Regeln**, **Stammdaten** (siehe
-[Bereiche, Schichten und Bedarf](stammdaten.md)), **Daten** (siehe [Daten und Korrekturdatei](daten.md)), im
-Programm am eigenen Rechner **Updates** (siehe [Updates](updates.md)) und **Erweiterungen** (siehe
-[Erweiterungen](erweiterungen.md)). Diese Seite beschreibt den Reiter **Regeln**:
+[Bereiche, Schichten und Bedarf](stammdaten.md)), **Erweiterungen** (siehe [Erweiterungen](erweiterungen.md))
+und im Programm am eigenen Rechner **Updates** (siehe [Updates](updates.md)); sie öffnet mit dem Reiter, der
+zuletzt offen war. Daten übernehmen, Monate und Sicherungen stehen im eigenen Menü **Daten** (siehe
+[Daten und Korrekturdatei](daten.md)). Diese Seite beschreibt den Reiter **Regeln**:
 wonach die Planung einen Plan bewertet. Die Regeln gelten für alle Monate und wirken ab der nächsten Planung;
 schon geplante Monate zeigen nach dem Speichern „Plan veraltet: neu planen“.
 

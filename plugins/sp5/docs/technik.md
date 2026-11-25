@@ -35,14 +35,14 @@ Sonst kennt die Erweiterung nur Unterschiede in Fällen, die in echten Daten kau
 - Ganzzahl-Optionen über 2 147 483 647: Die Einstellungen lehnen sie ab.
 
 Die Meldungen der Prüfung der Zuordnung zeigen die Seiten in einfachen Worten („Es ist noch kein Bereich
-eingetragen.“); der Lauf selbst prüft die Zuordnung genau wie `sp5_export.py`.
+eingetragen.“); das Einlesen selbst prüft die Zuordnung genau wie `sp5_export.py`.
 
 ## Optionen und Kommandozeile
 
 Die Optionen der Erweiterung entsprechen denen von `sp5_export.py`, mit denselben Standardwerten, bis auf **Bereiche
 einer Person aus**: `sp5_export.py` kennt nur „Gruppen“. Mit „Historie“ oder „Historie, Gruppen als Reserve“
 unterscheiden sich Bereiche und Einschränkungen der Personen deshalb gewollt; `sp5-vergleich.py` sagt das und
-nennt die Zahl der Bereiche nach ihrer Herkunft (aus `anfrage.json`). Byte für Byte gleich ist ein Lauf nur mit
+nennt die Zahl der Bereiche nach ihrer Herkunft (aus `anfrage.json`). Byte für Byte gleich ist ein Einlesen nur mit
 „Gruppen“.
 
 | Option in Dispofold | Kommandozeile von `sp5_export.py` |
@@ -69,10 +69,10 @@ an der Abwesenheit auch keine Stunden mit, damit das Ergebnis Byte für Byte dem
 
 ## Fehlermeldungen
 
-Ein Fehler beim Lauf nennt die Tabelle oder den Eintrag der Zuordnung. Ein unerwarteter Fehler nennt nur
+Ein Fehler beim Einlesen nennt die Tabelle oder den Eintrag der Zuordnung. Ein unerwarteter Fehler nennt nur
 Fehlerart, Datei und Zeile, nie Feldinhalte. Bericht und Warnungen enthalten keine Namen, aber die Ids und Kürzel
 des Betriebs; Datensatz und Ergebnis-ZIP enthalten personenbezogene Daten. Für eine Fehlersuche die
-pseudonymisierten Dateien von der Seite **Daten** weitergeben.
+pseudonymisierten Dateien von **Daten → Sichern** weitergeben.
 
 ## Vergleich mit echten Daten
 
@@ -84,10 +84,9 @@ pseudonymisierten Dateien von der Seite **Daten** weitergeben.
 
 ### Schritte
 
-1. In Dispofold auf der Seite **Schichtplaner 5 → Lauf und Import** den Monat wählen und **Ergebnis speichern**
-   (dasselbe geht unter **Einstellungen → Erweiterungen → Schichtplaner 5** bei **Ergebnis als Dateien
-   speichern**). Es kommt eine ZIP-Datei, etwa `dispofold-sp5-ergebnis-2027-01.zip`. Sie enthält
-   personenbezogene Daten: nur auf diesem Rechner ablegen.
+1. In Dispofold unter **Daten → Sichern**, **Für Fachleute**, **Ergebnis als Dateien speichern** den Monat
+   wählen und **Ergebnis speichern**. Es kommt eine ZIP-Datei, etwa `dispofold-sp5-ergebnis-2027-01.zip`. Sie
+   enthält personenbezogene Daten: nur auf diesem Rechner ablegen.
 2. In einer Eingabeaufforderung (Windows) oder einem Terminal (Linux):
 
    ```text

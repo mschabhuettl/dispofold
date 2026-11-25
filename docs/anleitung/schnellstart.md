@@ -8,7 +8,7 @@ Diese Anleitung ist in jede Form von Dispofold eingebaut, am Server wie im Progr
 auch ohne Internet: im Menü **Anleitung** und über **Mehr dazu in der Anleitung** unter jedem Seitentitel.
 
 Wer gleich mit echten Daten anfangen will: [Echte Daten aus dem bisherigen Planungsprogramm
-übernehmen](plugin-sp5-echte-daten.md) oder einen [Datensatz importieren](daten.md#import). Der Probemonat hier
+übernehmen](plugin-sp5-echte-daten.md) oder einen [Datensatz importieren](daten.md#übernehmen). Der Probemonat hier
 lohnt sich trotzdem vorher, am besten in einer Installation zum Ausprobieren.
 
 ## 1. Anmelden oder starten
@@ -42,8 +42,8 @@ So sieht es aus, wenn es geklappt hat: Oben steht der [Planungsmonat](begriffe.m
 (1). Der Dienstplan zeigt 150 erfundene Personen (2), schon mit Urlauben und anderen
 [Abwesenheiten](begriffe.md#abwesenheit), aber noch ohne Dienste. **Planen** (3) ist nicht mehr grau.
 
-Dasselbe geht auch unter **Einstellungen**, **Daten**, **Erweitert** mit **Demodaten laden (Jänner 2027)**; danach
-führt der Knopf **Zu Jänner 2027 wechseln** zum Monat der Demodaten. Die Demodaten ersetzen alle Stammdaten: nie
+Dasselbe geht auch unter **Daten**, **Übernehmen**, Quelle **Datensatz-Datei**, **Erweitert** mit **Demodaten
+laden (Jänner 2027)**; danach ist der Monat der Demodaten gewählt. Die Demodaten ersetzen alle Stammdaten: nie
 laden, wenn schon echte Daten da sind.
 
 ## 4. Einen kurzen Rundgang machen
@@ -52,8 +52,9 @@ Die drei Stellen ansehen, die auf jeder Seite gleich sind.
 
 ![Die wichtigsten Stellen jeder Seite](../screenshots/schnellstart-04-rundgang.png)
 
-1. **Menü:** **Dienstplan**, **Prüfen**, **Eingaben**, **Personen**, **Einstellungen** und **Anleitung**. Auf einem
-   schmalen Bildschirm, etwa am Telefon, steckt das Menü hinter dem Knopf mit den drei Strichen (☰) oben.
+1. **Menü:** **Dienstplan**, **Eingaben**, **Prüfen**, **Personen**, **Daten**, **Einstellungen** und
+   **Anleitung**. Auf einem schmalen Bildschirm, etwa am Telefon, steckt das Menü hinter dem Knopf mit den drei
+   Strichen (☰) oben.
 2. **Mehr dazu in der Anleitung:** Unter jedem Seitentitel sagt ein kurzer Text, wozu die Seite da ist; der Link
    öffnet den passenden Abschnitt dieser Anleitung. Ein **i** neben einer Zahl oder einem Feld erklärt sie.
 3. **Die Zeile über dem Plan:** Sie sagt nach dem Planen in Farbe, ob der Plan verwendbar ist. Jetzt steht dort
@@ -132,7 +133,7 @@ und im Fenster noch einmal **Monat abschließen** klicken.
 ![Das Menü Ausgabe im Dienstplan](../screenshots/schnellstart-10-abschliessen.png)
 
 So sieht es aus, wenn es geklappt hat: Neben **Status:** steht **abgeschlossen**, und der Plan ist nur noch
-lesbar. Zum Üben lässt sich der Monat unter **Einstellungen**, **Daten** mit **Monat wieder öffnen** wieder öffnen.
+lesbar. Zum Üben lässt sich der Monat unter **Daten**, **Monate** mit **Monat wieder öffnen** wieder öffnen.
 
 ## Wie es weitergeht
 

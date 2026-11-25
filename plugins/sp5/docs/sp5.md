@@ -11,18 +11,19 @@ sie nur; in Schichtplaner 5 ändert sich nichts. Den Weg Schritt für Schritt be
 ## Einschalten und einstellen
 
 1. Unter [Einstellungen → Erweiterungen](erweiterungen.md#einschalten-und-ausschalten) die Erweiterung
-   **Schichtplaner 5** einschalten.
-2. Darunter erscheinen ihre Einstellungen:
-   - **Ordner von Schichtplaner 5:** der Datenordner (mit `5EMPL.DBF` und den anderen Tabellen). Am Server sind nur
-     die Ordner wählbar, die die IT freigegeben hat (siehe [Betrieb](../betrieb.md#erweiterungen)); am eigenen
-     Rechner öffnet **Ordner wählen …** den Ordnerdialog.
-   - **Zuordnung (JSON):** welche Schichten, Gruppen und Abwesenheiten zu welchen Bereichen gehören, als Text.
-     Eine Datei wählen oder den Text einfügen; beim Speichern wird sie geprüft, alle Fehler stehen in der Meldung.
-     Bequemer geht es auf der Seite [Zuordnung](plugin-sp5-zuordnung.md), mit Vorschlägen aus dem Ordner.
+   **Schichtplaner 5** einschalten. Ihre Karte sagt dann „Ordner, Zuordnung und Optionen stehen unter Daten →
+   Übernehmen.“; **Einrichten** öffnet **Daten → Übernehmen** mit der Quelle **Schichtplaner 5**.
+2. Dort unter **Quelle** (siehe [Quelle](plugin-sp5-uebersicht.md#quelle)):
+   - **Ordner von Schichtplaner 5:** der Datenordner (mit `5EMPL.DBF` und den anderen Tabellen), dann **Ordner
+     speichern**. Am Server sind nur die Ordner wählbar, die die IT freigegeben hat (siehe
+     [Betrieb](../betrieb.md#erweiterungen)); am eigenen Rechner öffnet **Ordner wählen …** den Ordnerdialog.
+   - **Zuordnung:** welche Schichten, Gruppen und Abwesenheiten zu welchen Bereichen gehören. **Zuordnung
+     einrichten** führt zu [Daten → Zuordnung](plugin-sp5-zuordnung.md), mit Vorschlägen aus dem Ordner.
    - **Optionen:** wie der Import rechnet. Jede hat ein „i“ mit der Erklärung und einem Beispiel; die
      Standardwerte passen meist. Oben stehen die, die man kennen sollte; die übrigen stehen unter **Erweitert**.
-     Die wichtigste ist **Bereiche einer Person aus** (siehe unten).
-3. **Einstellungen speichern.** Ausschalten der Erweiterung behält sie.
+     Die wichtigste ist **Bereiche einer Person aus** (siehe unten). Eine Änderung wird gleich gespeichert und
+     gilt für jedes weitere Einlesen.
+3. Ausschalten der Erweiterung behält Ordner, Zuordnung und Optionen.
 
 | Einstellung | Standard |
 |---|---|
@@ -56,7 +57,13 @@ Disposition ist und in der Historie 10 Dienste in der Annahme und keinen in der 
 die Disposition nur von Hand. Die Seite der Person zeigt neben jedem Bereich, woher er kommt
 („Gruppe …“, „Historie: 10 Dienste“) und ob er nur von Hand ist.
 
-Einstellungen aus einer Version vor 0.25.0 bleiben bei „Gruppen“, damit derselbe Lauf dasselbe ergibt; die
+**Schichten seltener als … Dienste nur von Hand** braucht es mit „Historie, Gruppen als Reserve“ meist nicht:
+Dort hat eine Person ohnehin nur die Bereiche ganz, in denen sie gearbeitet hat. Mit echten Daten zeigt sich:
+Reserve und diese Option zusammen geben einer Person viele Zeilen mit Ausnahmen je Schicht; bleibt die Option leer,
+hat jeder Bereich einer Person einen klaren Zustand (planbar oder nur von Hand) ohne lange Liste darunter. Die
+Option bleibt deshalb unter **Erweitert** und ist leer.
+
+Einstellungen aus einer Version vor 0.25.0 bleiben bei „Gruppen“, damit dasselbe Einlesen dasselbe ergibt; die
 Option **Bei Gruppen: Bereiche aus der Historie ab …** wirkt nur dort. **Bereiche ohne Dienst in den letzten …
 Monaten nur von Hand** gilt bei jedem Wert, für Bereiche, in denen jemand früher gearbeitet hat und zuletzt
 nicht mehr.
@@ -67,11 +74,11 @@ so.
 
 ## Importieren
 
-Importiert wird an einer Stelle: auf der Seite [Lauf und Import](plugin-sp5-uebersicht.md) im Menü
-**Schichtplaner 5**. Dort den ersten und, für mehrere Monate, den letzten Monat wählen, **Ausführen**, das
-Ergebnis ansehen und dann unter **Diesen Lauf importieren** importieren. **Änderungen aus Dispofold behalten**
-anhaken, wenn seit dem letzten Import in Dispofold etwas an den Stammdaten geändert wurde; die Vorschau zeigt, was
-übernommen wird und wo es Konflikte gibt (siehe [Daten und Korrekturdatei](daten.md)).
+Importiert wird an einer Stelle: unter [Daten → Übernehmen](plugin-sp5-uebersicht.md) mit der Quelle
+**Schichtplaner 5**. Jeden Monat: **Daten** öffnen (die Quelle ist gemerkt), den Monat wählen, **Einlesen**, den
+Satz oben im Ergebnis lesen, dann **Übernehmen**. **Änderungen aus Dispofold behalten** anhaken, wenn seit dem
+letzten Import in Dispofold etwas an den Stammdaten geändert wurde; die Vorschau zeigt, was übernommen wird und wo
+es Konflikte gibt (siehe [Daten und Korrekturdatei](daten.md#neuer-datensatz-änderungen-aus-dispofold-behalten)).
 
 Die Korrekturen kommen von selbst: Die Erweiterung wendet die Korrekturdatei an, die Dispofold aus den Änderungen
 seit dem letzten Import bildet, und vermerkt sie im Datensatz. Eine Datei `korrekturen.json` braucht es dafür

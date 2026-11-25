@@ -108,6 +108,12 @@ Was in einem Monat dazukommt: Abwesenheiten, Wünsche und Vorgaben, unter dem Me
 nur für ihren Monat. Gegenstück: die [Stammdaten](#stammdaten), die für alle Monate gelten. Siehe
 [Abwesenheiten, Wünsche und Vorgaben](eingaben.md).
 
+## Einlesen
+
+Der erste Schritt unter **Daten**, **Übernehmen**: Dispofold liest die Quelle (eine Datensatz-Datei oder, mit einer
+Erweiterung, deren Quelle) und zeigt, was darin steht. Das ändert noch nichts in Dispofold; erst
+[Übernehmen](#übernehmen) tut das. Siehe [Übernehmen](daten.md#übernehmen).
+
 ## Einschränkung
 
 Eine Ausnahme vom [Zustand eines Bereichs](#zustand-eines-bereichs): eine Schicht oder alle Schichten einer
@@ -136,8 +142,8 @@ erwirbt einen Ersatzruhetag; offene Ersatzruhetage plant das Programm in den Fol
 
 Ein zugeklappter Abschnitt mit Einstellungen, die man für den Anfang nicht braucht. Es gibt ihn dreimal: im
 **Dienstplan** neben **Planen** (Startwert, Zeitlimit, Schrittzahl, **Neu beginnen** und die [Bewertung](#bewertung)), unter
-**Regeln** (Nachtzeit, die [Gewichte](#gewicht) und alle Regeln mit Beschreibung) und unter **Daten** (die
-Demodaten).
+**Regeln** (Nachtzeit, die [Gewichte](#gewicht) und alle Regeln mit Beschreibung) und unter **Daten**,
+**Übernehmen** (die Demodaten).
 
 ## Exportprogramm
 
@@ -334,6 +340,12 @@ verlangt), oder Dienste, die gar keinen Bedarf abdecken. Gehört zur Gruppe Beda
 [Personenstunden](#personenstunden). Kein Fehler: Sie entsteht vor allem, wo eine Schicht über mehrere Abschnitte
 des Bedarfs reicht und der nächste Abschnitt weniger Personen braucht. Siehe
 [Was die Zahlen bedeuten](zahlen.md#überbesetzung).
+
+## Übernehmen
+
+Der zweite Schritt unter **Daten**, **Übernehmen**, nach dem [Einlesen](#einlesen): Das Eingelesene ersetzt die
+[Stammdaten](#stammdaten) und die Planungsmonate, die darin stehen, auf Wunsch mit den Änderungen aus Dispofold.
+Siehe [Übernehmen](daten.md#übernehmen).
 
 ## Vorgabe
 

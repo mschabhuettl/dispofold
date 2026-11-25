@@ -1,15 +1,15 @@
 # Echte Daten aus Schichtplaner 5
 
 Diese Seite zeigt Schritt für Schritt, wie die echten Daten aus Schichtplaner 5 zum ersten Mal in Dispofold
-kommen: Erweiterung einschalten, Ordner wählen, Zuordnung anlegen, Export ausführen, prüfen und übernehmen. Jeder
-Schritt ist eine Handlung mit einem Bild; ein Rahmen im Bild zeigt, worauf es ankommt. Schichtplaner 5 selbst bleibt
-dabei, wie es ist: Dispofold liest den Ordner nur.
+kommen: Erweiterung einschalten, Ordner wählen, Zuordnung vorschlagen lassen, einlesen, prüfen und übernehmen.
+Jeder Schritt ist eine Handlung mit einem Bild; ein Rahmen im Bild zeigt, worauf es ankommt. Schichtplaner 5 selbst
+bleibt dabei, wie es ist: Dispofold liest den Ordner nur.
 
 Was man braucht: die Rolle Planung und den Datenordner von Schichtplaner 5 (der Ordner mit `5EMPL.DBF` und den
 anderen Tabellen). Am Server muss die IT ihn vorher freigeben (siehe [Betrieb](../betrieb.md#erweiterungen)).
 
 Wer bisher mit dem Exportprogramm und einer Korrekturdatei `korrekturen.json` gearbeitet hat, lädt diese Datei vor
-Schritt 12 einmal unter [Daten → Korrekturdatei laden](daten.md#korrekturdatei-laden).
+Schritt 9 einmal unter **Daten → Sichern**, [Korrekturdatei laden](daten.md#korrekturdatei-laden).
 
 ## 1. Die Erweiterung einschalten
 
@@ -18,166 +18,131 @@ Unter **Einstellungen → Erweiterungen** bei **Schichtplaner 5** **Eingeschalte
 
 ![Einstellungen → Erweiterungen, die Erweiterung noch aus](img/erweiterungen.png)
 
-![Einstellungen → Erweiterungen: die Erweiterung eingeschaltet, im Menü ihr Eintrag](img/echte-daten-01-einschalten.png)
+![Die Erweiterung eingeschaltet, mit dem Link Einrichten](img/echte-daten-01-einschalten.png)
 
-So sieht es aus, wenn es geklappt hat: Im Menü links steht **Schichtplaner 5**, und unter der Erweiterung stehen
-ihre Einstellungen.
+So sieht es aus, wenn es geklappt hat: Bei der Erweiterung steht „Ordner, Zuordnung und Optionen stehen unter
+Daten → Übernehmen.“ mit dem Link **Einrichten**. **Einrichten** anklicken.
 
 ## 2. Den Ordner wählen
 
-In den Einstellungen der Erweiterung bei **Ordner von Schichtplaner 5** den Datenordner wählen. Am Server die
-freigegebene Stelle in der Liste wählen und die Unterordner anklicken, bis der Datenordner erreicht ist; am eigenen
-Rechner **Ordner wählen …** anklicken und den Ordner im Dialog wählen.
+**Daten → Übernehmen** ist offen, bei **Quelle** ist **Schichtplaner 5** gewählt, und der Abschnitt **Quelle** ist
+aufgeklappt. Bei **Ordner von Schichtplaner 5** den Datenordner wählen: am Server die freigegebene Stelle in der
+Liste wählen und die Unterordner anklicken, bis der Datenordner erreicht ist; am eigenen Rechner **Ordner wählen …**
+anklicken und den Ordner im Dialog wählen. Dann **Ordner speichern** anklicken.
 
-![Der gewählte Datenordner in den Einstellungen der Erweiterung](img/echte-daten-02-ordner.png)
+![Die Quelle aufgeklappt, der Ordner gewählt, Ordner speichern](img/echte-daten-02-ordner.png)
 
-So sieht es aus, wenn es geklappt hat: Unter der Auswahl steht **Gewählter Ordner:** mit dem Datenordner.
+So sieht es aus, wenn es geklappt hat: Unten erscheint kurz **Ordner gespeichert**.
 
-## 3. Die Einstellungen speichern
+## 3. Zur Zuordnung
 
-**Einstellungen speichern** anklicken. Das Feld **Zuordnung (JSON)** bleibt leer, die Optionen bleiben, wie sie
-sind; beides kommt später.
+Die Zeile **Quelle:** nennt jetzt den Ordner und wie viele Personen darin stehen, etwa „Ordner …: 40 Personen
+gefunden“. Darunter steht „Zuordnung: noch keine. Ohne sie kann nichts eingelesen werden.“; das ist richtig so.
+**Zuordnung einrichten** anklicken.
 
-![Einstellungen speichern und die Meldung danach](img/echte-daten-03-gespeichert.png)
-
-So sieht es aus, wenn es geklappt hat: Unten erscheint kurz **Einstellungen gespeichert**.
-
-## 4. Die Seiten der Erweiterung öffnen
-
-Im Menü links **Schichtplaner 5** anklicken.
-
-![Lauf und Import mit dem Hinweis „Die Zuordnung fehlt“](img/echte-daten-04-zuordnung-fehlt.png)
-
-So sieht es aus, wenn es geklappt hat: Die Seite **Lauf und Import** ist offen, darüber die Reiter **Lauf und
-Import**, **Bericht**, **Zuordnung** und **Vergleich**. Oben steht rot „Die Zuordnung fehlt“; das ist richtig so.
-
-## 5. Zur Zuordnung wechseln
-
-Im roten Hinweis **Zur Zuordnung** anklicken.
-
-![Die leere Zuordnung mit der Prüfung](img/echte-daten-05-zuordnung-leer.png)
-
-So sieht es aus, wenn es geklappt hat: Der Reiter **Zuordnung** ist gewählt, oben steht „Noch keine Zuordnung
-gespeichert“, und unter **Prüfung** steht „Es ist noch kein Bereich eingetragen.“
+![Die Quelle mit den gefundenen Personen und Zuordnung einrichten](img/echte-daten-03-quelle.png)
 
 Die [Zuordnung](plugin-sp5-zuordnung.md) übersetzt Schichtplaner 5 in Dispofold: welche Arbeitsplätze getrennt
 geplant werden ([Bereiche](begriffe.md#bereich)), welcher Dienstcode zu welchem Bereich gehört (Schichtregeln),
-welche Gruppe wo arbeiten darf (Gruppen) und welche Abwesenheit die Ersatzruhe ist. Über jedem Abschnitt steht ein
-Satz, wofür er da ist.
+welche Gruppe wo arbeiten darf (Gruppen) und welche Abwesenheit die Ersatzruhe ist.
 
-## 6. Die Zuordnung vorschlagen lassen
+## 4. Die Vorschläge ansehen
 
-Unter **Vorschläge aus dem Ordner** **Zuordnung vorschlagen** anklicken.
+Der Reiter **Daten → Zuordnung** ist offen. Oben steht der Kasten **Vorschläge**: „… Vorschläge für das, was die
+Zuordnung noch nicht trifft.“ und darunter „Diese Bereiche kämen dazu, bitte kurz prüfen:“ mit der Liste.
 
-![Die Vorschläge aus dem Ordner](img/echte-daten-06-vorschlaege.png)
+![Der Kasten Vorschläge mit den Bereichen, die dazukämen](img/echte-daten-04-assistent.png)
 
-![Vorschläge für Bereiche und Schichten mit ihren Gründen](img/zuordnung-vorschlaege.png)
+Die Liste kurz lesen: Sind das die Arbeitsplätze, die getrennt geplant werden? Meist passt sie. Fehlt einer oder
+ist einer zu viel, hilft der Editor weiter unten (siehe
+[Vorschläge aus dem Ordner](plugin-sp5-zuordnung.md#vorschläge-aus-dem-ordner)); für den ersten Import ist das
+nicht nötig.
 
-So sieht es aus, wenn es geklappt hat: Darunter stehen Vorschläge in Abschnitten (**Neue Bereiche**,
-**Schichten**, **Gruppen**, **Ersatzruhe**), jeder mit seinem Grund, etwa „Mitglieder der Gruppe … haben 100 %
-der … Dienste“.
+## 5. Die Vorschläge übernehmen und speichern
 
-Darüber steht, woraus die Bereiche kommen: **Bereiche aus Gruppen** oder **Bereiche aus Schichtnamen**, die
-passende ist als „(empfohlen)“ markiert, mit einem Satz, warum. Die empfohlene passt fast immer. Sind die Gruppen in
-Schichtplaner 5 grob (zwei oder drei Gruppen mit fast allen) und die Arbeitsplätze nur an den Schichtnamen zu
-erkennen (`NW 7-19`, `NW 19-7`), schlägt Dispofold die Bereiche aus den Schichtnamen vor, je Schichtfamilie einen:
+**Alle Vorschläge übernehmen und speichern** anklicken.
 
-![Vorschläge aus den Schichtnamen: je Schichtfamilie ein Bereich](img/zuordnung-familien.png)
+![Die Vorschläge übernommen und gespeichert](img/echte-daten-05-gespeichert.png)
 
-So liest man einen Grund: „14 von 15 Mitgliedern mit Diensten (93 %) haben Dienste im Bereich NW“ heißt, fast alle
-aus dieser Gruppe hatten Dienste in NW; die Gruppe gehört dorthin. Je näher an 100 %, desto sicherer. Im Zweifel
-einen Vorschlag nicht übernehmen und die Regel später selbst eintragen; mehr dazu unter
-[Vorschläge aus dem Ordner](plugin-sp5-zuordnung.md#vorschläge-aus-dem-ordner).
+So sieht es aus, wenn es geklappt hat: Im Kasten steht „… Vorschläge übernommen und gespeichert.“ Steht dazu
+„… Vorschläge brauchen eine Wahl: unten unter Zuordnung vorschlagen.“, dort bei jedem den passenden Bereich mit
+**Übernehmen: …** wählen und oben **Zuordnung speichern**.
 
-## 7. Die Vorschläge übernehmen
+## 6. Den Monat wählen und einlesen
 
-In jedem Abschnitt **Alle übernehmen** anklicken. Wo zwei Bereiche zur Wahl stehen, den passenden mit
-**Übernehmen: …** wählen. Ein Vorschlag, der nicht passt (etwa eine Gruppe, die nicht in den Plan gehört), wird mit
-**Verwerfen** entfernt.
+Den Reiter **Übernehmen** anklicken. Bei **1. Einlesen** unter **Erster Monat** den ersten Monat wählen, der in
+Dispofold geplant werden soll; **Letzter Monat** bleibt bei „nur der erste Monat“. Dann **Einlesen** anklicken.
+Das liest den Ordner und rechnet die Daten, ändert aber noch nichts in Dispofold.
 
-![Die Zuordnung mit allen Vorschlägen, noch nicht gespeichert](img/echte-daten-07-uebernommen.png)
+![Der erste Monat gewählt und Einlesen](img/echte-daten-06-einlesen.png)
 
-So sieht es aus, wenn es geklappt hat: Statt der Vorschläge steht „Keine neuen Vorschläge“, unter **Prüfung** steht
-„Keine Probleme.“, und oben ist **Ungespeicherte Änderungen** markiert.
+So sieht es aus, wenn es geklappt hat: Darunter erscheint das Ergebnis mit „Eingelesen am …“, und der Abschnitt
+**Quelle** ist zu einer Zeile zugeklappt.
 
-## 8. Die Zuordnung speichern
+## 7. Das Ergebnis ansehen
 
-Oben **Zuordnung speichern** anklicken.
+Zuerst den Satz oben im Ergebnis lesen: Er sagt, was man zuerst ansieht. Dann die Zahlen: Personen, Bereiche,
+Schichten, Dienste, Bedarfsregeln und Warnungen.
 
-![Die gespeicherte Zuordnung](img/echte-daten-08-gespeichert.png)
+![Das Ergebnis des Einlesens mit dem Satz oben und den Zahlen](img/echte-daten-07-ergebnis.png)
 
-So sieht es aus, wenn es geklappt hat: Unten erscheint kurz **Zuordnung gespeichert**, und die Markierung
-**Ungespeicherte Änderungen** und der Hinweis „Noch keine Zuordnung gespeichert“ sind weg.
+So sieht es aus, wenn es geklappt hat: Die Zahl der Personen stimmt ungefähr mit dem Personalstand überein. Ist der
+Satz oben gelb, weil Bereiche keinen Mindestbedarf haben, würde dort niemand eingeteilt: dann unter **Quelle**,
+**Optionen** die Option **Bedarf** prüfen und Schritt 6 wiederholen.
 
-## 9. Den Monat wählen
+## 8. Den Bericht ansehen
 
-Den Reiter **Lauf und Import** anklicken und bei **Erster Monat** den ersten Monat wählen, der in Dispofold geplant
-werden soll. **Letzter Monat** bleibt leer.
+Im Ergebnis **Bericht** aufklappen und die **Warnungen** lesen. Viele Warnungen sind nur Zählerstände; wichtig ist
+vor allem, ob Personen fehlen oder Schichten ohne Bereich geblieben sind.
 
-![Lauf und Import mit dem ersten Monat](img/echte-daten-09-monat.png)
+![Der aufgeklappte Bericht mit den Zeilen und Warnungen](img/echte-daten-08-bericht.png)
 
-So sieht es aus, wenn es geklappt hat: Das Feld **Erster Monat** zeigt den Monat, und der rote Hinweis „Die
-Zuordnung fehlt“ ist weg.
+So sieht es aus, wenn es geklappt hat: Der Bericht zeigt die Zeilen nach Art und darunter die Warnungen. Was die
+einzelnen Zeilen bedeuten, steht unter [Bericht](plugin-sp5-bericht.md).
 
-## 10. Den Export ausführen
+## 9. Übernehmen
 
-**Ausführen** anklicken. Das liest den Ordner und rechnet die Daten, importiert aber noch nichts.
-
-![Lauf und Import nach dem Ausführen](img/echte-daten-10-lauf.png)
-
-![Die Zahlen des Laufs](img/echte-daten-10-lauf-zahlen.png)
-
-So sieht es aus, wenn es geklappt hat: Darunter steht „Lauf vom …“ mit dem Monat und den Zahlen: Personen,
-Bereiche, Schichten, Dienste, Bedarfsregeln und Warnungen.
-
-## 11. Das Ergebnis prüfen
-
-**Bericht ansehen** anklicken und die Zahl der Personen und die **Warnungen** lesen. Viele Warnungen sind nur
-Zählerstände; wichtig ist vor allem, ob Personen fehlen oder Schichten ohne Bereich geblieben sind.
-
-![Der Bericht des Laufs](img/echte-daten-11-bericht.png)
-
-![Die Warnungen unten im Bericht](img/echte-daten-11-bericht-warnungen.png)
-
-So sieht es aus, wenn es geklappt hat: Die Seite **Bericht** zeigt die Zeilen nach Art und darunter die Warnungen.
-Stimmt die Zahl der Personen ungefähr mit dem Personalstand überein, kann es weitergehen. Was die einzelnen Zeilen
-bedeuten, steht unter [Bericht](plugin-sp5-bericht.md).
-
-## 12. Die Daten übernehmen
-
-Den Reiter **Lauf und Import** anklicken, unter **Diesen Lauf importieren** **Importieren** anklicken und die
-Rückfrage „Der Datensatz ersetzt die Stammdaten. Fortfahren?“ mit **OK** bestätigen.
+Bei **2. Übernehmen** steht, was sich ändert, etwa „40 Personen, 5 Bereiche, Jänner 2027; ersetzt die Daten aus
+…“. **Übernehmen** anklicken.
 
 **Änderungen aus Dispofold behalten** bleibt dabei leer: Beim ersten Import aus Schichtplaner 5 gibt es in Dispofold
 nichts zu behalten. Ist das Häkchen schon gesetzt, weil vorher etwa die Demodaten geändert wurden, es vor dem Klick
-entfernen. Erscheint nach der Rückfrage noch „Stammdaten wurden geändert.“, **Trotzdem importieren** wählen; die
-Stammdaten zum Ausprobieren werden dann durch die echten ersetzt.
+entfernen. Erscheint noch „Stammdaten wurden geändert.“, **Trotzdem importieren** wählen; die Stammdaten zum
+Ausprobieren werden dann durch die echten ersetzt.
 
-![Das Ergebnis des Imports](img/echte-daten-12-import.png)
+![Die Daten übernommen, der Monat gewählt](img/echte-daten-09-uebernommen.png)
 
-So sieht es aus, wenn es geklappt hat: Unter dem Knopf steht „Import aus …“ mit der Zahl der Personen, Bereiche und
-Schichten und den Monaten.
+So sieht es aus, wenn es geklappt hat: Darunter steht „Import aus …“ mit der Zahl der Personen, Bereiche und
+Schichten und den Monaten, dazu „Gewählt ist jetzt …“ mit dem Monat und dem Link **Zum Dienstplan** und der Link
+**Bereiche prüfen** (siehe [Bereiche aller Personen](personen.md#bereiche-aller-personen)).
 
-## 13. Zum Monat wechseln
+## 10. Den Dienstplan öffnen
 
-Im Ergebnis des Imports **Zu … wechseln** anklicken (der Knopf erscheint, wenn gerade ein anderer Monat gewählt
-ist), dann im Menü **Dienstplan** öffnen.
+**Zum Dienstplan** anklicken.
 
-![Der Dienstplan des importierten Monats](img/echte-daten-13-dienstplan.png)
+![Der Dienstplan des übernommenen Monats](img/echte-daten-10-dienstplan.png)
 
-So sieht es aus, wenn es geklappt hat: Der Dienstplan zeigt den importierten Monat mit den Personen aus
+So sieht es aus, wenn es geklappt hat: Der Dienstplan zeigt den übernommenen Monat mit den Personen aus
 Schichtplaner 5. Geplant wird wie unter [Planen](planen.md) beschrieben.
+
+## Jeden Monat
+
+**Daten** öffnen (die Quelle **Schichtplaner 5** ist gemerkt), bei **Erster Monat** den Monat wählen,
+**Einlesen**, den Satz oben im Ergebnis lesen und **Übernehmen**. Vorbelegt sind die Monate des letzten
+Einlesens.
 
 ## Wenn etwas nicht klappt
 
-- **„Der Ordner von Schichtplaner 5 fehlt oder ist nicht lesbar“:** Schritt 2 und 3 wiederholen; am Server die IT
+- **„Der Ordner von Schichtplaner 5 fehlt oder ist nicht lesbar“:** Schritt 2 wiederholen; am Server die IT
   fragen, ob der Ordner freigegeben ist.
-- **„Die Zuordnung fehlt“:** Schritt 5 bis 8.
+- **„Zuordnung: noch keine.“** oder **„Die Zuordnung fehlt“:** Schritt 3 bis 5.
+- **„Seit dem Einlesen wurden Ordner oder Optionen geändert: bitte zuerst neu einlesen.“:** Schritt 6
+  wiederholen.
 - **Ein Monat ist abgeschlossen** (etwa der Monat, der vorher mit den Demodaten ausprobiert und abgeschlossen
-  wurde): Über dem Import steht ein Hinweis mit dem nächsten Schritt. Am einfachsten einen späteren ersten Monat
-  wählen und Schritt 10 wiederholen (siehe auch
-  [Lauf und Import](plugin-sp5-uebersicht.md#diesen-lauf-importieren)).
+  wurde): Über **Übernehmen** steht ein Hinweis mit dem nächsten Schritt. Am einfachsten einen späteren ersten
+  Monat wählen und Schritt 6 wiederholen, oder den Monat mit **Unter Daten → Monate wieder öffnen** wieder öffnen
+  (siehe auch [Ein Monat ist abgeschlossen](plugin-sp5-uebersicht.md#ein-monat-ist-abgeschlossen)).
 
-  ![Der Hinweis über dem Import, wenn ein Monat des Laufs abgeschlossen ist](img/import-abgeschlossen.png)
+  ![Der Hinweis über Übernehmen, wenn ein Monat abgeschlossen ist](img/import-abgeschlossen.png)
 - **Weitere Runden** (Korrekturen in Dispofold, neue Monate, der Vergleich mit dem letzten Import) beschreibt
   [Ablauf](plugin-sp5-ablauf.md).

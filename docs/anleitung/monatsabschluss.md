@@ -8,12 +8,12 @@ Monat ist danach nur noch lesbar.
 
 1. Den Plan prüfen: keine Regelverstöße, Lücken geklärt, kein Hinweis „Plan veraltet“ (siehe
    [Planen und Prüfen](planen.md)).
-2. Im **Dienstplan** **Ausgabe**, **Monat abschließen** wählen, oder unter **Einstellungen**, **Daten** ganz unten
-   **Monat abschließen**.
+2. Im **Dienstplan** **Ausgabe**, **Monat abschließen** wählen, oder unter **Daten**, **Monate** in der Zeile des
+   Monats **Monat abschließen …**.
 3. Ein Fenster prüft den Plan in einer Liste: Regelverstöße, offene Lücken, Plan aktuell oder veraltet. Ein Haken
    heißt erfüllt, ein Ausrufezeichen offen. Darunter steht, was danach gilt: Der Monat ist nur noch lesbar,
    Kennzahlen, Stundenkonto und Ersatzruhe zählen ab dem nächsten Monat weiter, und wieder öffnen lässt er sich
-   unter „Einstellungen > Daten“ mit „Monat wieder öffnen“.
+   unter „Daten > Monate“.
 4. **Monat abschließen** im Fenster schließt ab. **Abbrechen** lässt alles, wie es ist.
 
 ![Das Fenster vor dem Abschluss, alle Punkte erfüllt](../screenshots/beispiel-abschluss.png)
@@ -48,15 +48,17 @@ Reihe nach abgeschlossen.“ Ohne Plan lässt sich ein Monat nicht abschließen 
 ## Abgeschlossen heißt nur lesen
 
 Plan, Eingaben und Import sind für diesen Monat gesperrt. Der Dienstplan sagt „Abgeschlossen: nur lesen. Wieder
-öffnen unter „Einstellungen > Daten“.“ Drucken und Export gehen weiter. Ein Datensatz, der den Monat mit anderen
-Eingaben enthält, lässt sich nicht importieren („Der Monat … ist abgeschlossen; der Import würde ihn ändern.“).
+öffnen unter „Daten > Monate“.“ Drucken und Export gehen weiter. Ein Datensatz, der den Monat mit anderen
+Eingaben enthält, lässt sich nicht übernehmen („Der Monat … ist abgeschlossen; der Import würde ihn ändern.“).
 
 ## Monat wieder öffnen
 
-![Monat wieder öffnen unter Einstellungen, Daten](../screenshots/monat-oeffnen.png)
+![Daten, Monate mit einem abgeschlossenen Monat und Monat wieder öffnen](../screenshots/monat-oeffnen.png)
 
-Unter **Einstellungen**, **Daten** steht in einem abgeschlossenen Monat statt **Monat abschließen** der Knopf
-**Monat wieder öffnen** (nach einer Rückfrage). Monate werden von hinten her geöffnet: Ist der Folgemonat
+Unter **Daten**, **Monate** steht in der Zeile eines abgeschlossenen Monats statt **Monat abschließen …** der Knopf
+**Monat wieder öffnen** (nach einer Rückfrage). Die Tabelle nennt je Monat den Zustand (**offen** oder
+**abgeschlossen**) und den Plan (etwa **Entwurf** oder **noch kein Plan**); ein Klick auf den Monat öffnet ihn im
+Dienstplan (siehe [Monate](daten.md#monate)). Monate werden von hinten her geöffnet: Ist der Folgemonat
 abgeschlossen, muss er zuerst wieder geöffnet werden. Beim Öffnen verlassen die Abschlusswerte die Historie. Beim
 erneuten Abschließen werden sie neu geschrieben.
 

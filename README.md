@@ -116,7 +116,7 @@ docker compose ps    # nach ein bis zwei Minuten alle Dienste "healthy"
 ```
 
 Die Oberfläche ist dann unter `http://<server>:8080` erreichbar. Für den Zugriff im Netz gehört ein Reverse Proxy
-mit HTTPS davor. Erster Test: anmelden, **Einstellungen**, **Daten**, **Erweitert**, **Demodaten laden**, dann im
+mit HTTPS davor. Erster Test: anmelden, **Daten**, **Übernehmen**, **Erweitert**, **Demodaten laden**, dann im
 **Dienstplan** auf **Planen** klicken. Die Demodaten beschreiben eine erfundene Leitstelle: 150 erfundene Personen in fünf
 Bereichen, Jänner 2027.
 

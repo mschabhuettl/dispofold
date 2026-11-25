@@ -77,7 +77,7 @@ bleiben, die [Korrekturdatei](daten.md#korrekturdatei) an das Exportprogramm geb
 Fehlt der Austritt im Quellsystem und lässt sich die Person nicht entfernen, **Aus dem Quellsystem nicht mehr
 übernehmen** einschalten (siehe [Personen](personen.md#nicht-mehr-aus-dem-quellsystem-übernehmen)).
 
-**Kann ich einen abgeschlossenen Monat noch ändern?** Ja: unter **Einstellungen**, **Daten** **Monat wieder
+**Kann ich einen abgeschlossenen Monat noch ändern?** Ja: unter **Daten**, **Monate** **Monat wieder
 öffnen**, ändern, prüfen und wieder abschließen. Ist schon der Folgemonat abgeschlossen, zuerst diesen öffnen.
 
 **Die Planung dauert lange.** Mit den Standardwerten endet sie nach 250 000 Schritten, spätestens nach 300
@@ -89,7 +89,7 @@ rechts steht die Rolle). Die Rolle vergibt die IT. Siehe [Rolle „nur lesen“]
 
 **Wie sichere ich meine Daten?** Die Sicherung der Datenbank ist Sache der IT (siehe
 [betrieb.md](../betrieb.md#sicherung-und-wiederherstellung)). Zusätzlich speichert **Datensatz exportieren** unter
-**Einstellungen**, **Daten** alle Stammdaten und Eingaben als Datei; Pläne exportiert man je Monat als JSON.
+**Daten**, **Sichern** alle Stammdaten und Eingaben als Datei; Pläne exportiert man je Monat als JSON.
 
 ## Anmeldung
 
@@ -121,9 +121,9 @@ Ein abgelehnter Import nennt alle Fehler auf einmal, nur mit Ids, ohne Namen. Ni
 | … verweist auf den unbekannten Bereich … (*ebenso Person, Schicht, Abwesenheitsart*) | ein Eintrag nennt etwas, das es im Datensatz nicht gibt | im Quellsystem den Eintrag oder den fehlenden Bereich ergänzen |
 | Person …: Die gewohnte Verteilung ist ungültig | die Anteile ergeben nicht 100 % oder nennen einen fremden Bereich | im Quellsystem korrigieren |
 | Schicht … dauert … h, erlaubt sind höchstens … h. | eine Schicht ist länger als die Höchstdauer eines Dienstes | die Schicht oder die Regel prüfen |
-| Der Monat … ist abgeschlossen; der Import würde ihn ändern. | die Datei enthält einen abgeschlossenen Monat mit anderen Eingaben | den Monat wieder öffnen oder eine Datei ohne diesen Monat importieren |
+| Der Monat … ist abgeschlossen; der Import würde ihn ändern. Zuerst unter „Daten > Monate“ wieder öffnen, … | die Datei enthält einen abgeschlossenen Monat mit anderen Eingaben | den Monat unter **Daten**, **Monate** wieder öffnen oder eine Datei ohne diesen Monat übernehmen |
 | Während der Planung von … kann nicht importiert werden. | für einen Monat der Datei läuft eine Planung | warten oder **Stopp** |
-| Stammdaten wurden geändert. … | seit dem letzten Import wurde in Dispofold etwas geändert | siehe [Import](daten.md#import): exportieren, behalten oder bewusst ersetzen |
+| Stammdaten wurden geändert. … | seit dem letzten Import wurde in Dispofold etwas geändert | siehe [Übernehmen](daten.md#übernehmen): exportieren, behalten oder bewusst ersetzen |
 | Der Stand des letzten Imports ist nicht gespeichert (…) | die Installation stammt aus einer älteren Version | einmal neu importieren, danach gehen Vorschau und Korrekturdatei |
 | Die Daten sind zu groß (höchstens 50 MB). | die Datei ist zu groß | die IT fragen |
 | … Warnungen: | der Import ist gelungen, aber etwas ist auffällig, etwa zwei Abwesenheiten am selben Tag | die genannten Einträge im Quellsystem prüfen |

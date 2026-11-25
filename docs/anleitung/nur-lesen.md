@@ -27,8 +27,8 @@ Rechner gibt es diese Rolle nicht.
   kann sich noch ändern; verbindlich ist ein abgeschlossener Monat oder was die Planung sagt.
 
 Sie kann nichts ändern, nicht planen, nicht abschließen und nicht exportieren. Die Zellen und die Zahlen der
-Bedarfslücken lassen sich nicht anklicken, und Seiten der Planung (Prüfen, Eingaben, Einstellungen) gibt es nicht;
-wer ihre Adresse eingibt, landet im Dienstplan. Den Hinweis auf eine neue Version sieht sie nie.
+Bedarfslücken lassen sich nicht anklicken, und Seiten der Planung (Prüfen, Eingaben, Daten, Einstellungen) gibt es
+nicht; wer ihre Adresse eingibt, landet im Dienstplan. Den Hinweis auf eine neue Version sieht sie nie.
 
 ## Was die Rolle nicht sieht
 

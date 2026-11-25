@@ -3,6 +3,24 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.27.0 (2026-11-25)
+
+- **Ein Menü Daten für die Arbeit jeden Monat:** **Übernehmen** holt die Daten, **Monate** zeigt die Monate offen
+  oder abgeschlossen (abschließen und wieder öffnen hier), **Sichern** exportiert und holt Sicherungen zurück.
+  Einstellungen hat nur noch Regeln, Stammdaten und Erweiterungen und öffnet mit dem zuletzt benutzten Reiter. Alte
+  Lesezeichen führen auf die neuen Seiten.
+- **Übernehmen in zwei Schritten:** Erst **Einlesen**, das noch nichts ändert und zeigt, was kommt, dann
+  **Übernehmen**, das sagt, was es ersetzt. Danach ist der erste Monat der Daten gewählt, und „Bereiche prüfen“ führt
+  zu den Bereichen aller Personen.
+- **Die Import-Erweiterung an einem Ort:** Ordner, Zuordnung und Optionen stehen nur noch unter Daten, Übernehmen.
+  Die Optionen sind immer die gespeicherten; eine Änderung wird gleich gespeichert und gilt für jedes weitere
+  Einlesen, das Ergebnis nennt sie. Bericht und Vergleich klappen unter dem Ergebnis auf, die Kürzel ohne Regel
+  stehen mit Namen dabei. Ändert man Ordner oder Optionen nach dem Einlesen, wartet Übernehmen auf ein neues
+  Einlesen. Unter Erweiterungen bleibt nur Ein und Aus mit dem Weg dorthin.
+- **Zuordnung mit Assistent:** Fehlt der Zuordnung etwas, nennt sie oben die Vorschläge und die neuen Bereiche;
+  ein Knopf übernimmt und speichert alle. Der genaue Editor bleibt darunter, JSON nur noch für Fachleute.
+- **Kleiner:** Der Stern in der Tabelle der Bereiche zeigt auch Ausnahmen für alle Schichten einer Art.
+
 ## 0.26.0 (2026-11-25)
 
 - **Bereiche einer Person: planbar, nur von Hand, nie:** Auf der Seite einer Person hat jeder Bereich einen Zustand

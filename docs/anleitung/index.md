@@ -14,11 +14,11 @@ ohne Internet.
 Ein Monat, von den Daten bis zum Abschluss. [Ein Monat Schritt für Schritt](beispiel.md) zeigt denselben Ablauf mit
 Bildern.
 
-1. **Daten laden** (einmal und nach jedem neuen Export aus dem Quellsystem): unter **Einstellungen**, **Daten**
-   den Datensatz importieren, oder über die Erweiterung für das bisherige Planungsprogramm (siehe
-   [Echte Daten übernehmen](plugin-sp5-echte-daten.md)). Was sich selten ändert (Schichten, Bedarf, Feiertage),
-   pflegt man unter **Einstellungen**, **Stammdaten**, die Personen unter **Personen**. Siehe
-   [Daten](daten.md#import).
+1. **Daten laden** (einmal und nach jedem neuen Export aus dem Quellsystem): unter **Daten**, **Übernehmen** die
+   Quelle wählen, **Einlesen** und **Übernehmen**, mit einem Datensatz oder über die Erweiterung für das bisherige
+   Planungsprogramm (siehe [Echte Daten übernehmen](plugin-sp5-echte-daten.md)). Was sich selten ändert
+   (Schichten, Bedarf, Feiertage), pflegt man unter **Einstellungen**, **Stammdaten**, die Personen unter
+   **Personen**. Siehe [Daten](daten.md#übernehmen).
 2. **Eingaben erfassen:** unter **Eingaben** die Abwesenheiten (Urlaub, Krankenstand), die Wünsche und die
    Vorgaben des Monats eintragen und **Speichern**. Siehe [Eingaben](eingaben.md).
 3. **Planen:** im **Dienstplan** auf **Planen** klicken. Der Solver rechnet im Hintergrund, mit den Demodaten ein
@@ -32,7 +32,7 @@ Bildern.
    vorher **Plan fixieren**. Siehe [Von Hand ändern und fixieren](plan-bearbeiten.md#von-hand-ändern-und-fixieren).
 6. **Drucken und exportieren:** im **Dienstplan** das Menü **Ausgabe**: **Drucken** oder Export als XLSX, CSV
    oder JSON. Siehe [Drucken](plan-bearbeiten.md#drucken) und [Exportieren](daten.md#exportieren).
-7. **Monat abschließen:** im Menü **Ausgabe** oder unter **Einstellungen**, **Daten**. Die Zahlen des Monats
+7. **Monat abschließen:** im Menü **Ausgabe** oder unter **Daten**, **Monate**. Die Zahlen des Monats
    kommen in die Historie, der nächste Monat baut darauf auf. Siehe [Monat abschließen](monatsabschluss.md).
 8. **Änderungen zurückgeben:** Wurden Personen oder Bedarf in Dispofold geändert, die Korrekturdatei für das
    Exportprogramm speichern. Siehe [Korrekturdatei](daten.md#korrekturdatei).
@@ -41,10 +41,10 @@ Bildern.
 
 ![Die Teile jeder Seite, nummeriert](../screenshots/uebersicht.png)
 
-1. **Menü:** **Dienstplan**, **Prüfen**, **Eingaben**, **Personen**, **Einstellungen** und **Anleitung**. Die
-   Rolle „nur lesen“ sieht weniger, siehe [Rolle „nur lesen“](nur-lesen.md). Darunter führt **Quellcode
-   (AGPL-3.0)** zum Quellcode des Programms. Auf einem schmalen Bildschirm, etwa am Telefon, steckt das Menü
-   hinter dem Knopf mit den drei Strichen (☰) oben und klappt nach der Wahl wieder zu.
+1. **Menü:** **Dienstplan**, **Eingaben**, **Prüfen**, **Personen**, **Daten**, **Einstellungen** und
+   **Anleitung**. Die Rolle „nur lesen“ sieht weniger, siehe [Rolle „nur lesen“](nur-lesen.md). Darunter führt
+   **Quellcode (AGPL-3.0)** zum Quellcode des Programms. Auf einem schmalen Bildschirm, etwa am Telefon, steckt das
+   Menü hinter dem Knopf mit den drei Strichen (☰) oben und klappt nach der Wahl wieder zu.
 2. **Planungsmonat:** Auf den Seiten eines Monats steht oben der Monat, um den es geht. Die Pfeile daneben wechseln
    einen Monat zurück oder vor, die Auswahl reicht ein Jahr zurück und eines voraus. Beim ersten Öffnen ist der
    nächste Monat gewählt, wenn es für ihn Daten gibt, sonst der letzte Monat mit Daten; danach merkt sich der
@@ -90,7 +90,7 @@ Adresse derselben Seite auf der Website (mit Suche, Stand des neuesten Releases)
 | [Plan bearbeiten](plan-bearbeiten.md) | Dienstplan, Funktionen, Zeitachse, Zellen von Hand ändern, Dienste nur von Hand, drucken |
 | [Auswertungen](auswertungen.md) | Fairness, die Zahlen einer Person, „Warum dieser Dienst?“ |
 | [Monat abschließen](monatsabschluss.md) | Abschluss, Historie, wieder öffnen |
-| [Daten und Korrekturdatei](daten.md) | Import, Änderungen behalten, Export, Korrekturdatei, Pseudonymisieren |
+| [Daten und Korrekturdatei](daten.md) | Übernehmen, Änderungen behalten, Monate, Sichern: Export, Korrekturdatei, Pseudonymisieren |
 | [Regeln einstellen](einstellungen.md) | Planungsziele, Gesetz und Betriebsvereinbarung, Gewichte, mit allen Standardwerten |
 | [Updates](updates.md) | Hinweis auf neue Versionen, Update am Server und am eigenen Rechner |
 | [Erweiterungen](erweiterungen.md) | Erweiterungen ein- und ausschalten, was sie zeigen |

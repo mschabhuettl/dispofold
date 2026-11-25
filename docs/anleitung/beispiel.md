@@ -16,13 +16,14 @@ die ganze Seite.
 
 ## 1. Demodaten laden
 
-1. Im Menü **Einstellungen**, Reiter **Daten**.
+1. Im Menü **Daten**, Reiter **Übernehmen**, bei **Quelle** **Datensatz-Datei**.
 2. **Erweitert** aufklappen und **Demodaten laden (Jänner 2027)** (1) klicken, die Rückfrage mit **OK**
    bestätigen.
-3. Die Meldung (2) oben nennt, was geladen wurde: 150 Personen, 5 Bereiche, 13 Schichten, Monat 2027-01.
-4. Steht oben noch ein anderer Monat, **Zu Jänner 2027 wechseln** (3) klicken.
+3. Die Meldung (2) nennt, was geladen wurde: 150 Personen, 5 Bereiche, 13 Schichten, Monat 2027-01.
+4. Der Monat der Demodaten ist danach gewählt: Darunter steht „Gewählt ist jetzt Jänner 2027.“ (3) mit dem Link
+   **Zum Dienstplan**.
 
-![Die Seite Daten nach dem Laden der Demodaten](../screenshots/beispiel-demodaten.png)
+![Daten, Übernehmen nach dem Laden der Demodaten](../screenshots/beispiel-demodaten.png)
 
 Auf einer leeren Installation geht es kürzer: Der **Dienstplan** zeigt dort **Demodaten zum Ausprobieren laden**,
 und der Monat wechselt von selbst (siehe [Schnellstart](schnellstart.md#3-demodaten-laden)).
@@ -224,7 +225,7 @@ fixiert man in ihrer Auswahl mit **Fixieren**.
 
 2. Das Fenster prüft den Plan: keine Regelverstöße, keine offenen Lücken, Plan aktuell. Alles hat einen Haken.
    Darunter steht, was danach gilt: Der Monat ist nur noch lesbar, und wieder öffnen lässt er sich unter
-   „Einstellungen > Daten“.
+   „Daten > Monate“.
 3. **Monat abschließen** klicken.
 
 ![Das Fenster vor dem Abschluss](../screenshots/beispiel-abschluss.png)
@@ -242,10 +243,10 @@ nach dem Häkchen **Trotzdem abschließen** (siehe [Monat abschließen](monatsab
 Die Wochenstunden von Waltraud Erlenhuber und der Bedarf der Notrufannahme wurden in Dispofold geändert. Damit der
 nächste Datensatz aus dem Quellsystem sie schon enthält, bekommt das Exportprogramm eine Korrekturdatei:
 
-1. **Einstellungen**, Reiter **Daten**, Abschnitt **Korrekturdatei**.
+1. **Daten**, Reiter **Sichern**, Abschnitt **Korrekturdatei**.
 2. **Änderungen als Korrekturdatei exportieren** klicken. Der Browser speichert `korrekturen.json`.
 
-![Die Seite Daten mit dem Abschnitt Korrekturdatei](../screenshots/beispiel-korrekturdatei-ganz.png)
+![Daten, Sichern mit dem Abschnitt Korrekturdatei](../screenshots/beispiel-korrekturdatei-ganz.png)
 
 ![Die Meldung nach dem Speichern der Korrekturdatei](../screenshots/beispiel-korrekturdatei.png)
 
@@ -258,6 +259,6 @@ die das Exportprogramm betreut (siehe [Korrekturdatei](daten.md#korrekturdatei))
 
 - Der nächste Monat: Planungsmonat auf Februar stellen, Eingaben erfassen, planen. Die Historie des Jänners zählt
   für Fairness, Stundenkonto und Ersatzruhe mit.
-- Zum Üben den Jänner wieder öffnen (**Einstellungen**, **Daten**, **Monat wieder öffnen**), etwas ändern und neu
+- Zum Üben den Jänner wieder öffnen (**Daten**, **Monate**, **Monat wieder öffnen**), etwas ändern und neu
   abschließen.
 - Die Regeln an die eigene Vereinbarung anpassen: [Regeln einstellen](einstellungen.md).

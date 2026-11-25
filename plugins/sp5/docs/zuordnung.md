@@ -1,14 +1,30 @@
 # Schichtplaner 5: Zuordnung
 
-Die Seite **Schichtplaner 5 → Zuordnung** bearbeitet die Zuordnung: welche Schichten, Gruppen und Abwesenheiten
-von Schichtplaner 5 zu welchen Bereichen von Dispofold gehören. Sie ist dieselbe Zuordnung wie in den
-Einstellungen der Erweiterung und hat dasselbe Format wie eine `mapping.json`. Für den Anfang reicht
-**Zuordnung vorschlagen** (siehe [Vorschläge aus dem Ordner](#vorschläge-aus-dem-ordner)); fehlt die Zuordnung
-noch, führt der Hinweis „Die Zuordnung fehlt“ auf der Seite Lauf und Import mit **Zur Zuordnung** hierher.
+Der Reiter **Daten → Zuordnung** (nur mit eingeschalteter Erweiterung) bearbeitet die Zuordnung: welche
+Schichten, Gruppen und Abwesenheiten von Schichtplaner 5 zu welchen Bereichen von Dispofold gehören. Jedes Einlesen
+unter [Daten → Übernehmen](plugin-sp5-uebersicht.md) nutzt sie; sie hat das Format einer `mapping.json`.
+Dorthin führen **Zuordnung einrichten** und **Zuordnung bearbeiten** unter **Quelle**. Für den Anfang reicht der
+Kasten **Vorschläge** ganz oben (siehe [Vorschläge](#vorschläge)).
 
 ![Die Zuordnung mit Bereichen und Schichtregeln](img/zuordnung.png)
 
 Die Seite ist lang; oben führen Links zu jedem Abschnitt, von den Vorschlägen bis **Im Ordner**.
+
+## Vorschläge
+
+![Der Kasten Vorschläge über der Zuordnung](img/assistent.png)
+
+Ist die Zuordnung leer oder trifft sie Kürzel des Ordners noch nicht, steht oben der Kasten **Vorschläge**:
+
+1. „… Vorschläge für das, was die Zuordnung noch nicht trifft.“
+2. „Diese Bereiche kämen dazu, bitte kurz prüfen:“ mit der Liste der neuen Bereiche.
+3. **Alle Vorschläge übernehmen und speichern** nimmt jeden Vorschlag, der keine Wahl braucht (genau wie **Alle
+   übernehmen** in jedem Abschnitt weiter unten), und speichert die Zuordnung.
+
+Danach steht dort „… Vorschläge übernommen und gespeichert.“ und, wenn es welche gibt, „… Vorschläge brauchen eine
+Wahl: unten unter Zuordnung vorschlagen.“ Diese wählt man unten unter
+[Vorschläge aus dem Ordner](#vorschläge-aus-dem-ordner). Alles darunter ist für alle, die es genauer wollen: die
+Vorschläge einzeln und alle Regeln.
 
 ## Abschnitte
 
@@ -21,7 +37,7 @@ Abwesenheit die Ersatzruhe ist. Dieselben Sätze stehen auf der Seite über jede
 - **Schichtregeln:** ordnen Schichten nach ihrem Kürzel einem Bereich zu; die erste passende Regel gilt.
   **Kategorie** leer heißt: aus den Zeiten der Schicht; **Fair verteilen**: Dienste dieser Schicht werden über die Fairness gleichmäßig auf alle verteilt, die
   sie machen können; ohne Angabe nein, Nachtschichten nur mit der Option „Nachtschichten automatisch fair verteilen“
-  (Lauf und Import, Optionen). Die
+  (Daten → Übernehmen, Quelle, Optionen). Die
   Spalte **Trifft** zeigt die Kürzel aus dem Ordner, die die Regel trifft, oder „trifft nichts“.
 - **Ignorierte Schichten:** Schichten, die der Import nicht übernimmt, auch wenn eine Regel passt.
 - **Gruppen:** Wer darf in welchem Bereich arbeiten? Personen in einer Gruppe, deren Name passt, bekommen die
@@ -42,11 +58,12 @@ am Anfang des Kürzels passen muss.
 - **Prüfung:** Nach jeder Änderung prüft der Server die Zuordnung wie der Export und nennt jedes Problem mit dem
   Eintrag, wie ihn die Seite nennt, etwa „Es ist noch kein Bereich eingetragen.“ oder „Schichtregel 2: Das Muster
   „re:(“ ist kein gültiger regulärer Ausdruck (…).“
-- **Zuordnung speichern** speichert sie in den Einstellungen; der Server prüft sie dabei noch einmal und weist
-  eine fehlerhafte ab. Ungespeicherte Änderungen sind markiert, und beim Verlassen der Seite fragt Dispofold nach.
-- **mapping.json laden** ersetzt die Zuordnung im Editor durch eine Datei, **Als mapping.json speichern**
-  speichert sie als Datei. **JSON anzeigen und bearbeiten** zeigt sie als Text; **Übernehmen** ersetzt den Editor
-  damit.
+- **Zuordnung speichern** speichert sie; der Server prüft sie dabei noch einmal und weist eine fehlerhafte ab.
+  Ungespeicherte Änderungen sind markiert, und beim Verlassen der Seite fragt Dispofold nach.
+- Ganz unten, im Abschnitt **Für Fachleute: JSON**, steht zugeklappt **mapping.json laden oder speichern, JSON
+  anzeigen und bearbeiten**: **mapping.json laden** ersetzt die Zuordnung im Editor durch eine Datei, **Als
+  mapping.json speichern** speichert sie als Datei, und das Textfeld zeigt sie als Text; **Übernehmen** ersetzt den
+  Editor damit.
 
 ## Vorschläge aus dem Ordner
 
@@ -65,9 +82,10 @@ selbst ein.
 
 **Übernehmen** trägt ihn in den Editor ein,
 **Verwerfen** nimmt ihn aus der Liste, **Alle übernehmen** nimmt alle eines Abschnitts. Gespeichert wird erst mit
-**Zuordnung speichern**, mit derselben Prüfung wie sonst. Ein verworfener Vorschlag kommt nicht wieder, bis man
-**Verworfene zurücksetzen** wählt. Nach jedem Lauf nennt die Seite Lauf und Import die Zahl der neuen Vorschläge mit einem
-Link hierher.
+**Zuordnung speichern**, mit derselben Prüfung wie sonst (der Kasten **Vorschläge** oben übernimmt und speichert in
+einem Schritt). Ein verworfener Vorschlag kommt nicht wieder, bis man
+**Verworfene zurücksetzen** wählt. Nach jedem Einlesen nennt das Ergebnis unter **Daten → Übernehmen** die Kürzel ohne Regel
+mit einem Link hierher.
 
 ### Woraus die Bereiche kommen
 
@@ -189,6 +207,6 @@ Die Tabellen **Schichten im Ordner**, **Gruppen im Ordner** und **Abwesenheitsar
 dem Ordner von Schichtplaner 5 und was die Zuordnung im Editor damit macht: welche Regel gilt („Regel 3 → AN,
 Früh“), dass es ignoriert oder ausgeschlossen wird, dass eine Gruppe ohne eigene Regel die der übergeordneten
 Gruppe übernimmt, oder „keine Regel“. Darunter stehen die Kürzel ohne Regel, die nicht ignoriert werden: Sie
-werden nicht importiert, und der Lauf warnt.
+werden nicht importiert, und das Einlesen warnt.
 
 ![Die Schichten und Gruppen im Ordner mit ihren Regeln](img/zuordnung-ordner.png)

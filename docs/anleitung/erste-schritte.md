@@ -84,19 +84,19 @@ Nach der Installation ist Dispofold leer: Der **Dienstplan** zeigt **Noch keine 
 Es gibt drei Wege zu Daten:
 
 - **Zum Ausprobieren:** die Demodaten. Auf dem leeren Start **Demodaten zum Ausprobieren laden** klicken (oder
-  unter **Einstellungen**, **Daten**, **Erweitert** **Demodaten laden (Jänner 2027)**). Das lädt 150 erfundene
+  unter **Daten**, **Übernehmen**, **Erweitert** **Demodaten laden (Jänner 2027)**). Das lädt 150 erfundene
   Personen in fünf Bereichen mit Abwesenheiten und Wünschen für Jänner 2027. Der
   [Schnellstart](schnellstart.md) und [Ein Monat Schritt für Schritt](beispiel.md) beginnen genau so. Die
   Demodaten ersetzen alle Stammdaten, also nie in einer Installation laden, in der schon echte Daten stehen.
 - **Aus dem bisherigen Planungsprogramm:** Die mitgelieferte Erweiterung liest dessen Datenordner und übernimmt
   Personen, Bereiche, Schichten, Bedarf, Abwesenheiten und Dienste. Schritt für Schritt mit Bildern:
   [Echte Daten aus dem bisherigen Planungsprogramm übernehmen](plugin-sp5-echte-daten.md).
-- **Als Datensatz:** eine Datei aus dem Quellsystem importieren (auf dem leeren Start **Datensatz importieren**
-  oder unter **Einstellungen**, **Daten**). Die Datei liefert das Exportprogramm, das die IT einrichtet. Siehe
-  [Daten und Korrekturdatei](daten.md#import).
+- **Als Datensatz:** eine Datei aus dem Quellsystem einlesen und übernehmen (auf dem leeren Start **Datensatz
+  importieren** oder unter **Daten**, **Übernehmen**). Die Datei liefert das Exportprogramm, das die IT
+  einrichtet. Siehe [Daten und Korrekturdatei](daten.md#übernehmen).
 
-Danach den **Planungsmonat** oben auf den Monat der Daten stellen. Nach einem Import bietet die Seite dafür einen
-Knopf an, etwa **Zu Jänner 2027 wechseln**, wenn der gewählte Monat nicht in der Datei steht.
+Nach dem Übernehmen ist der erste Monat der Daten gewählt: Die Seite sagt etwa „Gewählt ist jetzt Jänner 2027.“
+und führt mit **Zum Dienstplan** weiter.
 
 ## Wie es weitergeht
 

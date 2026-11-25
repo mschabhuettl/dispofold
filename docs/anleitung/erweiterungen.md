@@ -17,7 +17,9 @@ sieht nur die Planung.
 1. Bei der Erweiterung **Eingeschaltet** anhaken (im Bild eingerahmt, wie der Reiter **Erweiterungen**).
 2. Die Rückfrage bestätigen. Eine eingeschaltete Erweiterung sieht alle Planungsdaten, wie die Planung selbst.
 3. Das Programm zeigt sich neu, mit den Seiten der Erweiterung im Menü. Hat sie Einstellungen, stehen sie darunter
-   auf derselben Seite.
+   auf derselben Seite. Eine Erweiterung, die Daten liefert, nennt dort nur, wo sie eingerichtet wird: Die
+   mitgelieferte sagt „Ordner, Zuordnung und Optionen stehen unter Daten → Übernehmen.“, und **Einrichten** öffnet
+   **Daten**, **Übernehmen** mit ihr als Quelle.
 
 Ausschalten geht genauso. Die Seiten der Erweiterung verschwinden dann aus dem Menü; ihre Einstellungen bleiben
 gespeichert und gelten wieder, sobald man sie einschaltet.
@@ -28,13 +30,13 @@ kann die IT eine Erweiterung ganz ausblenden; sie erscheint dann auch hier nicht
 
 ## Was Erweiterungen zeigen
 
-- **Seiten:** im Menü, als eigener Eintrag oder als weiterer Reiter einer Gruppe. Seiten für die Rolle **nur lesen**
+- **Seiten:** im Menü, als eigener Eintrag oder als weiterer Reiter einer Gruppe, etwa **Zuordnung** unter
+  **Daten**. Seiten für die Rolle **nur lesen**
   sieht diese Rolle auch; alles andere nur die Planung.
-- **Import:** Eine Erweiterung, die Daten liefert, importiert auf einer eigenen Seite; die mitgelieferte
-  Erweiterung für das bisherige Planungsprogramm auf ihrer Seite **Lauf und Import**. Eine Erweiterung kann statt
-  dessen auch einen eigenen Abschnitt auf der Seite **Daten** haben. Der Import läuft in beiden Fällen wie beim
-  Hochladen eines Datensatzes: mit der Wahl, die Änderungen aus Dispofold zu behalten, und mit derselben Vorschau
-  (siehe [Daten und Korrekturdatei](daten.md)).
+- **Quelle:** Eine Erweiterung, die Daten liefert, steht unter **Daten**, **Übernehmen** bei **Quelle** neben der
+  Datensatz-Datei. Es gelten dieselben zwei Schritte **Einlesen** und **Übernehmen**, mit der Wahl, die Änderungen
+  aus Dispofold zu behalten, und mit derselben Vorschau (siehe [Übernehmen](daten.md#übernehmen)).
+- **Sichern:** Eine Erweiterung kann unter **Daten**, **Sichern**, **Für Fachleute** eigene Dateien anbieten.
 - **Ordner:** Liest eine Erweiterung Dateien, wählt man den Ordner im Programm. Am Server sind nur die Ordner
   wählbar, die die IT freigegeben hat. Am eigenen Rechner öffnet **Ordner wählen …** den Ordnerdialog; der gewählte
   Ordner bleibt danach freigegeben.

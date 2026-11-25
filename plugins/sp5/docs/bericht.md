@@ -1,15 +1,17 @@
 # Schichtplaner 5: Bericht
 
-Die Seite **Schichtplaner 5 → Bericht** zeigt den Bericht und die Warnungen des letzten Laufs der Seite
-[Lauf und Import](plugin-sp5-uebersicht.md). Der Bericht enthält keine Namen, nur Personen-Ids (`E` und die Id aus
+Der aufklappbare Abschnitt **Bericht** im Ergebnis von **1. Einlesen** unter
+[Daten → Übernehmen](plugin-sp5-uebersicht.md#1-einlesen) zeigt den Bericht und die Warnungen des letzten
+Einlesens. Früher war das die Seite **Bericht**; sie führt jetzt dorthin. Der Bericht enthält keine Namen, nur Personen-Ids (`E` und die Id aus
 Schichtplaner 5, wie in Dispofold), Bereichs- und Schichtkürzel und Zahlen.
 
-![Der Bericht mit der Suche und den Personen](img/bericht.png)
+![Der aufgeklappte Bericht mit der Suche und den Personen](img/bericht.png)
 
-Oben sagt ein Satz, ob der Lauf in Ordnung aussieht und was man zuerst ansieht: Bereiche ohne Mindestbedarf (dort
-würde niemand eingeteilt; dann die Option **Bedarf** prüfen, etwa weil die Historie zu kurz ist), Schichten ohne
-Bereich (sie fehlen im Plan, bis die Zuordnung sie trifft) und Zeilen mit rotem Hinweis (eine ungültige Korrektur
-oder eine fehlende Person), danach die Warnungen. Gibt es nichts davon, heißt es „Der Lauf sieht in Ordnung aus“.
+Über dem Ergebnis des Einlesens sagt ein Satz, was man zuerst ansieht: Bereiche ohne Mindestbedarf (dort würde
+niemand eingeteilt; dann die Option **Bedarf** prüfen, etwa weil die Historie zu kurz ist), Schichten ohne Bereich
+(sie fehlen im Plan, bis die Zuordnung sie trifft) und Zeilen mit rotem Hinweis (eine ungültige Korrektur oder eine
+fehlende Person), danach die Warnungen. Fehlt für Bereiche der Mindestbedarf, ist der Satz gelb und sagt nie, dass
+alles in Ordnung ist. Gibt es nichts davon, heißt es „Der Lauf sieht in Ordnung aus“.
 
 ## Suchen, filtern, sortieren
 
@@ -45,7 +47,7 @@ Seite nicht kennt, erscheint mit allen Spalten, die Werte haben.
 
 ## Warnungen
 
-Darunter stehen die Warnungen des Laufs, mit derselben Suche, den Filtern für Person und Bereich und einem
+Darunter stehen die Warnungen des Einlesens, mit derselben Suche, den Filtern für Person und Bereich und einem
 Filter nach ihrer Art (dem ersten Wort).
 Warnungen nennen nur Ids, Kürzel und Anzahlen, nie Namen. Welche man zuerst liest, steht unter
-[Ablauf, Exportieren und lesen](plugin-sp5-ablauf.md#2-exportieren-und-lesen).
+[Ablauf, Einlesen und lesen](plugin-sp5-ablauf.md#2-einlesen-und-lesen).
