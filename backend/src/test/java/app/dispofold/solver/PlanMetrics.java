@@ -86,6 +86,71 @@ record PlanMetrics(int singleDuties, int singleFreeDays, double meanBlock, int s
                 singleNights);
     }
 
+    /**
+     * Staffing against the minimum demand of the solved input (exact roster): planned duty hours of the month over the
+     * minimum demand in person hours, person hours above the minimum inside the demand, the targets (scaled, work part)
+     * over the minimum demand and the people ending more than 8 h below their real target.
+     */
+    static String staffing(PlanningInput solved) {
+        Roster roster = new RosterBuilder(solved, true).build();
+        long required = 0, above = 0, overUpper = 0, room = 0, planned = 0, targets = 0;
+        for (DemandSegment s : roster.getSegments()) {
+            required += s.required() * s.minutes();
+            long n = roster.getCells().stream().filter(c -> c.isWork() && c.getAreaId().equals(s.areaId())
+                    && c.getStart() < s.end() && c.getEnd() > s.start()).count();
+            above += Math.max(0, n - s.required()) * s.minutes();
+            overUpper += Math.max(0, n - s.upper()) * s.minutes();
+            room += (s.upper() - s.required()) * s.minutes();
+        }
+        // the excess of each segment shared out over the duties in it, by kind of shift: the base shifts (an id
+        // without a digit) and their variants
+        Map<String, Double> byKind = new TreeMap<>();
+        for (DemandSegment s : roster.getSegments()) {
+            List<DutyCell> in = roster.getCells().stream().filter(c -> c.isWork() && c.getAreaId().equals(s.areaId())
+                    && c.getStart() < s.end() && c.getEnd() > s.start()).toList();
+            if (in.size() > s.required()) {
+                double each = (double) (in.size() - s.required()) * s.minutes() / in.size() / 60;
+                for (DutyCell c : in) {
+                    byKind.merge(c.getShift().getId().matches(".*\\d.*") ? "variant" : "base", each, Double::sum);
+                }
+            }
+        }
+        Map<String, Double> dutyHours = new TreeMap<>();
+        for (DutyCell c : roster.getCells()) {
+            if (c.isInMonth() && c.isWork()) {
+                dutyHours.merge(c.getShift().getId().matches(".*\\d.*") ? "variant" : "base",
+                        c.getDurationMinutes() / 60.0, Double::sum);
+            }
+        }
+        long duties = roster.getCells().stream().filter(c -> c.isInMonth() && c.isWork()).count();
+        long shortDuties = roster.getCells().stream().filter(c -> c.isInMonth() && c.isWork()
+                && c.getDurationMinutes() < 600).count();
+        String byArea = String.format(java.util.Locale.ROOT, "duties %d, under 10 h %d; ", duties, shortDuties)
+                + String.format(java.util.Locale.ROOT, "excess hours base %.0f of %.0f duty hours, variants %.0f of %.0f",
+                byKind.getOrDefault("base", 0.0), dutyHours.getOrDefault("base", 0.0),
+                byKind.getOrDefault("variant", 0.0), dutyHours.getOrDefault("variant", 0.0));
+        Map<Staff, Long> counted = new HashMap<>();
+        for (DutyCell c : roster.getCells()) {
+            if (c.isInMonth()) {
+                counted.merge(c.getStaff(), (long) c.getCountedMinutes(), Long::sum);
+                if (c.isWork()) {
+                    planned += c.getDurationMinutes();
+                }
+            }
+        }
+        int below = 0;
+        for (Staff s : roster.getStaff()) {
+            targets += s.getScaledTargetMinutes();
+            below += counted.getOrDefault(s, 0L) < s.getTargetMinutes() - 8 * 60 ? 1 : 0;
+        }
+        return String.format(java.util.Locale.ROOT,
+                "planned over minimum %+.1f %%, above minimum inside demand %+.1f %%, scaled targets %.0f h"
+                        + " (minimum demand %.0f h), people more than 8 h below target %d, above maximum %.0f h,"
+                        + " maximum over minimum %.0f h",
+                100.0 * (planned - required) / required, 100.0 * above / required, targets / 60.0, required / 60.0,
+                below, overUpper / 60.0, room / 60.0) + " " + byArea;
+    }
+
     @Override
     public String toString() {
         return String.format(java.util.Locale.ROOT,

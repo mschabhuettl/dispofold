@@ -23,7 +23,12 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
  * NORMAL is 1000000), {@code -Dsolver.metrics.seed} the seed (default 1),
  * {@code -Dsolver.metrics.weights=blockLength:6000,...} weights, {@code -Dsolver.metrics.mix=apply} clear usual mixes
  * for two thirds of the people (as {@link DemoSolveTest}) and {@code -Dsolver.metrics.nightMixMonths} the window of
- * the usual night share (default: the rules' default).
+ * the usual night share (default: the rules' default), {@code -Dsolver.metrics.nightMixTolerance},
+ * {@code -Dsolver.metrics.nightMixFloor=true} and {@code -Dsolver.metrics.targetTolerance} (hours) the other rule
+ * values, and {@code -Dsolver.metrics.maxPlus=N} a synthetic maximum: every demand rule with a minimum gets the
+ * maximum minimum + N (0: the maximum is the minimum; with {@code -Dsolver.metrics.maxEvery=K} only every K-th
+ * rule, the others minimum), as the demand from the history of the old planning system has
+ * one above the minimum.
  */
 @EnabledIfSystemProperty(named = "solver.metrics", matches = "true")
 class BlockMetricsBenchmarkTest {
@@ -35,6 +40,19 @@ class BlockMetricsBenchmarkTest {
         PlanningInput input = Fixtures.input(System.getProperty("solver.metrics.fixture", Fixtures.LARGE));
         if (System.getProperty("solver.metrics.mix", "").equals("apply")) {
             input = DemoSolveTest.withMixes(input, DemoSolveTest.clearMixes(input.dataset()));
+        }
+        Integer maxPlus = Integer.getInteger("solver.metrics.maxPlus");
+        int every = Integer.getInteger("solver.metrics.maxEvery", 1);
+        if (maxPlus != null) {
+            app.dispofold.model.Dataset d = input.dataset();
+            java.util.concurrent.atomic.AtomicInteger index = new java.util.concurrent.atomic.AtomicInteger();
+            input = new PlanningInput(new app.dispofold.model.Dataset(d.format(), d.version(), d.source(), d.areas(),
+                    d.shifts(), d.demand().stream().map(x -> new app.dispofold.model.DemandRule(x.areaId(), x.days(),
+                            x.date(), x.from(), x.to(), x.min(),
+                            x.min() > 0 ? x.min() + (index.getAndIncrement() % every == 0 ? maxPlus : 0) : x.max()))
+                            .toList(),
+                    d.holidays(), d.absenceTypes(), d.people(), d.restrictions(), d.history(), d.periods()),
+                    input.period(), input.rules(), input.assignments());
         }
         Map<String, Long> weights = new HashMap<>();
         for (String pair : System.getProperty("solver.metrics.weights", "").split(",")) {
@@ -50,7 +68,11 @@ class BlockMetricsBenchmarkTest {
                 r.nightMinHours(), r.accountCarryShare(), r.historyMonths(), weights, r.timeZone(),
                 r.averagingWeeks(), r.maxOverTargetPercent(), r.minFreeSundays(), r.nightDistribution(),
                 r.averageTolerancePercent(), r.freeInsideAbsence(), r.averagingPeriod(), r.accountBalancing(),
-                r.carryMinusRest(), null, null, null, null, Integer.getInteger("solver.metrics.nightMixMonths"), null),
+                r.carryMinusRest(), null, null, null, null, Integer.getInteger("solver.metrics.nightMixMonths"), null,
+                Integer.getInteger("solver.metrics.nightMixTolerance"),
+                System.getProperty("solver.metrics.nightMixFloor") == null ? null
+                        : Boolean.getBoolean("solver.metrics.nightMixFloor"),
+                Integer.getInteger("solver.metrics.targetTolerance")),
                 input.assignments());
         int seconds = Integer.getInteger("solver.metrics.seconds", 300);
         SolveOptions options = new SolveOptions(Long.getLong("solver.metrics.seed", 1L), seconds,
@@ -64,7 +86,18 @@ class BlockMetricsBenchmarkTest {
         }, done::completeExceptionally);
         SolveProgress result = done.get(seconds + 300L, TimeUnit.SECONDS);
         PlanAnalysis analysis = facade.analyze(TimefoldPlanningFacadeTest.withAssignments(input, result.assignments()));
-        LOG.infof("Metrics: %s, gaps %d, hard %d, wall %d s, score %s", PlanMetrics.of(input, result.assignments()),
-                analysis.gaps().size(), analysis.hardViolations(), result.elapsedMillis() / 1000, result.score());
+        Map<String, app.dispofold.model.ShiftMix> mixes = new HashMap<>();
+        input.dataset().people().forEach(p -> {
+            if (p.shiftMix() != null) {
+                mixes.put(p.id(), p.shiftMix());
+            }
+        });
+        double mixDeviation = analysis.people().stream().filter(p -> mixes.containsKey(p.personId()))
+                .mapToDouble(p -> DemoSolveTest.categoryDeviation(mixes.get(p.personId()), p.plannedMix())).average()
+                .orElse(0);
+        LOG.infof("Metrics: %s, mix deviation %.3f, gaps %d, hard %d, wall %d s, score %s; %s",
+                PlanMetrics.of(input, result.assignments()), mixDeviation,
+                analysis.gaps().size(), analysis.hardViolations(), result.elapsedMillis() / 1000, result.score(),
+                PlanMetrics.staffing(TimefoldPlanningFacadeTest.withAssignments(input, result.assignments())));
     }
 }
