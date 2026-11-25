@@ -196,8 +196,11 @@ export async function render(root, ctx, params = [], pending = null) {
   const swapped = view === 'areas';
   const rowItems = swapped ? areas : people;
   const colItems = swapped ? people : areas;
-  const showRow = swapped ? areaShown : visible;
-  const showCol = swapped ? visible : areaShown;
+  // the people shown as apply() last drew them: a click or a bulk change does not hide a row or a column
+  let shown = new Set();
+  const personShown = (p) => shown.has(p.id);
+  const showRow = swapped ? areaShown : personShown;
+  const showCol = swapped ? personShown : areaShown;
   const personBoxes = new Map();
   const areaBoxes = new Map();
   const box = (boxes, id, label) => {
@@ -252,6 +255,13 @@ export async function render(root, ctx, params = [], pending = null) {
     table.querySelectorAll('button[data-row][tabindex="0"]').forEach((b) => { b.tabIndex = -1; });
     cell.tabIndex = 0;
     cell.focus();
+    // not hidden under the sticky header row or name column
+    const wrap = table.parentElement;
+    const rect = cell.getBoundingClientRect();
+    const top = table.tHead.getBoundingClientRect().bottom;
+    const left = cell.closest('tr').firstElementChild.getBoundingClientRect().right;
+    if (rect.top < top) wrap.scrollTop -= top - rect.top;
+    if (rect.left < left) wrap.scrollLeft -= left - rect.left;
   };
   if (canEdit) {
     table.addEventListener('click', (e) => {
@@ -291,10 +301,11 @@ export async function render(root, ctx, params = [], pending = null) {
   // ---- filters apply, to the rows and the columns ----
   const count = h('p.muted', { id: 'area-matrix-count' });
   const apply = () => {
+    shown = new Set(people.filter(visible).map((p) => p.id));
     rows.forEach((tr, i) => { tr.hidden = !showRow(rowItems[i]); });
     const cols = new Set(visibleCols());
     for (const tr of [head, ...rows]) [...tr.children].slice(1).forEach((cell, j) => { cell.hidden = !cols.has(j); });
-    count.textContent = t('areaMatrix.count', { shown: people.filter(visible).length, total: people.length });
+    count.textContent = t('areaMatrix.count', { shown: shown.size, total: people.length });
     // the cell reached with Tab stays a shown one
     const current = table.querySelector('button[data-row][tabindex="0"]');
     if (canEdit && (!current || current.closest('tr').hidden || current.closest('td').hidden)) {
@@ -312,7 +323,7 @@ export async function render(root, ctx, params = [], pending = null) {
   const bulkState = h('select', { id: 'area-matrix-bulk-state' }, ['PLAN', 'ON_REQUEST', 'NEVER', ''].map((s) => h('option', { value: s || 'OUT' }, word(s))));
   const bulkButton = h('button.btn.btn-secondary', { type: 'button', id: 'area-matrix-bulk', disabled: true });
   const targets = () => {
-    const shownPeople = people.filter(visible).map((p) => p.id);
+    const shownPeople = people.filter(personShown).map((p) => p.id);
     const shownAreas = areas.filter(areaShown).map((a) => a.id);
     const ticked = (boxes, shown) => [...boxes].filter(([id, b]) => b.checked && shown.includes(id)).map(([id]) => id);
     const pickedPeople = ticked(personBoxes, shownPeople);

@@ -366,6 +366,28 @@ try {
   let pinned = await stuck(page);
   check('scrolled down, the header row stays at the top and on top of the rows', pinned.down > 0 && atEdge(pinned.head) && pinned.visible && opaque(pinned),
     JSON.stringify(pinned));
+  // the focused cell is never hidden under the sticky header row or name column
+  const inSight = (pg) => pg.evaluate(() => {
+    const r = document.activeElement.getBoundingClientRect();
+    return document.elementFromPoint(r.left + r.width / 2, r.top + r.height / 2)?.closest('button') === document.activeElement;
+  });
+  await page.locator('table.area-matrix tbody tr:last-child button').first().focus();
+  for (let k = 0; k < 25; k += 1) await page.keyboard.press('ArrowUp');
+  check('arrow up: the focused cell comes out from under the header row', await inSight(page));
+  // a cell changed in a shown row keeps its row shown and in the bulk change, even if it no longer fits the filter
+  await page.selectOption('#area-matrix-area', a1);
+  const firstRow = page.locator('tr[data-person-row]:not([hidden])').first();
+  const firstId = await firstRow.getAttribute('data-person-row');
+  const firstText = await cellOf(firstId, a1).innerText();
+  for (let k = 0; k < 4 && !(await cellOf(firstId, a1).innerText()).includes('nicht dabei'); k += 1) await cellOf(firstId, a1).click();
+  await firstRow.locator('th input').check();
+  check('a cell set to nicht dabei under the area filter: the row stays and counts in the bulk change', await firstRow.isVisible()
+    && (await page.textContent('#area-matrix-bulk')) === '1 Zelle setzen', await page.textContent('#area-matrix-bulk'));
+  // back as it was: round the cycle, untick, no filter
+  for (let k = 0; k < 4 && (await cellOf(firstId, a1).innerText()) !== firstText; k += 1) await cellOf(firstId, a1).click();
+  await firstRow.locator('th input').uncheck();
+  await page.selectOption('#area-matrix-area', '');
+  check('round the cycle, nothing is changed', !(await page.isVisible('#area-matrix-dirty')));
 
   // ---- swapped: areas as rows, people as columns; the same editing, the view remembered ----
   await page.selectOption('#area-matrix-view', 'areas');
@@ -415,6 +437,21 @@ try {
     JSON.stringify([inSwap(one.id).areaIds, inSwap(two.id).areaStates]));
   await page.locator('tr[data-area-row]').first().waitFor();
   check('after saving, the swapped view stays', await page.locator('tr[data-area-row]').count() === current.areas.length);
+  // with the state filter: a person whose only planbar cell is clicked keeps its column, the arrow key goes to the next one
+  await page.selectOption('#area-matrix-state', 'PLAN');
+  const [lone, next] = await page.evaluate(() => {
+    const cols = [...document.querySelectorAll('th[data-col-person]:not([hidden])')].map((th) => th.dataset.colPerson);
+    const only = cols.slice(0, -1).find((id) => document.querySelectorAll(`button.state-PLAN[data-person="${id}"]`).length === 1);
+    return [only, cols[cols.indexOf(only) + 1]];
+  });
+  const loneCell = page.locator(`button.state-PLAN[data-person="${lone}"]`);
+  const loneArea = await loneCell.getAttribute('data-area');
+  await loneCell.click();
+  await page.keyboard.press('ArrowRight');
+  check('swapped, state filter: after a click the arrow key goes to the next shown person', (await focused())[0] === next, JSON.stringify([lone, next, await focused()]));
+  for (let k = 0; k < 3; k += 1) await cellOf(lone, loneArea).click(); // round the cycle, back to planbar
+  await page.selectOption('#area-matrix-state', '');
+  check('swapped: round the cycle, nothing is changed', !(await page.isVisible('#area-matrix-dirty')));
 
   // ---- one area: its people in four groups with their counts; a click cycles the state as in the matrix ----
   await page.selectOption('#area-matrix-view', 'area');
@@ -455,10 +492,12 @@ try {
   check('viewers: the cells of a row side by side', rowTops === 1, String(rowTops));
   await matrixViewer.selectOption('#area-matrix-view', 'area');
   await matrixViewer.locator('.area-group').first().waitFor();
+  const viewerGroups = () => matrixViewer.$$eval('.area-group', (gs) => gs.map((g) => g.querySelector('h2').textContent).join('|'));
+  const groupsBefore = await viewerGroups();
   await matrixViewer.locator('.area-group span[data-person]').first().click();
   check('viewers: one area read only, a click changes nothing', await matrixViewer.locator('.area-groups button').count() === 0
     && await matrixViewer.locator('#area-matrix-save').count() === 0 && await matrixViewer.locator('.area-group span[data-person]').count() === current.people.length
-    && !(await matrixViewer.isVisible('#area-matrix-dirty')));
+    && await viewerGroups() === groupsBefore);
 
   // ---- dark: the sticky cells have the dark background, the text stays readable ----
   await page.selectOption('#area-matrix-view', 'people');
@@ -489,6 +528,9 @@ try {
       pinned = await stuck(phone);
       check('390 px: the matrix scrolls inside, the header row and the name column stay', pinned.down > 0 && pinned.across > 0 && atEdge(pinned.head)
         && atEdge(pinned.name) && pinned.visible, JSON.stringify(pinned));
+      await phone.locator('table.area-matrix tbody tr:last-child button').last().focus();
+      for (let k = 0; k < 4; k += 1) await phone.keyboard.press('ArrowLeft');
+      check('390 px, arrow left: the focused cell comes out from under the name column', await inSight(phone));
     }
   }
 } finally {
