@@ -591,8 +591,13 @@ tr.row-added > td { background: var(--primary-tint); }
 }
 
 /* Personen → Bereiche: the matrix of areas; the state as a sign and a word, colour only on top */
-.area-matrix-wrap { overflow-x: auto; }
-table.area-matrix th[scope="col"] { white-space: nowrap; }
+/* the wrap scrolls both ways, so that the header row and the first column stick inside it (also on a phone, where
+   table.data is otherwise a block of its own) */
+.area-matrix-wrap { overflow: auto; max-height: calc(100vh - 230px); border: 1px solid var(--border); background: var(--surface); }
+table.area-matrix { display: table; border-collapse: separate; border-spacing: 0; }
+table.area-matrix th[scope="col"] { white-space: nowrap; position: sticky; top: 0; z-index: 2; background: var(--surface-2); }
+table.area-matrix th[scope="row"] { position: sticky; left: 0; z-index: 1; background: var(--surface); }
+table.area-matrix thead th:first-child { left: 0; z-index: 3; }
 table.area-matrix td { padding: 0; }
 .area-cell { display: block; width: 100%; padding: .25rem .4rem; border: 1px solid transparent; background: transparent; color: var(--text); font: inherit; text-align: left; white-space: nowrap; }
 button.area-cell { cursor: pointer; }
@@ -603,6 +608,10 @@ button.area-cell:focus-visible { outline: 2px solid var(--focus); outline-offset
 .area-cell.state-NEVER { color: var(--danger); font-weight: 600; }
 .area-cell.state-OUT { color: var(--text-muted); }
 .area-mark { margin-left: .15rem; }
+.area-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; margin: 1rem 0; }
+.area-group h2 { font-size: 1rem; margin: 0 0 .3rem; }
+.area-group ul { list-style: none; margin: 0; padding: 0; }
+.area-group .area-cell { white-space: normal; }
 .area-state { display: flex; flex-wrap: wrap; align-items: end; gap: .2rem .8rem; margin-bottom: .4rem; }
 .area-state ul.area-exceptions { flex-basis: 100%; margin: 0 0 0 1rem; }
 /* a note that needs attention, not an error: the accent colour (yellow-brown) */
