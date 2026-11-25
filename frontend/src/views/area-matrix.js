@@ -125,6 +125,7 @@ export async function render(root, ctx, params = [], pending = null) {
     const kept = own();
     root.replaceChildren();
     await render(root, ctx, params, kept);
+    root.querySelector('#area-matrix-view')?.focus(); // the keyboard stays on the switch
   } }, VIEWS.map((v) => h('option', { value: v, selected: v === view }, ({ people: t('areaMatrix.view.people'), areas: t('areaMatrix.view.areas'), area: t('areaMatrix.view.area') })[v])));
   const viewField = h('div.field', {}, h('label', { for: 'area-matrix-view' }, t('areaMatrix.view')), viewSelect);
   const saveBar = (...more) => (canEdit ? h('div.toolbar', {}, ...more, save, dirtyNote) : '');

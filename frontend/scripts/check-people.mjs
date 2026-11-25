@@ -370,6 +370,7 @@ try {
   // ---- swapped: areas as rows, people as columns; the same editing, the view remembered ----
   await page.selectOption('#area-matrix-view', 'areas');
   await page.locator('tr[data-area-row]').first().waitFor();
+  check('after a change of the view the focus stays on the switch', await page.evaluate(() => document.activeElement?.id) === 'area-matrix-view');
   await page.reload();
   await page.locator('table.area-matrix').waitFor();
   check('the swapped view is remembered: one row per area, one column per person', await page.locator('tr[data-area-row]').count() === current.areas.length
@@ -450,6 +451,8 @@ try {
   await matrixViewer.locator('tr[data-area-row]').first().waitFor();
   check('viewers: the swapped view read only', await matrixViewer.locator('table.area-matrix button, table.area-matrix input').count() === 0
     && await matrixViewer.locator('#area-matrix-save').count() === 0);
+  const rowTops = await matrixViewer.$$eval('tr[data-area-row]:first-child > *', (cells) => new Set(cells.map((c) => Math.round(c.getBoundingClientRect().top))).size);
+  check('viewers: the cells of a row side by side', rowTops === 1, String(rowTops));
   await matrixViewer.selectOption('#area-matrix-view', 'area');
   await matrixViewer.locator('.area-group').first().waitFor();
   await matrixViewer.locator('.area-group span[data-person]').first().click();
