@@ -175,6 +175,13 @@ Nachtanteils, 1 bis 12, Standard 3) und `Rules.thoroughness` (`"FAST"`, `"NORMAL
 `solve` noch `SOLVER_MOVE_LIMIT` und `SOLVER_TIME_LIMIT_SECONDS` andere setzen). Die Gründlichkeit zählt nicht zum
 Stand, nach dem ein Plan veraltet. Neue Regel-Ids: `dayNightSwitch`, `dayNightSwitches`, `nightBlock`.
 
+Ab 0.29.0, ebenso optional: `Rules.nightMixTolerance` (Nächte über dem gewohnten Anteil über die Monate, 0 bis 10,
+Standard 1), `Rules.nightMixFloor` (fehlende Nächte nachholen, Standard `false`) und `Rules.targetToleranceHours`
+(Stunden um das Ziel, die nicht zählen, 0 bis 40, Standard 0); außerhalb der Grenzen `400` mit `rules.values`. Sie
+zählen zum Stand, nach dem ein Plan veraltet. Neue Regel-Id: `overMinimum` (Besetzung über dem Mindestbedarf, ein
+Treffer je Bereich und Tag ohne Person, Parameter `areaId` und `hours`). Gespeicherte Gewichte von 0.28 bekommen
+einmal den neuen Standard von `dayNightSwitches`, wenn sie unverändert waren (siehe [regeln.md](regeln.md)).
+
 ## Planungsmonate
 
 | Methode | Pfad | Antwort |

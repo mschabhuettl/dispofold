@@ -32,10 +32,14 @@ wenn ein Plan in einer Richtung auffällt.
 - **Gleichmäßig:** Nachtdienste werden fair auf alle verteilt. Der Nachtanteil der gewohnten Verteilung zählt
   nicht: Die Person ist im Nachtausgleich, die übrigen Anteile gelten für ihre Dienste außer Nächten.
 - In beiden Fällen ist nicht im Nachtausgleich, wer [nie Nacht](begriffe.md#nie-nacht) macht.
-- **Gewohnter Nachtanteil über 3 Monate** (Standard 3, nur bei „Wie bisher“ zu sehen): Der Nachtanteil einer Person gilt über diesen Monat und die
-  Vormonate in der Historie zusammen, nicht in jedem einzelnen Monat. Wer in den zwei Monaten davor viele Nächte
-  hatte, bekommt jetzt wenige, und umgekehrt; so wechseln in einem Monat weniger Personen zwischen Tag und
-  Nacht. 1 heißt: jeder Monat für sich, wie bis Version 0.27.
+- **Gewohnter Nachtanteil über 3 Monate höchstens, dazu bis zu 1 Nächte** (Standard 3 Monate und 1 Nacht, nur bei
+  „Wie bisher“ zu sehen): Über diesen Monat und die Vormonate in der Historie macht eine Person höchstens ihren
+  gewohnten Nachtanteil, dazu die eingestellten Nächte. Fehlende Nächte holt sie nicht nach, ein Monat ganz ohne
+  Nacht ist in Ordnung. Die Nachtdienste deckt weiter der Bedarf. 1 Monat heißt: jeder Monat für sich, nach oben
+  und nach unten, wie bis Version 0.28.
+- **Fehlende Nächte aus den Vormonaten nachholen** (Standard aus): Eingeschaltet zählen auch zu wenige Nächte über
+  die Monate. Wer in den Vormonaten weniger Nächte hatte als gewohnt, bekommt sie in diesem Monat nachgeholt; mit 0
+  Nächten Toleranz genau wie in Version 0.28.
 - Ist „Wie bisher“ gewählt und das Gewicht von **Gewohnte Verteilung** 0, warnt die Seite: Personen mit gewohnter
   Verteilung hätten dann keine Regel für Nachtdienste.
 - **Wann ändern:** „Gleichmäßig“, wenn die Nächte bewusst neu verteilt werden sollen, etwa nach einer neuen
@@ -49,9 +53,18 @@ Darunter die Ziele, jedes mit seinen Werten und einer **Wichtigkeit**:
 | Wechsel zwischen Tag und Nacht | nach der letzten Nacht eines Blocks 2 freie Tage vor einem Dienst am Tag, vor der ersten Nacht 0; Nächte in Blöcken von 2 bis 4 Nächten | Nächte liegen in Blöcken, danach kommt Erholung, und eine Person wechselt selten zwischen Tag und Nacht |
 | Wünsche | höchstens 6 je Person und Monat | so viele Wünsche je Person zählen, die ersten nach Datum |
 | Faire Verteilung | über die letzten 3 Monate | Wochenenden, Feiertage, fair verteilte Dienste und Nächte gleichmäßig verteilen |
-| Stunden treffen | höchstens 10 % über dem Soll (beim festen Anteil über dem Ziel), Stundenkonto ausgleichen bis Ende des Kalenderhalbjahrs (fester Anteil 25 % je Monat als Alternative), Minus am Halbjahresende verfällt | geplante und angerechnete Stunden nahe am Ziel; die Obergrenze ist ein Regelverstoß |
+| Stunden treffen | Toleranz beim Ziel 0 Stunden, höchstens 10 % über dem Soll (beim festen Anteil über dem Ziel), Stundenkonto ausgleichen bis Ende des Kalenderhalbjahrs (fester Anteil 25 % je Monat als Alternative), Minus am Halbjahresende verfällt | geplante und angerechnete Stunden nahe am Ziel; die Obergrenze ist ein Regelverstoß |
+| Besetzung nahe am Mindestbedarf | keine Werte | wo eine Höchstbesetzung mehr erlaubt, möglichst nur so viele Personen wie der Mindestbedarf |
 | Familienregeln | keine Werte | die persönlichen Regeln der Personen einhalten, wenn es geht |
 
+- **Toleranz beim Ziel** (Standard 0 Stunden, 0 bis 40): So viele Stunden über oder unter dem Ziel zählen bei
+  **Stunden treffen** nicht. Mehr gibt etwas längere Blöcke, aber auch mehr Stunden über dem Mindestbedarf, weil
+  dann auch Stunden über dem Ziel nichts kosten. **Wann ändern:** wenn Blöcke wichtiger sind als genaue Stunden.
+- **Besetzung nahe am Mindestbedarf** (ab 0.29.0): Wo der Bedarf eine Höchstbesetzung über dem Minimum hat, etwa
+  aus der Historie, plant das Programm möglichst nur das Minimum ein. Jede Personenstunde darüber kostet (Regel
+  **Besetzung über dem Mindestbedarf**, Gewicht 2000). Über der Höchstbesetzung ist es immer eine Überbesetzung.
+  **Wann ändern:** „mehr“, wenn Pläne deutlich mehr Stunden haben als der Mindestbedarf; „weniger“, wenn Blöcke
+  wichtiger sind.
 - **Ausgleich des Stundenkontos:** Standard ist **bis Ende des Kalenderhalbjahrs**. Am Ende jedes Halbjahrs soll
   das Stundenkonto bei 0 stehen, denn über das Halbjahr sind die vereinbarten Stunden geschuldet, bei Teilzeit
   die Stunden laut Vertrag. Jeder Monat gleicht seinen Teil aus: Ziel = Soll minus Stundenkonto geteilt durch die
@@ -98,8 +111,9 @@ zwischen Tag und Nacht auf „mehr“). Danach neu planen und die Zahlen über d
   Tag direkt auf Nacht; das ist Vorwärtsrotation.
 - **Kürzester Nachtblock** und **Längster Nachtblock** (Standard 2 und 4 Nächte): Eine einzelne Nacht oder fünf
   Nächte hintereinander kosten. Ein Block am Monatsende darf im nächsten Monat weitergehen.
-- Jeder Wechsel zwischen Nacht und Dienst am Tag kostet außerdem ein wenig, auch über freie Tage hinweg (Regel
-  **Wechsel zwischen Tag und Nacht** unter Erweitert, Gewicht 3000; 0 schaltet das ab).
+- Jeder Wechsel zwischen Nacht und Dienst am Tag kostet außerdem, auch über freie Tage hinweg (Regel
+  **Wechsel zwischen Tag und Nacht** unter Erweitert, Gewicht 30 000; 0 schaltet das ab). Eine Person mit kleinem
+  gewohntem Nachtanteil bekommt dadurch eher gar keine Nacht als eine einzelne.
 - 0 freie Tage oder Gewicht 0 schaltet die jeweilige Regel aus.
 
 ## Gesetz und Betriebsvereinbarung
@@ -176,13 +190,14 @@ Planungsziels steht, zu welchem Ziel sie gehören. Die Standardgewichte:
 | Regel | Standard | Ziel |
 |---|---|---|
 | Stunden treffen | 20 | Stunden treffen |
+| Besetzung über dem Mindestbedarf | 2000 | Besetzung nahe am Mindestbedarf |
 | Fairness Nachtdienste, Wochenenden, Feiertage | je 3 | Faire Verteilung |
 | Fairness fair verteilte Dienste | 2 | Faire Verteilung |
 | Wünsche | 300 | Wünsche |
 | Dienstblöcke | 18000 | Dienstblöcke |
 | Einzelne freie Tage | 30000 | Dienstblöcke |
 | Abstand zwischen Tag und Nacht | 10000 | Wechsel zwischen Tag und Nacht |
-| Wechsel zwischen Tag und Nacht | 3000 | Wechsel zwischen Tag und Nacht |
+| Wechsel zwischen Tag und Nacht | 30000 | Wechsel zwischen Tag und Nacht |
 | Nachtblöcke | 6000 | Wechsel zwischen Tag und Nacht |
 | Familienregel | 800 | Familienregeln |
 | Gewohnte Verteilung | 100 | keines |
@@ -203,4 +218,7 @@ wurden, laden unverändert; ohne Einstellung der Nachtdienste gilt „Wie bisher
 die Gewichte von **Dienstblöcke** und **Einzelne freie Tage** noch auf den alten Standards (6000 und 10000, oder
 beide auf derselben Wichtigkeit davon), bekommen sie beim ersten Laden die neuen (18000 und 30000, oder dieselbe
 Wichtigkeit davon). Von Hand gesetzte Gewichte bleiben. Die neuen Regeln und die Gründlichkeit beginnen mit
-ihrem Standard.
+ihrem Standard. Ebenso ab Version 0.29: Stehen die drei Gewichte des Ziels **Wechsel zwischen Tag und Nacht** noch
+auf einer Wichtigkeit von 0.28 (normal: 10000, 3000 und 6000), bekommt **Wechsel zwischen Tag und Nacht** den neuen
+Standard 30000 auf derselben Wichtigkeit. Die neue Regel **Besetzung über dem Mindestbedarf**, die Toleranz beim
+Ziel und die Einstellungen zum Nachtanteil beginnen mit ihrem Standard.

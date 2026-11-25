@@ -3,6 +3,27 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.29.0 (2026-11-26)
+
+- **Weniger Wechsel zwischen Tag und Nacht:** Die Regel **Wechsel zwischen Tag und Nacht** wiegt zehnmal so viel
+  (30000 statt 3000). Eine Person mit kleinem gewohntem Nachtanteil bekommt dadurch eher keine Nacht als eine
+  einzelne. Gespeicherte Regeln, deren drei Gewichte des Ziels noch auf einer Wichtigkeit von 0.28 standen, bekommen
+  das neue Gewicht einmal beim ersten Laden; von Hand gesetzte Gewichte bleiben.
+- **Gewohnter Nachtanteil als Obergrenze:** Über mehrere Monate macht eine Person höchstens ihren gewohnten
+  Nachtanteil, dazu eine Toleranz (Standard 1 Nacht). Nächte aus den Vormonaten holt sie nicht nach, ein Monat ohne
+  Nacht ist in Ordnung. **Fehlende Nächte nachholen** stellt das Nachholen wieder ein; 1 Monat bleibt wie bisher.
+- **Besetzung nahe am Mindestbedarf:** Ein neues Planungsziel. Wo eine Höchstbesetzung mehr erlaubt als das
+  Minimum, kostet jede Personenstunde darüber (Gewicht 2000); Prüfen zeigt die Treffer je Bereich und Tag.
+- **Toleranz beim Ziel:** So viele Stunden über oder unter dem Ziel zählen bei **Stunden treffen** nicht (Standard
+  0, einstellbar bis 40).
+- **Import aus dem alten Planungsprogramm:** Neue Option **Höchstbesetzung aus der Historie**: übliche Spitze (wie
+  bisher und Standard) oder wie Minimum.
+- **Gemessen** auf dem großen synthetischen Monat (150 Personen, klare gewohnte Verteilungen für zwei Drittel,
+  Höchstbesetzung Minimum + 1), „normal“, gegen 0.28.0: Wechsel zwischen Tag und Nacht 217 → 124, Personen mit Tag
+  und Nacht 78 → 72, einzelne Nächte 112 → 94, einzelne freie Tage 135 → 117, Einzeldienste 309 → 306, Stunden über
+  dem Minimum 17,7 % → 17,2 %; die gewohnte Verteilung weicht etwas mehr ab (0,28 → 0,38). Raster und Zahlen je
+  Gründlichkeit: docs/regeln.md, Raster der Gewichte.
+
 ## 0.28.0 (2026-11-25)
 
 - **Mehr Blöcke, weniger Wechsel zwischen Tag und Nacht:** Zwei neue Regeln unter Planungsziele, **Wechsel zwischen

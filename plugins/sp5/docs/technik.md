@@ -43,7 +43,7 @@ Die Optionen der Erweiterung entsprechen denen von `sp5_export.py`, mit denselbe
 einer Person aus**: `sp5_export.py` kennt nur „Gruppen“. Mit „Historie“ oder „Historie, Gruppen als Reserve“
 unterscheiden sich Bereiche und Einschränkungen der Personen deshalb gewollt; `sp5-vergleich.py` sagt das und
 nennt die Zahl der Bereiche nach ihrer Herkunft (aus `anfrage.json`). Byte für Byte gleich ist ein Einlesen nur mit
-„Gruppen“.
+„Gruppen“ und mit der Höchstbesetzung „übliche Spitze“; `anfrage.json` nennt sie als `demandMax`.
 
 | Option in Dispofold | Kommandozeile von `sp5_export.py` |
 |---|---|
@@ -53,6 +53,7 @@ nennt die Zahl der Bereiche nach ihrer Herkunft (aus `anfrage.json`). Byte für 
 | Bei Gruppen: Bereiche aus der Historie ab … Diensten dazu | `--areas-from-history` |
 | Schichten seltener als … Dienste nur von Hand | `--shifts-from-history` |
 | Bedarf | `--demand` |
+| Höchstbesetzung aus der Historie | keine; `sp5_export.py` rechnet immer mit der üblichen Spitze, „wie Minimum“ setzt nach den Korrekturen jedes Maximum auf das Minimum; `sp5-vergleich.py` macht dasselbe mit dem Ergebnis von `sp5_export.py` |
 | Gewohnte Verteilung übernehmen, ab … Diensten | `--no-shift-mix`, `--mix-min-duties` |
 | Ausgeblendete Schichten mit Diensten in den … Monaten davor | `--hidden-shifts-months` |
 | Bereiche ohne Dienst in den letzten … Monaten nur von Hand | `--recent-months` |

@@ -218,6 +218,18 @@ Beispiele, was jede Regel verhindert (Personen und Schichten erfunden, Standardw
 - **Beispiel `uselessDuty`:** Ein Dienst Spät 14-22 in Bereich B, wo es zwischen 14 und 22 Uhr gar keinen Bedarf
   gibt, zählt mit 480 Minuten. Meist fehlt dann in den Stammdaten der Bedarf für diese Zeit.
 
+- **Besetzung über dem Mindestbedarf** (`overMinimum`, ab 0.29.0, eine Qualitätsregel, Gewicht 2000 je
+  Personenstunde): Wo ein Bedarf eine Höchstbesetzung über der Mindestbesetzung hat, kostet jede Person über dem
+  Minimum, bis zur Höchstbesetzung. Darüber zählt die Überbesetzung oben. Die Personenminuten eines Bereichs und
+  Tages werden erst zusammengezählt und dann auf ganze Personenstunden gerundet (eine halbe aufgerundet), so kostet
+  eine Personenstunde das Gewicht, auch wenn sie in kurzen Abschnitten liegt. Ohne die Regel füllte die Planung
+  bis zur Höchstbesetzung auf, wenn das Blöcken oder Stunden half. **Beispiel:** Bereich A braucht tagsüber
+  mindestens zwei Personen, höchstens drei. Eine dritte Person von 7 bis 19 Uhr kostet 12 × 2000.
+  **Gemessen** am großen synthetischen Monat (150 Personen, Höchstbesetzung überall Minimum + 1, „schnell“):
+  Gewicht 0 plant 22,5 % über dem Minimum, 2000 21,4 %, 8000 21,5 %, 50 000 20,5 %. Mit sehr hohem Gewicht
+  steigen die Einzeldienste (50 000: 356 statt 296), deshalb ist der Standard 2000. Den größeren Teil der
+  Mehrstunden senkt mehr Rechenzeit, nicht das Gewicht: „normal“ plant 17,7 % über dem Minimum.
+
 - Die Bedarfsfenster eines Tages werden an allen Beginn- und Endzeiten der Schichten des Bereichs und an
   den Fenstergrenzen geteilt. In jedem Abschnitt ist die Besetzung konstant.
 - Ein Fenster gehört zum Tag seines Beginns. Ein Fenster mit `to <= from` endet am Folgetag.
@@ -234,7 +246,8 @@ der Erklärung je Person.
 
 | Id | Regel | Wirkung | Standardgewicht |
 |---|---|---|---|
-| `targetHours` | Stunden treffen | Abweichung in Viertelstunden, quadriert | 20 |
+| `targetHours` | Stunden treffen | Abweichung in Viertelstunden über der Toleranz, quadriert | 20 |
+| `overMinimum` | Besetzung über dem Mindestbedarf | je Personenstunde zwischen Mindest- und Höchstbesetzung | 2000 |
 | `fairNights` | Fairness Nachtdienste | Abweichung der Lasten vom Mittelwert, siehe Fairness | 3 |
 | `fairWeekends` | Fairness Wochenenden | siehe Fairness | 3 |
 | `fairHolidays` | Fairness Feiertage | siehe Fairness | 3 |
@@ -244,7 +257,7 @@ der Erklärung je Person.
 | `isolatedDayOff` | Kein einzelner freier Tag zwischen Diensten | je Fall | 30000 |
 | `forwardRotation` | Vorwärtsrotation | je Rückwärtswechsel | 500 |
 | `dayNightSwitch` | Abstand zwischen Tag und Nacht: 2 freie Tage nach Nächten, 0 vor der ersten Nacht | je fehlendem freien Tag | 10000 |
-| `dayNightSwitches` | Wechsel zwischen Tag und Nacht | je Wechsel | 3000 |
+| `dayNightSwitches` | Wechsel zwischen Tag und Nacht | je Wechsel | 30000 |
 | `nightBlock` | Nachtblöcke von 2 bis 4 Nächten | je Nacht zu kurz oder zu lang | 6000 |
 | `splitWeekend` | Ganze Wochenenden | je Wochenende mit nur einem Diensttag | 300 |
 | `compRestUse` | Ersatzruhe abbauen | Bonus je geplantem Ersatzruhetag | 500 |
@@ -254,16 +267,17 @@ der Erklärung je Person.
 | `family` | Familienregel | je Dienst gegen die Regel | 800 |
 | `onRequest` | Dienst, der nur von Hand geht, von Hand gesetzt | je solchem Dienst; Gewicht fest, nicht einstellbar | 1000 |
 
-**Wichtigkeit.** Die Seite Regeln fasst zwölf Qualitätsregeln zu Planungszielen zusammen. Die Wichtigkeit eines
+**Wichtigkeit.** Die Seite Regeln fasst dreizehn Qualitätsregeln zu Planungszielen zusammen. Die Wichtigkeit eines
 Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerundet auf ganze Zahlen:
 
 | Planungsziel | Regeln | weniger / normal / mehr | Gewichte |
 |---|---|---|---|
 | Dienstblöcke | `blockLength`, `isolatedDayOff` | 0,5 / 1 / 2 | 9000 / 18000 / 36000 und 15000 / 30000 / 60000 |
-| Wechsel zwischen Tag und Nacht | `dayNightSwitch`, `dayNightSwitches`, `nightBlock` | 0,5 / 1 / 2 | 5000 / 10000 / 20000, 1500 / 3000 / 6000 und 3000 / 6000 / 12000 |
+| Wechsel zwischen Tag und Nacht | `dayNightSwitch`, `dayNightSwitches`, `nightBlock` | 0,5 / 1 / 2 | 5000 / 10000 / 20000, 15000 / 30000 / 60000 und 3000 / 6000 / 12000 |
 | Wünsche | `wishes` | 0,5 / 1 / 2 | 150 / 300 / 600 |
 | Faire Verteilung | `fairNights`, `fairWeekends`, `fairHolidays`, `fairUnpopular` | 0,25 / 1 / 4 | 1 / 3 / 12, fair verteilte 1 / 2 / 8 |
 | Stunden treffen | `targetHours` | 0,5 / 1 / 2 | 10 / 20 / 40 |
+| Besetzung nahe am Mindestbedarf | `overMinimum` | 0,5 / 1 / 2 | 1000 / 2000 / 4000 |
 | Familienregeln | `family` | 0,5 / 1 / 2 | 400 / 800 / 1600 |
 
 - `forwardRotation`, `splitWeekend`, `compRestUse`, `shiftVariety`, `areaVariety` und `shiftMix` gehören zu keinem
@@ -323,6 +337,12 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
   Dienst darf die Grenze überschreiten, erscheint dann aber als Regelverstoß; die Liste „Von Hand
   einsetzbar“ nennt niemanden, den der Dienst über die Grenze brächte. Regeln, die vor dieser Grenze gespeichert
   wurden, bekommen den Standard.
+- **Toleranz** (`targetToleranceHours`, Standard 0, 0 bis 40 Stunden, ab 0.29.0): So viele Stunden über oder unter
+  dem Ziel zählen bei „Stunden treffen“ nicht; erst die Abweichung darüber zählt, in Viertelstunden quadriert.
+  Beispiel mit 8: 12 h unter dem Ziel zählen wie 4 h, (16)² × 20. Gemessen („normal“, siehe
+  [Raster der Gewichte](#raster-der-gewichte)): 8 Stunden geben weniger Einzeldienste (276 statt 306), aber mehr
+  Stunden über dem Mindestbedarf (18,6 % statt 17,2 %), weil auch Stunden über dem Ziel nichts mehr kosten. Deshalb
+  bleibt der Standard 0. Die Obergrenze über dem Ziel (Regelverstoß) gilt bei jeder Toleranz.
 - Verkleinertes Ziel: Braucht der Bedarf weniger Arbeit, als die Ziele aller Personen zusammen ergeben,
   wird das Ziel jeder Person um denselben Anteil verkleinert. Angerechnete Abwesenheitstage bleiben, der Rest
   des Ziels (die Arbeit) wird mit Bedarf / Summe der Arbeit malgenommen. Der Bedarf ist die Mindestbesetzung
@@ -376,16 +396,23 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
   Verteilung je Bereich hat, zählt nicht für die Abwechslung der Bereiche. Wochenenden, Feiertage und
   fair verteilte Dienste bleiben gleichmäßig verteilt. Personen ohne Verteilung werden geplant wie bisher.
 - **Nachtanteil über mehrere Monate** (`nightMixMonths`, Standard 3, ab 0.28.0, nur bei der Nachtverteilung „Wie
-  bisher“; bei „Gleichmäßig“ zählt der Nachtanteil ohnehin nicht): Der Nachtanteil gilt über diesen
-  Monat und die Vormonate davor, soweit die Historie sie hat, nicht in jedem einzelnen Monat. Erwartet sind
-  diesen Monat: Anteil mal alle Dienste des Zeitraums minus die Nächte der Vormonate, höchstens alle Dienste des
-  Monats, mindestens 0. Die Dienste der Vormonate schätzt die Planung aus ihren Stunden und der mittleren
-  Dienstlänge dieses Monats. Die übrigen Kategorien teilen sich die übrigen Dienste im Verhältnis ihrer Anteile;
-  die Bereiche bleiben je Monat. Beispiel: Ein Anteil von 30 % Nacht, 20 Dienste im Monat, in den zwei Vormonaten
-  12 Nächte: erwartet 0,3 × 60 − 12 = 6 Nächte. Wer in den Vormonaten viele Nächte hatte, bekommt jetzt wenige,
-  und umgekehrt; so verteilt sich der Wechsel wie in Plänen von Hand über die Monate. 1 heißt: jeder Monat für
-  sich, wie bis 0.27. Ohne Historie gilt ebenfalls jeder Monat für sich. Die Nächte der Historie sind die
-  gezählten Nachtdienste der Monate (nach der Nachtzeit), die Planung zählt Dienste der Kategorie Nacht.
+  bisher“; bei „Gleichmäßig“ zählt der Nachtanteil ohnehin nicht): Über diesen Monat und die Vormonate davor,
+  soweit die Historie sie hat, macht eine Person höchstens ihren gewohnten Nachtanteil (ab 0.29.0 eine
+  Obergrenze). Erlaubt sind diesen Monat: Anteil mal alle Dienste des Zeitraums minus die Nächte der Vormonate,
+  mindestens 0, dazu die Toleranz `nightMixTolerance` (Standard 1 Nacht, 0 bis 10). Erst Nächte darüber zählen,
+  quadriert in Zehntel-Diensten wie die übrigen Anteile. Weniger Nächte zählen nicht: Nächte, die in den
+  Vormonaten fehlten, holt die Planung nicht nach, und ein Monat ganz ohne Nacht ist in Ordnung. Die Dienste der
+  Vormonate schätzt die Planung aus ihren Stunden und der mittleren Dienstlänge dieses Monats. Die übrigen
+  Kategorien teilen sich die übrigen Dienste im Verhältnis ihrer Anteile; die Bereiche bleiben je Monat.
+  Beispiel: Ein Anteil von 30 % Nacht, 20 Dienste im Monat, in den zwei Vormonaten 12 Nächte: erlaubt sind
+  0,3 × 60 − 12 + 1 = 7 Nächte, 0 bis 7 kosten nichts, 9 kosten 2² × 100 mal Gewicht. Die Nachtdienste deckt
+  weiter der Bedarf; die Obergrenze hält sie bei denen, die sie gewohnt sind.
+- **Fehlende Nächte nachholen** (`nightMixFloor`, Standard aus): Eingeschaltet zählen auch zu wenige Nächte, unter
+  Anteil mal alle Dienste des Zeitraums minus die Nächte der Vormonate minus die Toleranz. Mit Toleranz 0 ist das
+  die Regel von 0.28.0: Wer in den Vormonaten wenige Nächte hatte, bekommt jetzt mehr. Mit **1 Monat** gilt die
+  Obergrenze nicht: jeder Monat für sich, nach oben und nach unten, genau wie bis 0.28.0. Ohne Historie gilt
+  ebenfalls jeder Monat für sich. Die Nächte der Historie sind die gezählten Nachtdienste der Monate (nach der
+  Nachtzeit), die Planung zählt Dienste der Kategorie Nacht.
 - Die Personenansicht zeigt die geplante Verteilung neben der gewohnten.
 - **Beispiel:** Olga macht seit Jahren fast nur Tagdienste (90 % Tag, 10 % Nacht). Die Regel verhindert, dass sie
   in einem Monat plötzlich zur Hälfte Nächte bekommt, nur weil das bei anderen Regeln etwas spart.
@@ -529,15 +556,20 @@ Eine Einstellung der Regeln, `nightDistribution`:
   Tagdiensten vor der ersten Nacht `dayToNightDays` (Standard 0, denn Tag auf Nacht ist Vorwärtsrotation). Abzug
   je fehlendem Tag, Gewicht 10000. Abwesenheiten und Ersatzruhe zählen als freie Tage, Dienste des Vormonats
   zählen mit. Beide Zahlen gehen von 0 bis 4; 0 schaltet die Richtung aus.
-- **Wechsel zwischen Tag und Nacht** (`dayNightSwitches`): ein kleiner Abzug (Gewicht 3000) für jeden solchen
-  Wechsel, auch über freie Tage hinweg, damit nicht nur der Abstand stimmt, sondern auch weniger gewechselt wird.
-  Gewicht 0 schaltet ihn aus.
+- **Wechsel zwischen Tag und Nacht** (`dayNightSwitches`): ein Abzug (Gewicht 30 000, bis 0.28 3000) für jeden
+  solchen Wechsel, auch über freie Tage hinweg, damit nicht nur der Abstand stimmt, sondern auch weniger gewechselt
+  wird. Gewicht 0 schaltet ihn aus. Bei 30 000 kostet eine einzelne Nacht zwei Wechsel, mehr als eine Person mit
+  kleinem Nachtanteil (etwa 10 %) an Abweichung von ihrer gewohnten Verteilung spart: Sie bekommt dann eher keine
+  Nacht. **Gemessen** am großen synthetischen Monat (150 Personen, klare Verteilungen für zwei Drittel,
+  Höchstbesetzung Minimum + 1, „normal“), gegen die Regeln von 0.28.0: Wechsel 217 → 124, Personen mit Tag und
+  Nacht 78 → 72, Einzeldienste 309 → 306, einzelne Nächte 112 → 94 (mit der Obergrenze für den Nachtanteil). Das
+  Raster dazu steht unter [Raster der Gewichte](#raster-der-gewichte).
 - **Nachtblöcke** (`nightBlock`): aufeinanderfolgende Nächte, gewünscht `nightBlockMin` (2) bis `nightBlockMax`
   (4). Abzug je Nacht zu wenig oder zu viel, Gewicht 6000; ein Block, der am Monatsende endet, ist nicht zu kurz.
   Kürzester Block 0 oder 1 schaltet die Untergrenze aus. Die Regel „Dienstblöcke“ zählt alle Dienste gleich; erst
   diese Regel sieht, dass Tag, Tag, Nacht nur eine einzelne Nacht ist.
 - **Beispiel `dayNightSwitch`:** Anna hat Nacht am Montag und Dienstag, frei am Mittwoch und Tagdienst am
-  Donnerstag: ein freier Tag nach den Nächten statt zwei, Abzug 1 × 10000, dazu 3000 für den Wechsel. Mit Tagdienst
+  Donnerstag: ein freier Tag nach den Nächten statt zwei, Abzug 1 × 10000, dazu 30 000 für den Wechsel. Mit Tagdienst
   erst am Freitag fällt nur der Wechsel an.
 - Vorwärtsrotation: die Reihenfolge Früh, Tag, Spät, Nacht. Ein Wechsel von einem Tag auf den nächsten in
   eine frühere Kategorie kostet. Nacht auf Früh ohne genug Ruhe ist ohnehin als Regelverstoß verboten.
@@ -557,6 +589,77 @@ Eine Einstellung der Regeln, `nightDistribution`:
 - **Wichtigkeit:** Die Regel gehört zu keinem Planungsziel, ihr Gewicht (300) steht nur unter Erweitert. Nicht
   gemessen; erwartbar gibt ein höheres Gewicht mehr ganze Wochenenden, auf Kosten von Blöcken, Wünschen und
   Stunden. Die freien Sonntage (Regelverstoß) gelten bei jedem Gewicht.
+
+### Raster der Gewichte
+
+Gemessen für 0.29.0 am großen synthetischen Monat (150 Personen, Jänner 2027, Startwert 1) mit klaren gewohnten
+Verteilungen für zwei Drittel der Personen und einer Höchstbesetzung von Minimum + 1 auf jeder Bedarfsregel, wie
+sie der Bedarf aus der Historie hat. Alle Läufe mit **Besetzung über dem Mindestbedarf** 2000, Gründlichkeit
+„schnell“ (250 000 Züge). Die Spalten: Gewichte von `dayNightSwitches`, `nightBlock` und `shiftMix`, die Toleranz
+beim Ziel, dann die Kennzahlen des Plans. Ein Lauf schwankt mit einem anderen Startwert etwa um 10 %.
+
+| Wechsel | Nachtblöcke | Verteilung | Toleranz | Einzeldienste | einzelne freie Tage | Wechsel | Personen mit Tag und Nacht | einzelne Nächte | über Minimum |
+|---|---|---|---|---|---|---|---|---|---|
+| 3 000 | 6 000 | 100 | 0 h | 320 | 122 | 303 | 98 | 133 | 21,4 % |
+| 3 000 | 6 000 | 100 | 8 h | 314 | 135 | 300 | 101 | 132 | 22,9 % |
+| 3 000 | 6 000 | 25 | 0 h | 161 | 42 | 295 | 102 | 90 | 21,4 % |
+| 3 000 | 6 000 | 25 | 8 h | 114 | 33 | 262 | 98 | 81 | 21,3 % |
+| 3 000 | 18 000 | 100 | 0 h | 283 | 122 | 290 | 96 | 109 | 22,0 % |
+| 3 000 | 18 000 | 100 | 8 h | 293 | 120 | 280 | 98 | 109 | 22,8 % |
+| 3 000 | 18 000 | 25 | 0 h | 152 | 45 | 264 | 98 | 55 | 21,1 % |
+| 3 000 | 18 000 | 25 | 8 h | 132 | 38 | 248 | 94 | 52 | 21,7 % |
+| 10 000 | 6 000 | 100 | 0 h | 320 | 145 | 259 | 98 | 130 | 21,8 % |
+| 10 000 | 6 000 | 100 | 8 h | 337 | 121 | 279 | 97 | 141 | 22,4 % |
+| 10 000 | 6 000 | 25 | 0 h | 143 | 18 | 228 | 100 | 71 | 21,0 % |
+| 10 000 | 6 000 | 25 | 8 h | 148 | 34 | 228 | 98 | 87 | 22,0 % |
+| 10 000 | 18 000 | 100 | 0 h | 254 | 112 | 231 | 93 | 81 | 21,8 % |
+| 10 000 | 18 000 | 100 | 8 h | 280 | 133 | 229 | 89 | 82 | 23,2 % |
+| 10 000 | 18 000 | 25 | 0 h | 152 | 36 | 215 | 93 | 37 | 20,6 % |
+| 10 000 | 18 000 | 25 | 8 h | 117 | 34 | 195 | 92 | 41 | 22,1 % |
+| 30 000 | 6 000 | 100 | 0 h | 305 | 168 | 171 | 89 | 104 | 22,2 % |
+| 30 000 | 6 000 | 100 | 8 h | 310 | 154 | 182 | 82 | 116 | 23,9 % |
+| 30 000 | 6 000 | 25 | 0 h | 190 | 60 | 136 | 80 | 56 | 22,0 % |
+| 30 000 | 6 000 | 25 | 8 h | 189 | 43 | 126 | 76 | 53 | 22,2 % |
+| 30 000 | 18 000 | 100 | 0 h | 332 | 155 | 170 | 84 | 72 | 21,7 % |
+| 30 000 | 18 000 | 100 | 8 h | 336 | 149 | 196 | 86 | 85 | 23,0 % |
+| 30 000 | 18 000 | 25 | 0 h | 187 | 58 | 159 | 82 | 40 | 22,1 % |
+| 30 000 | 18 000 | 25 | 8 h | 155 | 64 | 139 | 83 | 32 | 22,6 % |
+
+Bestätigt mit „normal“ (1 000 000 Züge), gegen die Regeln von 0.28.0:
+
+| Einstellung | Einzeldienste | einzelne freie Tage | Wechsel | Personen mit Tag und Nacht | einzelne Nächte | Abweichung der Verteilung | über Minimum |
+|---|---|---|---|---|---|---|---|
+| Regeln von 0.28.0 | 309 | 135 | 217 | 78 | 112 | 0,28 | 17,7 % |
+| Wechsel 30 000, Verteilung 100, Toleranz 0 | 306 | 117 | 124 | 72 | 94 | 0,38 | 17,2 % |
+| Wechsel 30 000, Verteilung 100, Toleranz 8 | 276 | 134 | 117 | 68 | 73 | 0,35 | 18,6 % |
+| Wechsel 30 000, Verteilung 25, Toleranz 8 | 137 | 54 | 96 | 67 | 34 | 0,45 | 17,8 % |
+
+- Gewählt ist die zweite Zeile: Wechsel und Personen mit Tag und Nacht sinken deutlich, Einzeldienste nicht mehr
+  als mit 0.28.0, und die Stunden über dem Minimum steigen nicht. Die Abweichung der Verteilung ist die mittlere
+  Abweichung der Anteile je Kategorie in diesem Monat (0: genau die gewohnte); sie steigt, weil Personen mit
+  kleinem Nachtanteil keine einzelne Nacht mehr bekommen und der Nachtanteil über drei Monate gilt.
+- Die gewohnte Verteilung mit Gewicht 25 halbiert die Einzeldienste, weicht aber deutlich stärker von den
+  gewohnten Anteilen ab. Wer Blöcke wichtiger findet als die gewohnte Verteilung, setzt sie unter Erweitert
+  niedriger.
+- Die Toleranz von 8 Stunden spart Einzeldienste, plant aber mehr Stunden über dem Minimum.
+
+Je Gründlichkeit, dieselben Daten, Regeln von 0.28.0 gegen die von 0.29.0 (je zwei Läufe gleichzeitig auf einem
+Rechner, daher die Dauer):
+
+| Gründlichkeit | Regeln | Einzeldienste | einzelne freie Tage | Wechsel | Personen mit Tag und Nacht | einzelne Nächte | Abweichung der Verteilung | über Minimum | Dauer |
+|---|---|---|---|---|---|---|---|---|---|
+| schnell | 0.28.0 | 346 | 186 | 278 | 89 | 138 | 0,30 | 23,6 % | 160 s |
+| schnell | 0.29.0 | 305 | 168 | 171 | 89 | 104 | 0,38 | 22,2 % | 191 s |
+| normal | 0.28.0 | 309 | 135 | 217 | 78 | 112 | 0,28 | 17,7 % | 559 s |
+| normal | 0.29.0 | 306 | 117 | 124 | 72 | 94 | 0,38 | 17,2 % | 536 s |
+| gründlich | 0.28.0 | 260 | 86 | 184 | 70 | 103 | 0,23 | 14,6 % | 2188 s |
+| gründlich | 0.29.0 | 253 | 83 | 107 | 68 | 62 | 0,32 | 14,5 % | 2509 s |
+
+Lücken und Regelverstöße: in allen Läufen 0. Zwei Läufe mit demselben Startwert geben denselben Plan. Die Stunden
+über dem Minimum sinken mit der Gründlichkeit, nicht mit den Regeln: Der Plan besteht zu drei Vierteln aus Diensten
+unter 10 Stunden (bei „normal“ 1256 von 1595), die die Abschnitte des Bedarfs ungenau füllen. Weder ein höheres
+Gewicht für **Besetzung über dem Mindestbedarf** noch ein Abzug je Dienst noch ein Startplan, der längere Dienste
+bevorzugt, hat daran auf dem synthetischen Monat etwas geändert.
 
 ### Ersatzruhe
 

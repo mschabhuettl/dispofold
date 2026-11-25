@@ -31,6 +31,7 @@ sie nur; in Schichtplaner 5 ändert sich nichts. Den Weg Schritt für Schritt be
 | Bereiche einer Person aus | Historie, Gruppen als Reserve (bei Einstellungen aus einer Version vor 0.25.0: Gruppen) |
 | Bereich aus der Historie ab … Diensten | 3 |
 | Bedarf | aus der Historie |
+| Höchstbesetzung aus der Historie | übliche Spitze (9 von 10 Tagen) |
 | Erweitert: Bei Gruppen: Bereiche aus der Historie ab … Diensten dazu | leer (aus) |
 | Erweitert: Schichten seltener als … Dienste nur von Hand | leer (aus) |
 | Erweitert: Gewohnte Verteilung übernehmen, ab … Diensten | an, 10 |
@@ -56,6 +57,14 @@ Disposition ist und in der Historie 10 Dienste in der Annahme und keinen in der 
 „Gruppen“ beide Bereiche, bei „Historie“ nur die Annahme und bei „Historie, Gruppen als Reserve“ die Annahme und
 die Disposition nur von Hand. Die Seite der Person zeigt neben jedem Bereich, woher er kommt
 („Gruppe …“, „Historie: 10 Dienste“) und ob er nur von Hand ist.
+
+**Höchstbesetzung aus der Historie** (ab 0.29.0) gilt nur für den Bedarf aus der Historie. Die Mindestbesetzung je
+Bereich, Tagesart und Uhrzeit ist die Besetzung, die an der Hälfte der gleichen Tage mindestens Dienst hatte (der
+Median). Die Höchstbesetzung ist bei **übliche Spitze** (Standard, wie `sp5_export.py`) die Besetzung, die an 9 von
+10 solchen Tagen erreicht wurde; bis dahin ist mehr Besetzung erlaubt, und die Regel „Besetzung über dem
+Mindestbedarf“ hält sie klein. Bei **wie Minimum** ist jede Person über dem Minimum eine Überbesetzung, auch zu
+Zeiten mit Minimum 0; das gilt auch für Bedarf, den eine Korrekturdatei ersetzt hat. Gemessen am großen synthetischen Monat plant „wie Minimum“ nicht weniger, sondern mehr
+Stunden (24 % statt 21 % über dem Minimum, „schnell“), alles darüber als Überbesetzung. Einstellungen aus einer Version davor behalten „übliche Spitze“.
 
 **Schichten seltener als … Dienste nur von Hand** braucht es mit „Historie, Gruppen als Reserve“ meist nicht:
 Dort hat eine Person ohnehin nur die Bereiche ganz, in denen sie gearbeitet hat. Mit echten Daten zeigt sich:
