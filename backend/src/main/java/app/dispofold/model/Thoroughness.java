@@ -1,11 +1,11 @@
 package app.dispofold.model;
 
 /**
- * How long a planning searches for a better plan: a number of evaluated moves per duty cell of the month, so that
- * the same seed, data and thoroughness give the same plan on any machine (see SolveBudget).
+ * How long a planning searches for a better plan: a fixed number of evaluated moves, so that the same seed, data and
+ * thoroughness give the same plan on any machine (see SolveBudget).
  */
 public enum Thoroughness {
-    /** The budget before version 0.28: a fixed number of moves, done in about a minute. */
+    /** The budget before version 0.28: 250 000 moves, about 2 minutes with 150 people. */
     FAST,
     /** The default. */
     NORMAL,
