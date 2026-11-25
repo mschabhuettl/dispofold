@@ -2,7 +2,8 @@
 // of each person; planners edit everything about a person in the one form there (master data, usual mix,
 // per area its state (planbar, nur von Hand, nie, nicht dabei) with its exceptions folded below it, a whole area
 // entered shift by shift reading as its state), create and remove a person; the matrix of all people and areas
-// (click, keyboard, several at once, filter, save, read only for viewers); the switch "Aus dem Quellsystem nicht mehr
+// (click, keyboard, several at once, filter, save, read only for viewers), its header row and name column stuck while
+// scrolling (also dark and at 390 px), the same with areas as rows, and one area with its people per state; the switch "Aus dem Quellsystem nicht mehr
 // übernehmen" (also for an exclusion the source applied) greys the person out in the list and is in the corrections
 // file until taken back; viewers get no form, no switch, no "Person anlegen" and no personal data from the server. Demo data of the dev server (mock API), month 2027-01 planned.
 //   npm run build && node scripts/check-people.mjs     (Chromium via `npx playwright install chromium`)
@@ -29,8 +30,8 @@ const check = (name, ok, detail = '') => {
 
 const browser = await launchBrowser();
 try {
-  const login = async (user) => {
-    const context = await browser.newContext({ locale: 'de-DE', viewport: { width: 1600, height: 1000 } });
+  const login = async (user, viewport = { width: 1600, height: 1000 }) => {
+    const context = await browser.newContext({ locale: 'de-DE', viewport });
     await context.addInitScript((m) => sessionStorage.setItem('month', m), month);
     const page = await context.newPage();
     page.on('pageerror', (e) => check('no page error', false, e.message));
@@ -342,6 +343,151 @@ try {
   await matrixViewer.locator('table.area-matrix').waitFor();
   check('viewers see the matrix read only', await matrixViewer.locator('table.area-matrix button').count() === 0
     && await matrixViewer.locator('#area-matrix-save').count() === 0 && (await matrixViewer.locator('table.area-matrix td').first().innerText()).trim().length > 0);
+
+  // ---- sticky header row and name column: scrolled to the far end, both stay at the edge of the table and on top ----
+  const stuck = (pg) => pg.evaluate(() => {
+    const wrap = document.querySelector('.area-matrix-wrap');
+    wrap.scrollIntoView({ block: 'nearest' }); // the whole frame in the window, for elementFromPoint
+    wrap.scrollTop = wrap.scrollHeight;
+    wrap.scrollLeft = wrap.scrollWidth;
+    const w = wrap.getBoundingClientRect();
+    const shown = (el) => !el.hidden && !el.closest('[hidden]');
+    const headCell = [...document.querySelectorAll('table.area-matrix thead th')].filter(shown).at(-1);
+    const nameCell = [...document.querySelectorAll('table.area-matrix tbody th')].filter(shown).at(-1);
+    const corner = document.querySelector('table.area-matrix thead th');
+    const on = (el) => { const r = el.getBoundingClientRect(); return document.elementFromPoint(r.left + 3, r.top + r.height / 2)?.closest('th') === el; };
+    return { down: wrap.scrollTop, across: wrap.scrollLeft, head: headCell.getBoundingClientRect().top - w.top, name: nameCell.getBoundingClientRect().left - w.left,
+      visible: on(headCell) && on(nameCell) && on(corner), backgrounds: [headCell, nameCell, corner].map((el) => getComputedStyle(el).backgroundColor) };
+  });
+  const atEdge = (x) => x >= 0 && x <= 2;
+  const opaque = (s) => s.backgrounds.every((b) => b !== 'rgba(0, 0, 0, 0)' && b !== 'transparent');
+  await page.goto(`${base}/#/bereiche`);
+  await page.locator('table.area-matrix').waitFor();
+  let pinned = await stuck(page);
+  check('scrolled down, the header row stays at the top and on top of the rows', pinned.down > 0 && atEdge(pinned.head) && pinned.visible && opaque(pinned),
+    JSON.stringify(pinned));
+
+  // ---- swapped: areas as rows, people as columns; the same editing, the view remembered ----
+  await page.selectOption('#area-matrix-view', 'areas');
+  await page.locator('tr[data-area-row]').first().waitFor();
+  await page.reload();
+  await page.locator('table.area-matrix').waitFor();
+  check('the swapped view is remembered: one row per area, one column per person', await page.locator('tr[data-area-row]').count() === current.areas.length
+    && await page.locator('th[data-col-person]').count() === current.people.length && await page.inputValue('#area-matrix-view') === 'areas');
+  pinned = await stuck(page);
+  check('swapped, scrolled sideways, the area column stays at the left', pinned.across > 0 && atEdge(pinned.name) && pinned.visible && opaque(pinned), JSON.stringify(pinned));
+  await page.evaluate(() => { const w = document.querySelector('.area-matrix-wrap'); w.scrollLeft = 0; w.scrollTop = 0; });
+  await cellOf(one.id, a2).click();
+  check('swapped: a click cycles nur von Hand → nie', (await cellOf(one.id, a2).innerText()).includes('nie') && await page.isVisible('#area-matrix-dirty'),
+    await cellOf(one.id, a2).innerText());
+  await page.keyboard.press('Space');
+  check('swapped: the space key cycles on → nicht dabei', (await cellOf(one.id, a2).innerText()).includes('nicht dabei'));
+  const focused = () => page.evaluate(() => [document.activeElement?.dataset.person, document.activeElement?.dataset.area]);
+  await page.keyboard.press('ArrowUp');
+  const up = await focused();
+  await page.keyboard.press('ArrowRight');
+  const right = await focused();
+  check('swapped: up goes to the area above, right to the next person', up[0] === one.id && up[1] === a1 && right[0] !== one.id && right[1] === a1,
+    JSON.stringify([up, right]));
+  await page.fill('#area-matrix-name', two.lastName);
+  check('swapped: the name filter narrows the columns', await page.locator('th[data-col-person]:not([hidden])').count() === 1
+    && await page.locator(`th[data-col-person="${two.id}"]:not([hidden])`).count() === 1);
+  await page.locator(`tr[data-area-row="${a1}"] th input`).check();
+  await page.selectOption('#area-matrix-bulk-state', 'NEVER');
+  check('swapped: a ticked area row sets its shown people', (await page.textContent('#area-matrix-bulk')) === '1 Zelle setzen', await page.textContent('#area-matrix-bulk'));
+  await page.click('#area-matrix-bulk');
+  await page.fill('#area-matrix-name', '');
+  // a change of the view keeps the unsaved changes
+  await page.selectOption('#area-matrix-view', 'people');
+  await page.locator('tr[data-person-row]').first().waitFor();
+  check('a change of the view keeps the unsaved changes', (await cellOf(one.id, a2).innerText()).includes('nicht dabei')
+    && (await cellOf(two.id, a1).innerText()).includes('nie') && (await page.textContent('#area-matrix-dirty')) === '2 Personen geändert, nicht gespeichert',
+    await page.textContent('#area-matrix-dirty'));
+  await page.selectOption('#area-matrix-view', 'areas');
+  await page.locator('tr[data-area-row]').first().waitFor();
+  await page.evaluate(() => { const x = document.querySelector('#toast'); if (x) x.textContent = ''; });
+  await page.click('#area-matrix-save');
+  await page.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('gespeichert'));
+  const afterSwap = await getDataset(page);
+  const inSwap = (pid) => afterSwap.people.find((p) => p.id === pid);
+  check('swapped: saved like the matrix', !inSwap(one.id).areaIds.includes(a2) && stateIn(afterSwap, two.id, a1) === 'NEVER',
+    JSON.stringify([inSwap(one.id).areaIds, inSwap(two.id).areaStates]));
+  await page.locator('tr[data-area-row]').first().waitFor();
+  check('after saving, the swapped view stays', await page.locator('tr[data-area-row]').count() === current.areas.length);
+
+  // ---- one area: its people in four groups with their counts; a click cycles the state as in the matrix ----
+  await page.selectOption('#area-matrix-view', 'area');
+  await page.locator('#area-matrix-pick').waitFor();
+  await page.selectOption('#area-matrix-pick', a1);
+  const stateOf = (p, aid) => (!p.areaIds.includes(aid) ? 'OUT' : p.areaStates?.[aid] ?? 'PLAN');
+  const groupsOf = () => page.$$eval('.area-group', (gs) => gs.map((g) => [g.dataset.state, g.querySelector('h2').textContent, g.querySelectorAll('[data-person]').length]));
+  const expected = (d) => ['PLAN', 'ON_REQUEST', 'NEVER', 'OUT'].map((s) => [s, d.people.filter((p) => stateOf(p, a1) === s).length]);
+  let groups = await groupsOf();
+  const words = { PLAN: 'planbar', ON_REQUEST: 'nur von Hand', NEVER: 'nie', OUT: 'nicht dabei' };
+  check('one area: four groups with the right counts', JSON.stringify(groups) === JSON.stringify(expected(afterSwap).map(([s, n]) => [s, `${words[s]}: ${n}`, n])),
+    JSON.stringify(groups));
+  const mover = afterSwap.people.find((p) => stateOf(p, a1) === 'PLAN');
+  const member = (pid) => page.locator(`.area-group button[data-person="${pid}"]`);
+  await member(mover.id).click();
+  groups = await groupsOf();
+  check('one area: a click moves the person to nur von Hand, the focus stays on it',
+    await page.locator(`.area-group[data-state="ON_REQUEST"] button[data-person="${mover.id}"]`).count() === 1
+    && (await focused())[0] === mover.id && groups[0][2] === expected(afterSwap)[0][1] - 1 && await page.isVisible('#area-matrix-dirty'), JSON.stringify(groups));
+  await page.keyboard.press('Space');
+  check('one area: the space key cycles on → nie', await page.locator(`.area-group[data-state="NEVER"] button[data-person="${mover.id}"]`).count() === 1
+    && (await focused())[0] === mover.id);
+  await page.evaluate(() => { const x = document.querySelector('#toast'); if (x) x.textContent = ''; });
+  await page.click('#area-matrix-save');
+  await page.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('gespeichert'));
+  const afterArea = await getDataset(page);
+  check('one area: saved like the matrix', stateIn(afterArea, mover.id, a1) === 'NEVER', JSON.stringify(afterArea.people.find((p) => p.id === mover.id).areaStates));
+  await page.locator('#area-matrix-pick').waitFor();
+  check('after saving, the same area is shown with the new counts', await page.inputValue('#area-matrix-pick') === a1
+    && JSON.stringify((await groupsOf()).map((g) => [g[0], g[2]])) === JSON.stringify(expected(afterArea)));
+
+  // ---- viewers: read only in every view ----
+  await matrixViewer.selectOption('#area-matrix-view', 'areas');
+  await matrixViewer.locator('tr[data-area-row]').first().waitFor();
+  check('viewers: the swapped view read only', await matrixViewer.locator('table.area-matrix button, table.area-matrix input').count() === 0
+    && await matrixViewer.locator('#area-matrix-save').count() === 0);
+  await matrixViewer.selectOption('#area-matrix-view', 'area');
+  await matrixViewer.locator('.area-group').first().waitFor();
+  await matrixViewer.locator('.area-group span[data-person]').first().click();
+  check('viewers: one area read only, a click changes nothing', await matrixViewer.locator('.area-groups button').count() === 0
+    && await matrixViewer.locator('#area-matrix-save').count() === 0 && await matrixViewer.locator('.area-group span[data-person]').count() === current.people.length
+    && !(await matrixViewer.isVisible('#area-matrix-dirty')));
+
+  // ---- dark: the sticky cells have the dark background, the text stays readable ----
+  await page.selectOption('#area-matrix-view', 'people');
+  await page.locator('tr[data-person-row]').first().waitFor();
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.waitForFunction(() => document.documentElement.dataset.theme === 'dark');
+  const dark =await page.evaluate(() => {
+    const cell = document.querySelector('table.area-matrix tbody th');
+    return [document.documentElement.dataset.theme, getComputedStyle(cell).backgroundColor, getComputedStyle(cell.querySelector('a')).color];
+  });
+  pinned = await stuck(page);
+  check('dark: the sticky cells are opaque and dark, the names light', dark[0] === 'dark' && dark[1] === 'rgb(22, 33, 41)' && dark[2] !== dark[1]
+    && opaque(pinned) && pinned.visible, JSON.stringify([dark, pinned.backgrounds]));
+  await page.emulateMedia({ colorScheme: 'light' });
+
+  // ---- 390 px: no sideways scroll of the page, the matrix scrolls inside its frame with its header and names stuck ----
+  const phone = await login('planung', { width: 390, height: 800 });
+  const pageWidth = () => phone.evaluate(() => document.documentElement.scrollWidth);
+  for (const v of ['people', 'areas', 'area']) {
+    await phone.goto(`${base}/#/bereiche`);
+    await phone.locator('#area-matrix-view').waitFor();
+    if (await phone.inputValue('#area-matrix-view') !== v) {
+      await phone.selectOption('#area-matrix-view', v);
+      await phone.locator(v === 'area' ? '.area-group' : 'table.area-matrix tbody tr').first().waitFor();
+    }
+    check(`390 px, view ${v}: no sideways scroll of the page`, await pageWidth() <= 390, String(await pageWidth()));
+    if (v === 'people') {
+      pinned = await stuck(phone);
+      check('390 px: the matrix scrolls inside, the header row and the name column stay', pinned.down > 0 && pinned.across > 0 && atEdge(pinned.head)
+        && atEdge(pinned.name) && pinned.visible, JSON.stringify(pinned));
+    }
+  }
 } finally {
   await browser.close();
   server.kill();
