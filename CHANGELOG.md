@@ -3,6 +3,31 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.28.0 (2026-11-25)
+
+- **Mehr Blöcke, weniger Wechsel zwischen Tag und Nacht:** Zwei neue Regeln unter Planungsziele, **Wechsel zwischen
+  Tag und Nacht**: Nach der letzten Nacht eines Blocks kommen 2 freie Tage vor einem Dienst am Tag (vor der ersten
+  Nacht 0, einstellbar 0 bis 4), jeder Wechsel kostet ein wenig, und Nächte liegen in Blöcken von 2 bis 4 Nächten.
+  Abwesenheiten und Ersatzruhe zählen als frei, der Vormonat zählt mit; Prüfen zeigt die Treffer mit Person und
+  Tagen.
+- **Gemessen** auf dem großen synthetischen Monat (150 Personen, 253 Schichten), Standard gegen 0.27.0:
+  Einzeldienste 217 → 40, einzelne freie Tage 55 → 7, mittlere Blocklänge 2,19 → 2,54, Wechsel zwischen Tag und
+  Nacht 356 → 182, Personen mit Wechsel 107 → 86, einzelne Nächte 155 → 22, keine Lücken; Dauer 95 s → 423 s.
+- **Blöcke wiegen mehr:** Die Gewichte von Dienstblöcken und einzelnen freien Tagen sind dreimal so hoch (18000 und
+  30000). Gespeicherte Regeln, deren Gewichte noch auf den alten Standards standen (oder auf derselben Wichtigkeit
+  davon), bekommen die neuen einmal beim ersten Laden; von Hand gesetzte Gewichte bleiben.
+- **Gewohnter Nachtanteil über 3 Monate:** Der Nachtanteil einer Person gilt über diesen Monat und die Vormonate in
+  der Historie zusammen, nicht in jedem Monat. So müssen nicht alle mit gemischtem Anteil jeden Monat Tag und Nacht
+  arbeiten. 1 stellt das alte Verhalten ein.
+- **Gründlichkeit der Planung:** Unter Regeln, Erweitert: schnell (wie bisher, 250 000 Schritte), normal (neuer
+  Standard, 1 000 000) oder gründlich (3 000 000). Gleiche Daten, gleicher Startwert und gleiche Gründlichkeit
+  ergeben weiter denselben Plan. Die Zeile über dem Plan zeigt, wann die Planung zuletzt einen besseren Plan fand.
+- **Bereiche aller Personen:** Kopfzeile und Namensspalte bleiben beim Blättern stehen. Ein Umschalter zeigt Personen
+  oder Bereiche als Zeilen oder einen einzelnen Bereich mit seinen Personen nach Zustand, mit Anzahl; ein Klick
+  schaltet weiter wie in der Tabelle.
+- **Anleitung:** Eine Prüfung gleicht die Anleitung mit der Oberfläche ab: Menüwege und fett gesetzte Namen von
+  Knöpfen, Reitern und Einstellungen müssen Texte der Oberfläche sein.
+
 ## 0.27.0 (2026-11-25)
 
 - **Ein Menü Daten für die Arbeit jeden Monat:** **Übernehmen** holt die Daten, **Monate** zeigt die Monate offen
