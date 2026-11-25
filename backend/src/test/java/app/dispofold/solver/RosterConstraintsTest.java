@@ -242,6 +242,18 @@ class RosterConstraintsTest {
     }
 
     @Test
+    void targetHoursLeavesTheToleranceOut() {
+        Staff b = staff("B", Set.of("AN"), 1440, 0, Staff.History.NONE, 0);
+        b.setTargetToleranceMinutes(8 * 60);
+        // 12 h below the target, 8 h of them inside the tolerance: 16 quarter hours, squared.
+        VERIFIER.verifyThat(RosterConstraints::targetHours).given(cell(b, MON, DAY), cell(b, MON.plusDays(1), null))
+                .penalizesBy(256);
+        b.setTargetToleranceMinutes(12 * 60);
+        VERIFIER.verifyThat(RosterConstraints::targetHours).given(cell(b, MON, DAY), cell(b, MON.plusDays(1), null))
+                .penalizesBy(0);
+    }
+
+    @Test
     void maxMonthHoursCountsDutiesAndCreditedDays() {
         Staff c = new Staff("C", 40, Set.of("AN"), 480, 600, 0, new Staff.Limits(660, 2160, 720, 3600, 2, 4, 800, Integer.MAX_VALUE),
                 Staff.History.NONE, 0, Staff.Fairness.of(40, 30, true, true), Staff.Average.NONE, Map.of());
@@ -474,6 +486,32 @@ class RosterConstraintsTest {
         VERIFIER.verifyThat(RosterConstraints::overstaffing).given(open, cell(A, MON, DAY), cell(b, MON, DAY))
                 .penalizesBy(120);
         VERIFIER.verifyThat(RosterConstraints::overstaffing).given(open, cell(A, MON, DAY)).penalizesBy(0);
+    }
+
+    @Test
+    void overMinimum() {
+        long start = Times.minute(MON) + 8 * 60;
+        Staff b = staff("B", Set.of("AN"));
+        Staff c = staff("C", Set.of("AN"));
+        // One person above the minimum of 1 for an hour: one person hour.
+        DemandSegment hour = segment("s", "AN", MON, start, start + 60, 1, 3);
+        VERIFIER.verifyThat(RosterConstraints::overMinimum).given(hour, cell(A, MON, DAY), cell(b, MON, DAY))
+                .penalizesBy(1);
+        // At the minimum nothing.
+        VERIFIER.verifyThat(RosterConstraints::overMinimum).given(hour, cell(A, MON, DAY)).penalizesBy(0);
+        // Two half hours of the same day add up before rounding: one person hour, not two.
+        DemandSegment first = segment("h1", "AN", MON, start, start + 30, 1, 2);
+        DemandSegment second = segment("h2", "AN", MON, start + 30, start + 60, 1, 2);
+        VERIFIER.verifyThat(RosterConstraints::overMinimum)
+                .given(first, second, cell(A, MON, DAY), cell(b, MON, DAY)).penalizesBy(1);
+        // Above the maximum is overstaffing (medium), not counted here: only up to the maximum of 2.
+        DemandSegment two = segment("t", "AN", MON, start, start + 120, 1, 2);
+        VERIFIER.verifyThat(RosterConstraints::overMinimum)
+                .given(two, cell(A, MON, DAY), cell(b, MON, DAY), cell(c, MON, DAY)).penalizesBy(2);
+        // Without a maximum, everything above the minimum is overstaffing already.
+        DemandSegment open = segment("o", "AN", MON, start, start + 120, 1, null);
+        VERIFIER.verifyThat(RosterConstraints::overMinimum).given(open, cell(A, MON, DAY), cell(b, MON, DAY))
+                .penalizesBy(0);
     }
 
     @Test

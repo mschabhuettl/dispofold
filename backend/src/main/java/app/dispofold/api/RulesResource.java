@@ -76,7 +76,9 @@ public class RulesResource {
             return "rules.block";
         }
         if (r.nightRest() < 0 || r.nightRest() > Rules.MAX_SWITCH_DAYS || r.dayToNight() < 0
-                || r.dayToNight() > Rules.MAX_SWITCH_DAYS || r.nightMixWindow() < 1 || r.nightMixWindow() > 12) {
+                || r.dayToNight() > Rules.MAX_SWITCH_DAYS || r.nightMixWindow() < 1 || r.nightMixWindow() > 12
+                || r.nightMixSlack() < 0 || r.nightMixSlack() > Rules.MAX_NIGHT_MIX_TOLERANCE
+                || r.targetTolerance() < 0 || r.targetTolerance() > Rules.MAX_TARGET_TOLERANCE_HOURS) {
             return "rules.values";
         }
         if (r.nightMin() < 0 || r.nightMax() < 1 || r.nightMax() < r.nightMin()) {

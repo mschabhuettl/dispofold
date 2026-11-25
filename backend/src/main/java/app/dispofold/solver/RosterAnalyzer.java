@@ -214,11 +214,15 @@ public final class RosterAnalyzer {
         return loads;
     }
 
-    /** Matches of no person on the medium level except uncovered demand (that is in the gaps): overstaffing. */
+    /**
+     * Matches of no person on the medium level except uncovered demand (that is in the gaps): overstaffing; and the
+     * staffing above the minimum (soft).
+     */
     public static List<PersonHit> personlessHits(ScoreExplainer.Explanation score) {
         List<PersonHit> hits = new ArrayList<>();
         for (ConstraintInfo info : ConstraintCatalog.ALL) {
-            if (!ConstraintCatalog.MEDIUM.equals(info.level()) || info.id().equals(ConstraintCatalog.DEMAND)) {
+            if (!ConstraintCatalog.MEDIUM.equals(info.level()) && !info.id().equals(ConstraintCatalog.OVER_MINIMUM)
+                    || info.id().equals(ConstraintCatalog.DEMAND)) {
                 continue;
             }
             for (ScoreExplainer.Match m : score.total(info.id()).matches()) {

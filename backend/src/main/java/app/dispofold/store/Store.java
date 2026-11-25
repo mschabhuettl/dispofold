@@ -361,7 +361,7 @@ public class Store {
     /** The rules; rules saved before version 0.28 get the new default weights once (see V7). */
     public synchronized Rules rules() {
         List<Rules> found = new ArrayList<>();
-        int[] version = { 2 };
+        int[] version = { app.dispofold.solver.ConstraintCatalog.WEIGHTS_VERSION };
         query("select doc, weights_version from rules where id = 1", rs -> {
             found.add(read(rs.getString(1), Rules.class));
             version[0] = rs.getInt(2);
@@ -370,16 +370,17 @@ public class Store {
             return Rules.defaults();
         }
         Rules rules = found.get(0);
-        if (version[0] < 2) {
-            rules = rules.withWeights(app.dispofold.solver.ConstraintCatalog.upgradeWeights(rules.weights()));
+        if (version[0] < app.dispofold.solver.ConstraintCatalog.WEIGHTS_VERSION) {
+            rules = rules.withWeights(app.dispofold.solver.ConstraintCatalog.upgradeWeights(rules.weights(), version[0]));
             saveRules(rules);
         }
         return rules;
     }
 
     public synchronized void saveRules(Rules rules) {
-        upsert("update rules set doc = ?, weights_version = 2 where id = 1",
-                "insert into rules (id, doc, weights_version) values (1, ?, 2)", json(rules));
+        upsert("update rules set doc = ?, weights_version = " + app.dispofold.solver.ConstraintCatalog.WEIGHTS_VERSION
+                + " where id = 1", "insert into rules (id, doc, weights_version) values (1, ?, "
+                + app.dispofold.solver.ConstraintCatalog.WEIGHTS_VERSION + ")", json(rules));
     }
 
     /** A plugin's state: switched on, and its own settings (JSON) with the version of their form. */

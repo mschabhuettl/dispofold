@@ -29,6 +29,15 @@ class ShiftMixTest {
     private static final String PERSON = "P0010";
 
     private static PlanningInput withMix(ShiftMix mix) {
+        return withMix(mix, Map.of(ConstraintCatalog.DAY_NIGHT_SWITCHES, 3000L));
+    }
+
+    /**
+     * The tests of the mix were tuned with the weight of the day/night switches of 0.28 (3000): with the default since
+     * 0.29 (30 000) a single night costs two switches and a small night share is left out (see
+     * {@link #withTheDefaultsASmallNightShareIsLeftOut}).
+     */
+    private static PlanningInput withMix(ShiftMix mix, Map<String, Long> weights) {
         PlanningInput base = Fixtures.input(Fixtures.SMALL);
         Dataset d = base.dataset();
         List<Person> people = new ArrayList<>();
@@ -44,14 +53,17 @@ class ShiftMixTest {
         Rules share = new Rules(r.minDailyRestHours(), r.minWeeklyRestHours(), r.maxDutyHours(), r.maxWeekHours(),
                 r.maxAverageWeekHours(), r.minBlock(), r.maxBlock(), r.maxWishesPerPerson(),
                 r.holidayWorkEarnsCompRest(), r.nightStart(), r.nightEnd(), r.nightMinHours(), r.accountCarryShare(),
-                r.historyMonths(), r.weights(), r.timeZone(), r.averagingWeeks(), r.maxOverTargetPercent(),
+                r.historyMonths(), weights, r.timeZone(), r.averagingWeeks(), r.maxOverTargetPercent(),
                 r.minFreeSundays(), r.nightDistribution(), r.averageTolerancePercent(), r.freeInsideAbsence(),
                 r.averagingPeriod(), AccountBalancing.MONTHLY_SHARE, null);
         return new PlanningInput(changed, base.period(), share, List.of());
     }
 
     private static PersonStats solve(ShiftMix mix) throws Exception {
-        PlanningInput input = withMix(mix);
+        return solve(withMix(mix));
+    }
+
+    private static PersonStats solve(PlanningInput input) throws Exception {
         TimefoldPlanningFacade facade = new TimefoldPlanningFacade();
         SolveProgress result = TimefoldPlanningFacadeTest.solve(facade, input, new SolveOptions(1, 600, 0, MOVES));
         PlanAnalysis analysis = facade.analyze(TimefoldPlanningFacadeTest.withAssignments(input,
@@ -78,6 +90,16 @@ class ShiftMixTest {
                 Map.of()));
         assertThat(share(nights, ShiftCategory.NIGHT)).isGreaterThanOrEqualTo(0.5);
         assertThat(share(nights, ShiftCategory.NIGHT)).isGreaterThan(share(days, ShiftCategory.NIGHT) + 0.3);
+    }
+
+    @Test
+    void withTheDefaultsASmallNightShareIsLeftOut() throws Exception {
+        PersonStats days = solve(withMix(new ShiftMix(Map.of(ShiftCategory.DAY, 0.9, ShiftCategory.NIGHT, 0.1),
+                Map.of("AN", 0.8, "DR", 0.2)), Map.of()));
+        // one night would cost two switches: none, and the areas still follow the mix
+        assertThat(share(days, ShiftCategory.NIGHT)).isZero();
+        assertThat(share(days, ShiftCategory.DAY)).isGreaterThanOrEqualTo(0.6);
+        assertThat(days.plannedMix().areasOrEmpty().getOrDefault("AN", 0.0)).isGreaterThanOrEqualTo(0.6);
     }
 
     @Test

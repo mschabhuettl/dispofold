@@ -129,7 +129,7 @@ class NightRulesTest {
     }
 
     @Test
-    void nightShareIsMetOverTheWindow() {
+    void theNightShareIsACeilingOverTheWindow() {
         Staff s = staff(2, 0);
         s.setMix(new ShiftMix(Map.of(ShiftCategory.DAY, 0.7, ShiftCategory.NIGHT, 0.3), Map.of()));
         List<DutyCell> tenDays = new ArrayList<>();
@@ -138,17 +138,46 @@ class NightRulesTest {
             c.setShift(DAY);
             tenDays.add(c);
         }
-        // One month only (today's behaviour): 3 nights expected, 0 planned.
+        // Window 1 (no months before), as 0.28.0: 3 nights expected, 0 planned.
         assertThat(RosterConstraints.mixDeviation(s, tenDays)).isEqualTo(2 * 30 * 30);
-        // Two months before with 20 duties of the same length and 9 nights: 0.3 x 30 - 9 = 0 nights now.
-        s.setNightWindow(new Staff.NightWindow(2, 9, 20 * 720));
-        assertThat(RosterConstraints.mixDeviation(s, tenDays)).isZero();
-        // No nights before: 9 of 10 duties should be nights; the day share applies to the rest.
+        // Two months before with 20 duties of the same length and no nights: the 9 nights missed are not made up,
+        // and a month without nights is fine.
         s.setNightWindow(new Staff.NightWindow(2, 0, 20 * 720));
+        assertThat(RosterConstraints.mixDeviation(s, tenDays)).isZero();
+        // Up to the share of the window (9) plus the tolerance (1) nights are fine; the day share applies to the rest.
         for (int i = 0; i < 9; i++) {
             tenDays.get(i).setShift(NIGHT);
         }
         assertThat(RosterConstraints.mixDeviation(s, tenDays)).isZero();
+        // 9 nights done before: the ceiling is 0 + 1, so 3 nights are 2 too many.
+        s.setNightWindow(new Staff.NightWindow(2, 9, 20 * 720));
+        for (int i = 3; i < 9; i++) {
+            tenDays.get(i).setShift(DAY);
+        }
+        assertThat(RosterConstraints.mixDeviation(s, tenDays)).isEqualTo(20 * 20);
+        s.setNightMixTolerance(0);
+        assertThat(RosterConstraints.mixDeviation(s, tenDays)).isEqualTo(30 * 30);
+    }
+
+    @Test
+    void theFloorMakesUpMissedNights() {
+        Staff s = staff(2, 0);
+        s.setMix(new ShiftMix(Map.of(ShiftCategory.DAY, 0.7, ShiftCategory.NIGHT, 0.3), Map.of()));
+        s.setNightMixFloor(true);
+        s.setNightMixTolerance(0);
+        s.setNightWindow(new Staff.NightWindow(2, 0, 20 * 720));
+        List<DutyCell> tenDays = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            DutyCell c = new DutyCell(s, LocalDate.of(2027, 3, 1 + i), true, List.of(DAY, NIGHT));
+            c.setShift(i < 9 ? NIGHT : DAY);
+            tenDays.add(c);
+        }
+        // As 0.28.0: 9 nights expected after none before.
+        assertThat(RosterConstraints.mixDeviation(s, tenDays)).isZero();
+        for (int i = 0; i < 10; i++) {
+            tenDays.get(i).setShift(DAY);
+        }
+        assertThat(RosterConstraints.mixDeviation(s, tenDays)).isEqualTo(90 * 90);
     }
 
     @Test

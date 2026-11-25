@@ -36,6 +36,12 @@ public final class Staff {
     /** The category shares of the mix are without the night share and apply to the duties that are not nights. */
     private boolean nightsOutsideMix;
     private NightWindow nightWindow = NightWindow.NONE;
+    /** Nights over the window above the usual share that the mix rule does not count (see nightMixTolerance). */
+    private int nightMixTolerance = app.dispofold.model.Rules.DEFAULT_NIGHT_MIX_TOLERANCE;
+    /** Over the window, fewer nights than the share count too (see nightMixFloor). */
+    private boolean nightMixFloor;
+    /** Minutes above or below the scaled target that the target rule does not count. */
+    private int targetToleranceMinutes;
     /** Target the soft rule aims at: the target scaled to the work the demand needs (see RosterBuilder). */
     private int scaledTargetMinutes;
 
@@ -207,6 +213,30 @@ public final class Staff {
 
     public void setNightWindow(NightWindow nightWindow) {
         this.nightWindow = nightWindow;
+    }
+
+    public int getNightMixTolerance() {
+        return nightMixTolerance;
+    }
+
+    public void setNightMixTolerance(int nightMixTolerance) {
+        this.nightMixTolerance = nightMixTolerance;
+    }
+
+    public boolean isNightMixFloor() {
+        return nightMixFloor;
+    }
+
+    public void setNightMixFloor(boolean nightMixFloor) {
+        this.nightMixFloor = nightMixFloor;
+    }
+
+    public int getTargetToleranceMinutes() {
+        return targetToleranceMinutes;
+    }
+
+    public void setTargetToleranceMinutes(int targetToleranceMinutes) {
+        this.targetToleranceMinutes = targetToleranceMinutes;
     }
 
     /** The person has usual shares per area: they replace area variety. */

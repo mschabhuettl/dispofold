@@ -42,7 +42,7 @@ public class RosterConstraints implements ConstraintProvider {
                 dailyRest(f), weeklyRest(f), maxDutyLength(f), maxWeekHours(f), maxMonthHours(f), freeSundays(f), averageWeekHours(f),
                 qualification(f), absence(f), freeInsideAbsence(f), employment(f), neverRestriction(f), compRestBalance(f), missingShift(f),
                 demand(f), overstaffing(f), uselessDuty(f),
-                targetHours(f), fairNights(f), fairWeekends(f), fairHolidays(f), fairUnpopular(f), wishes(f),
+                targetHours(f), overMinimum(f), fairNights(f), fairWeekends(f), fairHolidays(f), fairUnpopular(f), wishes(f),
                 blockLength(f), isolatedDayOff(f), forwardRotation(f), dayNightSwitch(f), dayNightSwitches(f),
                 nightBlock(f), splitWeekend(f), compRestUse(f),
                 shiftVariety(f), areaVariety(f), shiftMix(f), family(f), onRequest(f)
@@ -261,9 +261,39 @@ public class RosterConstraints implements ConstraintProvider {
                 .asConstraint(ConstraintCatalog.TARGET_HOURS);
     }
 
-    /** Deviation from the scaled target in quarter hours. */
+    /** Deviation from the scaled target beyond the tolerance, in quarter hours. */
     static long deviationBuckets(Staff s, long minutes) {
-        return Math.abs(minutes - s.getScaledTargetMinutes()) / 15;
+        return Math.max(0, Math.abs(minutes - s.getScaledTargetMinutes()) - s.getTargetToleranceMinutes()) / 15;
+    }
+
+    /**
+     * Person hours of an area's demand window day staffed above the minimum and at most at the maximum (above the
+     * maximum is overstaffing on the medium level). Summed over the day's segments before rounding to whole hours, so
+     * one person hour costs the weight.
+     */
+    Constraint overMinimum(ConstraintFactory f) {
+        return f.forEach(DemandSegment.class)
+                .filter(s -> s.upper() > s.required())
+                .join(work(f), equal(DemandSegment::areaId, DutyCell::getAreaId),
+                        overlapping(DemandSegment::start, DemandSegment::end, DutyCell::getStart, DutyCell::getEnd))
+                .groupBy((s, c) -> s, countBi())
+                .filter((s, n) -> n > s.required())
+                .groupBy((s, n) -> s.areaId(), (s, n) -> s.day(),
+                        sum(RosterConstraints::minutesAboveMinimum))
+                .filter((area, day, minutes) -> personHours(minutes) > 0)
+                .penalize(SOFT, (area, day, minutes) -> personHours(minutes))
+                .justifyWith((area, day, minutes, score) -> Hit.of(null, day, "areaId", area, "hours",
+                        personHours(minutes)))
+                .asConstraint(ConstraintCatalog.OVER_MINIMUM);
+    }
+
+    static long minutesAboveMinimum(DemandSegment s, long planned) {
+        return (Math.min(planned, s.upper()) - s.required()) * s.minutes();
+    }
+
+    /** Person minutes as whole person hours, half an hour rounded up. */
+    static int personHours(long minutes) {
+        return (int) ((minutes + 30) / 60);
     }
 
     /** One counted duty (load = the person's weight) or the person itself (load 0) in a fairness comparison. */
@@ -536,8 +566,9 @@ public class RosterConstraints implements ConstraintProvider {
     /**
      * People with a usual mix: per category and per area the planned duties follow the shares (expected = share x
      * the person's duties of the month). Penalty: the squared deviation in tenths of a duty, summed over categories
-     * and areas, so a few duties off cost little and a 50:50 month for a 90:10 person costs a lot. The night share is
-     * met over several months when the rules say so and the history has some of them (see mixDeviation).
+     * and areas, so a few duties off cost little and a 50:50 month for a 90:10 person costs a lot. Over several
+     * months (when the rules say so and the history has some of them) the night share is a ceiling: nights missed
+     * before are not made up, unless the floor is on (see mixDeviation).
      */
     Constraint shiftMix(ConstraintFactory f) {
         return monthWork(f)
@@ -577,10 +608,18 @@ public class RosterConstraints implements ConstraintProvider {
             int nights = planned.getOrDefault(app.dispofold.model.ShiftCategory.NIGHT, 0);
             if (overMonths) {
                 // Over the window: the share of all its duties (those of the months before estimated from their
-                // minutes and this month's mean duty length) minus the nights already done, within this month's duties.
+                // minutes and this month's mean duty length) minus the nights already done is the ceiling of this
+                // month's nights (plus the tolerance); below it only counts with the floor, so missed nights are not
+                // made up and a month without nights is fine.
                 double before = (double) window.minutes() * n / minutes;
-                double expected = Math.max(0, Math.min(n, nightShare * (n + before) - window.nights()));
-                sum += square(Math.round(10 * (nights - expected)));
+                double share = nightShare * (n + before) - window.nights();
+                double ceiling = Math.max(0, share) + s.getNightMixTolerance();
+                double floor = s.isNightMixFloor() ? Math.min(n, share - s.getNightMixTolerance()) : 0;
+                if (nights > ceiling) {
+                    sum += square(Math.round(10 * (nights - ceiling)));
+                } else if (nights < floor) {
+                    sum += square(Math.round(10 * (floor - nights)));
+                }
                 counted = n - nights;
             }
             for (app.dispofold.model.ShiftCategory category : app.dispofold.model.ShiftCategory.values()) {

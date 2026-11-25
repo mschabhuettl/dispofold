@@ -54,6 +54,12 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  *        it in the history), 1: in every month; null means {@link #DEFAULT_NIGHT_MIX_MONTHS}
  * @param thoroughness how long a planning searches (see {@link Thoroughness}); null means
  *        {@link Thoroughness#NORMAL}
+ * @param nightMixTolerance with a window of more than one month: nights a person may work over the window above
+ *        their usual share before the rule counts them; null means {@link #DEFAULT_NIGHT_MIX_TOLERANCE}
+ * @param nightMixFloor with a window of more than one month: fewer nights than the usual share minus the tolerance
+ *        count too (nights missed before are then made up); null means no
+ * @param targetToleranceHours hours above or below the target that the target rule does not count; null means
+ *        {@link #DEFAULT_TARGET_TOLERANCE_HOURS}
  */
 public record Rules(double minDailyRestHours, double minWeeklyRestHours, double maxDutyHours, double maxWeekHours,
         double maxAverageWeekHours, int minBlock, int maxBlock, int maxWishesPerPerson,
@@ -70,7 +76,10 @@ public record Rules(double minDailyRestHours, double minWeeklyRestHours, double 
         @JsonInclude(JsonInclude.Include.NON_NULL) Integer nightBlockMin,
         @JsonInclude(JsonInclude.Include.NON_NULL) Integer nightBlockMax,
         @JsonInclude(JsonInclude.Include.NON_NULL) Integer nightMixMonths,
-        @JsonInclude(JsonInclude.Include.NON_NULL) Thoroughness thoroughness) {
+        @JsonInclude(JsonInclude.Include.NON_NULL) Thoroughness thoroughness,
+        @JsonInclude(JsonInclude.Include.NON_NULL) Integer nightMixTolerance,
+        @JsonInclude(JsonInclude.Include.NON_NULL) Boolean nightMixFloor,
+        @JsonInclude(JsonInclude.Include.NON_NULL) Integer targetToleranceHours) {
 
     public static final String DEFAULT_TIME_ZONE = "Europe/Vienna";
     /** Planning never goes below this daily rest; a shortened rest is for operations only. */
@@ -82,6 +91,10 @@ public record Rules(double minDailyRestHours, double minWeeklyRestHours, double 
     public static final int DEFAULT_NIGHT_BLOCK_MIN = 2;
     public static final int DEFAULT_NIGHT_BLOCK_MAX = 4;
     public static final int DEFAULT_NIGHT_MIX_MONTHS = 3;
+    public static final int DEFAULT_NIGHT_MIX_TOLERANCE = 1;
+    public static final int DEFAULT_TARGET_TOLERANCE_HOURS = 0;
+    public static final int MAX_NIGHT_MIX_TOLERANCE = 10;
+    public static final int MAX_TARGET_TOLERANCE_HOURS = 40;
     /** Upper bound of the free days of the rule dayNightSwitch. */
     public static final int MAX_SWITCH_DAYS = 4;
 
@@ -110,7 +123,7 @@ public record Rules(double minDailyRestHours, double minWeeklyRestHours, double 
                 maxBlock, maxWishesPerPerson, holidayWorkEarnsCompRest, nightStart, nightEnd, nightMinHours,
                 accountCarryShare, historyMonths, weights, timeZone, averagingWeeks, maxOverTargetPercent,
                 minFreeSundays, nightDistribution, averageTolerancePercent, freeInsideAbsence, averagingPeriod, null,
-                null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null, null);
     }
 
     /** Rules without the parameters of night switches, night blocks, the night mix window and the thoroughness. */
@@ -125,7 +138,25 @@ public record Rules(double minDailyRestHours, double minWeeklyRestHours, double 
                 maxBlock, maxWishesPerPerson, holidayWorkEarnsCompRest, nightStart, nightEnd, nightMinHours,
                 accountCarryShare, historyMonths, weights, timeZone, averagingWeeks, maxOverTargetPercent,
                 minFreeSundays, nightDistribution, averageTolerancePercent, freeInsideAbsence, averagingPeriod,
-                accountBalancing, carryMinusRest, null, null, null, null, null, null);
+                accountBalancing, carryMinusRest, null, null, null, null, null, null, null, null, null);
+    }
+
+    /** Rules without the night share tolerance and floor and the target tolerance (null: the defaults). */
+    public Rules(double minDailyRestHours, double minWeeklyRestHours, double maxDutyHours, double maxWeekHours,
+            double maxAverageWeekHours, int minBlock, int maxBlock, int maxWishesPerPerson,
+            boolean holidayWorkEarnsCompRest, LocalTime nightStart, LocalTime nightEnd, double nightMinHours,
+            double accountCarryShare, int historyMonths, Map<String, Long> weights, String timeZone,
+            int averagingWeeks, Double maxOverTargetPercent, Integer minFreeSundays,
+            NightDistribution nightDistribution, Double averageTolerancePercent, Boolean freeInsideAbsence,
+            AveragingPeriod averagingPeriod, AccountBalancing accountBalancing, Boolean carryMinusRest,
+            Integer nightRestDays, Integer dayToNightDays, Integer nightBlockMin, Integer nightBlockMax,
+            Integer nightMixMonths, Thoroughness thoroughness) {
+        this(minDailyRestHours, minWeeklyRestHours, maxDutyHours, maxWeekHours, maxAverageWeekHours, minBlock,
+                maxBlock, maxWishesPerPerson, holidayWorkEarnsCompRest, nightStart, nightEnd, nightMinHours,
+                accountCarryShare, historyMonths, weights, timeZone, averagingWeeks, maxOverTargetPercent,
+                minFreeSundays, nightDistribution, averageTolerancePercent, freeInsideAbsence, averagingPeriod,
+                accountBalancing, carryMinusRest, nightRestDays, dayToNightDays, nightBlockMin, nightBlockMax,
+                nightMixMonths, thoroughness, null, null, null);
     }
 
     /** These rules with other weights. */
@@ -135,7 +166,7 @@ public record Rules(double minDailyRestHours, double minWeeklyRestHours, double 
                 nightMinHours, accountCarryShare, historyMonths, newWeights, timeZone, averagingWeeks,
                 maxOverTargetPercent, minFreeSundays, nightDistribution, averageTolerancePercent, freeInsideAbsence,
                 averagingPeriod, accountBalancing, carryMinusRest, nightRestDays, dayToNightDays, nightBlockMin,
-                nightBlockMax, nightMixMonths, thoroughness);
+                nightBlockMax, nightMixMonths, thoroughness, nightMixTolerance, nightMixFloor, targetToleranceHours);
     }
 
     /** These rules with another thoroughness (null: the default). */
@@ -145,7 +176,8 @@ public record Rules(double minDailyRestHours, double minWeeklyRestHours, double 
                 nightMinHours, accountCarryShare, historyMonths, weights, timeZone, averagingWeeks,
                 maxOverTargetPercent, minFreeSundays, nightDistribution, averageTolerancePercent, freeInsideAbsence,
                 averagingPeriod, accountBalancing, carryMinusRest, nightRestDays, dayToNightDays, nightBlockMin,
-                nightBlockMax, nightMixMonths, newThoroughness);
+                nightBlockMax, nightMixMonths, newThoroughness, nightMixTolerance, nightMixFloor,
+                targetToleranceHours);
     }
 
     /** {@link #nightRestDays()} with the default for rules saved without it. */
@@ -171,6 +203,21 @@ public record Rules(double minDailyRestHours, double minWeeklyRestHours, double 
     /** {@link #nightMixMonths()} with the default for rules saved without it. */
     public int nightMixWindow() {
         return nightMixMonths != null ? nightMixMonths : DEFAULT_NIGHT_MIX_MONTHS;
+    }
+
+    /** {@link #nightMixTolerance()} with the default for rules saved without it. */
+    public int nightMixSlack() {
+        return nightMixTolerance != null ? nightMixTolerance : DEFAULT_NIGHT_MIX_TOLERANCE;
+    }
+
+    /** {@link #nightMixFloor()} with the default for rules saved without it. */
+    public boolean nightMixMakesUp() {
+        return nightMixFloor != null && nightMixFloor;
+    }
+
+    /** {@link #targetToleranceHours()} with the default for rules saved without it. */
+    public int targetTolerance() {
+        return targetToleranceHours != null ? targetToleranceHours : DEFAULT_TARGET_TOLERANCE_HOURS;
     }
 
     /** {@link #thoroughness()} with the default for rules saved without it. */

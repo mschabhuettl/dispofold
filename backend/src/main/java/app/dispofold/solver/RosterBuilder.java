@@ -134,6 +134,9 @@ public final class RosterBuilder {
                     available(p, absences), previousCounts(before));
             nights(s, p, ownRestrictions);
             s.setNightWindow(nightWindow(own, month, rules.nightMixWindow()));
+            s.setNightMixTolerance(rules.nightMixSlack());
+            s.setNightMixFloor(rules.nightMixMakesUp());
+            s.setTargetToleranceMinutes(rules.targetTolerance() * 60);
             staff.add(s);
             cells.addAll(previousCells(s, before));
             cells.addAll(monthCells(p, s, ownRestrictions, counted, absences, around,
