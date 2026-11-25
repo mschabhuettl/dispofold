@@ -43,16 +43,20 @@ const PARAMS = [
   ['nightBlockMin', t('rules.param.nightBlockMin.label'), '', 'number', 1],
   ['nightBlockMax', t('rules.param.nightBlockMax.label'), '', 'number', 1],
   ['nightMixMonths', t('rules.param.nightMixMonths.label'), '', 'number', 1],
+  ['nightMixTolerance', t('rules.param.nightMixTolerance.label'), '', 'number', 1],
+  ['nightMixFloor', t('rules.param.nightMixFloor.label'), '', 'bool'],
+  ['targetToleranceHours', t('rules.param.targetToleranceHours.label'), '', 'number', 1],
   ['thoroughness', t('rules.param.thoroughness.label'), t('rules.param.thoroughness.help'), 'choice',
     [['FAST', t('rules.param.thoroughness.fast')], ['NORMAL', t('rules.param.thoroughness.normal')], ['THOROUGH', t('rules.param.thoroughness.thorough')]]],
 ];
 /** Bounds of number fields other than "at least 0". */
-const BOUNDS = { nightRestDays: [0, 4], dayToNightDays: [0, 4], nightBlockMax: [1, null], nightMixMonths: [1, 12] };
+const BOUNDS = { nightRestDays: [0, 4], dayToNightDays: [0, 4], nightBlockMax: [1, null], nightMixMonths: [1, 12], nightMixTolerance: [0, 10],
+  targetToleranceHours: [0, 40] };
 const PARAM = Object.fromEntries(PARAMS.map((p) => [p[0], p]));
 /** Help per parameter: what it does and what raising or lowering it changes. */
 const PARAM_HELP = Object.fromEntries(PARAMS.map(([key]) => [key, t(`help.param.${key}`)]));
 const GOAL_HELP = { blocks: t('help.goal.blocks'), nights: t('help.goal.nights'), wishes: t('help.goal.wishes'), fairness: t('help.goal.fairness'), hours: t('help.goal.hours'),
-  family: t('help.goal.family') };
+  staffing: t('help.goal.staffing'), family: t('help.goal.family') };
 
 /** Planning goals: group (lib/rule-groups.js), title and sentences whose placeholders are parameter fields. */
 const GOALS = [
@@ -60,8 +64,9 @@ const GOALS = [
   ['nights', t('rules.goal.nights.title'), [t('rules.goal.nights.switch'), t('rules.goal.nights.blocks')]],
   ['wishes', t('rules.goal.wishes.title'), [t('rules.goal.wishes.text')]],
   ['fairness', t('rules.goal.fairness.title'), [t('rules.goal.fairness.text')]],
-  ['hours', t('rules.goal.hours.title'), [t('rules.goal.hours.over'), t('rules.goal.hours.balancing'), t('rules.goal.hours.account'),
-    t('rules.goal.hours.minusRest')]],
+  ['hours', t('rules.goal.hours.title'), [t('rules.goal.hours.tolerance'), t('rules.goal.hours.over'), t('rules.goal.hours.balancing'),
+    t('rules.goal.hours.account'), t('rules.goal.hours.minusRest')]],
+  ['staffing', t('rules.goal.staffing.title'), [t('rules.goal.staffing.text')]],
   ['family', t('rules.goal.family.title'), [t('rules.goal.family.text')]],
 ];
 const IMPORTANCE = [['less', t('rules.importance.less')], ['normal', t('rules.importance.normal')],
@@ -88,6 +93,9 @@ export async function render(root, ctx) {
   params.nightBlockMin ??= 2;
   params.nightBlockMax ??= 4;
   params.nightMixMonths ??= 3;
+  params.nightMixTolerance ??= 1;
+  params.nightMixFloor ??= false;
+  params.targetToleranceHours ??= 0;
   params.thoroughness ??= 'NORMAL';
 
   root.append(h('h1', {}, t('nav.rules')));
@@ -105,7 +113,7 @@ export async function render(root, ctx) {
   // 1. Planning goals
   const nightWarning = h('div', { 'aria-live': 'polite' });
   // the months of the usual night share matter only while each person keeps their share (HABIT)
-  const mixMonths = h('p', {}, sentence(t('rules.night.months')));
+  const mixMonths = h('div', {}, h('p', {}, sentence(t('rules.night.months'))), h('p', {}, sentence(t('rules.night.floor'))));
   const goalOf = Object.fromEntries(GOALS.map(([group, title]) => [group, title]));
   form.append(h('section.section', { 'aria-labelledby': 'h-goals' }, h('h2', { id: 'h-goals' }, t('rules.goals.title')),
     h('p.muted', {}, t('rules.goals.help')),

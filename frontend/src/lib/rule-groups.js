@@ -8,6 +8,7 @@ export const GROUPS = {
   wishes: ['wishes'],
   fairness: ['fairNights', 'fairWeekends', 'fairHolidays', 'fairUnpopular'],
   hours: ['targetHours'],
+  staffing: ['overMinimum'],
   family: ['family'],
 };
 

@@ -29,10 +29,11 @@ test('the placeholders of constraint descriptions are rule parameters', () => {
 });
 
 test('no constraint description has a parameter default as a fixed number', () => {
-  // 0 is left out: "0 schaltet die Regel aus" is no default but the value that switches a rule off
+  // 0 is left out: "0 schaltet die Regel aus" is no default but the value that switches a rule off; so are the fixed
+  // weights of the demand group ("1 je Personenminute (fest)"), which are no rule parameter
   const defaults = new Set(Object.values(DEFAULT_RULES).filter((v) => typeof v === 'number' && v !== 0));
   for (const [k, v] of descriptions) {
-    const fixed = v.replace(/\{[^}]*\}/g, '').match(/\d+(?:,\d+)?/g) ?? [];
+    const fixed = v.replace(/\{[^}]*\}/g, '').replace(/[\d ]+ je (?:Personen|Dienst)minute \(fest/g, '').match(/\d+(?:,\d+)?/g) ?? [];
     for (const n of fixed) assert.ok(!defaults.has(Number(n.replace(',', '.'))), `${k}: fixed ${n}`);
   }
 });

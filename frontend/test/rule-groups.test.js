@@ -4,8 +4,8 @@ import { CUSTOM, GROUPS, applyLevel, groupConstraints, groupLevel, levelWeight, 
 
 /** The soft part of the backend catalogue (ConstraintCatalog), with the default weights. */
 const CATALOGUE = [
-  ['targetHours', 20], ['fairNights', 3], ['fairWeekends', 3], ['fairHolidays', 3], ['fairUnpopular', 2], ['wishes', 300],
-  ['blockLength', 18000], ['isolatedDayOff', 30000], ['forwardRotation', 500], ['dayNightSwitch', 10000], ['dayNightSwitches', 3000],
+  ['targetHours', 20], ['overMinimum', 2000], ['fairNights', 3], ['fairWeekends', 3], ['fairHolidays', 3], ['fairUnpopular', 2], ['wishes', 300],
+  ['blockLength', 18000], ['isolatedDayOff', 30000], ['forwardRotation', 500], ['dayNightSwitch', 10000], ['dayNightSwitches', 30000],
   ['nightBlock', 6000], ['splitWeekend', 300], ['compRestUse', 500],
   ['shiftVariety', 5], ['areaVariety', 1], ['shiftMix', 100], ['family', 800],
 ].map(([id, defaultWeight]) => ({ id, level: 'SOFT', defaultWeight, tunable: true }))
