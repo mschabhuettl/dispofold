@@ -46,7 +46,7 @@ const startMonth = nextMonth !== month ? nextMonth : new Date(Date.UTC(year, mon
 // what the guide names but the run did not show: reported at the end, the run fails
 const mismatches = [];
 // the sick note of the worked example as the guide names it (beispiel.md step 8), if the plan allows
-const SICK = { firstName: 'Rosa', lastName: 'Erleneder', from: `${month}-11`, to: `${month}-12` };
+const SICK = { firstName: 'Leopold', lastName: 'Rosenhofer', from: `${month}-21`, to: `${month}-22` };
 const outDir = resolve(process.argv[2] ?? 'screenshots-out');
 if (process.env.SEED_DEMO !== '1') throw new Error('SEED_DEMO=1 is required: the script replaces the master data with demo data');
 mkdirSync(outDir, { recursive: true });
