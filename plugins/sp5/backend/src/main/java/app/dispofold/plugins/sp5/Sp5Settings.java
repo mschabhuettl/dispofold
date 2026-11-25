@@ -23,7 +23,9 @@ import app.dispofold.plugin.api.PluginErrors;
  * {@code areaSource} (Dispofold only) is where a person's areas come from: "groups" (as sp5_export.py, with
  * areasFromHistory adding areas), "history" or "reserve" (the areas with at least historyAreaDuties duties, the group
  * areas below that left out or kept on request; areasFromHistory then has no effect). New settings start with
- * "reserve"; stored settings from before the option keep "groups", so that they compute as before. {@code "proposals":
+ * "reserve"; stored settings from before the option keep "groups", so that they compute as before. {@code demandMax}
+ * (Dispofold only) is the maximum of the demand from the history: "p90" (as sp5_export.py) or "min" (the minimum);
+ * stored settings from before the option keep "p90". {@code "proposals":
  * {share, minDuties, months, restWords, discarded, familyShare, familyMinDuties, familyRatio, ignoreUntimed}} are the settings of the mapping proposals ({@link Sp5Proposals});
  * the discarded keys change only through their own routes, a save keeps the stored ones.
  */
@@ -31,6 +33,9 @@ final class Sp5Settings {
 
     static final int MAX_HISTORY_MONTHS = 24;
     static final List<String> AREA_SOURCES = List.of("groups", "history", "reserve");
+    static final List<String> DEMAND_MAXIMA = List.of("p90", "min");
+    /** The maximum of the demand from the history in new settings. */
+    static final String NEW_DEMAND_MAX = "p90";
 
     private Sp5Settings() {
     }
@@ -52,6 +57,7 @@ final class Sp5Settings {
         o.put("nightsFair", false);
         o.put("areaSource", "reserve");
         o.put("historyAreaDuties", 3);
+        o.put("demandMax", NEW_DEMAND_MAX);
         ObjectNode p = s.putObject("proposals");
         p.put("share", 80);
         p.put("minDuties", 3);
@@ -74,6 +80,9 @@ final class Sp5Settings {
         if (stored != null && stored.isObject()) {
             if (stored.size() > 0 && !stored.path("options").has("areaSource")) {
                 ((ObjectNode) s.get("options")).put("areaSource", "groups");
+            }
+            if (stored.size() > 0 && !stored.path("options").has("demandMax")) {
+                ((ObjectNode) s.get("options")).put("demandMax", "p90");
             }
             stored.fields().forEachRemaining(e -> {
                 if (e.getKey().equals("options") || e.getKey().equals("proposals")) {
@@ -137,6 +146,9 @@ final class Sp5Settings {
         }
         if (!intIn(o.get("historyAreaDuties"), 1, Integer.MAX_VALUE)) {
             throw invalid("historyAreaDuties");
+        }
+        if (!o.get("demandMax").isTextual() || !DEMAND_MAXIMA.contains(o.get("demandMax").asText())) {
+            throw invalid("demandMax");
         }
         JsonNode p = s.get("proposals");
         if (!intIn(p.get("share"), 1, 100)) {
@@ -205,6 +217,7 @@ final class Sp5Settings {
             Map.entry("recentMonths", "Bereiche ohne Dienst in den letzten … Monaten nur von Hand (ab 0)"),
             Map.entry("areaSource", "Bereiche einer Person aus"),
             Map.entry("historyAreaDuties", "Bereich aus der Historie ab … Diensten (ab 1)"),
+            Map.entry("demandMax", "Höchstbesetzung aus der Historie"),
             Map.entry("shiftMix", "Gewohnte Verteilung übernehmen"),
             Map.entry("nightsFair", "Nachtschichten automatisch fair verteilen"),
             Map.entry("proposals.share", "Anteil für eine Schicht (1 bis 100 %)"),

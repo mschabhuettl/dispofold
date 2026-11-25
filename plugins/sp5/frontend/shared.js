@@ -15,8 +15,9 @@ export const TAKE_OVER = `#/uebernehmen/${ID}`;
  * checkboxes. The first ones are what a beginner looks at; the others, which most sites leave as they are, stand under
  * "Erweitert".
  */
-const CHOICES = { demand: ['history', 'sp5'], areaSource: ['reserve', 'history', 'groups'] };
-const OPTIONS = [['historyMonths', 'number'], ['areaSource', 'choice'], ['historyAreaDuties', 'number'], ['demand', 'choice']];
+const CHOICES = { demand: ['history', 'sp5'], areaSource: ['reserve', 'history', 'groups'], demandMax: ['p90', 'min'] };
+const OPTIONS = [['historyMonths', 'number'], ['areaSource', 'choice'], ['historyAreaDuties', 'number'], ['demand', 'choice'],
+  ['demandMax', 'choice']];
 const ADVANCED = [['areasFromHistory', 'optional'], ['shiftsFromHistory', 'optional'], ['mixMinDuties', 'number'],
   ['hiddenShiftsMonths', 'number'], ['recentMonths', 'number']];
 

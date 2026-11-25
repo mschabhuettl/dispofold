@@ -133,6 +133,29 @@ public class Sp5ExportTest {
                 + "\"dispofold/dataset\",\n \"version\": 2,\n \"source\": \"sp5\",").endsWith("\n}\n");
     }
 
+    @Test
+    @SuppressWarnings("unchecked")
+    void theMaximumAtTheMinimumChangesOnlyTheMaximaOfTheDemand(@TempDir Path dir) throws Exception {
+        folder(dir);
+        Sp5Export.Request p90 = request(dir, null);
+        Sp5Export.Result usual = Sp5Export.run(p90);
+        Sp5Export.Result min = Sp5Export.run(new Sp5Export.Request(dir, "2027-01", null, 1, null, null, "history", 1,
+                3, 3, mapping(), null, true, "groups", 3, Sp5Export.DEMAND_MAX_MIN));
+        List<Map<String, Object>> before = (List<Map<String, Object>>) usual.dataset().get("demand");
+        List<Map<String, Object>> after = (List<Map<String, Object>>) min.dataset().get("demand");
+        assertThat(before).anySatisfy(rule -> assertThat(rule.get("max")).isNotEqualTo(rule.get("min")));
+        assertThat(after).hasSameSizeAs(before).allSatisfy(rule -> assertThat(rule.get("max")).isEqualTo(rule.get("min")));
+        for (int i = 0; i < before.size(); i++) {
+            Map<String, Object> expected = new java.util.LinkedHashMap<>(before.get(i));
+            expected.put("max", expected.get("min"));
+            assertThat(after.get(i)).isEqualTo(expected);
+        }
+        // the rest of the dataset is the same
+        Map<String, Object> rest = new java.util.LinkedHashMap<>(min.dataset());
+        rest.put("demand", before);
+        assertThat(rest).isEqualTo(usual.dataset());
+    }
+
     /** The shifts' "unpopular" with nightsFair on or off and this mapping. */
     @SuppressWarnings("unchecked")
     static List<Object> unpopular(Path dir, Map<String, Object> mapping, boolean nightsFair) throws Exception {

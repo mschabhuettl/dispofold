@@ -255,6 +255,17 @@ def main(argv: list[str] | None = None) -> int:
             same = False
         else:
             py = work / "python"
+            demand = request["args"][request["args"].index("--demand") + 1] if "--demand" in request["args"] else "history"
+            if request.get("demandMax", "p90") == "min" and demand == "history":
+                # since 0.29.0 (Dispofold only): every maximum of the demand from the history at its minimum; the same
+                # change on the Python result, as json.dump writes it
+                dataset = json.loads((py / "dataset.json").read_text(encoding="utf-8"))
+                for rule in dataset.get("demand", []):
+                    rule["max"] = rule["min"]
+                (py / "dataset.json").write_text(json.dumps(dataset, ensure_ascii=False, indent=1) + "\n",
+                                                 encoding="utf-8")
+                lines.append("Höchstbesetzung aus der Historie: wie Minimum; für den Vergleich ist im Ergebnis von "
+                             "sp5_export.py jedes Maximum des Bedarfs auf das Minimum gesetzt")
             same = all([
                 compare_dataset((work / "dataset.json").read_bytes(), (py / "dataset.json").read_bytes(), lines),
                 compare_report((work / "report.csv").read_bytes(), (py / "report.csv").read_bytes(), lines),

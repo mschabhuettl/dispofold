@@ -82,7 +82,7 @@ public class Sp5Resource {
             JsonNode stored = plugin.settings().get("options");
             ObjectNode options = body.has("options") ? (ObjectNode) body.get("options")
                     : ((ObjectNode) body).putObject("options");
-            for (String k : new String[] { "areaSource", "historyAreaDuties" }) {
+            for (String k : new String[] { "areaSource", "historyAreaDuties", "demandMax" }) {
                 if (!options.has(k)) {
                     options.set(k, stored.get(k));
                 }
@@ -126,6 +126,9 @@ public class Sp5Resource {
         // the run, the counts of the areas by their source say what it did (numbers only)
         question.put("areaSource", request.areaSource());
         question.put("historyAreaDuties", request.historyAreaDuties());
+        // nor this one: the maximum of the demand from the history ("min": sp5_export.py's demand with every maximum
+        // set to the minimum)
+        question.put("demandMax", request.demandMax());
         question.set("areaCounts", mapper.valueToTree(result.areaCounts()));
         // the restrictions as rows (as the export writes them) and as the pages show them: the states of whole areas
         // and the exceptions (numbers only)

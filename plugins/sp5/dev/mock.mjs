@@ -4,7 +4,7 @@
 // evaluated here roughly as the plugin does (fnmatch, "re:" from the start); the front end never evaluates them.
 
 const OPTIONS = { historyMonths: 12, areasFromHistory: null, shiftsFromHistory: null, demand: 'history', mixMinDuties: 10,
-  shiftMix: true, hiddenShiftsMonths: 3, recentMonths: 3, areaSource: 'reserve', historyAreaDuties: 3 };
+  shiftMix: true, hiddenShiftsMonths: 3, recentMonths: 3, areaSource: 'reserve', historyAreaDuties: 3, demandMax: 'p90' };
 
 export const MAPPING = {
   areas: [{ id: 'AN', name: 'Annahme', color: '#D7E8F5' }, { id: 'DR', name: 'Disposition', color: '#F5E1C8' }],
@@ -303,7 +303,8 @@ function options(saved, given) {
     : ['areasFromHistory', 'shiftsFromHistory'].find((k) => o[k] !== null && !integer(o[k], 1))
       ?? (!['history', 'sp5'].includes(o.demand) ? 'demand' : !integer(o.mixMinDuties, 1) ? 'mixMinDuties'
         : ['hiddenShiftsMonths', 'recentMonths'].find((k) => !integer(o[k], 0)) ?? (typeof o.shiftMix !== 'boolean' ? 'shiftMix'
-          : !['groups', 'history', 'reserve'].includes(o.areaSource) ? 'areaSource' : !integer(o.historyAreaDuties, 1) ? 'historyAreaDuties' : null));
+          : !['groups', 'history', 'reserve'].includes(o.areaSource) ? 'areaSource' : !integer(o.historyAreaDuties, 1) ? 'historyAreaDuties'
+            : !['p90', 'min'].includes(o.demandMax) ? 'demandMax' : null));
   return bad ? { refused: invalid(bad) } : { options: o };
 }
 

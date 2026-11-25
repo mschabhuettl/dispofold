@@ -40,4 +40,18 @@ class Sp5SettingsTest {
             assertThatThrownBy(() -> Sp5Settings.checked(m, body)).as(bad).isNotNull();
         }
     }
+
+    @Test
+    void theMaximumOfTheDemandIsTheUsualPeakUnlessChosen() throws Exception {
+        assertThat(Sp5Settings.withDefaults(m, null).get("options").get("demandMax").asText()).isEqualTo("p90");
+        // stored before the option: the usual peak, as computed before
+        JsonNode stored = m.readTree("{\"options\": {\"historyMonths\": 12}}");
+        assertThat(Sp5Settings.withDefaults(m, stored).get("options").get("demandMax").asText()).isEqualTo("p90");
+        JsonNode chosen = m.readTree("{\"options\": {\"demandMax\": \"min\"}}");
+        assertThat(Sp5Settings.checked(m, chosen).get("options").get("demandMax").asText()).isEqualTo("min");
+        for (String bad : List.of("{\"demandMax\": \"max\"}", "{\"demandMax\": 90}")) {
+            JsonNode body = m.readTree("{\"options\": " + bad + "}");
+            assertThatThrownBy(() -> Sp5Settings.checked(m, body)).as(bad).isNotNull();
+        }
+    }
 }

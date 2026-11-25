@@ -89,7 +89,7 @@ public class Sp5Runs {
                         : plugin.data(plugin.export(new Sp5Export.Request(r.folder(), r.month(), r.to(),
                                 r.historyMonths(), r.areasFromHistory(), r.shiftsFromHistory(), r.demand(),
                                 r.mixMinDuties(), r.hiddenShiftsMonths(), r.recentMonths(), r.mapping(), null,
-                                r.nightsFair(), r.areaSource(), r.historyAreaDuties())))
+                                r.nightsFair(), r.areaSource(), r.historyAreaDuties(), r.demandMax())))
                                 .dataset();
             }
             return withoutCorrections;

@@ -22,6 +22,9 @@ public final class Sp5Export {
     public static final List<String> DEMAND_SOURCES = List.of("history", "sp5");
     public static final int HISTORY_MONTHS = 12;
     public static final int MAX_HISTORY_MONTHS = 24;
+    /** The maximum of the demand from the history: the staffing of 9 of 10 days (as sp5_export.py) or the minimum. */
+    public static final String DEMAND_MAX_P90 = "p90";
+    public static final String DEMAND_MAX_MIN = "min";
     public static final int MAX_EXTRA_MONTHS = 12;
     public static final int REPORT_COLUMNS = 29;
     public static final int HIDDEN_SHIFTS_MONTHS = 3;
@@ -53,11 +56,23 @@ public final class Sp5Export {
      *        a shift is not marked
      * @param areaSource where a person's areas come from (Dispofold only): "groups" as sp5_export.py, "history" or
      *        "reserve" with historyAreaDuties (see {@link Sp5Import#areaSource})
+     * @param demandMax the maximum of the demand from the history (Dispofold only): "p90" the staffing reached on 9 of
+     *        10 such days, as sp5_export.py; "min" the minimum (see {@link #withMaxAtMinimum})
      */
     public record Request(Path folder, String month, String to, int historyMonths, Integer areasFromHistory,
             Integer shiftsFromHistory, String demand, Integer mixMinDuties, int hiddenShiftsMonths, int recentMonths,
             Map<String, Object> mapping, Map<String, Object> corrections, boolean nightsFair, String areaSource,
-            int historyAreaDuties) {
+            int historyAreaDuties, String demandMax) {
+
+        /** The maximum of the demand from the history as sp5_export.py. */
+        public Request(Path folder, String month, String to, int historyMonths, Integer areasFromHistory,
+                Integer shiftsFromHistory, String demand, Integer mixMinDuties, int hiddenShiftsMonths,
+                int recentMonths, Map<String, Object> mapping, Map<String, Object> corrections, boolean nightsFair,
+                String areaSource, int historyAreaDuties) {
+            this(folder, month, to, historyMonths, areasFromHistory, shiftsFromHistory, demand, mixMinDuties,
+                    hiddenShiftsMonths, recentMonths, mapping, corrections, nightsFair, areaSource, historyAreaDuties,
+                    DEMAND_MAX_P90);
+        }
 
         /** The areas from the groups, as sp5_export.py. */
         public Request(Path folder, String month, String to, int historyMonths, Integer areasFromHistory,
@@ -320,6 +335,9 @@ public final class Sp5Export {
         job.areaSource = q.areaSource();
         job.historyAreaDuties = q.historyAreaDuties();
         Map<String, Object> dataset = job.run();
+        if (q.demand().equals("history") && DEMAND_MAX_MIN.equals(q.demandMax())) {
+            withMaxAtMinimum(dataset);
+        }
         List<List<Object>> rows = new ArrayList<>();
         if (q.corrections() != null) {
             Corrections.Applied applied = Corrections.apply(dataset, q.corrections());
@@ -369,6 +387,17 @@ public final class Sp5Export {
                 .thenComparing(r -> (String) r.get(2), Py::compareStr)
                 .thenComparing(r -> (String) r.get(3), Py::compareStr));
         return new Result(dataset, report, job.warnings, job.areaSources, job.areaCounts);
+    }
+
+    /**
+     * Every demand rule with its maximum at its minimum: staffing above the minimum is then overstaffing in the plan
+     * (a window with minimum 0 is a time without staffing).
+     */
+    @SuppressWarnings("unchecked")
+    static void withMaxAtMinimum(Map<String, Object> dataset) {
+        for (Map<String, Object> rule : (List<Map<String, Object>>) dataset.get("demand")) {
+            rule.put("max", rule.get("min"));
+        }
     }
 
     /** The dataset file: json.dump(dataset, ensure_ascii=False, indent=1) and a newline, UTF-8. */
