@@ -6,6 +6,9 @@ test('headline: usable plan, gaps, rule violations, both', () => {
   assert.deepEqual(planHeadline({ hard: 0, gaps: 0, uncoveredHours: 0 }),
     { level: 'good', text: 'Plan verwendbar: keine Regelverstöße, keine Lücken' });
   assert.deepEqual(planHeadline({ hard: 0, gaps: 3, uncoveredHours: 16 }), { level: 'warn', text: '3 Lücken (16 Personenstunden)' });
+  // while solving: how long ago the last better plan was found
+  assert.equal(planHeadline({ solving: true, seconds: 90, improvedSeconds: 85 }).text, 'Planung läuft (90 s), findet noch bessere Pläne (zuletzt vor 5 s)');
+  assert.equal(planHeadline({ solving: true, seconds: 3 }).text, 'Planung läuft (3 s)');
   assert.deepEqual(planHeadline({ hard: 2, gaps: 0, uncoveredHours: 0 }), { level: 'bad', text: '2 Regelverstöße' });
   assert.deepEqual(planHeadline({ hard: 1, gaps: 1, uncoveredHours: 7.5 }), { level: 'bad', text: '1 Regelverstoß, 1 Lücke (7,5 Personenstunden)' });
 });

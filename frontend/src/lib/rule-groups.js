@@ -4,6 +4,7 @@
 /** Group -> constraint ids (backend ConstraintCatalog); ids the catalogue lacks are left out. */
 export const GROUPS = {
   blocks: ['blockLength', 'isolatedDayOff'],
+  nights: ['dayNightSwitch', 'dayNightSwitches', 'nightBlock'],
   wishes: ['wishes'],
   fairness: ['fairNights', 'fairWeekends', 'fairHolidays', 'fairUnpopular'],
   hours: ['targetHours'],

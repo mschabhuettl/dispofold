@@ -10,13 +10,17 @@ const hours = (v) => (v == null ? '–' : Number(v).toLocaleString('de-AT', { ma
  * 'solving' or 'none' (no plan yet, or no analysis to judge it). gaps is the number of gaps of the analysis, null
  * without one (while solving only the uncovered person hours of the score are known).
  */
-export function planHeadline({ solving = false, seconds = 0, planned = true, hard = 0, gaps = null, uncoveredHours = null,
+export function planHeadline({ solving = false, seconds = 0, improvedSeconds = null, planned = true, hard = 0, gaps = null, uncoveredHours = null,
   duties = null, areas = 0, areasWithoutDemand = 0 }) {
   const parts = [];
   if (hard > 0) parts.push(t('roster.headline.hard', { count: hard }));
   if (gaps > 0) parts.push(t('roster.headline.gaps', { count: gaps, hours: hours(uncoveredHours) }));
   else if (gaps == null && uncoveredHours > 0) parts.push(t('roster.headline.uncovered', { hours: hours(uncoveredHours) }));
-  if (solving) return { level: 'solving', text: [t('roster.headline.solving', { seconds }), ...parts].join(', ') };
+  if (solving) {
+    const running = improvedSeconds > 0 ? t('roster.headline.improving', { seconds, ago: Math.max(0, seconds - improvedSeconds) })
+      : t('roster.headline.solving', { seconds });
+    return { level: 'solving', text: [running, ...parts].join(', ') };
+  }
   if (!planned) return { level: 'none', text: t('common.noPlan') };
   // no gap is no reassurance where no area asks for anyone: an empty plan or areas without minimum demand
   if (areas > 0 && areasWithoutDemand >= areas) {

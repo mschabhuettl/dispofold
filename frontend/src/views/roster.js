@@ -110,6 +110,7 @@ export async function render(root, ctx) {
     const figures = demandFigures(analysis) ?? scoreFigures(plan.score);
     const hard = state.solving ? state.hardViolations : (analysis?.hardViolations ?? state.hardViolations);
     const headline = planHeadline({ solving: state.solving, seconds: Math.round(state.elapsedMillis / 1000),
+      improvedSeconds: state.improvedMillis ? Math.round(state.improvedMillis / 1000) : null,
       planned: plan.assignments.length > 0, hard, gaps: state.solving ? null : (analysis?.gaps?.length ?? null),
       uncoveredHours: figures?.uncovered ?? null, duties: plan.assignments.filter((a) => a.shiftId).length,
       areas: dataset.areas.length, areasWithoutDemand: areasWithoutDemand(dataset) });

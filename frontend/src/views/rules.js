@@ -38,16 +38,26 @@ const PARAMS = [
   ['accountCarryShare', t('rules.param.accountCarryShare.label'), t('rules.param.accountCarryShare.help'), 'number', 'any'],
   ['carryMinusRest', t('rules.param.carryMinusRest.label'), '', 'bool'],
   ['historyMonths', t('rules.param.historyMonths.label'), t('rules.param.historyMonths.help'), 'number', 1],
+  ['nightRestDays', t('rules.param.nightRestDays.label'), '', 'number', 1],
+  ['dayToNightDays', t('rules.param.dayToNightDays.label'), '', 'number', 1],
+  ['nightBlockMin', t('rules.param.nightBlockMin.label'), '', 'number', 1],
+  ['nightBlockMax', t('rules.param.nightBlockMax.label'), '', 'number', 1],
+  ['nightMixMonths', t('rules.param.nightMixMonths.label'), '', 'number', 1],
+  ['thoroughness', t('rules.param.thoroughness.label'), t('rules.param.thoroughness.help'), 'choice',
+    [['FAST', t('rules.param.thoroughness.fast')], ['NORMAL', t('rules.param.thoroughness.normal')], ['THOROUGH', t('rules.param.thoroughness.thorough')]]],
 ];
+/** Bounds of number fields other than "at least 0". */
+const BOUNDS = { nightRestDays: [0, 4], dayToNightDays: [0, 4], nightBlockMax: [1, null], nightMixMonths: [1, 12] };
 const PARAM = Object.fromEntries(PARAMS.map((p) => [p[0], p]));
 /** Help per parameter: what it does and what raising or lowering it changes. */
 const PARAM_HELP = Object.fromEntries(PARAMS.map(([key]) => [key, t(`help.param.${key}`)]));
-const GOAL_HELP = { blocks: t('help.goal.blocks'), wishes: t('help.goal.wishes'), fairness: t('help.goal.fairness'), hours: t('help.goal.hours'),
+const GOAL_HELP = { blocks: t('help.goal.blocks'), nights: t('help.goal.nights'), wishes: t('help.goal.wishes'), fairness: t('help.goal.fairness'), hours: t('help.goal.hours'),
   family: t('help.goal.family') };
 
 /** Planning goals: group (lib/rule-groups.js), title and sentences whose placeholders are parameter fields. */
 const GOALS = [
   ['blocks', t('rules.goal.blocks.title'), [t('rules.goal.blocks.text')]],
+  ['nights', t('rules.goal.nights.title'), [t('rules.goal.nights.switch'), t('rules.goal.nights.blocks')]],
   ['wishes', t('rules.goal.wishes.title'), [t('rules.goal.wishes.text')]],
   ['fairness', t('rules.goal.fairness.title'), [t('rules.goal.fairness.text')]],
   ['hours', t('rules.goal.hours.title'), [t('rules.goal.hours.over'), t('rules.goal.hours.balancing'), t('rules.goal.hours.account'),
@@ -73,6 +83,12 @@ export async function render(root, ctx) {
   params.averagingPeriod ??= 'HALF_YEAR';
   params.accountBalancing ??= 'PERIOD_END';
   params.carryMinusRest ??= false;
+  params.nightRestDays ??= 2;
+  params.dayToNightDays ??= 0;
+  params.nightBlockMin ??= 2;
+  params.nightBlockMax ??= 4;
+  params.nightMixMonths ??= 3;
+  params.thoroughness ??= 'NORMAL';
 
   root.append(h('h1', {}, t('nav.rules')));
   if (!canEdit) root.append(h('p.alert', {}, t('rules.readonly')));
@@ -94,7 +110,8 @@ export async function render(root, ctx) {
     h('div.goal', {}, h('fieldset.night', {}, h('legend', {}, h('strong', {}, t('rules.night.title')), info(t('help.param.nightDistribution'), t('rules.night.title'))),
       NIGHT_MODES.map(([mode, label]) => h('label.choice', {},
         h('input', { type: 'radio', name: 'nightDistribution', value: mode, checked: params.nightDistribution === mode, disabled: !canEdit,
-          oninput: () => { params.nightDistribution = mode; } }), ' ', label))), nightWarning),
+          oninput: () => { params.nightDistribution = mode; } }), ' ', label))),
+      h('p', {}, sentence(t('rules.night.months'))), nightWarning),
     GOALS.map(([group, title, texts]) => {
       const importance = importanceControl(group, title);
       return h('div.goal', { 'data-group': group }, h('div', {}, h('h3', {}, title, info(GOAL_HELP[group], title)), texts.map((text) => h('p', {}, sentence(text)))), importance);
@@ -115,7 +132,9 @@ export async function render(root, ctx) {
   const advanced = h('details.rules-advanced', {}, h('summary', {}, h('h2', { id: 'h-advanced' }, t('rules.advanced.title'))),
     h('p.muted', {}, t('rules.advanced.help')),
     h('section', { 'aria-labelledby': 'h-night-window' }, h('h3', { id: 'h-night-window' }, t('rules.nightWindow')),
-      h('div.params', {}, ['nightStart', 'nightEnd', 'nightMinHours'].map(paramField))));
+      h('div.params', {}, ['nightStart', 'nightEnd', 'nightMinHours'].map(paramField))),
+    h('section', { 'aria-labelledby': 'h-thoroughness' }, h('h3', { id: 'h-thoroughness' }, t('rules.thoroughness')),
+      h('div.params', {}, paramField('thoroughness'))));
   for (const [level, title, help] of LEVELS) {
     const list = constraints.filter((c) => c.level === level);
     if (!list.length) continue;
@@ -170,7 +189,8 @@ export async function render(root, ctx) {
     }
     if (type === 'bool') return h('input', { id: `param-${key}`, type: 'checkbox', checked: Boolean(params[key]), oninput: (e) => { params[key] = e.target.checked; } });
     // the hours account share is stored as a fraction and shown in percent
-    return h('input', { id: `param-${key}`, type, step, min: type === 'number' ? 0 : null, max: key === 'accountCarryShare' ? 100 : null, required: true,
+    const [min, max] = BOUNDS[key] ?? [0, key === 'accountCarryShare' ? 100 : null];
+    return h('input', { id: `param-${key}`, type, step, min: type === 'number' ? min : null, max, required: true,
       value: type === 'time' ? String(params[key] ?? '').slice(0, 5) : key === 'accountCarryShare' ? percent(params[key]) : params[key],
       oninput: (e) => { params[key] = type === 'time' ? e.target.value : Number(e.target.value) / (key === 'accountCarryShare' ? 100 : 1); } });
   }

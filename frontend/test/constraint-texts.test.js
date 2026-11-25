@@ -29,7 +29,8 @@ test('the placeholders of constraint descriptions are rule parameters', () => {
 });
 
 test('no constraint description has a parameter default as a fixed number', () => {
-  const defaults = new Set(Object.values(DEFAULT_RULES).filter((v) => typeof v === 'number'));
+  // 0 is left out: "0 schaltet die Regel aus" is no default but the value that switches a rule off
+  const defaults = new Set(Object.values(DEFAULT_RULES).filter((v) => typeof v === 'number' && v !== 0));
   for (const [k, v] of descriptions) {
     const fixed = v.replace(/\{[^}]*\}/g, '').match(/\d+(?:,\d+)?/g) ?? [];
     for (const n of fixed) assert.ok(!defaults.has(Number(n.replace(',', '.'))), `${k}: fixed ${n}`);

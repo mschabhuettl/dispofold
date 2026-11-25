@@ -163,8 +163,8 @@ export const CONSTRAINTS = [
     'qualification', 'absence', 'freeInsideAbsence', 'employment', 'neverRestriction', 'compRestBalance', 'missingShift'].map((id) => [id, 'HARD', 1]),
   ['demand', 'MEDIUM', 1000000000], ['overstaffing', 'MEDIUM', 1], ['uselessDuty', 'MEDIUM', 1],
   ['targetHours', 'SOFT', 20], ['fairNights', 'SOFT', 3], ['fairWeekends', 'SOFT', 3], ['fairHolidays', 'SOFT', 3],
-  ['fairUnpopular', 'SOFT', 2], ['wishes', 'SOFT', 300], ['blockLength', 'SOFT', 6000], ['isolatedDayOff', 'SOFT', 10000],
-  ['forwardRotation', 'SOFT', 500], ['splitWeekend', 'SOFT', 300], ['compRestUse', 'SOFT', 500], ['shiftVariety', 'SOFT', 5],
+  ['fairUnpopular', 'SOFT', 2], ['wishes', 'SOFT', 300], ['blockLength', 'SOFT', 18000], ['isolatedDayOff', 'SOFT', 30000],
+  ['forwardRotation', 'SOFT', 500], ['dayNightSwitch', 'SOFT', 10000], ['dayNightSwitches', 'SOFT', 3000], ['nightBlock', 'SOFT', 6000], ['splitWeekend', 'SOFT', 300], ['compRestUse', 'SOFT', 500], ['shiftVariety', 'SOFT', 5],
   ['areaVariety', 'SOFT', 1], ['shiftMix', 'SOFT', 100], ['family', 'SOFT', 800],
   // on-request duties are never planned automatically, so their weight is not a setting
   ['onRequest', 'SOFT', 1000],
@@ -175,5 +175,6 @@ export const DEFAULT_RULES = {
   minBlock: 2, maxBlock: 4, maxWishesPerPerson: 6, holidayWorkEarnsCompRest: true, nightStart: '22:00', nightEnd: '06:00',
   nightMinHours: 2, maxOverTargetPercent: 10, minFreeSundays: 2, accountCarryShare: 0.25, historyMonths: 3, averagingWeeks: 52, weights: {},
   nightDistribution: 'HABIT', averageTolerancePercent: 10, freeInsideAbsence: true, averagingPeriod: 'HALF_YEAR',
-  accountBalancing: 'PERIOD_END', carryMinusRest: false,
+  accountBalancing: 'PERIOD_END', carryMinusRest: false, nightRestDays: 2, dayToNightDays: 0, nightBlockMin: 2, nightBlockMax: 4,
+  nightMixMonths: 3, thoroughness: 'NORMAL',
 };

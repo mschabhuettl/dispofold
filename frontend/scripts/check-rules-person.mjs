@@ -252,6 +252,40 @@ try {
   check('reset of the weight ends the warning', await warning.count() === 0);
   check('HABIT is saved', (await putBody()).nightDistribution === 'HABIT');
 
+  // Day and night: free days around nights, night blocks and the months of the usual night share in the goals, the
+  // thoroughness under Erweitert; rules saved before them show the defaults and save what is set.
+  await openRules();
+  const nightsGoal = page.locator('.goal[data-group="nights"]');
+  check('the goal Wechsel zwischen Tag und Nacht is shown', (await nightsGoal.textContent()).includes('Wechsel zwischen Tag und Nacht'));
+  const fields = { nightRestDays: '2', dayToNightDays: '0', nightBlockMin: '2', nightBlockMax: '4', nightMixMonths: '3' };
+  for (const [key, value] of Object.entries(fields)) {
+    check(`${key} shows its default`, await page.inputValue(`#param-${key}`) === value, await page.inputValue(`#param-${key}`));
+  }
+  check('free days after nights at most 4', await page.getAttribute('#param-nightRestDays', 'max') === '4');
+  check('the switch rules have a Wichtigkeit', await importance('nights', 'mehr').count() === 1);
+  await advanced.locator('summary').click();
+  check('Gründlichkeit normal by default', await page.inputValue('#param-thoroughness') === 'NORMAL');
+  const thoroughHelp = await page.locator('.field:has(#param-thoroughness) .info, .field:has(#param-thoroughness) button').count();
+  check('Gründlichkeit has a help', thoroughHelp > 0);
+  await page.selectOption('#param-thoroughness', 'THOROUGH');
+  await page.fill('#param-nightRestDays', '3');
+  await page.fill('#param-nightMixMonths', '1');
+  await importance('nights', 'mehr').click();
+  const nightBody = await putBody();
+  check('the night settings are saved', nightBody.thoroughness === 'THOROUGH' && nightBody.nightRestDays === 3 && nightBody.nightMixMonths === 1
+    && nightBody.dayToNightDays === 0 && nightBody.nightBlockMax === 4, JSON.stringify(nightBody).slice(0, 300));
+  check('mehr doubles the switch weights', nightBody.weights.dayNightSwitch === defaults.dayNightSwitch * 2
+    && nightBody.weights.dayNightSwitches === defaults.dayNightSwitches * 2 && nightBody.weights.nightBlock === defaults.nightBlock * 2, JSON.stringify(nightBody.weights));
+  const describedRow = page.locator('.rule-row').filter({ hasText: 'Abstand zwischen Tag und Nacht' }).first();
+  await openRules();
+  await advanced.locator('summary').click();
+  check('the rule text names the stored free days', (await describedRow.textContent()).includes('3 freie Tage'), await describedRow.textContent());
+  await importance('nights', 'normal').click();
+  await page.selectOption('#param-thoroughness', 'NORMAL');
+  await page.fill('#param-nightRestDays', '2');
+  await page.fill('#param-nightMixMonths', '3');
+  await putBody();
+
   // An edit made while a save is under way stays unsaved.
   await openRules(true);
   await page.route('**/api/rules', async (route) => {
