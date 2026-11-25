@@ -42,11 +42,11 @@ Stunden, die zählen, als wäre gearbeitet worden: Abwesenheitstage, die das Sol
 Arbeitstag Wochenstunden durch 5 oder, je nach Abwesenheitsart, die Stunden des Dienstes, den die Abwesenheit
 ersetzt hat. Die Planung vergleicht geplante plus angerechnete Stunden mit dem [Ziel](#ziel).
 
-## Auf Anfrage verfügbar
+## Von Hand einsetzbar
 
-Die Liste der Personen, die man für eine [Lücke](#lücke) fragen kann: Sie machen die Schicht nur auf Anfrage, sind
+Die Liste der Personen, die man für eine [Lücke](#lücke) fragen kann: Die Schicht geht für sie nur von Hand, sie sind
 an dem Tag frei, und der Dienst ergibt keinen Regelverstoß. Siehe
-[Dienste nur auf Anfrage](plan-bearbeiten.md#dienste-nur-auf-anfrage).
+[Dienste nur von Hand](plan-bearbeiten.md#dienste-nur-von-hand).
 
 ## Bedarf
 
@@ -110,10 +110,11 @@ nur für ihren Monat. Gegenstück: die [Stammdaten](#stammdaten), die für alle 
 
 ## Einschränkung
 
-Was eine Person nicht macht: eine Schicht oder alle Schichten einer [Schichtart](#schichtart), an jedem Tag oder an
-einem Wochentag, auf Wunsch befristet. **Nie** heißt: Das Programm plant es nie, auch nicht von Hand ohne
-Regelverstoß. **Nur auf Anfrage** heißt: Das Programm plant es nie von selbst, die Planung kann den Dienst aber
-nach Rückfrage setzen. Siehe [Person bearbeiten](personen.md#person-bearbeiten).
+Eine Ausnahme vom [Zustand eines Bereichs](#zustand-eines-bereichs): eine Schicht oder alle Schichten einer
+[Schichtart](#schichtart), an jedem Tag oder an einem Wochentag, auf Wunsch befristet. **nie** heißt: Das Programm
+plant es nie, auch nicht von Hand ohne Regelverstoß. **nur von Hand** heißt: Das Programm plant es nie von selbst,
+die Planung kann den Dienst aber nach Rückfrage setzen. Bis Version 0.25 hieß das „nur auf Anfrage“. Siehe
+[Person bearbeiten](personen.md#person-bearbeiten).
 
 ## Einzelne freie Tage
 
@@ -261,7 +262,7 @@ den Bedarf deckt. Die Qualitätsregeln heißen im Programm so, auch auf den Knö
 ([Regeln mit Treffern](#regeln-mit-treffern)): **Stunden treffen**, **Fairness Nachtdienste**, **Fairness
 Wochenenden**, **Fairness Feiertage**, **Fairness fair verteilte Dienste**, **Wünsche**, **Dienstblöcke**,
 **Einzelne freie Tage**, **Vorwärtsrotation**, **Ganze Wochenenden frei**, **Ersatzruhe abbauen**, **Abwechslung
-Dienste**, **Abwechslung Bereiche**, **Gewohnte Verteilung**, **Familienregel**, **Dienst nur auf Anfrage**.
+Dienste**, **Abwechslung Bereiche**, **Gewohnte Verteilung**, **Familienregel**, **Dienst nur von Hand**.
 Treffer dieser Regeln sind keine Fehler: Der Plan ist trotzdem verwendbar. Siehe
 [Wie das Programm plant](wie-plant.md).
 
@@ -317,6 +318,14 @@ Daraus entstehen die [Korrekturdatei](#korrekturdatei) und die Vorschau von **Ä
 
 Die Plus- oder Minusstunden einer Person. Ein Teil davon fließt in das [Ziel](#ziel) jedes Monats; nach dem
 Monatsabschluss steht der neue Stand in der Historie.
+
+## Zustand eines Bereichs
+
+Für jede Person und jeden ihrer Bereiche: **planbar** (die Planung darf sie in jeder Schicht des Bereichs
+einplanen), **nur von Hand** (die Planung plant sie dort nie selbst, ein Dienst lässt sich aber von Hand setzen)
+oder **nie** (ein Dienst dort ist ein Regelverstoß). Was für einzelne Schichten, Tage oder Zeiten abweicht, ist eine
+[Einschränkung](#einschränkung). Siehe [Person bearbeiten](personen.md#person-bearbeiten) und
+[Bereiche aller Personen](personen.md#bereiche-aller-personen).
 
 ## Überbesetzung
 

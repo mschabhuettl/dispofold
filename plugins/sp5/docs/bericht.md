@@ -29,14 +29,14 @@ Jede Art hat ihren eigenen Abschnitt mit den Spalten, die sie füllt, und einem 
 |---|---|
 | **Bedarf** | Bereich und Tagestyp (Mo bis So, Feiertag): Dienste und Spitzenbesetzung in der Historie, der Bedarf aus Schichtplaner 5, nicht übernommene Dienste |
 | **Bereiche der Personen** | Person und Bereich aus ihren Gruppen oder mit Diensten |
-| **Schichten der Personen** | Person und Schicht ihrer Bereiche, mit der Einschränkung („nur auf Anfrage“, „aus Schichtplaner 5“, „zu kurze Historie“) |
-| **Personen** | übernommene Person: Dienste, Wochenstunden, Bereiche, gewohnte Verteilung, Zahl der Einschränkungen „nur auf Anfrage“ |
+| **Schichten der Personen** | Person und Schicht ihrer Bereiche, mit der Einschränkung („nur von Hand“, „aus Schichtplaner 5“, „zu kurze Historie“) |
+| **Personen** | übernommene Person: Dienste, Wochenstunden, Bereiche, gewohnte Verteilung, Zahl der Einschränkungen „nur von Hand“ |
 | **Schichten ohne Bereich**, **Ignorierte Schichten** | Schicht ohne Regel oder ignoriert, mit Diensten in der Historie |
 | **Verworfene Dienste** | Grund und Schicht verworfener Dienste der Historie |
 | **Wochenstunden** | Person, bei der HRSWEEK vom Wert nach CALCBASE abweicht |
 | **Korrekturen** | Feld der Korrekturdatei, mit dem Status |
 | **Ausgeblendete Schichten** | ausgeblendete Schicht mit Diensten: übernommen oder verworfen, mit dem letzten Dienst |
-| **Bereiche, in denen jemand nicht mehr arbeitet** | Person und Bereich, in dem sie zuletzt nicht mehr gearbeitet hat; der Bereich wird „nur auf Anfrage“ |
+| **Bereiche, in denen jemand nicht mehr arbeitet** | Person und Bereich, in dem sie zuletzt nicht mehr gearbeitet hat; der Bereich wird „nur von Hand“ |
 
 Korrekturen mit dem Status **ungültig** oder **Person fehlt** sind hervorgehoben. Was die Status bedeuten, steht
 unter [Ablauf, Bereinigen](plugin-sp5-ablauf.md#6-bereinigen-und-wiederholen). Eine Zeilenart, die die

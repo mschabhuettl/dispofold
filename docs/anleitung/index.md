@@ -27,7 +27,7 @@ Bildern.
    zu tun ist, und listet darunter die Regelverstöße, den offenen Bedarf mit den Personen, die man fragen kann,
    die Hinweise zur Qualität und Auffälligkeiten in den Stammdaten. Siehe [Prüfen](planen.md#probleme) und
    [Was die Zahlen bedeuten](zahlen.md).
-5. **Von Hand nachbessern:** Zellen im Dienstplan ändern, Lücken mit Diensten auf Anfrage füllen, bei Bedarf
+5. **Von Hand nachbessern:** Zellen im Dienstplan ändern, Lücken mit Diensten nur von Hand füllen, bei Bedarf
    noch einmal **Planen** (die von Hand gesetzten Zellen bleiben dabei fixiert). Ist der Plan schon ausgehängt,
    vorher **Plan fixieren**. Siehe [Von Hand ändern und fixieren](plan-bearbeiten.md#von-hand-ändern-und-fixieren).
 6. **Drucken und exportieren:** im **Dienstplan** das Menü **Ausgabe**: **Drucken** oder Export als XLSX, CSV
@@ -87,7 +87,7 @@ Adresse derselben Seite auf der Website (mit Suche, Stand des neuesten Releases)
 | [Bereiche, Schichten und Bedarf](stammdaten.md) | die Stammdaten: Bereiche, Abwesenheitsarten, Schichten, Bedarf, Feiertage |
 | [Abwesenheiten, Wünsche und Vorgaben](eingaben.md) | die Eingaben eines Monats |
 | [Planen und Prüfen](planen.md) | planen, das Ergebnis lesen, [Probleme](planen.md#probleme) und offener Bedarf |
-| [Plan bearbeiten](plan-bearbeiten.md) | Dienstplan, Funktionen, Zeitachse, Zellen von Hand ändern, Dienste auf Anfrage, drucken |
+| [Plan bearbeiten](plan-bearbeiten.md) | Dienstplan, Funktionen, Zeitachse, Zellen von Hand ändern, Dienste nur von Hand, drucken |
 | [Auswertungen](auswertungen.md) | Fairness, die Zahlen einer Person, „Warum dieser Dienst?“ |
 | [Monat abschließen](monatsabschluss.md) | Abschluss, Historie, wieder öffnen |
 | [Daten und Korrekturdatei](daten.md) | Import, Änderungen behalten, Export, Korrekturdatei, Pseudonymisieren |

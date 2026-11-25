@@ -116,7 +116,7 @@ Person aus Technik und Systeme.
 
 So sieht es aus, wenn es geklappt hat: Zuerst ist die Überschrift (1) rot, „2 Regelverstöße“. Nach dem Entfernen
 der Dienste ist sie gelb: An den beiden Tagen fehlt jemand. Ein Klick auf die Zahl in der Zeile **Bedarfslücken**
-zeigt, wer gefragt werden kann ([Auf Anfrage verfügbar](begriffe.md#auf-anfrage-verfügbar)); ein Klick auf einen
+zeigt, wer gefragt werden kann ([Von Hand einsetzbar](begriffe.md#von-hand-einsetzbar)); ein Klick auf einen
 Namen setzt den Dienst. Steht dort „Niemand passt.“, jemanden von Hand einteilen: die leere Zelle der Person
 anklicken und die Schicht wählen. Ist die Überschrift wieder grün, ist alles erledigt.
 

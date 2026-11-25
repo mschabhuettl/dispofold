@@ -115,13 +115,13 @@ try {
   const status = await page.locator('.status-details strong').first().innerText();
   check('plan status reads Entwurf', status === 'Entwurf', status);
 
-  // a gap list (Auf Anfrage verfügbar) in Plan nach Funktion
+  // a gap list (Von Hand einsetzbar) in Plan nach Funktion
   await open(page, 'funktionen');
   const marker = page.locator('table.functions tr.gap-row .gap-marker').first();
   if (await marker.count()) {
     await marker.click();
     await page.locator('.popover .candidates[data-loaded]').first().waitFor({ timeout: 30000 });
-    check('gap list titled Auf Anfrage verfügbar', (await page.locator('.popover').innerText()).includes('Auf Anfrage verfügbar'));
+    check('gap list titled Von Hand einsetzbar', (await page.locator('.popover').innerText()).includes('Von Hand einsetzbar'));
     await scan(page, 'gap list');
     await page.keyboard.press('Escape');
   }
@@ -144,10 +144,9 @@ try {
     .filter((i) => !i.id || !f.querySelector(`label[for="${i.id}"]`)).length);
   const mixFields = await form.locator('input[data-mix-cat], input[data-mix-area]').count();
   check('mix fields have labels', mixFields > 0 && unlabelled === 0, `${unlabelled} of ${mixFields} without label`);
-  // the label without the note next to a ticked area (where it comes from, on request)
-  const areaLabels = await form.locator('input[name="areaIds"]').evaluateAll((cs) => cs.map((c) => [...c.parentElement.childNodes]
-    .filter((n) => !n.dataset?.areaNote).map((n) => n.textContent).join('').trim()));
-  check('area checkboxes named', areaLabels.length > 0 && areaLabels.every((l) => areas.some((a) => l === `${a.name} (${a.id})`)), areaLabels.slice(0, 3).join(' | '));
+  // each area with its state, labelled with its name and id
+  const areaLabels = await form.locator('select[data-area-state]').evaluateAll((xs) => xs.map((x) => document.querySelector(`label[for="${x.id}"]`)?.textContent.trim()));
+  check('area states named', areaLabels.length > 0 && areaLabels.every((l) => areas.some((a) => l === `${a.name} (${a.id})`)), areaLabels.slice(0, 3).join(' | '));
   check('night note in the person form', (await form.innerText()).includes('Nachtausgleich'));
   await scan(page, 'person form');
 

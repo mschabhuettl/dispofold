@@ -247,7 +247,7 @@ der Erklärung je Person.
 | `areaVariety` | Abwechslung der Bereiche | je Paar Dienste im selben Bereich, mit Vormonat (nur bei mehreren Bereichen) | 1 |
 | `shiftMix` | Gewohnte Verteilung | quadrierte Abweichung in Zehntel-Diensten je Kategorie und Bereich, siehe unten | 100 |
 | `family` | Familienregel | je Dienst gegen die Regel | 800 |
-| `onRequest` | Dienst nur auf Anfrage, von Hand gesetzt | je solchem Dienst; Gewicht fest, nicht einstellbar | 1000 |
+| `onRequest` | Dienst, der nur von Hand geht, von Hand gesetzt | je solchem Dienst; Gewicht fest, nicht einstellbar | 1000 |
 
 **Wichtigkeit.** Die Seite Regeln fasst neun Qualitätsregeln zu Planungszielen zusammen. Die Wichtigkeit eines
 Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerundet auf ganze Zahlen:
@@ -314,8 +314,8 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
   also, was für Dienste bleibt. Abzug: Minuten darüber. Warum Regelverstoß: Ungedeckter Bedarf (Gruppe Bedarf) wiegt
   immer schwerer als das Ziel (Qualität); ohne Obergrenze füllt der Solver Lücken mit Teilzeitkräften bis
   zur gesetzlichen Wochengrenze auf. Die gesetzlichen Grenzen gelten weiter. Ein von Hand gesetzter oder fixer
-  Dienst darf die Grenze überschreiten, erscheint dann aber als Regelverstoß; die Liste „Auf Anfrage
-  verfügbar“ nennt niemanden, den der Dienst über die Grenze brächte. Regeln, die vor dieser Grenze gespeichert
+  Dienst darf die Grenze überschreiten, erscheint dann aber als Regelverstoß; die Liste „Von Hand
+  einsetzbar“ nennt niemanden, den der Dienst über die Grenze brächte. Regeln, die vor dieser Grenze gespeichert
   wurden, bekommen den Standard.
 - Verkleinertes Ziel: Braucht der Bedarf weniger Arbeit, als die Ziele aller Personen zusammen ergeben,
   wird das Ziel jeder Person um denselben Anteil verkleinert. Angerechnete Abwesenheitstage bleiben, der Rest
@@ -349,7 +349,7 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
   zählen damit als frei. Wer im Monat ein- oder austritt oder an den meisten Sonntagen abwesend ist, erfüllt
   die Regel so ohne Sonderfall.
 - Von Hand gesetzte Dienste und Vorgaben dürfen die Regel verletzen; sie erscheint dann als Regelverstoß. Die
-  Liste „Auf Anfrage verfügbar“ nennt niemanden, dem der Dienst einen freien Sonntag zu wenig ließe.
+  Liste „Von Hand einsetzbar“ nennt niemanden, dem der Dienst einen freien Sonntag zu wenig ließe.
 
 ### Gewohnte Verteilung
 
@@ -551,7 +551,7 @@ Eine Einstellung der Regeln, `nightDistribution`:
 - Weil die Salden von Monat zu Monat weitergegeben werden, werden Monate der Reihe nach abgeschlossen (ein
   geplanter Vormonat zuerst) und rückwärts wieder geöffnet (ein abgeschlossener Folgemonat zuerst).
 
-### Familie, Sperren auf Anfrage, Bedarf
+### Familie, Sperren nur von Hand, Bedarf
 
 - Familienregel je Person und Wochentag: spätestes Dienstende, frühester Dienstbeginn, keine Nacht. Die
   Uhrzeiten beziehen sich auf den Tag des Dienstbeginns; ein Nachtdienst endet also immer nach einem
@@ -563,13 +563,13 @@ Eine Einstellung der Regeln, `nightDistribution`:
   zwischen Plänen mit gleicher Besetzung: „mehr“ bricht die Regel erwartbar seltener für bessere Blöcke, Wünsche
   oder Stunden, „weniger“ öfter. Soll ein Dienst auch bei einer Lücke ausgeschlossen sein, braucht es eine Sperre
   „nie“ (Regelverstoß).
-- Sperren der Art "nur auf Anfrage" plant der Solver nie ein, auch nicht, wenn sonst eine Bedarfslücke bleibt:
+- Sperren der Art "nur von Hand" plant der Solver nie ein, auch nicht, wenn sonst eine Bedarfslücke bleibt:
   Die Planung fragt die Person und trägt den Dienst dann von Hand ein (fixiert) oder als Vorgabe in den
   Eingaben. Ein solcher Dienst ist kein Regelverstoß; er erscheint als Treffer der Regel `onRequest`, damit
   er sichtbar bleibt. Ihr Gewicht ist fest; ein gespeichertes Gewicht für `onRequest` wird ignoriert. Ein nicht
   fixierter Anfrage-Dienst aus einem früheren Plan fällt bei der nächsten Planung weg. Zu jeder Lücke zeigt die
   Oberfläche, wer gefragt werden kann (siehe [api.md](api.md), `candidates`).
-- **Beispiel `onRequest`:** David macht Nacht 19-07 nur auf Anfrage. Der Solver plant ihm nie eine Nacht, auch
+- **Beispiel `onRequest`:** Für David ist Nacht 19-07 nur von Hand. Der Solver plant ihm nie eine Nacht, auch
   nicht für eine Lücke. Sagt David zu, setzt die Planung den Dienst von Hand; der Treffer zeigt dann, dass es eine
   Ausnahme ist. Das feste Gewicht ändert keinen Plan, weil der Solver solche Dienste ohnehin nie setzt.
 - Sperren gelten für eine Schicht oder für alle Schichten einer Kategorie (z. B. keine Nachtdienste), je

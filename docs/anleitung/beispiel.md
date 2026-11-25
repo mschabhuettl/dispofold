@@ -179,17 +179,17 @@ Behoben wird der Regelverstoß in der Zelle:
 
 ![Wer für die Lücke gefragt werden kann](../screenshots/beispiel-anfrage.png)
 
-Über der Liste **Auf Anfrage verfügbar** steht „Klick auf einen Namen setzt den Dienst und fixiert ihn.“ Die Liste
-nennt Personen, die diese Schicht nur auf Anfrage machen und an dem Tag frei sind, mit ihren Stunden, etwa
+Über der Liste **Von Hand einsetzbar** steht „Klick auf einen Namen setzt den Dienst und fixiert ihn.“ Die Liste
+nennt Personen, für die diese Schicht nur von Hand geht und an dem Tag frei sind, mit ihren Stunden, etwa
 „geplant 100,0 h von Ziel 114,0 h“. In Technik und Systeme ist das Waltraud Erlenhuber, wenn sie an dem Tag frei
 ist, im Bild am 11. Man fragt die Person und klickt bei Zusage auf ihren Namen: Der Dienst ist gesetzt und
 [fixiert](begriffe.md#fixiert), im Plan mit einer kleinen Ecke unten links.
 
 **Wenn niemand passt.** Am 12. hat Waltraud Erlenhuber selbst Dienst; dort sagt die Liste:
 
-![Die Lücke eines Tages, an dem niemand auf Anfrage passt](../screenshots/niemand-passt.png)
+![Die Lücke eines Tages, an dem niemand von Hand einsetzbar ist](../screenshots/niemand-passt.png)
 
-„Niemand passt. Gefragt werden können nur Personen, die den Dienst nur auf Anfrage machen und an dem Tag frei
+„Niemand passt. Gefragt werden können nur Personen, für die der Dienst nur von Hand geht und an dem Tag frei
 sind.“ Dann gibt es zwei Wege:
 
 - **Von Hand einteilen:** jemanden fragen, der den Dienst normal machen darf, die leere Zelle dieser Person am Tag
@@ -207,7 +207,7 @@ frei ist und den Dienst machen darf:
 ![Nach dem neuen Planen](../screenshots/beispiel-neu-geplant.png)
 
 1. Wieder grün: „Plan verwendbar: keine Regelverstöße, keine Lücken“. Der Hinweis „Plan veraltet“ ist weg.
-2. An den Krankentagen steht „K“; die Dienste haben andere übernommen, auf Anfrage gesetzte Dienste mit der
+2. An den Krankentagen steht „K“; die Dienste haben andere übernommen, von Hand gesetzte Dienste mit der
    kleinen Ecke.
 
 **Achtung bei einem ausgehängten Plan:** Neu planen darf alle Zellen ändern, die nicht fixiert sind, auch die

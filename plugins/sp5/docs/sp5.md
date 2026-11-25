@@ -31,10 +31,10 @@ sie nur; in Schichtplaner 5 ändert sich nichts. Den Weg Schritt für Schritt be
 | Bereich aus der Historie ab … Diensten | 3 |
 | Bedarf | aus der Historie |
 | Erweitert: Bei Gruppen: Bereiche aus der Historie ab … Diensten dazu | leer (aus) |
-| Erweitert: Schichten seltener als … Dienste nur auf Anfrage | leer (aus) |
+| Erweitert: Schichten seltener als … Dienste nur von Hand | leer (aus) |
 | Erweitert: Gewohnte Verteilung übernehmen, ab … Diensten | an, 10 |
 | Erweitert: Ausgeblendete Schichten mit Diensten in den … Monaten davor | 3 |
-| Erweitert: Bereiche ohne Dienst in den letzten … Monaten nur auf Anfrage | 3 |
+| Erweitert: Bereiche ohne Dienst in den letzten … Monaten nur von Hand | 3 |
 | Erweitert: Nachtschichten automatisch fair verteilen | aus |
 
 **Bereiche einer Person aus** sagt, in welchen Bereichen eine Person geplant werden kann:
@@ -45,19 +45,20 @@ sie nur; in Schichtplaner 5 ändert sich nichts. Den Weg Schritt für Schritt be
 - **Historie:** nur die Bereiche, in denen sie in der Historie mindestens so viele Dienste hatte wie bei **Bereich
   aus der Historie ab … Diensten** eingestellt (Standard 3), auch ohne passende Gruppe.
 - **Historie, Gruppen als Reserve** (empfohlen): wie „Historie“; die übrigen Bereiche ihrer Gruppen bleiben, aber
-  jede Schicht darin ist „nur auf Anfrage“: Dispofold plant sie dort nicht von selbst, man kann sie von Hand
-  einsetzen.
+  als „nur von Hand“: Dispofold plant die Person dort nicht von selbst, man kann sie von Hand einsetzen. Auf der
+  Seite der Person und unter **Personen → Bereiche** steht das als Zustand des Bereichs, nicht als Liste von
+  Einschränkungen.
 
 Wer in keinem Bereich auf die Zahl kommt, etwa weil neu oder mit sehr wenigen Diensten, behält bei „Historie“ und
 „Historie, Gruppen als Reserve“ die Bereiche seiner Gruppen. Beispiel: Wer in einer Gruppe für Annahme und
 Disposition ist und in der Historie 10 Dienste in der Annahme und keinen in der Disposition hatte, bekommt bei
 „Gruppen“ beide Bereiche, bei „Historie“ nur die Annahme und bei „Historie, Gruppen als Reserve“ die Annahme und
-die Disposition nur auf Anfrage. Die Seite der Person zeigt neben jedem Bereich, woher er kommt
-(„Gruppe …“, „Historie: 10 Dienste“) und ob er nur auf Anfrage ist.
+die Disposition nur von Hand. Die Seite der Person zeigt neben jedem Bereich, woher er kommt
+(„Gruppe …“, „Historie: 10 Dienste“) und ob er nur von Hand ist.
 
 Einstellungen aus einer Version vor 0.25.0 bleiben bei „Gruppen“, damit derselbe Lauf dasselbe ergibt; die
 Option **Bei Gruppen: Bereiche aus der Historie ab …** wirkt nur dort. **Bereiche ohne Dienst in den letzten …
-Monaten nur auf Anfrage** gilt bei jedem Wert, für Bereiche, in denen jemand früher gearbeitet hat und zuletzt
+Monaten nur von Hand** gilt bei jedem Wert, für Bereiche, in denen jemand früher gearbeitet hat und zuletzt
 nicht mehr.
 
 Ohne die letzte Option wird eine Schicht nur fair verteilt, wenn ihre Schichtregel in der Zuordnung „Fair

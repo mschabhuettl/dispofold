@@ -165,6 +165,11 @@ def test_owner_script_finds_identical_and_anonymous_differences(source, tmp_path
                            extra={"areaSource": "reserve", "historyAreaDuties": 3, "areaCounts": counts}))
     assert "Bereiche einer Person aus: Historie, Gruppen als Reserve (ab 3 Diensten)" in hist.stdout, hist.stdout
     assert "Bereiche: 40 mit einer Gruppe als Quelle" in hist.stdout and "12 aus Gruppen als Reserve" in hist.stdout
+    # since 0.26.0: the restrictions as rows and as the pages show them
+    rows = compare(_bundle(tmp_path / "zeilen.zip", out, args, extra={"restrictionCounts": {
+        "rows": 646, "exceptions": 479, "lines": 478, "statesOnRequest": 58, "statesNever": 0}}))
+    assert "Einschränkungen: 646 Zeilen; auf den Seiten 58 Bereiche „nur von Hand“, 0 „nie“ und 479 Ausnahmen in 478 Zeilen" \
+        in rows.stdout, rows.stdout
     assert "nicht automatisch fair verteilt" in off.stdout
     # the same result compared as if nights were marked automatically: the difference shows
     assert compare(_bundle(tmp_path / "mit-nacht.zip", plain_out, args, nights_fair=True)).returncode == 1

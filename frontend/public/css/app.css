@@ -589,3 +589,19 @@ tr.row-added > td { background: var(--primary-tint); }
   .spread svg { max-width: 100%; height: auto; }
   .guide, .guide-online { overflow-wrap: anywhere; }
 }
+
+/* Personen → Bereiche: the matrix of areas; the state as a sign and a word, colour only on top */
+.area-matrix-wrap { overflow-x: auto; }
+table.area-matrix th[scope="col"] { white-space: nowrap; }
+table.area-matrix td { padding: 0; }
+.area-cell { display: block; width: 100%; padding: .25rem .4rem; border: 1px solid transparent; background: transparent; color: var(--text); font: inherit; text-align: left; white-space: nowrap; }
+button.area-cell { cursor: pointer; }
+button.area-cell:hover { background: var(--surface-2); }
+button.area-cell:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+.area-cell.state-PLAN { color: var(--success); }
+.area-cell.state-ON_REQUEST { color: var(--accent); font-weight: 600; }
+.area-cell.state-NEVER { color: var(--danger); font-weight: 600; }
+.area-cell.state-OUT { color: var(--text-muted); }
+.area-mark { margin-left: .15rem; }
+.area-state { display: flex; flex-wrap: wrap; align-items: end; gap: .2rem .8rem; margin-bottom: .4rem; }
+.area-state ul.area-exceptions { flex-basis: 100%; margin: 0 0 0 1rem; }

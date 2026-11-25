@@ -23,8 +23,8 @@ erhalten. **Plan fixieren** macht das Gegenteil: Es fixiert alle geplanten Diens
 etwa wenn der Plan schon ausgehängt ist. Neu planen ändert sie dann nicht mehr und setzt Dienste nur noch an freien
 Tagen; freie Tage bleiben offen, damit sich für eine Lücke noch jemand findet. Hat ein Bedarf ein **Höchstens** über
 dem **Mindestens**, kann neu planen dort auch zusätzliche Dienste setzen, um Stunden zu treffen; wer das bei einem
-ausgehängten Plan nicht will, trägt die Krankmeldung ein und besetzt die Lücke über die Liste „Auf Anfrage
-verfügbar“ statt neu zu planen. Eine danach eingetragene
+ausgehängten Plan nicht will, trägt die Krankmeldung ein und besetzt die Lücke über die Liste „Von Hand
+einsetzbar“ statt neu zu planen. Eine danach eingetragene
 Abwesenheit auf einem fixierten Dienst bleibt ein Konflikt, bis man den Dienst in der Zelle entfernt (siehe
 [Plan bearbeiten](plan-bearbeiten.md#von-hand-ändern-und-fixieren)).
 
@@ -84,7 +84,7 @@ Personenstunden und die Abzüge der Planqualität; die Rohzahl zeigt der Tooltip
 ![Ein Klick auf einen Knopf listet die Treffer](../screenshots/treffer.png)
 
 Ein Klick auf die Zahl eines Tages in der Zeile **Bedarfslücken** des Dienstplans listet die Lücken dieses Tages
-mit Bereich, Uhrzeit und fehlender Besetzung, jeweils mit der Liste **Auf Anfrage verfügbar**.
+mit Bereich, Uhrzeit und fehlender Besetzung, jeweils mit der Liste **Von Hand einsetzbar**.
 
 **Was ist ein guter Plan?** Keine Regelverstöße (sonst darf er so nicht verwendet werden) und keine Lücken, die
 sich füllen lassen. Die Zahlen der Qualitätsregeln sind nie 0; sie helfen, zwei Läufe zu vergleichen. Wichtige
@@ -170,15 +170,15 @@ wo eine Zahl auffällt (eine Person mit vielen Treffern). Typische Regelverstö�
 
 ### Offener Bedarf
 
-![Offener Bedarf mit der Liste Auf Anfrage verfügbar](../screenshots/pruefen-bedarf.png)
+![Offener Bedarf mit der Liste Von Hand einsetzbar](../screenshots/pruefen-bedarf.png)
 
 Die Lücken nach Tagen, je Lücke Bereich, Uhrzeit, wie viele Personen fehlen, welche Funktionen des Bereichs in
-diese Zeit fallen und ein Link zur **Zeitachse** auf Bereich und Tag. **Auf Anfrage verfügbar** klappt die
+diese Zeit fallen und ein Link zur **Zeitachse** auf Bereich und Tag. **Von Hand einsetzbar** klappt die
 Personen auf, die man fragen kann; ein Klick auf einen Namen setzt den Dienst. Siehe
-[Dienste nur auf Anfrage](plan-bearbeiten.md#dienste-nur-auf-anfrage). Während einer Planung und in einem
+[Dienste nur von Hand](plan-bearbeiten.md#dienste-nur-von-hand). Während einer Planung und in einem
 abgeschlossenen Monat fehlt dieser Knopf.
 
-Bleibt eine Lücke, obwohl niemand auf Anfrage passt, gibt es drei Wege: jemanden von Hand einteilen, der den
+Bleibt eine Lücke, obwohl niemand von Hand einsetzbar ist, gibt es drei Wege: jemanden von Hand einteilen, der den
 Dienst normal machen darf (die Prüfung zeigt danach, ob das eine Regel verletzt), den Bedarf an diesem Tag prüfen
 oder die Lücke bewusst offen lassen und den Monat mit **Trotzdem abschließen** abschließen.
 
@@ -196,7 +196,7 @@ Eintrag sagt, was zu tun ist, und verweist auf die Person, die **Stammdaten** (b
 | „In ihrem Bereich gibt es keine Schicht.“ | für den Bereich Schichten anlegen oder der Person einen anderen Bereich zuordnen |
 | „Einschränkungen „Nie“ schließen jede Schicht ihrer Bereiche aus.“ | die Einschränkungen der Person prüfen |
 | „Bereich … hat keinen Bedarf.“ | Bedarf für den Bereich anlegen, sonst zählt jeder Dienst dort als Überbesetzung |
-| „Bereich …, Mo 07:00-15:00: an … Tagen kann niemand eingeplant werden (ab …).“ | für eine Bedarfszeile gibt es an diesen Tagen niemanden, der beschäftigt ist, den Bereich hat, nicht abwesend ist und eine Schicht des Bereichs zu dieser Zeit machen darf („Nur auf Anfrage“ zählt als möglich): Personen den Bereich zuordnen, Einschränkungen „Nie“ und Abwesenheiten prüfen oder den Bedarf ändern. Der Verweis **Zum Bedarf** zeigt die Zeile in den Stammdaten |
+| „Bereich …, Mo 07:00-15:00: an … Tagen kann niemand eingeplant werden (ab …).“ | für eine Bedarfszeile gibt es an diesen Tagen niemanden, der beschäftigt ist, den Bereich hat, nicht abwesend ist und eine Schicht des Bereichs zu dieser Zeit machen darf („Nur von Hand“ zählt als möglich): Personen den Bereich zuordnen, Einschränkungen „Nie“ und Abwesenheiten prüfen oder den Bedarf ändern. Der Verweis **Zum Bedarf** zeigt die Zeile in den Stammdaten |
 | „Die gewohnte Verteilung … ergibt … statt 100 %.“ | die Anteile so ändern, dass sie 100 % ergeben |
 | „Die gewohnte Verteilung nennt den Bereich …, den die Person nicht hat.“ | den Anteil entfernen oder den Bereich zuordnen |
 | „Der Nachtanteil der gewohnten Verteilung zählt nicht, …“ | nichts, wenn das so gewollt ist (Einstellung **Nachtdienste** oder nie Nacht) |

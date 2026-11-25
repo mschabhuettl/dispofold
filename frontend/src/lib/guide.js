@@ -42,7 +42,7 @@ export const guideFile = (page) => `anleitung/${page}.html`;
 /** Section of the guide for each page of the program: "<page>" or "<page>#<anchor of a heading on it>". */
 export const SECTIONS = { plan: 'plan-bearbeiten', funktionen: 'plan-bearbeiten#plan-nach-funktion',
   zeitachse: 'plan-bearbeiten#bereichs-zeitachse', pruefen: 'planen#probleme', fairness: 'auswertungen#fairness',
-  eingaben: 'eingaben', person: 'personen', regeln: 'einstellungen', stammdaten: 'stammdaten', import: 'daten',
+  eingaben: 'eingaben', person: 'personen', bereiche: 'personen#bereiche-aller-personen', regeln: 'einstellungen', stammdaten: 'stammdaten', import: 'daten',
   einstellungen: 'updates#updates-im-programm-am-eigenen-rechner', erweiterungen: 'erweiterungen' };
 
 /** Anchor of a heading as on GitHub and on the site: lower case, punctuation removed, spaces to hyphens. */

@@ -1,6 +1,7 @@
 // Application shell: user, month picker, navigation and hash routing.
 import { createApi } from './lib/api.js';
 import { datasetCache as createDatasetCache } from './lib/dataset-cache.js';
+import { withEffectiveRestrictions } from './lib/area-states.js';
 import { addMonths, monthLabel } from './lib/dates.js';
 import { restartAndReload, frontEndMode, showPage } from './lib/desktop.js';
 import { guarded, h, toast } from './lib/dom.js';
@@ -13,6 +14,7 @@ import * as roster from './views/roster.js';
 import * as timeline from './views/timeline.js';
 import * as functions from './views/functions.js';
 import * as person from './views/person.js';
+import * as areaMatrix from './views/area-matrix.js';
 import * as fairness from './views/fairness.js';
 import * as check from './views/check.js';
 import * as rules from './views/rules.js';
@@ -37,7 +39,8 @@ const ROUTES = [
   { path: 'pruefen', group: 'check', label: t('nav.check'), tab: t('nav.tab.problems'), view: check, month: true },
   { path: 'fairness', group: 'check', label: t('nav.fairness'), tab: t('nav.tab.fairness'), view: fairness, month: true, viewer: 'fairness' },
   { path: 'eingaben', group: 'inputs', label: t('nav.inputs'), view: inputs, month: true },
-  { path: 'person', group: 'people', label: t('nav.person'), view: person, month: true, viewer: 'people' },
+  { path: 'person', group: 'people', label: t('nav.person'), tab: t('nav.tab.people'), view: person, month: true, viewer: 'people' },
+  { path: 'bereiche', group: 'people', label: t('nav.areaMatrix'), tab: t('nav.tab.areaMatrix'), view: areaMatrix, viewer: 'people' },
   { path: 'regeln', group: 'settings', label: t('nav.rules'), tab: t('nav.tab.rules'), view: rules },
   { path: 'stammdaten', group: 'settings', label: t('nav.masterdata'), tab: t('nav.tab.masterdata'), view: masterdata },
   { path: 'import', group: 'settings', label: t('nav.import'), tab: t('nav.tab.data'), view: importExport, month: true },
@@ -50,7 +53,7 @@ const EXTENSIONS_ROUTE = { path: 'erweiterungen', group: 'settings', label: t('n
 const GUIDE_ROUTE = { path: 'anleitung', group: 'guide', label: t('nav.guide'), view: guide };
 /** The intro under the title of each page, by path. */
 const INTROS = { plan: t('help.page.plan'), funktionen: t('help.page.funktionen'), zeitachse: t('help.page.zeitachse'),
-  pruefen: t('help.page.pruefen'), fairness: t('help.page.fairness'), eingaben: t('help.page.eingaben'), person: t('help.page.person'),
+  pruefen: t('help.page.pruefen'), fairness: t('help.page.fairness'), eingaben: t('help.page.eingaben'), person: t('help.page.person'), bereiche: t('help.page.bereiche'),
   regeln: t('help.page.regeln'), stammdaten: t('help.page.stammdaten'), import: t('help.page.import'), einstellungen: t('help.page.einstellungen'),
   erweiterungen: t('help.page.erweiterungen'), anleitung: t('help.page.anleitung') };
 const GROUPS = { plan: t('nav.group.plan'), check: t('nav.group.check'), inputs: t('nav.group.inputs'), people: t('nav.group.people'),
@@ -84,7 +87,8 @@ window.addEventListener('dispofold-download', (e) => {
 const main = document.getElementById('main');
 const monthInput = document.getElementById('month');
 let cleanup = null;
-const datasetCache = createDatasetCache(() => api.dataset());
+// the pages see the area states as read and `restrictions` with them as rows, as the server plans (lib/area-states.js)
+const datasetCache = createDatasetCache(() => api.dataset().then(withEffectiveRestrictions));
 let renderCount = 0;
 let currentHash = location.hash;
 const MONTH_RE = /^\d{4}-(0[1-9]|1[0-2])$/;

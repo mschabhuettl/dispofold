@@ -8,8 +8,8 @@ import { fmt, h, toast } from '../lib/dom.js';
 import { goalReasons, groupHitsByDate, hitEffect, hitSummary } from '../lib/explain.js';
 import { personName } from '../lib/grid-model.js';
 import { constraintLabel, hitText } from '../lib/codes.js';
-import { CATEGORIES, conflictDecision, fromForm, inUseQuestion, itemLabel, restrictionFromForm, restrictionText, toForm } from '../lib/masterdata-edit.js';
-import { areaOnRequest, areaRestriction, setAreaRestriction } from '../lib/restrictions.js';
+import { CATEGORIES, conflictDecision, fromForm, inUseQuestion, itemLabel, restrictionFromForm, toForm } from '../lib/masterdata-edit.js';
+import { exceptionLines } from '../lib/area-states.js';
 import { accountRestShort, nightStatus } from '../lib/fairness.js';
 import { info } from '../lib/info.js';
 import { effectiveMix, MIX_CATEGORIES, mixFromForm, mixNightNote, mixRows, mixText, nightNote, sharePercent } from '../lib/shift-mix.js';
@@ -19,8 +19,8 @@ import { control, de, employmentText, problemAlert, readForm } from './masterdat
 
 const LEVEL = { HARD: t('person.level.hard'), MEDIUM: t('person.level.medium'), SOFT: t('person.level.soft') };
 const CATEGORY = { EARLY: t('masterdata.category.early'), DAY: t('masterdata.category.day'), LATE: t('masterdata.category.late'), NIGHT: t('masterdata.category.night') };
+const CATEGORY_NAMES = CATEGORY;
 const WEEKDAY_OPTIONS = WEEKDAY_SHORT.map((d, i) => [String(i + 1), d]);
-const AREA_KINDS = [['NONE', t('people.area.none')], ['ON_REQUEST', t('people.area.onRequest')], ['NEVER', t('people.area.never')]];
 const NEW = 'neu';
 const inline = { fontWeight: 400, marginRight: '.6rem' };
 const bare = { border: 0, padding: 0, margin: 0 };
@@ -239,7 +239,8 @@ function editor(root, ctx, initial, personId, rules) {
   let baseRestrictions;
   const rebase = () => {
     base = key == null ? null : dataset.people.find((p) => p.id === key) ?? null;
-    baseRestrictions = key == null ? [] : (dataset.restrictions ?? []).filter((r) => r.personId === key);
+    // the exceptions as read: the states of the areas belong to the person (lib/area-states.js)
+    baseRestrictions = key == null ? [] : (dataset.exceptions ?? dataset.restrictions ?? []).filter((r) => r.personId === key);
   };
   rebase();
   const master = [{ name: 'firstName', label: t('masterdata.col.firstName'), help: t('help.field.people.firstName'), required: true }, { name: 'lastName', label: t('masterdata.col.lastName'), help: t('help.field.people.lastName'), required: true },
@@ -249,7 +250,6 @@ function editor(root, ctx, initial, personId, rules) {
     { name: 'compRestBalance', label: t('masterdata.col.compRestOpen'), help: t('help.field.people.compRestBalance'), type: 'number', step: 1, min: 0, required: true },
     { name: 'externalId', label: t('masterdata.col.externalId'), help: t('help.field.people.externalId') }];
   const employment = [{ name: 'entryDate', label: t('masterdata.entryDate'), help: t('help.field.people.entryDate'), type: 'date' }, { name: 'exitDate', label: t('masterdata.exitDate'), help: t('help.field.people.exitDate'), type: 'date' }];
-  const areaField = () => ({ name: 'areaIds', label: t('masterdata.col.areas'), help: t('help.field.people.areaIds'), type: 'checks', options: dataset.areas.map((a) => [a.id, `${a.name} (${a.id})`]) });
   const addFields = () => [
     { name: 'target', label: t('masterdata.restriction.target'), help: t('help.field.restrictions.target'), type: 'select', options: [...CATEGORIES.map((c) => [`category:${c}`, t('masterdata.restriction.category', { category: CATEGORY[c] })]),
       ...dataset.shifts.map((s) => [`shift:${s.id}`, `${s.code} ${s.name}`])] },
@@ -264,51 +264,49 @@ function editor(root, ctx, initial, personId, rules) {
   function draw(values = toForm('people', base), restrictions = baseRestrictions) {
     local = restrictions.map((r) => ({ ...r }));
     const shifts = new Map(dataset.shifts.map((s) => [s.id, s]));
-    const items = h('ul', {});
-    const switches = h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '.4rem .8rem', alignItems: 'end' } });
     const add = addFields();
-    const ticked = () => [...form.querySelectorAll('input[name="areaIds"]:checked')].map((c) => c.value);
-    const drawItems = () => {
-      items.replaceChildren(...(local.length ? local.map((r, i) => h('li', {}, restrictionText(r, shifts), ' ',
-        h('button.btn-link', { type: 'button', 'aria-label': t('masterdata.restriction.removeLabel', { text: restrictionText(r, shifts) }),
-          onclick: () => { local.splice(i, 1); drawItems(); } }, t('masterdata.remove')))) : [h('li.muted', {}, t('masterdata.restriction.none'))]));
-      drawSwitches();
+    const chosen = () => [...form.querySelectorAll('select[data-area-state]')].filter((x) => x.value).map((x) => x.dataset.areaState);
+    // per area its state, where it comes from (an import's areaSources) and below it only its exceptions, one line per
+    // shift with the weekdays and dates folded in; exceptions by category and of shifts of other areas after them
+    const areaRows = new Map();
+    const extra = h('div', {});
+    const lineItem = (line) => h('li', { 'data-exception': line.target }, line.text, ' ',
+      h('button.btn-link', { type: 'button', 'aria-label': t('masterdata.restriction.removeLabel', { text: line.text }),
+        onclick: () => { local = local.filter((r) => !line.rows.includes(r)); drawExceptions(); } }, t('masterdata.remove')));
+    const drawExceptions = () => {
+      const areas = chosen();
+      const lines = exceptionLines(local, key, shifts, CATEGORY_NAMES, areas);
+      for (const [areaId, row] of areaRows) {
+        const own = lines.filter((l) => l.areaId === areaId);
+        row.list.replaceChildren(...own.map(lineItem));
+        row.list.hidden = !own.length || !areas.includes(areaId);
+        const source = base?.areaSources ? (base.areaSources[areaId] || t('people.area.byHand')) : null;
+        row.source.textContent = areas.includes(areaId) && source ? t('people.area.source', { source }) : '';
+      }
+      const rest = lines.filter((l) => !l.areaId);
+      extra.replaceChildren(...(rest.length ? [h('p', {}, h('strong', {}, t('people.exceptions.other'))), h('ul', {}, rest.map(lineItem))] : []));
     };
-    // next to each ticked area: where it comes from (an import's areaSources; "von Hand" for an area it did not give)
-    // and whether its shifts are on request, so that a tick is not read as "is planned there"
-    const drawNotes = () => form.querySelectorAll('input[name="areaIds"]').forEach((box) => {
-      box.parentElement.querySelector('[data-area-note]')?.remove();
-      if (!box.checked) return;
-      const sources = base?.areaSources;
-      const parts = [];
-      if (sources) parts.push(sources[box.value] || t('people.area.byHand'));
-      const ids = dataset.shifts.filter((s) => s.areaId === box.value).map((s) => s.id);
-      const request = areaOnRequest(local, key, ids);
-      if (request !== 'NONE') parts.push(request === 'ALL' ? t('people.area.allOnRequest') : t('people.area.someOnRequest'));
-      if (parts.length) box.parentElement.append(h('span.muted', { 'data-area-note': box.value }, ` (${parts.join(', ')})`));
-    });
-    // "ganzer Bereich" per ticked area: the same records as setting each of its shifts for every day by hand
-    const drawSwitches = () => { drawNotes(); switches.replaceChildren(...ticked().map((areaId) => {
-      const ids = dataset.shifts.filter((s) => s.areaId === areaId).map((s) => s.id);
-      const state = areaRestriction(local, key, ids);
-      const name = dataset.areas.find((a) => a.id === areaId)?.name ?? areaId;
-      const id = `f-area-${areaId}`;
-      return h('div.field', {}, h('label', { for: id }, t('people.area.switch', { name })),
-        h('select', { id, 'data-area': areaId, disabled: !ids.length, onchange: (e) => {
-          local = setAreaRestriction(local, key, ids, e.target.value);
-          drawItems();
-        } }, AREA_KINDS.map(([v, label]) => h('option', { value: v, selected: v === state }, label)),
-        state === 'MIXED' && h('option', { value: 'MIXED', disabled: true, selected: true }, t('people.area.mixed'))));
-    })); };
-    const restrictionsBlock = h('div', { style: wide }, h('strong', {}, t('masterdata.col.restrictions')),
-      info(t('help.field.people.restrictions'), t('masterdata.col.restrictions')), h('p.muted', {}, t('people.restrictions.help')),
-      switches, items,
+    const states = values.areaStates ?? {};
+    const areasBlock = h('div', { style: wide, id: 'person-areas' }, h('div.with-info', {}, h('strong', {}, t('masterdata.col.areas')),
+      info(t('help.field.people.areaIds'), t('masterdata.col.areas'))),
+    dataset.areas.map((a) => {
+      const id = `f-area-${a.id}`;
+      const value = !(values.areaIds ?? []).includes(a.id) ? '' : states[a.id] ?? 'PLAN';
+      const select = h('select', { id, 'data-area-state': a.id },
+        [['', t('areaState.out')], ['PLAN', t('areaState.plannable')], ['ON_REQUEST', t('areaState.manual')], ['NEVER', t('areaState.never')]]
+          .map(([v, label]) => h('option', { value: v, selected: v === value }, label)));
+      const row = { list: h('ul.area-exceptions', {}), source: h('span.muted', { 'data-area-source': a.id }) };
+      areaRows.set(a.id, row);
+      return h('div.area-state', { 'data-area': a.id }, h('div.field', {}, h('label', { for: id }, `${a.name} (${a.id})`), select), row.source, row.list);
+    }), extra);
+    const restrictionsBlock = h('div', { style: wide }, h('strong', {}, t('people.exceptions')),
+      info(t('help.field.people.restrictions'), t('people.exceptions')), h('p.muted', {}, t('people.restrictions.help')),
       h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '.4rem .8rem', alignItems: 'end' } },
         add.map((f) => control(f, f.type === 'date' ? '' : f.options[0][0])),
         h('button.btn.btn-secondary.btn-small', { type: 'button', onclick: () => {
           try {
             local.push(restrictionFromForm(key, readForm(form, add)));
-            drawItems();
+            drawExceptions();
           } catch (err) {
             showProblem(err);
           }
@@ -319,27 +317,33 @@ function editor(root, ctx, initial, personId, rules) {
     } },
     base && h('span.muted', { style: wide }, `${t('masterdata.col.id')}: ${base.id}`),
     master.map((f) => control(f, values[f.name])), employment.map((f) => control(f, values[f.name])),
-    h('div', { style: wide }, control(areaField(), values.areaIds)),
+    areasBlock,
     // the night note and the shares that apply, from the person as stored (a new person: the note of the mode)
     mixEditor(dataset, values.shiftMix, rules?.nightDistribution, base != null && neverNightShifts(dataset, base, ctx.month, rules)), restrictionsBlock, familyEditor(values.familyRules ?? []),
     h('div.toolbar', { style: wide }, h('button.btn.btn-primary', { type: 'submit' }, t('common.save')),
       h('button.btn.btn-secondary', { type: 'button', onclick: () => (key == null ? ctx.navigate('person') : draw()) }, t('common.cancel')),
       base && h('button.btn.btn-secondary', { type: 'button', onclick: remove }, t('people.remove'))),
     h('div.form-problems', { 'aria-live': 'polite', style: wide }));
-    // the area shares and the area switches follow the ticked areas
+    // the area shares and the exceptions follow the chosen areas
     const sync = () => {
-      const on = new Set(ticked());
+      const on = new Set(chosen());
       form.querySelectorAll('div[data-mix-area]').forEach((el) => { el.hidden = !on.has(el.dataset.mixArea); });
-      drawSwitches();
+      drawExceptions();
     };
-    form.addEventListener('change', (e) => { if (e.target.name === 'areaIds') sync(); });
+    form.addEventListener('change', (e) => { if (e.target.dataset.areaState) sync(); });
     section.querySelector('form')?.remove();
     section.append(form);
-    drawItems();
     sync();
   }
 
-  const readValues = () => ({ ...readForm(form, [...master, ...employment, areaField()]), familyRules: readFamily(form), shiftMix: readMix(form) });
+  /** The areas and their states as the form shows them. */
+  const readAreas = () => {
+    const selects = [...form.querySelectorAll('select[data-area-state]')].filter((x) => x.value);
+    return { areaIds: selects.map((x) => x.dataset.areaState),
+      areaStates: Object.fromEntries(selects.filter((x) => x.value !== 'PLAN').map((x) => [x.dataset.areaState, x.value])) };
+  };
+
+  const readValues = () => ({ ...readForm(form, [...master, ...employment]), ...readAreas(), familyRules: readFamily(form), shiftMix: readMix(form) });
 
   async function submit() {
     const values = readValues();

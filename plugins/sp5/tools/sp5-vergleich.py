@@ -243,6 +243,12 @@ def main(argv: list[str] | None = None) -> int:
                          f"{counts.get('reserve', 0)} aus Gruppen als Reserve und {counts.get('droppedGroupAreas', 0)} "
                          f"aus Gruppen weggelassen; {counts.get('peopleWithoutHistory', 0)} Personen ohne Bereich aus "
                          "der Historie")
+        if isinstance(request.get("restrictionCounts"), dict):
+            # since 0.26.0: the restrictions as rows and as the pages of Dispofold show them (numbers only)
+            rc = request["restrictionCounts"]
+            lines.append(f"Einschränkungen: {rc.get('rows', 0)} Zeilen; auf den Seiten {rc.get('statesOnRequest', 0)} Bereiche "
+                         f"„nur von Hand“, {rc.get('statesNever', 0)} „nie“ und {rc.get('exceptions', 0)} Ausnahmen in "
+                         f"{rc.get('lines', 0)} Zeilen")
         code, stderr = run_python(checkout, Path(args.daten).resolve(), work, request)
         if code != 0:
             lines.append(f"sp5_export.py endete mit Fehler (Code {code}); kein Vergleich möglich")

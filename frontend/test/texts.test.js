@@ -44,7 +44,7 @@ test('every text key is used', () => {
 
 // One term each (docs/anleitung/begriffe.md): the old names of levels, rules, inputs and badges are gone from every text
 // ("Strafe" is a deduction of the plan quality: "Abzug").
-const OLD_TERMS = /Sollstunden|Monatssoll|Ziel für diesen Plan|\bfixe[nrs]?\b|Fixe Dienste|Eingaben geändert|Vormonat geändert|Schichtmix|\bMix\b|Familienw[uü]nsch|Blocktage|Wer kann gefragt|\bhart(e[nrs]?)?\b|\bweich(e[nrs]?)?\b|\bStufen?\b|\bStrafen?\b|dispofold\/dataset|docs\/|Version 2\b/i;
+const OLD_TERMS = /Sollstunden|Monatssoll|Ziel für diesen Plan|\bfixe[nrs]?\b|Fixe Dienste|Eingaben geändert|Vormonat geändert|Schichtmix|\bMix\b|Familienw[uü]nsch|Blocktage|Wer kann gefragt|\bhart(e[nrs]?)?\b|\bweich(e[nrs]?)?\b|\bStufen?\b|\bStrafen?\b|dispofold\/dataset|docs\/|Version 2\b|auf Anfrage/i;
 
 test('no text uses an old term', () => {
   assert.deepEqual(Object.entries(TEXTS).filter(([, v]) => OLD_TERMS.test(v)).map(([k]) => k), []);

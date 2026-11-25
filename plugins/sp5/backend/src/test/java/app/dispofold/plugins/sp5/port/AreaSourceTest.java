@@ -126,7 +126,7 @@ class AreaSourceTest {
         assertThat(restrictions(reserve)).containsExactly(Map.entry("E1", new TreeSet<>(List.of("S2 ON_REQUEST 0"))));
         assertThat(reserve.warnings()).anySatisfy(w -> assertThat(w).startsWith(
                 "Bereiche einer Person aus der Historie (ab 3 Diensten, Gruppen als Reserve): 2 Bereiche aus der Historie, "
-                        + "1 aus Gruppen als Reserve nur auf Anfrage, 0 aus Gruppen weggelassen; 2 Mitarbeiter"));
+                        + "1 aus Gruppen als Reserve nur von Hand, 0 aus Gruppen weggelassen; 2 Mitarbeiter"));
         assertThat(reserve.areaCounts()).containsEntry("fromHistory", 2).containsEntry("reserve", 1)
                 .containsEntry("peopleWithoutHistory", 2);
         // where each area comes from: per area only the groups that give it

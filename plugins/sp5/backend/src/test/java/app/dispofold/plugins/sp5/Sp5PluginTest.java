@@ -207,6 +207,10 @@ class Sp5PluginTest {
         JsonNode question = mapper.readTree(zip.get("anfrage.json"));
         assertThat(question.path("format").asText()).isEqualTo("dispofold/sp5-ergebnis");
         assertThat(question.path("nightsFair").asBoolean()).isTrue();
+        // the restrictions as rows and as the pages show them, numbers only
+        assertThat(question.path("restrictionCounts").path("rows").asInt()).isGreaterThanOrEqualTo(
+                question.path("restrictionCounts").path("exceptions").asInt());
+        assertThat(question.path("restrictionCounts").has("statesOnRequest")).isTrue();
         List<String> args = new ArrayList<>();
         question.path("args").forEach(a -> args.add(a.asText()));
         assertThat(args).containsExactly("--month", "2027-01", "--to", "2027-02", "--history-months", "1",

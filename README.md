@@ -139,9 +139,9 @@ Betrieb.
 |---|---|
 | ![Stammdaten](docs/screenshots/stammdaten.png) | ![Plan nach Funktion](docs/screenshots/funktionen.png) |
 
-| Auf Anfrage verfügbar |
+| Von Hand einsetzbar |
 |---|
-| ![Auf Anfrage verfügbar](docs/screenshots/anfrage.png) |
+| ![Von Hand einsetzbar](docs/screenshots/anfrage.png) |
 
 | Dienstplan, dunkel | Bereichs-Zeitachse, dunkel |
 |---|---|

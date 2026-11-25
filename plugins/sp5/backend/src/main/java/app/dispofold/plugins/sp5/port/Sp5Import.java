@@ -1913,7 +1913,7 @@ final class Sp5Import {
         areaCounts.put("peopleWithoutHistory", without);
         warn("Bereiche einer Person aus der Historie (ab " + historyAreaDuties + " Diensten"
                 + ("reserve".equals(areaSource) ? ", Gruppen als Reserve" : "") + "): " + fromHistory
-                + " Bereiche aus der Historie, " + kept + " aus Gruppen als Reserve nur auf Anfrage, " + dropped
+                + " Bereiche aus der Historie, " + kept + " aus Gruppen als Reserve nur von Hand, " + dropped
                 + " aus Gruppen weggelassen; " + without + " Mitarbeiter ohne Bereich mit " + historyAreaDuties
                 + " Diensten behalten die Bereiche aus Gruppen");
     }
@@ -1962,7 +1962,7 @@ final class Sp5Import {
             }
         });
         if (!reserve.isEmpty()) {
-            warn("Bereiche aus Gruppen als Reserve: " + result.size() + " Einschränkungen 'nur auf Anfrage' ergänzt");
+            warn("Bereiche aus Gruppen als Reserve: " + result.size() + " Einschränkungen 'nur von Hand' ergänzt");
         }
         return result;
     }

@@ -84,10 +84,10 @@ test('restrictions: exactly one of shift and category', () => {
 
 test('restriction and family rule texts', () => {
   const shifts = new Map([['AN-F', { code: 'F1', name: 'Früh' }]]);
-  assert.equal(restrictionText({ shiftId: 'AN-F', category: null, weekday: 0, kind: 'NEVER', validFrom: null, validTo: null }, shifts), 'Nie: F1 Früh, jeden Tag');
+  assert.equal(restrictionText({ shiftId: 'AN-F', category: null, weekday: 0, kind: 'NEVER', validFrom: null, validTo: null }, shifts), 'nie: F1 Früh, jeden Tag');
   assert.equal(restrictionText({ shiftId: null, category: 'NIGHT', weekday: 1, kind: 'ON_REQUEST', validFrom: '2026-12-14', validTo: null }, shifts),
-    'Nur auf Anfrage: alle Nacht-Schichten, Mo, ab 14.12.2026');
-  assert.equal(restrictionText({ shiftId: 'GONE', weekday: 7, kind: 'NEVER', validTo: '2027-01-31' }, shifts), 'Nie: GONE, So, bis 31.01.2027');
+    'nur von Hand: alle Nacht-Schichten, Mo, ab 14.12.2026');
+  assert.equal(restrictionText({ shiftId: 'GONE', weekday: 7, kind: 'NEVER', validTo: '2027-01-31' }, shifts), 'nie: GONE, So, bis 31.01.2027');
   assert.equal(familyText(person.familyRules[0]), 'Di/Do: Ende bis 18:00, keine Nacht (Kind)');
 });
 

@@ -73,8 +73,8 @@ Bedarf hinaus sammeln. Die Seite einer Person sagt, warum Ziel und Soll sich unt
   alle.
 - **Familienregeln** (persönliche Regeln je Wochentag) und die **gewohnte Verteilung** sind Qualitätsregeln: Sie
   werden eingehalten, wenn es geht.
-- **Nur auf Anfrage:** Eine Schicht mit dieser Einschränkung plant das Programm für die Person nie selbst ein.
-  Siehe [Dienste nur auf Anfrage](plan-bearbeiten.md#dienste-nur-auf-anfrage).
+- **Nur von Hand:** Eine Schicht mit dieser Einschränkung plant das Programm für die Person nie selbst ein.
+  Siehe [Dienste nur von Hand](plan-bearbeiten.md#dienste-nur-von-hand).
 
 ## Monate und Historie
 

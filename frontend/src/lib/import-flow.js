@@ -84,6 +84,8 @@ export function importSteps(ctx, result, current = () => null) {
     result.replaceChildren(h('div.alert', {},
       h('strong', {}, t('import.summaryTitle', { source: s.source })), t('import.summary', { people: s.people, areas: s.areas, shifts: s.shifts, months: s.months.join(', ') || '–' }),
       s.kept ? h('p', {}, t('data.import.kept', { count: s.kept })) : null,
+      // what the import made of the people's areas, all at once
+      s.people ? h('p', {}, h('a', { href: '#/bereiche', id: 'import-check-areas' }, t('import.checkAreas'))) : null,
       s.warnings?.length ? [h('p', {}, h('strong', {}, t('import.warnings', { count: s.warnings.length }))), h('ul', {}, s.warnings.map((w) => h('li', {}, messageText(w))))] : null,
       s.months?.length && !s.months.includes(ctx.month) ? h('p', {}, button(t('import.switchMonth', { month: monthLabel(s.months[0]) }), () => ctx.setMonth(s.months[0]))) : null));
   };

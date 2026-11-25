@@ -49,7 +49,7 @@ Die Seite **Prüfen** steht in der Reihenfolge, in der man arbeitet. Alle Gruppe
 1. **Das Urteil** oben: „Nichts zu tun: 0 Regelverstöße, 0 Lücken“ (grün), sonst „Zuerst: …“ mit dem, was zuerst
    zu tun ist, etwa „Zuerst: 2 Regelverstöße beheben, dann 2 Lücken schließen (17 Personenstunden)“.
 2. **Regelverstöße:** jeder Verstoß gegen eine Regel, die der Plan einhalten muss. Diese zuerst beheben.
-3. **Offener Bedarf:** die Lücken nach Tagen, mit **Auf Anfrage verfügbar**.
+3. **Offener Bedarf:** die Lücken nach Tagen, mit **Von Hand einsetzbar**.
 4. **Hinweise zur Qualität (keine Fehler):** Überbesetzung, Dienste ohne Bedarf und die Qualitätsregeln mit großem
    Anteil an den Abzügen der Planqualität. Zugeklappt hinter „… Hinweise anzeigen“. Hier stehen oft Hunderte
    Einträge, auch bei einem grünen Plan: Jede Abweichung von einer Qualitätsregel ist ein Eintrag. Man liest sie

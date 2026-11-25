@@ -3,6 +3,20 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.26.0 (2026-11-25)
+
+- **Bereiche einer Person: planbar, nur von Hand, nie:** Auf der Seite einer Person hat jeder Bereich einen Zustand
+  statt eines Hakens: planbar (jede Schicht darf geplant werden), nur von Hand (die Planung plant die Person dort nie
+  selbst, ein Dienst lässt sich aber von Hand setzen) oder nie. Darunter stehen nur noch die Ausnahmen des Bereichs,
+  eine Zeile je Schicht mit den Wochentagen und Zeiten. Gespeichert, geplant und in Dateien geschrieben wird
+  dasselbe wie bisher, als Einschränkungen; ein Plan rechnet genau wie vorher.
+- **Bereiche aller Personen:** Ein neuer Reiter unter Personen zeigt alle Personen und Bereiche in einer Tabelle.
+  Ein Klick oder die Leertaste schaltet eine Zelle weiter, mehrere Personen und Bereiche lassen sich auf einmal
+  setzen; ein Stern zeigt Ausnahmen, die Zeile darunter die Herkunft. Wer nur lesen darf, sieht sie ohne Ändern.
+  Nach einem Import führt „Bereiche prüfen“ dorthin.
+- **Neues Wort:** „Nur auf Anfrage“ heißt jetzt überall „nur von Hand“, die Liste „Auf Anfrage verfügbar“ heißt
+  „Von Hand einsetzbar“. Gemeint ist dasselbe.
+
 ## 0.25.1 (2026-11-25)
 
 - **Vergleichsskript der Import-Erweiterung:** Es brach ab, sobald sich die Warnungen unterschieden, etwa bei

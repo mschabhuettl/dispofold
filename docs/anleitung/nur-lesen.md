@@ -19,6 +19,8 @@ Rechner gibt es diese Rolle nicht.
   nur die eigene Zeile.
 - Den Plan drucken oder als PDF speichern (**Ausgabe**, **Drucken**), so wie er am Bildschirm steht.
 - Die Seite jeder Person mit ihren Diensten, Stunden und Soll und der Antwort auf „Warum dieser Dienst?“.
+- Die Tabelle **Personen → Bereiche**: je Person und Bereich planbar, nur von Hand, nie oder nicht dabei, ohne
+  Ändern und ohne Ausnahmen und Herkunft.
 - Die Fairness-Übersicht: wie Nächte, Wochenenden, Feiertage und fair verteilte Dienste verteilt sind.
 - Die Zeile über dem Plan: ob der Plan Lücken hat und ob er **Entwurf** oder **abgeschlossen** ist, ohne die
   Knöpfe der einzelnen Regeln, die die Planung dort sieht. Ein Entwurf
@@ -33,8 +35,8 @@ wer ihre Adresse eingibt, landet im Dienstplan. Den Hinweis auf eine neue Versio
 Aus Datenschutzgründen sieht sie nicht:
 
 - Wünsche und die Quote erfüllter Wünsche,
-- Einschränkungen und Familienregeln von Personen (auch nicht die Markierung „nur auf Anfrage“ und nicht die
-  Liste **Auf Anfrage verfügbar**),
+- Einschränkungen und Familienregeln von Personen (auch nicht die Markierung „nur von Hand“ und nicht die
+  Liste **Von Hand einsetzbar**),
 - die gewohnte Verteilung, das Formular **Person bearbeiten** und die externe Id,
 - den Grund einer Abwesenheit (sie erscheint nur als „abwesend“, im Plan und in der Legende als „ABW“),
 - das Stundenkonto, das Ziel und die Ersatzruhe-Guthaben,

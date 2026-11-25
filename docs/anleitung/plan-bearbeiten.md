@@ -3,7 +3,7 @@
 Der **Dienstplan** zeigt den Plan des gewählten Monats auf drei Reitern: **Personen** (eine Zeile je Person, eine
 Spalte je Tag), **Funktionen** (derselbe Plan je Schicht, siehe [Plan nach Funktion](#plan-nach-funktion)) und
 **Zeitachse** (siehe [Bereichs-Zeitachse](#bereichs-zeitachse)). Hier ändert man einzelne Zellen, füllt Lücken
-mit Diensten auf Anfrage und druckt den Plan. Planen und das Ergebnis lesen: [Planen und Prüfen](planen.md).
+mit Diensten nur von Hand und druckt den Plan. Planen und das Ergebnis lesen: [Planen und Prüfen](planen.md).
 
 ## Dienstplan
 
@@ -16,7 +16,7 @@ mit Diensten auf Anfrage und druckt den Plan. Planen und das Ergebnis lesen: [Pl
 4. **Ausgabe:** **Drucken**, der Export als XLSX, CSV und JSON und **Monat abschließen**.
 5. **Legende:** zugeklappt; ein Klick öffnet sie, der Browser merkt sich die Wahl.
 6. **Bedarfslücken:** die Zahl der Lücken je Tag. Die Zeile bleibt beim Scrollen unter den Tagen stehen; ein Klick
-   auf eine Zahl listet die Lücken des Tages mit **Auf Anfrage verfügbar**.
+   auf eine Zahl listet die Lücken des Tages mit **Von Hand einsetzbar**.
 
 Darüber stehen **Planen**, **Stopp**, **Plan fixieren**, **Fixierungen lösen** und **Erweitert** und die Zeile mit
 dem Ergebnis; beides beschreibt [Planen und Prüfen](planen.md). Hat der Plan einen Konflikt oder eine Lücke, führt
@@ -33,7 +33,7 @@ seitlich scrollt (Wischen, Umschalt und Mausrad oder die Bildlaufleiste unten).
 - **Wochenenden** und **Feiertage** sind hinterlegt, der Kopf eines Feiertags trägt „Fei“.
 - **Fixierte Zellen** sind eingerahmt, eine geplante Ersatzruhe ist gestrichelt eingerahmt.
 - **Konflikt:** ein Dienst trotz Abwesenheit, rot, mit beiden Codes („K/A1“). Das ist ein Regelverstoß.
-- **Nur auf Anfrage:** ein von Hand gesetzter Dienst, den die Person nur auf Anfrage macht, hat unten links eine
+- **Nur von Hand:** ein von Hand gesetzter Dienst, der für die Person nur von Hand geht, hat unten links eine
   kleine Ecke.
 - Neben dem Namen stehen Kürzel und Wochenstunden; der Name führt zur Seite der Person.
 
@@ -62,19 +62,19 @@ Ein von Hand gesetzter Dienst kann eine Regel verletzen, etwa die Ruhezeit. Dann
 Überschrift wird rot. Deshalb nach Änderungen von Hand die Zeile über dem Plan ansehen und vor dem Abschluss prüfen.
 Während einer Planung und in einem abgeschlossenen Monat lassen sich Zellen nicht ändern.
 
-## Dienste nur auf Anfrage
+## Dienste nur von Hand
 
-![Auf Anfrage verfügbar bei einer Lücke](../screenshots/anfrage.png)
+![Von Hand einsetzbar bei einer Lücke](../screenshots/anfrage.png)
 
-Eine Einschränkung „Nur auf Anfrage“ (auf der Seite der Person, siehe
+Eine Einschränkung „Nur von Hand“ (auf der Seite der Person, siehe
 [Einschränkungen](personen.md#einschränkungen)) heißt: Das Programm plant diese Schicht für diese Person nie von
 selbst ein. Fehlt dadurch Personal, bleibt die Lücke im Plan stehen. Die Planung fragt die Person und setzt den
 Dienst dann von Hand.
 
-- **Auf Anfrage verfügbar:** Diese Liste steht bei jeder Lücke: im **Dienstplan** nach einem Klick auf die Zahl
+- **Von Hand einsetzbar:** Diese Liste steht bei jeder Lücke: im **Dienstplan** nach einem Klick auf die Zahl
   in der Zeile **Bedarfslücken**, unter **Funktionen** nach einem Klick auf eine Zelle der Zeile „offen“, in der
   Lückenliste der **Zeitachse** und unter **Prüfen**, **Offener Bedarf**. Sie nennt die Personen, für die eine
-  Schicht des Bereichs in dieser Lücke an diesem Tag nur auf Anfrage geht, die an dem Tag frei sind (kein Dienst,
+  Schicht des Bereichs in dieser Lücke an diesem Tag nur von Hand geht, die an dem Tag frei sind (kein Dienst,
   keine Abwesenheit, nicht fixiert) und für die der Dienst keinen Regelverstoß ergibt (auch nicht die
   Höchststunden im Monat). Je Person stehen Schicht, Datum und Stunden, etwa „geplant 96,0 h von Ziel 114,0 h“
   (das Ziel aus Soll und Stundenkonto, noch ohne Verkleinerung durch den Bedarf; auf der Seite der Person kann es
@@ -83,7 +83,7 @@ Dienst dann von Hand.
   normal machen darf (die leere Zelle der Person anklicken und die Schicht wählen), oder neu planen.
 - **Ein Klick auf einen Namen** setzt den Dienst für diese Person und fixiert ihn. Die nächste Planung behält
   ihn bei.
-- Im Plan ist ein solcher Dienst unten links mit einer kleinen Ecke markiert (**nur auf Anfrage**). Er zählt
+- Im Plan ist ein solcher Dienst unten links mit einer kleinen Ecke markiert (**nur von Hand**). Er zählt
   nicht als Regelverstoß.
 
 ## Plan nach Funktion
@@ -100,14 +100,14 @@ Ansicht beantwortet die Frage „Wer macht am 12. die Frühschicht in der Notruf
   Personen eingeteilt sind.
 - **In der Zelle** steht das Kürzel der Person, der ganze Name erscheint beim Darüberfahren. Unter **Anzeige**
   lässt sich stattdessen „Nachname Vorname“ wählen (Standard hier: „Kürzel“). Fixierte Dienste, Konflikte und
-  Dienste nur auf Anfrage sind markiert wie im Dienstplan.
+  Dienste nur von Hand sind markiert wie im Dienstplan.
 - **Zeile „offen“** (rot): Hat ein Bereich im Monat Bedarfslücken, steht direkt unter seinem Namen eine Zeile
   „offen“. Beim Scrollen bleiben Name und Zeile „offen“ des obersten Bereichs unter den Tagen stehen. Jede Lücke
   steht dort genau einmal, am Tag ihres Beginns (eine Lücke von 19:00 bis 07:00 also am ersten Tag), mit der Zahl
   der fehlenden Personen und der Uhrzeit, zum Beispiel „1 · 07:00-19:00“. Hat ein Tag mehr als drei Lücken,
   zeigt die Zelle die ersten zwei und „+N weitere“; alle stehen im Hinweis der Zelle und im Ausdruck.
 - **Ein Klick auf einen Namen** öffnet dieselbe Auswahl wie im Dienstplan (Dienst ändern, frei, fixieren).
-  **Ein Klick auf eine Zelle der Zeile „offen“** öffnet die Liste **Auf Anfrage verfügbar** für die Lücken
+  **Ein Klick auf eine Zelle der Zeile „offen“** öffnet die Liste **Von Hand einsetzbar** für die Lücken
   dieses Tages.
 - Mit den Pfeiltasten bewegt man sich wie im Dienstplan durch die Zellen, Enter öffnet die Auswahl.
 - Das Menü **Ausgabe** hat hier **Drucken** und den Export.
@@ -128,7 +128,7 @@ auf einer Zeitachse. Sie beantwortet die Frage „Wann genau fehlt jemand, und w
 4. **Besetzung gegen Bedarf:** die Mindestbesetzung (gestrichelt), die Höchstbesetzung und die geplante Besetzung
    als Fläche. Wo die Fläche unter der Mindestbesetzung liegt, ist die Lücke rot schraffiert.
 5. **Lücken im Zeitraum:** jede Lücke mit Von, Bis, der größten Zahl fehlender Personen und den Personenstunden.
-   **Auf Anfrage verfügbar** in einer Zeile klappt darunter die Personen auf, die man für diese Lücke fragen kann.
+   **Von Hand einsetzbar** in einer Zeile klappt darunter die Personen auf, die man für diese Lücke fragen kann.
 
 Die Links **Zeitachse** unter **Prüfen** öffnen diesen Reiter gleich auf Bereich und Tag des Eintrags.
 

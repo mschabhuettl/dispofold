@@ -130,6 +130,7 @@
         "exitDate": { "$ref": "#/$defs/dateOrNull" },
         "excludedFrom": { "$ref": "#/$defs/dateOrNull" },
         "areaSources": { "type": ["object", "null"], "additionalProperties": { "type": "string" } },
+        "areaStates": { "type": ["object", "null"], "additionalProperties": { "enum": ["ON_REQUEST", "NEVER"] } },
         "shiftMix": { "anyOf": [{ "$ref": "#/$defs/shiftMix" }, { "type": "null" }] }
       }
     },

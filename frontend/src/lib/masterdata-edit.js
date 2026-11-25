@@ -69,7 +69,7 @@ export function familyRuleFromForm(v) {
 
 const TO_FORM = {
   people: (p) => ({ firstName: p.firstName ?? '', lastName: p.lastName ?? '', shortName: p.shortName ?? '',
-    weeklyHours: String(p.weeklyHours ?? ''), areaIds: [...(p.areaIds ?? [])], hoursAccount: String(p.hoursAccount ?? 0),
+    weeklyHours: String(p.weeklyHours ?? ''), areaIds: [...(p.areaIds ?? [])], areaStates: { ...(p.areaStates ?? {}) }, hoursAccount: String(p.hoursAccount ?? 0),
     compRestBalance: String(p.compRestBalance ?? 0), externalId: p.externalId ?? '', entryDate: p.entryDate ?? '',
     exitDate: p.exitDate ?? '', familyRules: (p.familyRules ?? []).map(familyRuleToForm), shiftMix: mixToForm(p.shiftMix, p.areaIds) }),
   areas: (a) => ({ id: a.id ?? '', name: a.name ?? '', color: a.color ?? '' }),
@@ -101,6 +101,9 @@ const FROM_FORM = {
       familyRules: (v.familyRules ?? []).map(familyRuleFromForm), externalId: orNull(v.externalId), entryDate, exitDate };
     // the key stays absent for a person without a mix (and without one before)
     if (shiftMix || 'shiftMix' in base) person.shiftMix = shiftMix;
+    // "nur von Hand" and "nie" of the areas the person has; planbar is no entry
+    const states = Object.fromEntries(Object.entries(v.areaStates ?? {}).filter(([a, k]) => areaIds.includes(a) && k));
+    if (Object.keys(states).length || 'areaStates' in base) person.areaStates = states;
     return person;
   },
   areas: (v, base) => ({ ...base, id: required(v.id, t('masterdata.col.shortName')), name: required(v.name, t('masterdata.col.name')), color: orNull(v.color) }),
@@ -192,7 +195,8 @@ export function inUseQuestion(kind, item, params) {
 
 /** The list of a kind in a dataset; for 'restrictions' the restrictions of the person key. */
 function listOf(kind, dataset, key) {
-  if (kind === 'restrictions') return (dataset.restrictions ?? []).filter((r) => r.personId === key);
+  // the person's exceptions as the pages read them (the states of the areas are part of the person)
+  if (kind === 'restrictions') return (dataset.exceptions ?? dataset.restrictions ?? []).filter((r) => r.personId === key);
   return dataset[kind] ?? [];
 }
 

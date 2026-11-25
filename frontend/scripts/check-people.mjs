@@ -1,7 +1,8 @@
 // Playwright check of the Personen pages: the list searches by name, short name and area name and links to the page
 // of each person; planners edit everything about a person in the one form there (master data, usual mix,
-// restrictions with the area switch "ganzer Bereich", which gives the same records as entering each shift by hand
-// and shows "gemischt" when the shifts differ), create and remove a person; the switch "Aus dem Quellsystem nicht mehr
+// per area its state (planbar, nur von Hand, nie, nicht dabei) with its exceptions folded below it, a whole area
+// entered shift by shift reading as its state), create and remove a person; the matrix of all people and areas
+// (click, keyboard, several at once, filter, save, read only for viewers); the switch "Aus dem Quellsystem nicht mehr
 // übernehmen" (also for an exclusion the source applied) greys the person out in the list and is in the corrections
 // file until taken back; viewers get no form, no switch, no "Person anlegen" and no personal data from the server. Demo data of the dev server (mock API), month 2027-01 planned.
 //   npm run build && node scripts/check-people.mjs     (Chromium via `npx playwright install chromium`)
@@ -91,24 +92,27 @@ try {
     && (await page.locator('#main h1').innerText()) === personName(person), page.url());
   check('figures and explanation stay on the page', await page.locator('#h-hours').count() === 1 && await page.locator('#h-why').count() === 1);
 
-  // Edit through the one form: weekly hours, mix, area switch for area1, each shift of area2 by hand.
+  // Edit through the one form: weekly hours, mix, "nie" for area1, exceptions for a shift of area2 on two weekdays.
   const form = page.locator('#person-form');
   await page.fill('#f-weeklyHours', '30.5');
   await form.locator('input[data-mix-cat="DAY"]').fill('80');
   await form.locator('input[data-mix-cat="NIGHT"]').fill('20');
-  const switch1 = form.locator(`select[data-area="${area1}"]`);
-  const switch2 = form.locator(`select[data-area="${area2}"]`);
-  check('area switch labelled', (await form.locator(`label[for="f-area-${area1}"]`).innerText()) === `Ganzer Bereich ${areaName(area1)}`);
-  check('area switch starts at keine', await switch1.inputValue() === 'NONE');
-  await switch1.selectOption('NEVER');
-  check('area switch lists one restriction per shift', await form.locator('li', { hasText: /^Nie: .*, jeden Tag/ }).count() === shiftsOf(area1).length);
-  for (const s of shiftsOf(area2)) {
-    await form.locator('#f-target').selectOption(`shift:${s.id}`);
-    await form.locator('#f-weekday').selectOption('0');
+  const state1 = form.locator(`#f-area-${area1}`);
+  const state2 = form.locator(`#f-area-${area2}`);
+  check('each area has a state, labelled with its name', (await form.locator(`label[for="f-area-${area1}"]`).innerText()) === `${areaName(area1)} (${area1})`
+    && await state1.inputValue() === 'PLAN', await state1.inputValue());
+  check('the states in plain words', (await state1.locator('option').allInnerTexts()).join('|') === 'nicht dabei|planbar|nur von Hand|nie');
+  await state1.selectOption('NEVER');
+  const shift2 = shiftsOf(area2)[0];
+  for (const day of ['1', '2']) {
+    await form.locator('#f-target').selectOption(`shift:${shift2.id}`);
+    await form.locator('#f-weekday').selectOption(day);
     await form.locator('#f-kind').selectOption('ON_REQUEST');
     await form.getByRole('button', { name: 'Einschränkung hinzufügen' }).click();
   }
-  check('shifts entered by hand show as the whole area', await switch2.inputValue() === 'ON_REQUEST', await switch2.inputValue());
+  const lines2 = await form.locator(`[data-area="${area2}"] ul.area-exceptions li`).allInnerTexts();
+  check('the exceptions of an area below it, one line per shift with the weekdays folded in',
+    lines2.length === 1 && lines2[0].startsWith(`${shift2.code} ${shift2.name}: nur von Hand (Mo, Di)`), lines2.join(' / '));
   const requests = [];
   const listen = (r) => { if (r.method() !== 'GET' && r.url().includes('/api/dataset/')) requests.push(r); };
   page.on('request', listen);
@@ -118,30 +122,42 @@ try {
   page.off('request', listen);
   const paths = requests.map((r) => `${r.method()} ${new URL(r.url()).pathname}`);
   const personPath = `/api/dataset/people/${encodeURIComponent(person.id)}`;
-  check('one form saves the person, then the restrictions', paths.join(',') === `PUT ${personPath},PUT ${personPath}/restrictions`, paths.join(','));
+  check('one form saves the person, then the exceptions', paths.join(',') === `PUT ${personPath},PUT ${personPath}/restrictions`, paths.join(','));
   const sent = requests[0]?.postDataJSON();
-  check('master data and mix sent', sent?.weeklyHours === 30.5 && JSON.stringify(sent?.shiftMix?.categories) === '{"DAY":0.8,"NIGHT":0.2}',
-    JSON.stringify([sent?.weeklyHours, sent?.shiftMix]));
-  const restrictions = requests[1]?.postDataJSON() ?? [];
-  const byArea = (areaId) => restrictions.filter((r) => shiftsOf(areaId).some((s) => s.id === r.shiftId));
-  const shape = (r) => JSON.stringify({ ...r, shiftId: 'S', kind: 'K' });
-  check('area switch: one record per shift for every day', byArea(area1).length === shiftsOf(area1).length
-    && byArea(area1).every((r) => r.kind === 'NEVER' && r.weekday === 0 && r.personId === person.id), JSON.stringify(byArea(area1)));
-  check('area switch records equal the ones entered by hand', byArea(area2).length === shiftsOf(area2).length
-    && new Set([...byArea(area1), ...byArea(area2)].map(shape)).size === 1, [...new Set(restrictions.map(shape))].join(' '));
-  const saved = await getDataset(page);
-  check('saved on the server', saved.people.find((p) => p.id === person.id).weeklyHours === 30.5
-    && saved.restrictions.filter((r) => r.personId === person.id).length === shiftsOf(area1).length + shiftsOf(area2).length);
-  check('form shows the saved state', await form.locator(`select[data-area="${area1}"]`).inputValue() === 'NEVER'
-    && await page.inputValue('#f-weeklyHours') === '30.5');
+  check('master data, mix and the states sent', sent?.weeklyHours === 30.5 && JSON.stringify(sent?.shiftMix?.categories) === '{"DAY":0.8,"NIGHT":0.2}'
+    && JSON.stringify(sent?.areaStates) === JSON.stringify({ [area1]: 'NEVER' }), JSON.stringify([sent?.weeklyHours, sent?.shiftMix, sent?.areaStates]));
+  check('only the exceptions sent as restrictions', (requests[1]?.postDataJSON() ?? []).length === 2);
+  let saved = await getDataset(page);
+  const mine = (d) => d.people.find((p) => p.id === person.id);
+  check('saved on the server: the state, the exceptions apart', mine(saved).weeklyHours === 30.5 && mine(saved).areaStates?.[area1] === 'NEVER'
+    && saved.restrictions.filter((r) => r.personId === person.id).length === 2, JSON.stringify([mine(saved).areaStates, saved.restrictions.filter((r) => r.personId === person.id)]));
+  check('form shows the saved state', await form.locator(`#f-area-${area1}`).inputValue() === 'NEVER' && await page.inputValue('#f-weeklyHours') === '30.5');
 
-  // One shift differing: the area is "gemischt"; "keine" removes the area's restrictions.
-  const first = shiftsOf(area1)[0];
-  await form.getByRole('button', { name: `Einschränkung „Nie: ${first.code} ${first.name}, jeden Tag“ entfernen` }).click();
-  const mixed = form.locator(`select[data-area="${area1}"]`);
-  check('area switch shows gemischt', await mixed.inputValue() === 'MIXED' && (await mixed.locator('option:checked').innerText()) === 'gemischt');
-  await mixed.selectOption('NONE');
-  check('keine removes the restrictions of the area', await form.locator('li', { hasText: /^Nie: / }).count() === 0);
+  // Every shift of area2 "nur von Hand" on every day, entered as exceptions: read back as the state of the area.
+  for (const s of shiftsOf(area2)) {
+    await form.locator('#f-target').selectOption(`shift:${s.id}`);
+    await form.locator('#f-weekday').selectOption('0');
+    await form.locator('#f-kind').selectOption('ON_REQUEST');
+    await form.getByRole('button', { name: 'Einschränkung hinzufügen' }).click();
+  }
+  await page.evaluate(() => { const x = document.querySelector('#toast'); if (x) x.textContent = ''; }); // the toast of the save before
+  await form.getByRole('button', { name: 'Speichern' }).click();
+  await page.waitForFunction(() => document.querySelector('#toast')?.textContent === 'Gespeichert');
+  // the page draws itself anew after the save
+  await page.waitForFunction((id) => document.querySelector(`#f-area-${id}`)?.value === 'ON_REQUEST', area2, { timeout: 5000 }).catch(() => {});
+  check('a whole area entered shift by shift reads as its state', await page.locator(`#f-area-${area2}`).inputValue() === 'ON_REQUEST',
+    await page.locator(`#f-area-${area2}`).inputValue());
+  // planbar again for both: the states and their rows go, the weekday exceptions stay
+  await page.waitForTimeout(300);
+  await page.locator(`#f-area-${area1}`).selectOption('PLAN');
+  await page.locator(`#f-area-${area2}`).selectOption('PLAN');
+  await page.evaluate(() => { const x = document.querySelector('#toast'); if (x) x.textContent = ''; }); // the toast of the save before
+  await page.locator('#person-form').getByRole('button', { name: 'Speichern' }).click();
+  await page.waitForFunction(() => document.querySelector('#toast')?.textContent === 'Gespeichert');
+  await page.waitForTimeout(300);
+  saved = await getDataset(page);
+  check('planbar again: no state, the weekday exceptions stay', !Object.keys(mine(saved).areaStates ?? {}).length
+    && saved.restrictions.filter((r) => r.personId === person.id).length === 2, JSON.stringify(saved.restrictions.filter((r) => r.personId === person.id)));
 
   // "Aus dem Quellsystem nicht mehr übernehmen": saved at once; the list greys the person out, the corrections file
   // excludes them; switched off, the file no longer does.
@@ -203,14 +219,13 @@ try {
   await page.fill('#f-firstName', 'Testa');
   await page.fill('#f-lastName', 'Neuperson');
   await page.fill('#f-weeklyHours', '20');
-  await page.locator(`#person-form input[name="areaIds"][value="${area1}"]`).check();
-  await page.locator(`#person-form select[data-area="${area1}"]`).selectOption('ON_REQUEST');
+  await page.locator(`#f-area-${area1}`).selectOption('ON_REQUEST');
   await page.locator('#person-form').getByRole('button', { name: 'Speichern' }).click();
   await page.waitForFunction(() => document.querySelector('#main h1')?.textContent === 'Neuperson Testa');
   const created = await getDataset(page);
   const newPerson = created.people.find((p) => p.lastName === 'Neuperson');
-  check('new person saved with its restrictions', newPerson && page.url().endsWith(`#/person/${newPerson.id}`)
-    && created.restrictions.filter((r) => r.personId === newPerson.id && r.kind === 'ON_REQUEST').length === shiftsOf(area1).length, page.url());
+  check('new person saved with the state of its area', newPerson && page.url().endsWith(`#/person/${newPerson.id}`)
+    && newPerson.areaStates?.[area1] === 'ON_REQUEST' && JSON.stringify(newPerson.areaIds) === JSON.stringify([area1]), page.url());
   await page.getByRole('button', { name: 'Person entfernen' }).click();
   await page.waitForURL((u) => u.hash === '#/person');
   check('person removed', !(await getDataset(page)).people.some((p) => p.lastName === 'Neuperson'));
@@ -246,26 +261,71 @@ try {
   const imported = await page.evaluate(async (body) => (await fetch('/api/import/dataset?replace=true', { method: 'POST', headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body) })).status, { ...current, version: 2, people, restrictions: withRequest });
   check('a dataset with area sources is imported', imported === 200, String(imported));
-  // the notes as the page shows them
-  const notes = async (id) => {
+  const areaInfo = async (id) => {
     await page.goto(`${base}/#/person/${encodeURIComponent(id)}`);
     await page.locator('#person-form').waitFor();
-    return page.$$eval('#person-form [data-area-note]', (xs) => Object.fromEntries(xs.map((x) => [x.dataset.areaNote, x.textContent.trim()])));
+    return page.$$eval('#person-areas [data-area]', (rows) => Object.fromEntries(rows.map((r) => [r.dataset.area,
+      [r.querySelector('select').value, r.querySelector('[data-area-source]').textContent, [...r.querySelectorAll('li')].map((li) => li.firstChild.textContent.trim())]])));
   };
-  const reserve = await notes(one.id);
-  check('an area from a group and the history, a reserve area all on request', reserve[a1] === '(Gruppe Team Annahme; Historie: 14 Dienste)'
-    && reserve[a2] === '(Gruppe Alle, nur auf Anfrage)', JSON.stringify(reserve));
+  const reserve = await areaInfo(one.id);
+  check('an area from a group and the history; a reserve area as its state', JSON.stringify(reserve[a1]) === JSON.stringify(['PLAN', 'Herkunft: Gruppe Team Annahme; Historie: 14 Dienste', []])
+    && JSON.stringify(reserve[a2]) === JSON.stringify(['ON_REQUEST', 'Herkunft: Gruppe Alle', []]), JSON.stringify(reserve));
   if (process.env.SHOTS) {
-    await page.locator('#person-form fieldset:has(input[name="areaIds"])').screenshot({ path: join(process.env.SHOTS, 'person-bereiche.png') });
+    await page.locator('#person-areas').screenshot({ path: join(process.env.SHOTS, 'person-bereiche.png') });
     await page.emulateMedia({ colorScheme: 'dark' });
-    await page.locator('#person-form fieldset:has(input[name="areaIds"])').screenshot({ path: join(process.env.SHOTS, 'person-bereiche-dunkel.png') });
+    await page.locator('#person-areas').screenshot({ path: join(process.env.SHOTS, 'person-bereiche-dunkel.png') });
     await page.emulateMedia({ colorScheme: 'light' });
   }
-  const byHand = await notes(two.id);
-  check('an area set by hand, partly on request', byHand[a1] === '(Historie: 22 Dienste)' && byHand[a2] === '(von Hand, teilweise auf Anfrage)', JSON.stringify(byHand));
-  await page.locator(`#person-form select[data-area="${a2}"]`).selectOption('ON_REQUEST');
-  check('the note follows the area switch', (await page.textContent(`#person-form [data-area-note="${a2}"]`))?.trim() === '(von Hand, nur auf Anfrage)');
-  check('no note for a person without sources and on-request restrictions', Object.keys(await notes(current.people.find((p) => p.id !== one.id && p.id !== two.id && !current.restrictions.some((r) => r.personId === p.id)).id)).length === 0);
+  const byHand = await areaInfo(two.id);
+  const firstShift = current.shifts.find((sh) => sh.id === shiftsIn(a2)[0]);
+  check('an area set by hand, planbar, with one shift as an exception', byHand[a1][1] === 'Herkunft: Historie: 22 Dienste' && byHand[a2][0] === 'PLAN'
+    && byHand[a2][1] === 'Herkunft: von Hand' && byHand[a2][2].join() === `${firstShift.code} ${firstShift.name}: nur von Hand`, JSON.stringify(byHand));
+
+  // ---- the matrix of all people and areas ----
+  await page.goto(`${base}/#/bereiche`);
+  await page.locator('table.area-matrix').waitFor();
+  const cells = await page.locator('table.area-matrix button[data-person]').count();
+  check('one cell per person and area', cells === current.people.length * current.areas.length, String(cells));
+  const cellOf = (pid, aid) => page.locator(`table.area-matrix button[data-person="${pid}"][data-area="${aid}"]`);
+  check('a cell shows its state as a sign and a word', (await cellOf(one.id, a2).innerText()).includes('nur von Hand')
+    && (await cellOf(one.id, a1).innerText()).includes('planbar'), await cellOf(one.id, a2).innerText());
+  check('a mark for exceptions', await cellOf(two.id, a2).locator('sup').count() === 1);
+  await cellOf(two.id, a2).focus();
+  check('the source and the exceptions of the focused cell below the table', (await page.textContent('#area-matrix-status')).includes('Herkunft: von Hand')
+    && (await page.textContent('#area-matrix-status')).includes('Ausnahmen:'), await page.textContent('#area-matrix-status'));
+  await cellOf(one.id, a1).click();
+  check('a click cycles planbar → nur von Hand', (await cellOf(one.id, a1).innerText()).includes('nur von Hand') && await page.isVisible('#area-matrix-dirty'));
+  await page.keyboard.press('Space');
+  check('the space key cycles on → nie', (await cellOf(one.id, a1).innerText()).includes('nie'));
+  await page.keyboard.press('ArrowRight');
+  check('the arrow keys move between cells', (await page.evaluate(() => document.activeElement?.dataset.area)) === a2);
+  // several at once: the column a1 for the people found by name
+  await page.fill('#area-matrix-name', two.lastName);
+  check('the name filter', (await page.textContent('#area-matrix-count')).startsWith('1 von'), await page.textContent('#area-matrix-count'));
+  await page.fill('#area-matrix-name', '');
+  await page.locator(`th[data-col-area="${a1}"] input`).check();
+  await page.locator(`tr[data-person-row="${one.id}"] th input`).check();
+  await page.locator(`tr[data-person-row="${two.id}"] th input`).check();
+  await page.selectOption('#area-matrix-bulk-state', 'ON_REQUEST');
+  check('the bulk button says how many cells', (await page.textContent('#area-matrix-bulk')) === '2 Zellen setzen', await page.textContent('#area-matrix-bulk'));
+  await page.click('#area-matrix-bulk');
+  if (process.env.SHOTS) {
+    await page.locator('#main').screenshot({ path: join(process.env.SHOTS, 'bereiche-matrix.png') });
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.locator('#main').screenshot({ path: join(process.env.SHOTS, 'bereiche-matrix-dunkel.png') });
+    await page.emulateMedia({ colorScheme: 'light' });
+  }
+  await page.click('#area-matrix-save');
+  await page.waitForFunction(() => document.querySelector('#toast')?.textContent.includes('gespeichert'));
+  const afterMatrix = await getDataset(page);
+  const stateIn = (d, pid, aid) => d.people.find((p) => p.id === pid).areaStates?.[aid];
+  check('the matrix saves like the person page', stateIn(afterMatrix, one.id, a1) === 'ON_REQUEST' && stateIn(afterMatrix, two.id, a1) === 'ON_REQUEST'
+    && stateIn(afterMatrix, one.id, a2) === 'ON_REQUEST', JSON.stringify(afterMatrix.people.filter((p) => [one.id, two.id].includes(p.id)).map((p) => p.areaStates)));
+  const matrixViewer = await login('ansicht');
+  await matrixViewer.goto(`${base}/#/bereiche`);
+  await matrixViewer.locator('table.area-matrix').waitFor();
+  check('viewers see the matrix read only', await matrixViewer.locator('table.area-matrix button').count() === 0
+    && await matrixViewer.locator('#area-matrix-save').count() === 0 && (await matrixViewer.locator('table.area-matrix td').first().innerText()).trim().length > 0);
 } finally {
   await browser.close();
   server.kill();

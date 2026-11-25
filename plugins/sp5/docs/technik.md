@@ -51,11 +51,11 @@ nennt die Zahl der Bereiche nach ihrer Herkunft (aus `anfrage.json`). Byte für 
 | Bereiche einer Person aus | keine; `sp5_export.py` rechnet immer mit „Gruppen“ |
 | Bereich aus der Historie ab … Diensten | keine (gilt nur für „Historie“ und „Historie, Gruppen als Reserve“) |
 | Bei Gruppen: Bereiche aus der Historie ab … Diensten dazu | `--areas-from-history` |
-| Schichten seltener als … Dienste nur auf Anfrage | `--shifts-from-history` |
+| Schichten seltener als … Dienste nur von Hand | `--shifts-from-history` |
 | Bedarf | `--demand` |
 | Gewohnte Verteilung übernehmen, ab … Diensten | `--no-shift-mix`, `--mix-min-duties` |
 | Ausgeblendete Schichten mit Diensten in den … Monaten davor | `--hidden-shifts-months` |
-| Bereiche ohne Dienst in den letzten … Monaten nur auf Anfrage | `--recent-months` |
+| Bereiche ohne Dienst in den letzten … Monaten nur von Hand | `--recent-months` |
 | Nachtschichten automatisch fair verteilen | keine; `sp5_export.py` tut das immer (siehe oben) |
 
 Die Zuordnung hat das Format von `mapping.json` aus sp5-export. Die Korrekturdatei, die Dispofold aus den

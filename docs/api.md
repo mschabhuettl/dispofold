@@ -25,11 +25,12 @@ Im Docker-Betrieb begrenzt nginx die Anmeldeversuche auf 10 je Minute und Adress
 
 | Methode | Pfad | Antwort |
 |---|---|---|
-| `GET` | `/api/dataset` | `{ ...Dataset, "revision": n, "changedSinceImport": bool }` mit allen Stammdaten, `periods` leer (vor dem ersten Import ein leerer Datensatz mit Revision 0) |
+| `GET` | `/api/dataset` | `{ ...Dataset, "revision": n, "changedSinceImport": bool }` mit allen Stammdaten, `periods` leer (vor dem ersten Import ein leerer Datensatz mit Revision 0); Einschränkungen eines ganzen Bereichs als `areaStates` der Person, in `restrictions` nur die übrigen (siehe unten) |
 | `POST` | `/api/dataset/{kind}` | legt ein Objekt an (Body: das Objekt), Antwort `MasterChange` |
 | `PUT` | `/api/dataset/{kind}/{key}` | ändert ein Objekt (Body: das ganze Objekt), Antwort `MasterChange` |
 | `DELETE` | `/api/dataset/{kind}/{key}?confirm=true` | entfernt ein Objekt, Antwort `{ "revision": n, "removed": n }` |
-| `PUT` | `/api/dataset/people/{personId}/restrictions` | ersetzt die Einschränkungen einer Person (Body: Liste von `Restriction`), Antwort `MasterChange` mit der Liste als `item` |
+| `PUT` | `/api/dataset/people/{personId}/restrictions` | ersetzt die Ausnahmen einer Person (Body: Liste von `Restriction`), die Zustände ihrer Bereiche bleiben; Antwort `MasterChange` mit der Liste als `item` |
+| `PUT` | `/api/dataset/area-states` | setzt Bereiche und ihre Zustände mehrerer Personen in einer Änderung (Body: `[{ "personId", "areaIds", "areaStates" }]`, Seite **Personen → Bereiche**); ein weggelassener Bereich verliert seinen Zustand und seinen Anteil an der gewohnten Verteilung, Ausnahmen bleiben; Antwort `MasterChange` |
 | `PUT` | `/api/dataset/people/{personId}/excluded` | Body `true`: die Person wird nicht mehr aus dem Quellsystem übernommen, `false` nimmt das zurück (siehe unten); Antwort `MasterChange` mit der Person als `item` |
 | `GET` | `/api/dataset/export` | Datei-Download: Stammdaten und alle Planungsmonate als `Dataset` (Version 2), nur für `planner` |
 | `POST` | `/api/import/dataset?replace=true` | lädt ein `Dataset`-Dokument (Body, siehe `docs/datenformat.md`), Antwort `ImportSummary` |
@@ -59,6 +60,11 @@ Stammdaten bearbeiten:
   gilt die Person als nicht beschäftigt, abgeschlossene Monate davor ändern sich nicht. `false` löscht das Feld.
   `PUT /api/dataset/people/{id}` übernimmt `excludedFrom` nicht aus dem Body, es bleibt, wie es ist. Ein Body
   anders als `true` oder `false`: `400` `masterdata.format`.
+- Zustände der Bereiche (`areaStates` einer Person, `ON_REQUEST` „nur von Hand“ oder `NEVER` „nie“): gespeichert,
+  geplant und in Dateien geschrieben werden sie als Einschränkungen, je Schicht des Bereichs eine für jeden Tag
+  ohne Zeitraum. `GET /api/dataset` liest solche Sätze als Zustand und lässt sie aus `restrictions` weg.
+  `PUT /api/dataset/people/{id}` mit `areaStates` setzt die Zustände; ohne das Feld bleiben sie, wie sie sind.
+  Eine neue Schicht eines Bereichs bekommt den Zustand, den Personen für den Bereich haben.
 - Jede Änderung muss die gelesene Revision mitschicken (Header `If-Match: <n>`). Fehlt sie: `428`
   `masterdata.revisionMissing`; hat inzwischen jemand anderer Stammdaten gespeichert oder importiert: `409`
   `masterdata.conflict`.
@@ -207,7 +213,7 @@ Planung:
 
 Wer gefragt werden kann: `from` und `to` sind lokale Zeitpunkte wie in den Bedarfslücken der Analyse (z. B.
 `2027-01-04T07:00`). Die Antwort `[{ "personId", "date", "shiftId", "plannedHours", "targetHours" }]` nennt
-alle Personen, für die eine Schicht des Bereichs, die die Lücke überschneidet, an diesem Tag nur auf Anfrage
+alle Personen, für die eine Schicht des Bereichs, die die Lücke überschneidet, an diesem Tag nur von Hand
 geht, deren Tag frei ist (kein Dienst, keine Abwesenheit, beschäftigt, nicht fixiert) und für die der Dienst
 keinen neuen harten Verstoß bringt. `plannedHours` sind die Stunden, die bisher zum Soll zählen (Dienste und
 gutgeschriebene Tage). Sortiert nach `plannedHours - targetHours`, die mit den wenigsten Stunden zuerst. Fehler:

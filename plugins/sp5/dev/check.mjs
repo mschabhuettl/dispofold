@@ -355,7 +355,7 @@ export default async function run({ base, browser, check, shots }) {
   await page.waitForSelector('[data-section="removed"] tbody');
   check('a removed person excluded in Dispofold: the import keeps her', (await text(page, '[data-section="removed"] tbody'))?.includes('in Dispofold ausgeschlossen'),
     await text(page, '[data-section="removed"] tbody'));
-  check('restrictions as text', (await text(page, '[data-section="restrictions"] tbody'))?.includes('+ Nur auf Anfrage: A1 Annahme früh 06:30, Mo, 01.01.2027 bis 31.03.2027'),
+  check('restrictions as text', (await text(page, '[data-section="restrictions"] tbody'))?.includes('+ nur von Hand: A1 Annahme früh 06:30, Mo, 01.01.2027 bis 31.03.2027'),
     await text(page, '[data-section="restrictions"] tbody'));
   check('demand with label and staffing', (await text(page, '[data-section="demand"] tbody'))?.includes('AN Mo–Fr 07:00–19:00\t1–2\t2'), await text(page, '[data-section="demand"] tbody'));
   check('changed counts highlighted with the difference', (await page.locator('[data-section="counts"] .badge-warn', { hasText: '+1' }).count()) >= 1

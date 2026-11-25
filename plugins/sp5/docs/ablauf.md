@@ -30,8 +30,8 @@ Alle Beispiele sind erfunden: die Bereiche und Kürzel (`AN`, `DR`, `A1`, `R1` u
    ![Vorschläge für Schichten und Gruppen mit ihren Gründen](img/zuordnung-vorschlaege.png)
 4. Die **Optionen** passen meist mit ihren Standardwerten. **Bereiche einer Person aus** steht auf „Historie,
    Gruppen als Reserve“: Eine Person bekommt die Bereiche, in denen sie gearbeitet hat, ganz, und die übrigen
-   Bereiche ihrer Gruppen nur auf Anfrage. Wenn die Zeilen **Schichten der Personen** im Bericht es nahelegen,
-   hilft unter **Erweitert** noch **Schichten seltener als … Dienste nur auf Anfrage**.
+   Bereiche ihrer Gruppen nur von Hand. Wenn die Zeilen **Schichten der Personen** im Bericht es nahelegen,
+   hilft unter **Erweitert** noch **Schichten seltener als … Dienste nur von Hand**.
 
 5. **Umstieg von `sp5_export.py`:** Wer bisher `sp5_export.py --corrections korrekturen.json` aufgerufen hat, lädt
    diese `korrekturen.json` einmal unter [Daten → Korrekturdatei laden](daten.md#korrekturdatei-laden), vor dem

@@ -127,6 +127,9 @@ public class Sp5Resource {
         question.put("areaSource", request.areaSource());
         question.put("historyAreaDuties", request.historyAreaDuties());
         question.set("areaCounts", mapper.valueToTree(result.areaCounts()));
+        // the restrictions as rows (as the export writes them) and as the pages show them: the states of whole areas
+        // and the exceptions (numbers only)
+        question.set("restrictionCounts", mapper.valueToTree(restrictionCounts(plugin.data(result).dataset())));
         question.put("mapping", "mapping.json");
         if (request.corrections() != null) {
             question.put("corrections", Sp5Plugin.CORRECTIONS_FILE);
@@ -211,6 +214,28 @@ public class Sp5Resource {
         Object m = python(mapping);
         List<String> errors = Sp5MappingText.plain(Sp5Export.mappingErrors(m));
         return Sp5Codes.codes(plugin.folder(plugin.settings()), m, errors);
+    }
+
+    /**
+     * {rows, exceptions, lines, statesOnRequest, statesNever}: the restrictions as rows, folded into area states and
+     * their exceptions, and those as the lines of the person page.
+     */
+    static Map<String, Integer> restrictionCounts(app.dispofold.model.Dataset d) {
+        app.dispofold.model.Dataset folded = app.dispofold.model.AreaStates.fold(d);
+        Map<String, Integer> counts = new java.util.LinkedHashMap<>();
+        counts.put("rows", d.restrictions() == null ? 0 : d.restrictions().size());
+        counts.put("exceptions", folded.restrictions() == null ? 0 : folded.restrictions().size());
+        // the lines the person page shows: one per shift or category, kind and validity, the weekdays folded in
+        counts.put("lines", folded.restrictions() == null ? 0 : (int) folded.restrictions().stream()
+                .map(r -> java.util.Arrays.asList(r.personId(), r.shiftId(), r.category(), r.kind(), r.validFrom(),
+                        r.validTo()))
+                .distinct().count());
+        for (app.dispofold.model.RestrictionKind kind : app.dispofold.model.RestrictionKind.values()) {
+            counts.put(kind == app.dispofold.model.RestrictionKind.NEVER ? "statesNever" : "statesOnRequest",
+                    (int) folded.people().stream().filter(p -> p.areaStates() != null)
+                            .flatMap(p -> p.areaStates().values().stream()).filter(k -> k == kind).count());
+        }
+        return counts;
     }
 
     /**

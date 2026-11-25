@@ -86,7 +86,8 @@ export async function render(root, ctx) {
       && names(w, filter.person) && names(w, filter.area));
     warningHeading.replaceChildren(t('plugin.sp5.report.warnings'), ' ', h('span.muted', {}, list.length === warnings.length
       ? `(${warnings.length})` : t('plugin.sp5.report.some', { shown: list.length, total: warnings.length })));
-    warningList.replaceChildren(...list.map((w) => h('li', {}, w)));
+    // the export program's words, shown with today's (the file keeps them, for the comparison byte for byte)
+    warningList.replaceChildren(...list.map((w) => h('li', {}, w.replaceAll('nur auf Anfrage', 'nur von Hand'))));
     if (!list.length) warningList.append(h('li.muted', {}, warnings.length ? t('plugin.sp5.report.noMatch') : t('plugin.sp5.report.noWarnings')));
   }
 

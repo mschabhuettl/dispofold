@@ -157,9 +157,9 @@ Planungsziels steht, zu welchem Ziel sie gehören. Die Standardgewichte:
 | Ersatzruhe abbauen | 500 | keines |
 | Abwechslung Dienste | 5 | keines |
 | Abwechslung Bereiche | 1 | keines |
-| Dienst nur auf Anfrage | 1000, fest | keines |
+| Dienst nur von Hand | 1000, fest | keines |
 
-Die Zahlen sind nur im Verhältnis zueinander wichtig, nicht für sich. Das Gewicht von **Dienst nur auf Anfrage**
+Die Zahlen sind nur im Verhältnis zueinander wichtig, nicht für sich. Das Gewicht von **Dienst nur von Hand**
 ist fest: Solche Dienste plant das Programm ohnehin nie selbst ein. Regeln der Gruppen Regelverstoß und Bedarf
 haben kein Gewicht. **Wann ändern:** selten, und nur eine Regel auf einmal; meist reicht die Wichtigkeit eines
 Ziels. Ein Gewicht 0 schaltet eine Regel aus.

@@ -3,6 +3,7 @@
 import { addDays, dayCode, epochMinutes, formatLocalDateTime, isWeekend, monthDates, parseLocalDateTime, parseTime, shiftHours,
   shiftInterval, weekday } from '../src/lib/dates.js';
 import { CONSTRAINTS, DEFAULT_RULES, TEMPLATE, makeDataset } from './mock-data.mjs';
+import { foldDataset } from '../src/lib/area-states.js';
 
 export function createMockApi({ dataset: initial = null, month = '2026-12', desktop = false, updateSource = '', askUpdates = false,
   release = '', plugins = [], empty = false } = {}) {
@@ -17,6 +18,19 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
   let dataset = empty ? { format: 'dispofold/dataset', version: 1, source: '', areas: [], shifts: [], demand: [], holidays: [],
     absenceTypes: [], people: [], restrictions: [], history: [], periods: [] }
     : initial ? structuredClone(initial) : makeDataset(month);
+  /** A person's restrictions: the exceptions of the folded view and one every-day row per shift of each stated area. */
+  const setStates = (view, personId, areaIds, states) => {
+    const own = (view.restrictions ?? []).filter((r) => r.personId === personId);
+    for (const [areaId, kind] of Object.entries(states ?? {})) {
+      if (!kind || !(areaIds ?? []).includes(areaId)) continue;
+      for (const s of dataset.shifts.filter((x) => x.areaId === areaId)) {
+        if (!own.some((r) => r.shiftId === s.id && !Number(r.weekday ?? 0) && !r.validFrom && !r.validTo && r.kind === kind)) {
+          own.push({ personId, shiftId: s.id, category: null, weekday: 0, kind, validFrom: null, validTo: null });
+        }
+      }
+    }
+    dataset.restrictions = [...dataset.restrictions.filter((r) => r.personId !== personId), ...own];
+  };
   let rules = structuredClone(DEFAULT_RULES);
   const periods = new Map(dataset.periods.map((p) => [p.month, p]));
   // Daten page: the master data of the last import (baseline) and whether they were changed since (PUT people)
@@ -588,16 +602,37 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
       return err(404, 'Ordner oder Datei nicht gefunden oder nicht freigegeben', 'files.notFound');
     }
     if (a === 'dataset' && !b && method === 'GET') {
+      // as the backend: stored as restrictions, read folded (the states of the areas, the rest as exceptions)
+      const folded = foldDataset(dataset);
       if (role !== 'planner') {
-        return json({ ...dataset, revision: masterRevision, periods: [], restrictions: [], changedSinceImport, people: dataset.people.map((p) => ({ ...p, familyRules: [], hoursAccount: null,
+        return json({ ...folded, revision: masterRevision, periods: [], restrictions: [], changedSinceImport, people: folded.people.map((p) => ({ ...p, familyRules: [], hoursAccount: null,
           compRestBalance: null, shiftMix: null, externalId: null, areaSources: undefined })) });
       }
-      return json({ ...dataset, revision: masterRevision, periods: [], changedSinceImport });
+      return json({ ...folded, revision: masterRevision, periods: [], changedSinceImport });
+    }
+    if (a === 'dataset' && b === 'area-states' && method === 'PUT') {
+      if (!Array.isArray(body)) return err(400, 'Bereiche im falschen Format', 'masterdata.format');
+      const view = foldDataset(dataset);
+      for (const row of body) {
+        const p = dataset.people.find((x) => x.id === row.personId);
+        if (!p) return err(404, `Person ${row.personId} nicht gefunden`, 'masterdata.unknown');
+        const areas = row.areaIds ?? p.areaIds;
+        if (p.shiftMix?.areas) {
+          for (const gone of p.areaIds.filter((x) => !areas.includes(x))) delete p.shiftMix.areas[gone];
+        }
+        p.areaIds = [...areas];
+        setStates(view, p.id, areas, row.areaStates ?? {});
+      }
+      changedSinceImport = true;
+      return json({ revision: ++masterRevision, key: String(body.length) });
     }
     // master data of people as docs/api.md (answers { revision, key, item }); the revision is counted but not checked
     if (a === 'dataset' && b === 'people' && d === 'restrictions' && method === 'PUT') {
       if (!dataset.people.some((p) => p.id === c)) return err(404, `Person ${c} nicht gefunden`, 'masterdata.unknown');
-      dataset.restrictions = [...dataset.restrictions.filter((r) => r.personId !== c), ...body.map((r) => ({ ...r, personId: c }))];
+      // the exceptions as sent; the states of the areas stay
+      const view = foldDataset(dataset);
+      const person = view.people.find((p) => p.id === c);
+      setStates({ ...view, restrictions: body.map((r) => ({ ...r, personId: c })) }, c, person.areaIds, person.areaStates ?? {});
       changedSinceImport = true;
       return json({ revision: ++masterRevision, key: c, item: body });
     }
@@ -611,7 +646,9 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
     }
     if (a === 'dataset' && b === 'people' && !c && method === 'POST') {
       const item = { ...body, id: `PN${++newPeople}` };
+      delete item.areaStates;
       dataset.people.push(item);
+      setStates({ restrictions: [] }, item.id, item.areaIds ?? [], body.areaStates ?? {});
       changedSinceImport = true;
       return json({ revision: ++masterRevision, key: item.id, item });
     }
@@ -632,7 +669,12 @@ export function createMockApi({ dataset: initial = null, month = '2026-12', desk
       // where the areas come from: only an import writes it
       delete item.areaSources;
       if (dataset.people[i].areaSources) item.areaSources = dataset.people[i].areaSources;
+      // the states of the areas: stored as restrictions; a body without them keeps the old ones
+      const view = foldDataset(dataset);
+      const states = 'areaStates' in body ? body.areaStates ?? {} : view.people.find((p) => p.id === c).areaStates ?? {};
+      delete item.areaStates;
       dataset.people[i] = item;
+      setStates(view, c, item.areaIds, states);
       changedSinceImport = true;
       return json({ revision: ++masterRevision, key: c, item: dataset.people[i] });
     }

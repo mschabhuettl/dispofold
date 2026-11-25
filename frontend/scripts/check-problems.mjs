@@ -126,14 +126,14 @@ try {
   check('gaps are listed by day', (await gaps.locator('.check-group > summary').count()) > 0 && (await gaps.locator('li.gap-item').count()) > 0);
   await gaps.locator('.check-group > summary').first().click();
   check('a gap names the functions of the area', ((await gaps.locator('li.gap-item').first().textContent()) ?? '').includes('Funktionen:'));
-  await gaps.locator('li.gap-item button', { hasText: 'Auf Anfrage verfügbar' }).first().click();
+  await gaps.locator('li.gap-item button', { hasText: 'Von Hand einsetzbar' }).first().click();
   await gaps.locator('.candidates[data-loaded]').first().waitFor();
   check('who could be asked loads on demand', (await gaps.locator('.candidates[data-loaded]').count()) === 1);
   // a closed month: nobody can be asked, a duty cannot be set
   await page.evaluate((m) => fetch(`/api/plans/${m}/finalize`, { method: 'POST' }), month);
   await page.reload();
   await page.locator('#check-gaps li.gap-item').first().waitFor({ state: 'attached' });
-  check('closed month: no "Auf Anfrage verfügbar"', (await page.locator('#check-gaps li.gap-item button').count()) === 0);
+  check('closed month: no "Von Hand einsetzbar"', (await page.locator('#check-gaps li.gap-item button').count()) === 0);
   await page.evaluate((m) => fetch(`/api/plans/${m}/reopen`, { method: 'POST' }), month);
 
   // Zeitachse links: an overstaffing and a gap open the Zeitachse on their area and day

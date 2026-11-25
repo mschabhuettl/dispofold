@@ -143,6 +143,8 @@ export function createApi({ fetchImpl = (...a) => globalThis.fetch(...a), onUnau
     updateMaster: (kind, key, item, revision) => request('PUT', `/api/dataset/${k(kind)}/${k(key)}`, item, revision),
     deleteMaster: (kind, key, revision, confirmed) => request('DELETE', `/api/dataset/${k(kind)}/${k(key)}${confirmed ? '?confirm=true' : ''}`, undefined, revision),
     saveRestrictions: (personId, list, revision) => request('PUT', `/api/dataset/people/${k(personId)}/restrictions`, list, revision),
+    // the matrix "Bereiche": [{ personId, areaIds, areaStates }] in one change
+    saveAreaStates: (rows, revision) => request('PUT', '/api/dataset/area-states', rows, revision),
     /** No longer taken over from the source (true) or again (false); the server sets the day excludedFrom */
     setExcluded: (personId, excluded, revision) => request('PUT', `/api/dataset/people/${k(personId)}/excluded`, excluded, revision),
     exportDataset: () => download('/api/dataset/export', 'dispofold-datensatz.json'),

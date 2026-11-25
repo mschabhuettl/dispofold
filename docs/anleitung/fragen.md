@@ -27,8 +27,8 @@ Ins Netz gehen kann Dispofold nur für zwei Dinge:
 **Warum ist eine Lücke geblieben, obwohl noch Leute frei sind?** Frei heißt nicht, dass jemand den Dienst machen
 darf. Meist verhindert es eine Regel: die tägliche Ruhezeit nach einem Dienst am Vortag, die Höchststunden im
 Monat, der Wochenschnitt (die eigene Grenze der Person), die freien Sonntage, ein freier Tag mitten in einer
-Abwesenheit, eine Einschränkung „Nie“ oder ein anderer Bereich. Wer die Schicht nur auf Anfrage
-macht, steht in der Liste **Auf Anfrage verfügbar** an der Lücke. Ist die Liste leer, kann man jemanden von Hand
+Abwesenheit, eine Einschränkung „Nie“ oder ein anderer Bereich. Für wen die Schicht nur von Hand
+geht, steht in der Liste **Von Hand einsetzbar** an der Lücke. Ist die Liste leer, kann man jemanden von Hand
 einteilen und in der Zeile über dem Plan sehen, ob das eine Regel verletzt. Siehe
 [Offener Bedarf](planen.md#offener-bedarf).
 
@@ -65,7 +65,7 @@ Personen braucht. Siehe [Überbesetzung](zahlen.md#überbesetzung).
 
 **Was tun bei einer Krankmeldung nach dem Planen?** Die Abwesenheit unter **Eingaben** eintragen, im Dienstplan
 **Zum ersten Konflikt springen**, die rote Zelle anklicken und **Dienst entfernen (frei)**, dann die Lücke füllen
-(**Auf Anfrage verfügbar** oder von Hand). Neu planen nur nach **Plan fixieren**, wenn der Plan schon ausgehängt
+(**Von Hand einsetzbar** oder von Hand). Neu planen nur nach **Plan fixieren**, wenn der Plan schon ausgehängt
 ist. Schritt für Schritt
 mit Bildern: [Ein Monat Schritt für Schritt](beispiel.md#8-eine-krankmeldung-nach-dem-planen).
 
@@ -148,10 +148,10 @@ Ein abgelehnter Import nennt alle Fehler auf einmal, nur mit Ids, ohne Namen. Ni
 | Meldung | Ursache | Was tun |
 |---|---|---|
 | … Regelverstöße (*rot über dem Plan*) | ein Dienst verletzt eine Regel, meist von Hand gesetzt, durch eine Vorgabe oder eine nachträgliche Abwesenheit | die Knöpfe darunter oder **Prüfen** nennen Person und Tag; ändern oder neu planen. Siehe [Probleme](planen.md#probleme) |
-| … Lücken (… Personenstunden) (*gelb*) | der Bedarf ist nicht gedeckt; es war niemand mehr frei, der den Dienst machen darf | **Auf Anfrage verfügbar** an der Lücke, von Hand einteilen oder den Bedarf prüfen |
+| … Lücken (… Personenstunden) (*gelb*) | der Bedarf ist nicht gedeckt; es war niemand mehr frei, der den Dienst machen darf | **Von Hand einsetzbar** an der Lücke, von Hand einteilen oder den Bedarf prüfen |
 | Plan veraltet: neu planen | Eingaben, Stammdaten, Regeln, die Historie oder der Vormonat haben sich nach der Planung geändert | neu planen. Siehe [Plan veraltet](planen.md#hinweis-plan-veraltet-neu-planen) |
 | Konflikt: …, aber Dienst … geplant. Das ist ein Regelverstoß. | ein Dienst an einem Tag mit Abwesenheit | **Dienst entfernen (frei)** in der Auswahl der Zelle |
-| Niemand passt. Gefragt werden können nur Personen, die den Dienst nur auf Anfrage machen und an dem Tag frei sind. | an der Lücke gibt es niemanden auf Anfrage | jemanden von Hand einteilen oder die Lücke bewusst offen lassen |
+| Niemand passt. Gefragt werden können nur Personen, für die der Dienst nur von Hand geht und an dem Tag frei sind. | an der Lücke gibt es niemanden, der von Hand einsetzbar ist | jemanden von Hand einteilen oder die Lücke bewusst offen lassen |
 | Während der Planung ist das nicht möglich. / Während der Planung ist der Plan gesperrt. | eine Planung läuft | warten oder **Stopp** |
 | Letzte Planung fehlgeschlagen | der letzte Lauf ist mit einem Fehler abgebrochen | noch einmal planen, bei Wiederholung mit **Neu beginnen**; hilft das nicht, die IT fragen |
 | Die Planung ist gerade nicht verfügbar. Bitte später noch einmal versuchen. / Die Planung konnte nicht gestartet werden. | der Server ist überlastet oder hat einen Fehler | später noch einmal; sonst die IT fragen |

@@ -40,6 +40,10 @@ wurde, dann **Importieren**; die Vorschau zeigt, was übernommen wird, Konflikte
 
 ![Die Vorschau des Imports](img/import.png)
 
+Nach dem Import führt **Bereiche prüfen** zur Tabelle aller Personen und Bereiche (siehe
+[Bereiche aller Personen](personen.md#bereiche-aller-personen)): Dort sieht man auf einen Blick, wer wo planbar,
+nur von Hand oder nie ist, und ändert es für viele auf einmal.
+
 Ist ein Monat des Laufs schon abgeschlossen, steht über dem Import ein Hinweis mit dem nächsten Schritt: Ändert der
 Import einen abgeschlossenen Monat, lehnt Dispofold ihn ab. Dann einen späteren ersten Monat wählen und noch einmal
 ausführen, oder den Monat unter **Einstellungen → Daten** mit **Monat wieder öffnen** öffnen und dann importieren.

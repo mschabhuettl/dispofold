@@ -78,8 +78,8 @@ test('comparison: natural id order, differences, field values, restrictions', ()
   const r = { personId: 'E1', shiftId: 'S12', category: null, weekday: 1, kind: 'ON_REQUEST', validFrom: '2027-01-01', validTo: '2027-03-31' };
   const shifts = new Map([['S12', { id: 'S12', code: 'A1', name: 'Annahme früh' }]]);
   assert.deepEqual(m.restrictionLines({ field: 'restrictions', added: [r], removed: [{ ...r, shiftId: null, category: 'NIGHT', weekday: 0, kind: 'NEVER', validFrom: null, validTo: null }] }, shifts),
-    ['+ Nur auf Anfrage: A1 Annahme früh, Mo, 01.01.2027 bis 31.03.2027', '− Nie: alle Nacht-Schichten, jeden Tag']);
-  assert.deepEqual(m.restrictionLines({ field: 'restrictions', added: [{ ...r, validFrom: null, validTo: null }], removed: [] }), ['+ Nur auf Anfrage: S12, Mo']);
+    ['+ nur von Hand: A1 Annahme früh, Mo, 01.01.2027 bis 31.03.2027', '− nie: alle Nacht-Schichten, jeden Tag']);
+  assert.deepEqual(m.restrictionLines({ field: 'restrictions', added: [{ ...r, validFrom: null, validTo: null }], removed: [] }), ['+ nur von Hand: S12, Mo']);
 });
 
 test('demand labels and staffing, an empty max being the minimum', () => {

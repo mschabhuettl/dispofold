@@ -44,16 +44,24 @@ Unter **Person bearbeiten** steht alles zu einer Person in einem Formular. Geän
 | Ersatzruhe offen | offene Ersatzruhetage (Pflichtfeld, ganze Zahl ab 0); gilt wie das Stundenkonto nur ohne abgeschlossenen Vormonat | wie beim Stundenkonto |
 | Externe Id | die Kennung im Quellsystem, zum Beispiel die Personalnummer | selten; das Exportprogramm braucht sie |
 | Eintritt, Austritt | erster und letzter Tag der Beschäftigung; davor und danach keine Dienste, das Soll zählt nur dazwischen. Leer: unbegrenzt. | bei Eintritt, Austritt oder einer Karenz über Monate |
-| Bereiche | in welchen Bereichen die Person grundsätzlich eingeplant werden kann; ohne Bereich wird sie nie eingeplant | wenn jemand neu eingeschult ist oder einen Bereich nicht mehr macht |
+| Bereiche | je Bereich **planbar**, **nur von Hand**, **nie** oder **nicht dabei** (siehe unten); ohne Bereich wird sie nie eingeplant | wenn jemand neu eingeschult ist oder einen Bereich nicht mehr macht |
 
 Über den Feldern steht die Id der Person. Neue Personen bekommen ihre Id vom Programm.
 
-Ein Haken bei einem Bereich heißt „grundsätzlich möglich“; wie die Person dort geplant wird, entscheiden die
-[Einschränkungen](#einschränkungen). Neben jedem angekreuzten Bereich steht in Klammern, woher er kommt, wenn ein
-Import es mitgegeben hat: eine Gruppe, die Historie mit der Zahl der Dienste („Historie: 14 Dienste“), oder „von
-Hand“ für einen Bereich, den der Import nicht gegeben hat. Dazu steht dort „nur auf Anfrage“, wenn alle Schichten
-des Bereichs nur auf Anfrage sind (die Person wird dort nicht automatisch geplant, nur von Hand), oder „teilweise
-auf Anfrage“, wenn es einige sind.
+Je Bereich wählt man einen Zustand:
+
+- **planbar:** Die Planung darf die Person in jeder Schicht des Bereichs einplanen.
+- **nur von Hand:** Die Planung plant die Person dort nie selbst; die Planung kann einen Dienst aber von Hand
+  setzen, er steht dann in der Liste **Von Hand einsetzbar** (siehe
+  [Dienste nur von Hand](plan-bearbeiten.md#dienste-nur-von-hand)).
+- **nie:** Ein Dienst in dem Bereich ist ein Regelverstoß.
+- **nicht dabei:** Der Bereich gehört nicht zur Person.
+
+Unter einem Bereich stehen nur seine [Ausnahmen](#einschränkungen), eine Zeile je Schicht, mit den Wochentagen und
+Zeiten, etwa „R4 Disposition Nacht: nur von Hand (Mo, Di, Fr)“. Daneben steht, woher der Bereich kommt, wenn ein
+Import es mitgegeben hat: „Herkunft: Gruppe Team Annahme“, „Herkunft: Historie: 14 Dienste“ oder „Herkunft: von
+Hand“ für einen Bereich, den der Import nicht gegeben hat. Alle Personen auf einmal bearbeitet man unter
+[Bereiche aller Personen](#bereiche-aller-personen).
 
 ### Gewohnte Verteilung
 
@@ -77,21 +85,20 @@ Feld je Schichtart und je Bereich der Person.
 
 ### Einschränkungen
 
-Welche Schicht oder [Schichtart](begriffe.md#schichtart) (zum Beispiel alle Nachtschichten) die Person **Nie**
-oder **Nur auf Anfrage** macht:
+Ausnahmen vom Zustand eines Bereichs: welche Schicht oder [Schichtart](begriffe.md#schichtart) (zum Beispiel alle
+Nachtschichten) für die Person **nie** oder **nur von Hand** gilt, an jedem Tag oder an einzelnen Wochentagen, auf
+Wunsch befristet. Ausnahmen für eine Schichtart oder für Schichten eines Bereichs, den die Person nicht hat,
+stehen unter **Für alle Bereiche oder Schichten anderer Bereiche**.
 
 1. In der Zeile unter der Liste **Schicht oder Kategorie**, **Wochentag** (Standard **jeden Tag**) und **Art**
    wählen, auf Wunsch **Gültig ab** und **Gültig bis** (leer heißt: schon immer und auf Dauer).
 2. **Einschränkung hinzufügen** nimmt die Zeile in die Liste auf, **Entfernen** in der Liste nimmt sie heraus.
 3. **Speichern** speichert das ganze Formular.
 
-- **Nie:** Die Person bekommt diesen Dienst nie. Ein Dienst dagegen, etwa von Hand gesetzt, ist ein Regelverstoß.
-- **Nur auf Anfrage:** Die Planung plant den Dienst nie von selbst. Er darf aber nach Rückfrage von Hand gesetzt
-  werden und steht dann in der Liste **Auf Anfrage verfügbar** (siehe
-  [Dienste nur auf Anfrage](plan-bearbeiten.md#dienste-nur-auf-anfrage)).
-- **Ganzer Bereich:** Für jeden Bereich der Person setzt die Auswahl **keine**, **nur auf Anfrage** oder **nie**
-  alle Schichten des Bereichs auf einmal, für jeden Tag. „gemischt“ heißt, dass die Schichten des Bereichs
-  verschieden eingeschränkt sind.
+- **nie:** Die Person bekommt diesen Dienst nie. Ein Dienst dagegen, etwa von Hand gesetzt, ist ein Regelverstoß.
+- **nur von Hand:** Die Planung plant den Dienst nie von selbst. Er darf aber nach Rückfrage von Hand gesetzt
+  werden und steht dann in der Liste **Von Hand einsetzbar**.
+- Für einen ganzen Bereich wählt man oben den Zustand, nicht eine Ausnahme je Schicht.
 - **Wann verwenden:** für dauerhafte Grenzen (keine Nachtdienste aus gesundheitlichen Gründen, ein Bereich nur
   zur Aushilfe). Für einen einzelnen Tag ist ein Wunsch oder eine Vorgabe richtig.
 
@@ -123,6 +130,26 @@ Was in die Korrekturdatei kommt: Wochenstunden, Bereiche, Stundenkonto, Ersatzru
 gewohnte Verteilung, Familienregeln und Einschränkungen. Nicht dorthin kommen neu angelegte Personen und
 geänderte Namen und Kürzel; sie trägt man im Quellsystem nach (siehe
 [Daten und Korrekturdatei](daten.md#neuer-datensatz-änderungen-aus-dispofold-behalten)).
+
+## Bereiche aller Personen
+
+Der Reiter **Bereiche** unter **Personen** zeigt alle Personen (Zeilen) und alle Bereiche (Spalten) in einer
+Tabelle. Jede Zelle zeigt den Zustand mit Zeichen und Wort: ● planbar, ◐ nur von Hand, ✕ nie, · nicht dabei.
+
+- **Ändern:** Ein Klick oder die Leertaste schaltet eine Zelle weiter: planbar, nur von Hand, nie, nicht dabei.
+  Die Pfeiltasten wechseln die Zelle.
+- **Viele auf einmal:** Personen (Häkchen vorn) und Bereiche (Häkchen im Kopf) auswählen, unter **Auswahl setzen
+  auf** einen Zustand wählen und **… Zellen setzen**. Ohne ausgewählte Personen gilt es für alle angezeigten, ohne
+  ausgewählte Bereiche für alle Bereiche.
+- **Filtern:** nach Name, Bereich und Zustand.
+- **Ausnahmen und Herkunft:** Ein Stern in einer Zelle heißt, die Person hat in dem Bereich Ausnahmen. Die Zeile
+  unter der Tabelle nennt für die gewählte Zelle die Herkunft und die Ausnahmen; die Maus zeigt dasselbe.
+- **Speichern** speichert alle geänderten Personen auf einmal, genau so, wie die Seite einer Person speichert:
+  dieselbe Prüfung, und die Änderungen sind Änderungen in Dispofold. Beim nächsten Import ersetzt das Quellsystem
+  sie, außer man wählt **Änderungen aus Dispofold behalten**; dann kommen die Bereiche und ihre Zustände über die
+  [Korrekturdatei](daten.md#korrekturdatei) wieder dazu.
+
+Wer nur lesen darf, sieht die Tabelle ohne Ändern.
 
 ## Person anlegen
 
