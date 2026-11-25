@@ -76,10 +76,10 @@ die Werte selbst wählen wie oben.
 | `DB_PASSWORD` | (Pflicht) | Passwort der Datenbank |
 | `APP_USERS` | (Pflicht) | Benutzer, siehe oben |
 | `SESSION_ENCRYPTION_KEY` | (Pflicht) | Schlüssel für das Anmelde-Cookie, mindestens 32 Zeichen |
-| `SOLVER_TIME_LIMIT_SECONDS` | `300` | Zeitlimit einer Planung als Sicherheitsnetz, wenn in der Oberfläche keines eingetragen ist |
+| `SOLVER_TIME_LIMIT_SECONDS` | leer | Zeitlimit einer Planung als Sicherheitsnetz, wenn in der Oberfläche keines eingetragen ist. Leer: nach der Gründlichkeit unter Regeln (schnell 300, normal 1200, gründlich 3600) |
 | `SOLVER_UNIMPROVED_SECONDS` | `30` | Planung endet früher, wenn sich das Ergebnis so lange nicht verbessert. Wirkt nur mit `SOLVER_MOVE_LIMIT=0` |
 | `SOLVER_SEED` | `1` | Startwert, wenn in der Oberfläche keiner eingetragen ist |
-| `SOLVER_MOVE_LIMIT` | `250000` | Planung endet nach so vielen Zügen (0: aus). Gleicher Startwert, gleiche Daten und gleiches Zuglimit ergeben denselben Plan, sofern die Planung vor dem Zeitlimit endet |
+| `SOLVER_MOVE_LIMIT` | leer | Planung endet nach so vielen Zügen (0: aus). Leer: nach der Gründlichkeit unter Regeln (schnell 250000, normal 1000000, gründlich 3000000). Gleicher Startwert, gleiche Daten und gleiches Zuglimit ergeben denselben Plan, sofern die Planung vor dem Zeitlimit endet |
 | `JAVA_OPTS` | `-XX:MaxRAMPercentage=75` | Speicher des Backends |
 | `DISPOFOLD_UPDATE_CHECK` | `true` | Beim Start und einmal am Tag nach einer neuen Version suchen (siehe [Neue Version](#neue-version)); `false` schaltet das ab |
 

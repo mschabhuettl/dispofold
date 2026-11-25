@@ -7,13 +7,15 @@ verwendbar ist, und **Prüfen** listet alles auf, was nicht stimmt. Wie man einz
 ## Planen
 
 1. Im **Dienstplan** auf **Planen** klicken. Der Solver rechnet im Hintergrund, die Laufzeit steht in der Zeile über
-   dem Plan („Planung läuft (12 s)“); die Zahlen dort zeigen den bisher besten Stand. Man kann währenddessen auf
+   dem Plan („Planung läuft (12 s)“, sobald ein besserer Plan gefunden ist mit „findet noch bessere Pläne (zuletzt
+   vor 3 s)“); die Zahlen dort zeigen den bisher besten Stand. Man kann währenddessen auf
    anderen Seiten weiterarbeiten.
 2. Während der Planung ist der Plan gesperrt: Zellen, Export, Monatsabschluss und Änderungen an den Daten dieses
    Monats gehen erst danach.
-3. Die Planung endet von selbst nach der **Schrittzahl** (Standard 250 000 Schritte), spätestens nach dem
-   **Zeitlimit** (Standard 300 Sekunden). Mit den Demodaten dauert das auf einem üblichen Rechner ein bis zwei
-   Minuten. **Stopp** beendet sie früher; der beste Stand bis dahin bleibt erhalten. Am Ende meldet das Programm
+3. Die Planung endet von selbst nach der **Schrittzahl**, spätestens nach dem **Zeitlimit**. Beide legt die
+   **Gründlichkeit** unter [Regeln, Erweitert](einstellungen.md#erweitert) fest: normal (Standard) 1 000 000
+   Schritte, Zeitlimit 1200 Sekunden. Mit den Demodaten dauert das auf einem üblichen Rechner einige Minuten,
+   mit „schnell“ ein bis zwei. **Stopp** beendet sie früher; der beste Stand bis dahin bleibt erhalten. Am Ende meldet das Programm
    „Planung beendet“.
 
 Eine neue Planung baut auf dem gespeicherten Plan auf: Sie verbessert ihn, statt von vorn zu beginnen. Fixierte
@@ -46,9 +48,10 @@ Unter **Erweitert** (zugeklappt) steuert man einen einzelnen Lauf. Alle Felder s
    Ausgangsplan, gleicher Startwert und gleiche Schrittzahl ergeben denselben Plan, sofern die Planung vor dem
    Zeitlimit endet. Ein anderer Startwert ergibt einen anderen, ähnlich guten Plan. **Wann ändern:** wenn man
    eine zweite Variante sehen will.
-2. **Zeitlimit (s):** wie viele Sekunden die Planung höchstens rechnet, Standard 300, mindestens 5. Ein
-   Sicherheitsnetz für langsame Rechner.
-3. **Schrittzahl:** nach wie vielen geprüften Änderungen die Planung aufhört, Standard 250 000. Unabhängig von der
+2. **Zeitlimit (s):** wie viele Sekunden die Planung höchstens rechnet, mindestens 5; leer nach der
+   Gründlichkeit (normal 1200). Ein Sicherheitsnetz für langsame Rechner.
+3. **Schrittzahl:** nach wie vielen geprüften Änderungen die Planung aufhört; leer nach der Gründlichkeit (normal
+   1 000 000). Unabhängig von der
    Geschwindigkeit des Rechners, deshalb wiederholbar. **Wann ändern:** mehr Schritte für einen etwas besseren
    Plan, wenn die Zeit da ist; weniger für einen schnellen Entwurf.
 4. **Neu beginnen:** Der gespeicherte Plan wird nicht als Ausgangspunkt genommen, nur fixierte Dienste und

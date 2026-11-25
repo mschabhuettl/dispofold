@@ -51,7 +51,9 @@ die Regeln der Gruppe Regelverstoß und der Bedarf haben kein einstellbares Gewi
   `excludedFrom` (nicht mehr aus dem Quellsystem übernommen).
 - Ändern sich nach einer Planung die Eingaben (Stammdaten, Planungsmonat, Regeln, Vormonat), gilt der Plan
   als veraltet, bis er neu geplant wird. Die Planung ist ohne Angabe reproduzierbar: Sie endet nach einer
-  festen Zahl von Zügen (`SOLVER_MOVE_LIMIT`), gleicher Stand und gleicher Startwert geben denselben Plan.
+  festen Zahl von Zügen, die die Gründlichkeit unter Regeln, Erweitert festlegt (schnell 250 000, normal
+  1 000 000, gründlich 3 000 000; `SOLVER_MOVE_LIMIT` überschreibt sie). Gleicher Stand, gleicher Startwert und
+  gleiche Gründlichkeit geben denselben Plan, sofern die Planung vor ihrem Zeitlimit endet.
   Ein Kaltstart beginnt ohne den bisherigen Plan (nur fixierte Zellen bleiben).
 - Der Solver startet mit einem einfachen Startplan: Tag für Tag deckt er den offenen Bedarf jedes Bereichs mit
   Personen, die am weitesten unter ihrem Soll liegen, und hält dabei die Regeln der Gruppe Regelverstoß ein. Einen Dienst, der
@@ -238,9 +240,12 @@ der Erklärung je Person.
 | `fairHolidays` | Fairness Feiertage | siehe Fairness | 3 |
 | `fairUnpopular` | Fairness fair verteilte Dienste | siehe Fairness | 2 |
 | `wishes` | Wünsche mit gleicher Quote | siehe Wünsche | 300 |
-| `blockLength` | Blöcke von 2 bis 4 Diensten | je Tag zu kurz oder zu lang | 6000 |
-| `isolatedDayOff` | Kein einzelner freier Tag zwischen Diensten | je Fall | 10000 |
+| `blockLength` | Blöcke von 2 bis 4 Diensten | je Tag zu kurz oder zu lang | 18000 |
+| `isolatedDayOff` | Kein einzelner freier Tag zwischen Diensten | je Fall | 30000 |
 | `forwardRotation` | Vorwärtsrotation | je Rückwärtswechsel | 500 |
+| `dayNightSwitch` | Abstand zwischen Tag und Nacht: 2 freie Tage nach Nächten, 0 vor der ersten Nacht | je fehlendem freien Tag | 10000 |
+| `dayNightSwitches` | Wechsel zwischen Tag und Nacht | je Wechsel | 3000 |
+| `nightBlock` | Nachtblöcke von 2 bis 4 Nächten | je Nacht zu kurz oder zu lang | 6000 |
 | `splitWeekend` | Ganze Wochenenden | je Wochenende mit nur einem Diensttag | 300 |
 | `compRestUse` | Ersatzruhe abbauen | Bonus je geplantem Ersatzruhetag | 500 |
 | `shiftVariety` | Abwechslung der Dienste | je Paar Dienste gleichen Bereichs und gleicher Kategorie, mit Vormonat | 5 |
@@ -249,12 +254,13 @@ der Erklärung je Person.
 | `family` | Familienregel | je Dienst gegen die Regel | 800 |
 | `onRequest` | Dienst, der nur von Hand geht, von Hand gesetzt | je solchem Dienst; Gewicht fest, nicht einstellbar | 1000 |
 
-**Wichtigkeit.** Die Seite Regeln fasst neun Qualitätsregeln zu Planungszielen zusammen. Die Wichtigkeit eines
+**Wichtigkeit.** Die Seite Regeln fasst zwölf Qualitätsregeln zu Planungszielen zusammen. Die Wichtigkeit eines
 Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerundet auf ganze Zahlen:
 
 | Planungsziel | Regeln | weniger / normal / mehr | Gewichte |
 |---|---|---|---|
-| Dienstblöcke | `blockLength`, `isolatedDayOff` | 0,5 / 1 / 2 | 3000 / 6000 / 12000 und 5000 / 10000 / 20000 |
+| Dienstblöcke | `blockLength`, `isolatedDayOff` | 0,5 / 1 / 2 | 9000 / 18000 / 36000 und 15000 / 30000 / 60000 |
+| Wechsel zwischen Tag und Nacht | `dayNightSwitch`, `dayNightSwitches`, `nightBlock` | 0,5 / 1 / 2 | 5000 / 10000 / 20000, 1500 / 3000 / 6000 und 3000 / 6000 / 12000 |
 | Wünsche | `wishes` | 0,5 / 1 / 2 | 150 / 300 / 600 |
 | Faire Verteilung | `fairNights`, `fairWeekends`, `fairHolidays`, `fairUnpopular` | 0,25 / 1 / 4 | 1 / 3 / 12, fair verteilte 1 / 2 / 8 |
 | Stunden treffen | `targetHours` | 0,5 / 1 / 2 | 10 / 20 / 40 |
@@ -369,6 +375,16 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
   Für die Fairness Nachtdienste (den Nachtausgleich) entscheidet die Nachtverteilung (siehe unten). Wer eine
   Verteilung je Bereich hat, zählt nicht für die Abwechslung der Bereiche. Wochenenden, Feiertage und
   fair verteilte Dienste bleiben gleichmäßig verteilt. Personen ohne Verteilung werden geplant wie bisher.
+- **Nachtanteil über mehrere Monate** (`nightMixMonths`, Standard 3, ab 0.28.0): Der Nachtanteil gilt über diesen
+  Monat und die Vormonate davor, soweit die Historie sie hat, nicht in jedem einzelnen Monat. Erwartet sind
+  diesen Monat: Anteil mal alle Dienste des Zeitraums minus die Nächte der Vormonate, höchstens alle Dienste des
+  Monats, mindestens 0. Die Dienste der Vormonate schätzt die Planung aus ihren Stunden und der mittleren
+  Dienstlänge dieses Monats. Die übrigen Kategorien teilen sich die übrigen Dienste im Verhältnis ihrer Anteile;
+  die Bereiche bleiben je Monat. Beispiel: Ein Anteil von 30 % Nacht, 20 Dienste im Monat, in den zwei Vormonaten
+  12 Nächte: erwartet 0,3 × 60 − 12 = 6 Nächte. Wer in den Vormonaten viele Nächte hatte, bekommt jetzt wenige,
+  und umgekehrt; so verteilt sich der Wechsel wie in Plänen von Hand über die Monate. 1 heißt: jeder Monat für
+  sich, wie bis 0.27. Ohne Historie gilt ebenfalls jeder Monat für sich. Die Nächte der Historie sind die
+  gezählten Nachtdienste der Monate (nach der Nachtzeit), die Planung zählt Dienste der Kategorie Nacht.
 - Die Personenansicht zeigt die geplante Verteilung neben der gewohnten.
 - **Beispiel:** Olga macht seit Jahren fast nur Tagdienste (90 % Tag, 10 % Nacht). Die Regel verhindert, dass sie
   in einem Monat plötzlich zur Hälfte Nächte bekommt, nur weil das bei anderen Regeln etwas spart.
@@ -506,6 +522,22 @@ Eine Einstellung der Regeln, `nightDistribution`:
   25-Fache) auf die heutigen, mit den Zahlen oben. Das 0,5- und 2-Fache
   ist nicht gemessen. Erwartbar wirkt es in dieselbe Richtung, aber schwächer: „mehr“ gibt weniger Einzeldienste
   und einzelne freie Tage und kostet eher Wünsche und Stunden nahe am Ziel, „weniger“ umgekehrt.
+- **Abstand zwischen Tag und Nacht** (`dayNightSwitch`, ab 0.28.0): Zwei Dienste einer Person, die aufeinander
+  folgen (freie Tage dazwischen übersprungen), der eine eine Nacht (Kategorie Nacht), der andere nicht. Nach der
+  letzten Nacht eines Blocks sollen `nightRestDays` (Standard 2) freie Tage vor einem Dienst am Tag liegen, nach
+  Tagdiensten vor der ersten Nacht `dayToNightDays` (Standard 0, denn Tag auf Nacht ist Vorwärtsrotation). Abzug
+  je fehlendem Tag, Gewicht 10000. Abwesenheiten und Ersatzruhe zählen als freie Tage, Dienste des Vormonats
+  zählen mit. Beide Zahlen gehen von 0 bis 4; 0 schaltet die Richtung aus.
+- **Wechsel zwischen Tag und Nacht** (`dayNightSwitches`): ein kleiner Abzug (Gewicht 3000) für jeden solchen
+  Wechsel, auch über freie Tage hinweg, damit nicht nur der Abstand stimmt, sondern auch weniger gewechselt wird.
+  Gewicht 0 schaltet ihn aus.
+- **Nachtblöcke** (`nightBlock`): aufeinanderfolgende Nächte, gewünscht `nightBlockMin` (2) bis `nightBlockMax`
+  (4). Abzug je Nacht zu wenig oder zu viel, Gewicht 6000; ein Block, der am Monatsende endet, ist nicht zu kurz.
+  Kürzester Block 0 oder 1 schaltet die Untergrenze aus. Die Regel „Dienstblöcke“ zählt alle Dienste gleich; erst
+  diese Regel sieht, dass Tag, Tag, Nacht nur eine einzelne Nacht ist.
+- **Beispiel `dayNightSwitch`:** Anna hat Nacht am Montag und Dienstag, frei am Mittwoch und Tagdienst am
+  Donnerstag: ein freier Tag nach den Nächten statt zwei, Abzug 1 × 10000, dazu 3000 für den Wechsel. Mit Tagdienst
+  erst am Freitag fällt nur der Wechsel an.
 - Vorwärtsrotation: die Reihenfolge Früh, Tag, Spät, Nacht. Ein Wechsel von einem Tag auf den nächsten in
   eine frühere Kategorie kostet. Nacht auf Früh ohne genug Ruhe ist ohnehin als Regelverstoß verboten.
 - Kategorie einer Schicht: aus dem Schichtkatalog; fehlt sie, gilt Nacht (siehe oben), Früh (Beginn vor

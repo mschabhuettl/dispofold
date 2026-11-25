@@ -80,9 +80,11 @@ Fehlt der Austritt im Quellsystem und lässt sich die Person nicht entfernen, **
 **Kann ich einen abgeschlossenen Monat noch ändern?** Ja: unter **Daten**, **Monate** **Monat wieder
 öffnen**, ändern, prüfen und wieder abschließen. Ist schon der Folgemonat abgeschlossen, zuerst diesen öffnen.
 
-**Die Planung dauert lange.** Mit den Standardwerten endet sie nach 250 000 Schritten, spätestens nach 300
-Sekunden. Man kann in der Zwischenzeit weiterarbeiten oder mit **Stopp** den bisher besten Stand behalten. Für einen
-schnellen Entwurf unter **Erweitert** eine kleinere Schrittzahl eintragen.
+**Die Planung dauert lange.** Mit der Gründlichkeit normal endet sie nach 1 000 000 Schritten, spätestens nach
+1200 Sekunden; mit etwa 150 Personen dauert das 6 bis 7 Minuten. Man kann in der Zwischenzeit weiterarbeiten oder
+mit **Stopp** den bisher besten Stand behalten. Für einen schnellen Entwurf unter
+**Einstellungen > Regeln > Erweitert** die Gründlichkeit „schnell“ wählen oder über dem Plan unter **Erweitert**
+eine kleinere Schrittzahl eintragen.
 
 **Ich sehe Prüfen, Eingaben oder Einstellungen nicht.** Dann ist man mit der Rolle „nur lesen“ angemeldet (oben
 rechts steht die Rolle). Die Rolle vergibt die IT. Siehe [Rolle „nur lesen“](nur-lesen.md).

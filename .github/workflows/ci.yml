@@ -226,6 +226,9 @@ jobs:
       - name: Terms on every page, viewer navigation, import page (browser)
         working-directory: frontend
         run: node scripts/check-terms.mjs
+      - name: The guide names only menus, tabs, buttons and settings of the interface
+        working-directory: frontend
+        run: node scripts/check-guide.mjs
       - name: Night setting on the person and fairness pages (browser)
         working-directory: frontend
         run: node scripts/check-night.mjs

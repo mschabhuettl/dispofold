@@ -32,6 +32,10 @@ wenn ein Plan in einer Richtung auffällt.
 - **Gleichmäßig:** Nachtdienste werden fair auf alle verteilt. Der Nachtanteil der gewohnten Verteilung zählt
   nicht: Die Person ist im Nachtausgleich, die übrigen Anteile gelten für ihre Dienste außer Nächten.
 - In beiden Fällen ist nicht im Nachtausgleich, wer [nie Nacht](begriffe.md#nie-nacht) macht.
+- **Gewohnter Nachtanteil über 3 Monate** (Standard 3): Der Nachtanteil einer Person gilt über diesen Monat und die
+  Vormonate in der Historie zusammen, nicht in jedem einzelnen Monat. Wer in den zwei Monaten davor viele Nächte
+  hatte, bekommt jetzt wenige, und umgekehrt; so wechseln in einem Monat weniger Personen zwischen Tag und
+  Nacht. 1 heißt: jeder Monat für sich, wie bis Version 0.27.
 - Ist „Wie bisher“ gewählt und das Gewicht von **Gewohnte Verteilung** 0, warnt die Seite: Personen mit gewohnter
   Verteilung hätten dann keine Regel für Nachtdienste.
 - **Wann ändern:** „Gleichmäßig“, wenn die Nächte bewusst neu verteilt werden sollen, etwa nach einer neuen
@@ -42,6 +46,7 @@ Darunter die Ziele, jedes mit seinen Werten und einer **Wichtigkeit**:
 | Ziel | Werte (Standard) | Was es bewirkt |
 |---|---|---|
 | Dienstblöcke | Blöcke von 2 bis 4 Tagen | Dienste in Blöcken dieser Länge, ohne einzelne freie Tage dazwischen |
+| Wechsel zwischen Tag und Nacht | nach der letzten Nacht eines Blocks 2 freie Tage vor einem Dienst am Tag, vor der ersten Nacht 0; Nächte in Blöcken von 2 bis 4 Nächten | Nächte liegen in Blöcken, danach kommt Erholung, und eine Person wechselt selten zwischen Tag und Nacht |
 | Wünsche | höchstens 6 je Person und Monat | so viele Wünsche je Person zählen, die ersten nach Datum |
 | Faire Verteilung | über die letzten 3 Monate | Wochenenden, Feiertage, fair verteilte Dienste und Nächte gleichmäßig verteilen |
 | Stunden treffen | höchstens 10 % über dem Soll (beim festen Anteil über dem Ziel), Stundenkonto ausgleichen bis Ende des Kalenderhalbjahrs (fester Anteil 25 % je Monat als Alternative), Minus am Halbjahresende verfällt | geplante und angerechnete Stunden nahe am Ziel; die Obergrenze ist ein Regelverstoß |
@@ -82,8 +87,20 @@ offener Bedarf gehen immer vor. Gemessen ist die Wirkung bisher nur für die fai
 klein.
 
 **Wann ändern:** wenn ein Plan in einer Richtung auffällt, zum Beispiel viele unerfüllte Wünsche (Wünsche auf
-„mehr“) oder zu viele kurze Blöcke (Dienstblöcke auf „mehr“). Danach neu planen und die Zahlen über dem Plan
-vergleichen.
+„mehr“), zu viele kurze Blöcke (Dienstblöcke auf „mehr“) oder zu viele Wechsel zwischen Tag und Nacht (Wechsel
+zwischen Tag und Nacht auf „mehr“). Danach neu planen und die Zahlen über dem Plan vergleichen.
+
+**Wechsel zwischen Tag und Nacht** im Einzelnen:
+
+- **Freie Tage nach Nächten** (Standard 2, 0 bis 4): nach der letzten Nacht eines Blocks so viele freie Tage,
+  bevor wieder ein Dienst am Tag kommt. Abwesenheiten und Ersatzruhe zählen als frei.
+- **Freie Tage vor der ersten Nacht** (Standard 0, 0 bis 4): nach Tagdiensten vor der ersten Nacht. 0 erlaubt
+  Tag direkt auf Nacht; das ist Vorwärtsrotation.
+- **Kürzester Nachtblock** und **Längster Nachtblock** (Standard 2 und 4 Nächte): Eine einzelne Nacht oder fünf
+  Nächte hintereinander kosten. Ein Block am Monatsende darf im nächsten Monat weitergehen.
+- Jeder Wechsel zwischen Nacht und Dienst am Tag kostet außerdem ein wenig, auch über freie Tage hinweg (Regel
+  **Wechsel zwischen Tag und Nacht** unter Erweitert, Gewicht 3000; 0 schaltet das ab).
+- 0 freie Tage oder Gewicht 0 schaltet die jeweilige Regel aus.
 
 ## Gesetz und Betriebsvereinbarung
 
@@ -131,6 +148,19 @@ beim Ziel **Stunden treffen**.
 
 Zugeklappt. Darin:
 
+**Gründlichkeit:** wie lange die Planung nach einem besseren Plan sucht.
+
+| Wahl | Schritte | Dauer mit etwa 150 Personen | Wann |
+|---|---|---|---|
+| schnell | 250 000 | etwa 1,5 Minuten | zum Ausprobieren; so plante Dispofold bis Version 0.27 |
+| normal (Standard) | 1 000 000 | etwa 6 bis 7 Minuten | für den Monatsplan |
+| gründlich | 3 000 000 | etwa 20 Minuten | wenn der Plan noch besser werden soll, etwa über Nacht |
+
+Die Dauer hängt vom Rechner und von der Größe des Monats ab, mit weniger Personen ist sie kürzer. Die Zahl der
+Schritte hängt nicht davon ab: Gleiche Daten, gleicher Startwert und gleiche Gründlichkeit ergeben denselben
+Plan. Während die Planung läuft, zeigt die Zeile über dem Plan, wie lange sie schon rechnet und vor wie vielen
+Sekunden sie zuletzt einen besseren Plan gefunden hat.
+
 **Nachtzeit:** wann ein Dienst als Nacht zählt.
 
 | Feld | Standard |
@@ -149,8 +179,11 @@ Planungsziels steht, zu welchem Ziel sie gehören. Die Standardgewichte:
 | Fairness Nachtdienste, Wochenenden, Feiertage | je 3 | Faire Verteilung |
 | Fairness fair verteilte Dienste | 2 | Faire Verteilung |
 | Wünsche | 300 | Wünsche |
-| Dienstblöcke | 6000 | Dienstblöcke |
-| Einzelne freie Tage | 10000 | Dienstblöcke |
+| Dienstblöcke | 18000 | Dienstblöcke |
+| Einzelne freie Tage | 30000 | Dienstblöcke |
+| Abstand zwischen Tag und Nacht | 10000 | Wechsel zwischen Tag und Nacht |
+| Wechsel zwischen Tag und Nacht | 3000 | Wechsel zwischen Tag und Nacht |
+| Nachtblöcke | 6000 | Wechsel zwischen Tag und Nacht |
 | Familienregel | 800 | Familienregeln |
 | Gewohnte Verteilung | 100 | keines |
 | Vorwärtsrotation | 500 | keines |
@@ -166,4 +199,8 @@ haben kein Gewicht. **Wann ändern:** selten, und nur eine Regel auf einmal; mei
 Ziels. Ein Gewicht 0 schaltet eine Regel aus.
 
 Die Beschreibungen der Regeln nennen die eingestellten Werte. Regeln, die mit einer älteren Version gespeichert
-wurden, laden unverändert; ohne Einstellung der Nachtdienste gilt „Wie bisher“.
+wurden, laden unverändert; ohne Einstellung der Nachtdienste gilt „Wie bisher“. Ausnahme ab Version 0.28: Stehen
+die Gewichte von **Dienstblöcke** und **Einzelne freie Tage** noch auf den alten Standards (6000 und 10000, oder
+beide auf derselben Wichtigkeit davon), bekommen sie beim ersten Laden die neuen (18000 und 30000, oder dieselbe
+Wichtigkeit davon). Von Hand gesetzte Gewichte bleiben. Die neuen Regeln und die Gründlichkeit beginnen mit
+ihrem Standard.
