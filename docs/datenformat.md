@@ -102,6 +102,7 @@ leer sein. Felder, die im Beispiel `null` sind, dürfen fehlen.
 | shift | `start`, `end` | Dienstbeginn und -ende; die Dauer ist die bezahlte Dienstzeit (bezahlte Pausen sind enthalten). Höchstens so lang wie die Regel „Höchstdauer eines Dienstes" (`maxDutyHours`, Standard 12 Stunden) |
 | shift | `category` | `EARLY`, `DAY`, `LATE`, `NIGHT`; fehlt sie, wird sie aus den Zeiten abgeleitet |
 | shift | `unpopular` | „Fair verteilen“: Dienste dieser Schicht werden über die Fairness gleichmäßig auf alle verteilt, die sie machen können. Nur setzen, wo das gewollt ist; Nachtschichten brauchen es nicht, sie haben ihre eigene Fairness-Regel |
+| shift | `usage` | optional: Anteil der Schicht an den Diensten ihres Bereichs in den Monaten der Historie, von 0 bis 1 (0,25 heißt: jeder vierte Dienst des Bereichs war auf dieser Schicht). Ein Import schreibt es (die Import-Erweiterung aus den Diensten der Historie). Die Regel „Gewohnte Schichten“ meidet Schichten, deren Anteil unter einer Schwelle liegt. Fehlt es, gilt die Schicht als gewohnt |
 | demand | `days` / `date` | Gültigkeit: Tagestypen `MON`..`SUN`, `HOL`, oder ein einzelnes Datum |
 | demand | `from`, `to`, `min`, `max` | Zeitfenster und Mindest- (optional Höchst-) Besetzung des Bereichs |
 | absenceType | `code` | Kürzel, auf das sich Abwesenheiten beziehen |
@@ -287,6 +288,7 @@ der Monat des Eintrags.
 | `import.wishWithoutShift` | `personId`, `date` | Wunsch `SHIFT` oder `NOT_SHIFT` ohne `shiftId` |
 | `import.dateOutsideMonth` | `kind`, `personId`, `date`, `month` | Abwesenheit, Wunsch oder Vorgabe außerhalb des Planungsmonats, Vormonatsdienst nicht vor dessen Beginn |
 | `import.missingTime` | `shiftId` | Beginn oder Ende einer Schicht fehlt |
+| `import.badShiftUsage` | `shiftId` | Anteil der Schicht in der Historie (`usage`) liegt nicht zwischen 0 und 1 |
 | `import.shiftTooLong` | `shiftId`, `minutes`, `maxMinutes` | Schicht ist länger als die Höchstdauer eines Dienstes (`maxDutyHours`) |
 | `import.shiftIdReserved` | `shiftId` | Schicht-Id `ER` ist für Ersatzruhe reserviert |
 

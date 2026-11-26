@@ -156,6 +156,33 @@ public class Sp5ExportTest {
         assertThat(rest).isEqualTo(usual.dataset());
     }
 
+    static Sp5Export.Request withUsage(Path dir, int historyMonths, String demand) throws Exception {
+        return new Sp5Export.Request(dir, "2027-01", null, historyMonths, null, null, demand, 1, 3, 3, mapping(), null,
+                true, "groups", 3, Sp5Export.DEMAND_MAX_P90, true);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void theSharesOfTheShiftsComeFromTheDutiesOfTheHistory(@TempDir Path dir) throws Exception {
+        folder(dir);
+        // December: Anna A1 on 15 even days and N1 on 16 odd ones, Ben A1 on the 21 days that are no multiple of
+        // 3 (X2, ignored, on the others); Cora is not taken over. Of 52 duties on the area's shifts: A1 36, N1 16
+        Sp5Export.Result shared = Sp5Export.run(withUsage(dir, 1, "history"));
+        List<Map<String, Object>> shifts = (List<Map<String, Object>>) shared.dataset().get("shifts");
+        assertThat(shifts).extracting(x -> x.get("usage")).containsExactly(0.6923, 0.3077);
+        // nothing else changes, and without the option there is no share, as sp5_export.py
+        Sp5Export.Result plain = Sp5Export.run(new Sp5Export.Request(dir, "2027-01", null, 1, null, null, "history", 1,
+                3, 3, mapping(), null, true, "groups", 3, Sp5Export.DEMAND_MAX_P90));
+        assertThat((List<Map<String, Object>>) plain.dataset().get("shifts")).allSatisfy(x -> assertThat(x)
+                .doesNotContainKey("usage"));
+        shifts.forEach(x -> x.remove("usage"));
+        assertThat(shared.dataset()).isEqualTo(plain.dataset());
+        // without a history: no share, the shifts count as usual
+        Sp5Export.Result none = Sp5Export.run(withUsage(dir, 0, "sp5"));
+        assertThat((List<Map<String, Object>>) none.dataset().get("shifts")).allSatisfy(x -> assertThat(x)
+                .doesNotContainKey("usage"));
+    }
+
     /** The shifts' "unpopular" with nightsFair on or off and this mapping. */
     @SuppressWarnings("unchecked")
     static List<Object> unpopular(Path dir, Map<String, Object> mapping, boolean nightsFair) throws Exception {

@@ -266,6 +266,16 @@ def main(argv: list[str] | None = None) -> int:
                                                  encoding="utf-8")
                 lines.append("Höchstbesetzung aus der Historie: wie Minimum; für den Vergleich ist im Ergebnis von "
                              "sp5_export.py jedes Maximum des Bedarfs auf das Minimum gesetzt")
+            if request.get("shiftUsage"):
+                # since 0.30.0 (Dispofold only): each shift's share of its area's duties in the history months; set
+                # aside from the result of Dispofold, as json.dump writes it
+                dataset = json.loads((work / "dataset.json").read_text(encoding="utf-8"))
+                shares = [s.pop("usage") for s in dataset.get("shifts", []) if "usage" in s]
+                (work / "dataset.json").write_text(json.dumps(dataset, ensure_ascii=False, indent=1) + "\n",
+                                                   encoding="utf-8")
+                lines.append(f"Häufigkeit der Schichten in der Historie: {len(shares)} Schichten mit Anteil, "
+                             f"{sum(1 for x in shares if x == 0)} davon ohne Dienst; für den Vergleich aus dem "
+                             "Ergebnis von Dispofold entfernt")
             same = all([
                 compare_dataset((work / "dataset.json").read_bytes(), (py / "dataset.json").read_bytes(), lines),
                 compare_report((work / "report.csv").read_bytes(), (py / "report.csv").read_bytes(), lines),

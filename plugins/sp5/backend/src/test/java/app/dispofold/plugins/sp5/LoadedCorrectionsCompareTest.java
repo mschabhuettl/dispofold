@@ -33,6 +33,7 @@ import io.restassured.http.ContentType;
 
 import app.dispofold.model.Dataset;
 import app.dispofold.model.Period;
+import app.dispofold.plugins.sp5.port.PyJson;
 import app.dispofold.store.Store;
 
 /**
@@ -132,8 +133,15 @@ class LoadedCorrectionsCompareTest {
                 .forEach(l -> warnings.append(l.substring(WARNING.length())).append('\n'));
 
         byte[] dataset = Files.readAllBytes(out.resolve("dataset.json"));
-        assertThat(new String(zip.get("dataset.json"), StandardCharsets.UTF_8))
-                .isEqualTo(new String(dataset, StandardCharsets.UTF_8));
+        // each shift's share in the history is the plugin's own (as the comparison script does: set aside)
+        assertThat(request.path("shiftUsage").asBoolean()).isTrue();
+        @SuppressWarnings("unchecked")
+        Map<String, Object> own = (Map<String, Object>) PyJson.load(zip.get("dataset.json"));
+        @SuppressWarnings("unchecked")
+        List<Map<String, Object>> ownShifts = (List<Map<String, Object>>) own.get("shifts");
+        assertThat(ownShifts).anySatisfy(s -> assertThat(s).containsKey("usage"));
+        ownShifts.forEach(s -> s.remove("usage"));
+        assertThat(PyJson.dump(own) + "\n").isEqualTo(new String(dataset, StandardCharsets.UTF_8));
         assertThat(new String(zip.get("report.csv"), StandardCharsets.UTF_8))
                 .isEqualTo(Files.readString(out.resolve("report.csv"), StandardCharsets.UTF_8));
         assertThat(new String(zip.get("warnings.txt"), StandardCharsets.UTF_8)).isEqualTo(warnings.toString());
@@ -156,7 +164,8 @@ class LoadedCorrectionsCompareTest {
         assertThat(imported.restrictions()).isEqualTo(expected.restrictions());
         assertThat(imported.demand()).isEqualTo(expected.demand());
         assertThat(imported.areas()).isEqualTo(expected.areas());
-        assertThat(imported.shifts()).isEqualTo(expected.shifts());
+        assertThat(imported.shifts().stream().map(s -> s.withUsage(null)).toList()).isEqualTo(expected.shifts());
+        assertThat(imported.shifts()).anySatisfy(s -> assertThat(s.usage()).isNotNull());
         Period period = mapper.readValue(given().get("/api/periods/2027-01").then().statusCode(200).extract()
                 .asString(), Period.class);
         assertThat(period).isEqualTo(expected.periods().get(0));

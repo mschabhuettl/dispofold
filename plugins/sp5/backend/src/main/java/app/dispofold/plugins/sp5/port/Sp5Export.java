@@ -58,11 +58,23 @@ public final class Sp5Export {
      *        "reserve" with historyAreaDuties (see {@link Sp5Import#areaSource})
      * @param demandMax the maximum of the demand from the history (Dispofold only): "p90" the staffing reached on 9 of
      *        10 such days, as sp5_export.py; "min" the minimum (see {@link #withMaxAtMinimum})
+     * @param shiftUsage each shift's share of its area's duties in the history months (Dispofold only, see
+     *        {@link #withUsage}); sp5_export.py writes none
      */
     public record Request(Path folder, String month, String to, int historyMonths, Integer areasFromHistory,
             Integer shiftsFromHistory, String demand, Integer mixMinDuties, int hiddenShiftsMonths, int recentMonths,
             Map<String, Object> mapping, Map<String, Object> corrections, boolean nightsFair, String areaSource,
-            int historyAreaDuties, String demandMax) {
+            int historyAreaDuties, String demandMax, boolean shiftUsage) {
+
+        /** Without the shares of the shifts, as sp5_export.py. */
+        public Request(Path folder, String month, String to, int historyMonths, Integer areasFromHistory,
+                Integer shiftsFromHistory, String demand, Integer mixMinDuties, int hiddenShiftsMonths,
+                int recentMonths, Map<String, Object> mapping, Map<String, Object> corrections, boolean nightsFair,
+                String areaSource, int historyAreaDuties, String demandMax) {
+            this(folder, month, to, historyMonths, areasFromHistory, shiftsFromHistory, demand, mixMinDuties,
+                    hiddenShiftsMonths, recentMonths, mapping, corrections, nightsFair, areaSource, historyAreaDuties,
+                    demandMax, false);
+        }
 
         /** The maximum of the demand from the history as sp5_export.py. */
         public Request(Path folder, String month, String to, int historyMonths, Integer areasFromHistory,
@@ -368,6 +380,9 @@ public final class Sp5Export {
         if (q.demand().equals("history") && DEMAND_MAX_MIN.equals(q.demandMax())) {
             withMaxAtMinimum(dataset);
         }
+        if (q.shiftUsage()) {
+            withUsage(dataset, job.shiftCounts);
+        }
         List<List<Object>> report = new ArrayList<>();
         for (List<Object> r : job.reportRows) {
             List<Object> padded = new ArrayList<>(r);
@@ -398,6 +413,31 @@ public final class Sp5Export {
     static void withMaxAtMinimum(Map<String, Object> dataset) {
         for (Map<String, Object> rule : (List<Map<String, Object>>) dataset.get("demand")) {
             rule.put("max", rule.get("min"));
+        }
+    }
+
+    /**
+     * Every shift with its share of its area's duties in the history months ("usage", rounded to four places): the
+     * duties counted for the areas of the people (those taken over and those whose area comes from their duties
+     * alone), per shift over all duties on the area's shifts. No share without a history or in an area without such
+     * duties: its shifts then count as usual.
+     */
+    @SuppressWarnings("unchecked")
+    static void withUsage(Map<String, Object> dataset, Map<Object, Long> counts) {
+        Map<Object, Long> byShift = new java.util.HashMap<>();
+        for (Map.Entry<Object, Long> e : counts.entrySet()) {
+            byShift.merge(((List<?>) e.getKey()).get(1), e.getValue(), Long::sum);
+        }
+        List<Map<String, Object>> shifts = (List<Map<String, Object>>) dataset.get("shifts");
+        Map<Object, Long> byArea = new java.util.HashMap<>();
+        for (Map<String, Object> s : shifts) {
+            byArea.merge(s.get("areaId"), byShift.getOrDefault(s.get("id"), 0L), Long::sum);
+        }
+        for (Map<String, Object> s : shifts) {
+            long total = byArea.get(s.get("areaId"));
+            if (total > 0) {
+                s.put("usage", Math.round(10000.0 * byShift.getOrDefault(s.get("id"), 0L) / total) / 10000.0);
+            }
         }
     }
 

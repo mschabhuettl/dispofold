@@ -129,6 +129,9 @@ public class Sp5Resource {
         // nor this one: the maximum of the demand from the history ("min": sp5_export.py's demand with every maximum
         // set to the minimum)
         question.put("demandMax", request.demandMax());
+        // nor this: each shift's share of its area's duties in the history months (a field of the shifts that the
+        // comparison sets aside)
+        question.put("shiftUsage", request.shiftUsage());
         question.set("areaCounts", mapper.valueToTree(result.areaCounts()));
         // the restrictions as rows (as the export writes them) and as the pages show them: the states of whole areas
         // and the exceptions (numbers only)

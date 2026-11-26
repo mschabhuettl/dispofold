@@ -53,7 +53,8 @@
         "end": { "$ref": "#/$defs/time" },
         "category": { "anyOf": [{ "$ref": "#/$defs/category" }, { "type": "null" }] },
         "color": { "$ref": "#/$defs/stringOrNull" },
-        "unpopular": { "type": "boolean" }
+        "unpopular": { "type": "boolean" },
+        "usage": { "type": "number", "minimum": 0, "maximum": 1 }
       }
     },
     "demandRule": {

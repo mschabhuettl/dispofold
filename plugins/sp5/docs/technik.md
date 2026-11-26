@@ -43,7 +43,10 @@ Die Optionen der Erweiterung entsprechen denen von `sp5_export.py`, mit denselbe
 einer Person aus**: `sp5_export.py` kennt nur „Gruppen“. Mit „Historie“ oder „Historie, Gruppen als Reserve“
 unterscheiden sich Bereiche und Einschränkungen der Personen deshalb gewollt; `sp5-vergleich.py` sagt das und
 nennt die Zahl der Bereiche nach ihrer Herkunft (aus `anfrage.json`). Byte für Byte gleich ist ein Einlesen nur mit
-„Gruppen“ und mit der Höchstbesetzung „übliche Spitze“; `anfrage.json` nennt sie als `demandMax`.
+„Gruppen“ und mit der Höchstbesetzung „übliche Spitze“; `anfrage.json` nennt sie als `demandMax`. Den Anteil
+jeder Schicht in der Historie (`usage`, ab 0.30.0) schreibt nur Dispofold; `anfrage.json` sagt es mit
+`shiftUsage`, und `sp5-vergleich.py` nimmt das Feld vor dem Vergleich aus dem Ergebnis von Dispofold und nennt die
+Zahl der Schichten mit Anteil.
 
 | Option in Dispofold | Kommandozeile von `sp5_export.py` |
 |---|---|
@@ -58,6 +61,7 @@ nennt die Zahl der Bereiche nach ihrer Herkunft (aus `anfrage.json`). Byte für 
 | Ausgeblendete Schichten mit Diensten in den … Monaten davor | `--hidden-shifts-months` |
 | Bereiche ohne Dienst in den letzten … Monaten nur von Hand | `--recent-months` |
 | Nachtschichten automatisch fair verteilen | keine; `sp5_export.py` tut das immer (siehe oben) |
+| Anteil jeder Schicht in der Historie (keine Option, immer) | keine; `sp5_export.py` schreibt keinen Anteil |
 
 Die Zuordnung hat das Format von `mapping.json` aus sp5-export. Die Korrekturdatei, die Dispofold aus den
 Änderungen seit dem letzten Import bildet, wendet die Erweiterung so an wie `sp5_export.py` mit `--corrections`.

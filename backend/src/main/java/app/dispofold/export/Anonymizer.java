@@ -92,7 +92,7 @@ public final class Anonymizer {
         Dataset dataset = new Dataset(d.format(), d.version(), SOURCE,
                 list(d.areas()).stream().map(a -> new Area(a.id(), a.id(), a.color())).toList(),
                 list(d.shifts()).stream().map(s -> new ShiftType(s.id(), s.areaId(), s.code(), s.code(), s.start(),
-                        s.end(), s.category(), s.color(), s.unpopular())).toList(),
+                        s.end(), s.category(), s.color(), s.unpopular(), s.usage())).toList(),
                 d.demand(),
                 list(d.holidays()).stream().map(h -> new Holiday(h.date(), HOLIDAY)).toList(),
                 list(d.absenceTypes()).stream().map(t -> new AbsenceType(t.code(), t.code(), t.reducesTarget(),

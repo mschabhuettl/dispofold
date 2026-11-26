@@ -129,6 +129,9 @@ public final class DatasetValidator {
             if (ShiftOption.COMP_REST_ID.equals(s.id())) {
                 error("import.shiftIdReserved", "shiftId", s.id());
             }
+            if (s.usage() != null && !(s.usage() >= 0 && s.usage() <= 1)) {
+                error("import.badShiftUsage", "shiftId", s.id());
+            }
             if (s.start() == null || s.end() == null) {
                 error("import.missingTime", "shiftId", s.id());
                 return;

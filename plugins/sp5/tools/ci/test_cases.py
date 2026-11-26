@@ -171,6 +171,20 @@ def test_owner_script_finds_identical_and_anonymous_differences(source, tmp_path
     assert "Einschränkungen: 646 Zeilen; auf den Seiten 58 Bereiche „nur von Hand“, 0 „nie“ und 479 Ausnahmen in 478 Zeilen" \
         in rows.stdout, rows.stdout
     assert "nicht automatisch fair verteilt" in off.stdout
+    # since 0.30.0: each shift's share in the history (Dispofold only) is set aside and counted
+    shared = json.loads(out.read_text(encoding="utf-8"))
+    for i, shift in enumerate(shared["shifts"]):
+        shift["usage"] = 0.0 if i == 0 else 0.25
+    shared_out = tmp_path / "anteile" / "dataset.json"
+    shared_out.parent.mkdir()
+    shared_out.write_text(json.dumps(shared, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    for suffix in (".csv", ".warnings"):
+        shared_out.with_suffix(suffix).write_bytes(out.with_suffix(suffix).read_bytes())
+    usage = compare(_bundle(tmp_path / "anteile.zip", shared_out, args, extra={"shiftUsage": True}))
+    assert usage.returncode == 0 and "ERGEBNIS: alles identisch" in usage.stdout, usage.stdout + usage.stderr
+    assert (f"Häufigkeit der Schichten in der Historie: {len(shared['shifts'])} Schichten mit Anteil, 1 davon ohne "
+            "Dienst") in usage.stdout
+    assert compare(_bundle(tmp_path / "anteile-ohne.zip", shared_out, args)).returncode == 1
     # the same result compared as if nights were marked automatically: the difference shows
     assert compare(_bundle(tmp_path / "mit-nacht.zip", plain_out, args, nights_fair=True)).returncode == 1
     # a changed person name and a changed number: found, and nothing of the data in the result

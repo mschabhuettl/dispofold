@@ -66,6 +66,12 @@ Mindestbedarf“ hält sie klein. Bei **wie Minimum** ist jede Person über dem 
 Zeiten mit Minimum 0; das gilt auch für Bedarf, den eine Korrekturdatei ersetzt hat. Gemessen am großen synthetischen Monat plant „wie Minimum“ nicht weniger, sondern mehr
 Stunden (24 % statt 21 % über dem Minimum, „schnell“), alles darüber als Überbesetzung. Einstellungen aus einer Version davor behalten „übliche Spitze“.
 
+**Anteil jeder Schicht in der Historie** (ab 0.30.0, ohne Option): Die Erweiterung zählt die Dienste der
+übernommenen Personen in den Monaten der Historie je Schicht und schreibt jeder Schicht ihren Anteil an den Diensten
+ihres Bereichs (`usage`, unter **Stammdaten → Schichten** in der Spalte „Anteil in der Historie“). Die Regel
+**Gewohnte Schichten** meidet damit Schichten, die selten vorkamen. Ohne Historie oder in einem Bereich ohne solchen
+Dienst bekommt keine Schicht einen Anteil; sie gelten dann alle als gewohnt.
+
 **Schichten seltener als … Dienste nur von Hand** braucht es mit „Historie, Gruppen als Reserve“ meist nicht:
 Dort hat eine Person ohnehin nur die Bereiche ganz, in denen sie gearbeitet hat. Mit echten Daten zeigt sich:
 Reserve und diese Option zusammen geben einer Person viele Zeilen mit Ausnahmen je Schicht; bleibt die Option leer,

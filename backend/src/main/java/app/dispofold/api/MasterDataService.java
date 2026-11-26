@@ -362,6 +362,14 @@ public class MasterDataService {
                 // a shift moved to another area: it leaves the states of its old area and takes those of the new one
                 ShiftType old = master.shifts.get(index);
                 ShiftType moved = (ShiftType) item;
+                // its share in the history comes from an import: kept when the body has none, gone in another area
+                if (!object(kind, body).has("usage")) {
+                    moved = moved.withUsage(old.usage());
+                }
+                if (!Objects.equals(old.areaId(), moved.areaId())) {
+                    moved = moved.withUsage(null);
+                }
+                item = moved;
                 if (!Objects.equals(old.areaId(), moved.areaId())) {
                     Dataset view = view(master);
                     for (Person p : list(view.people())) {
