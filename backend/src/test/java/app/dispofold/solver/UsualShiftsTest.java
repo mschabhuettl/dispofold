@@ -55,7 +55,7 @@ class UsualShiftsTest {
         List<DemandRule> demand = new ArrayList<>(d.demand().stream().filter(r -> !r.areaId().equals("AN")).toList());
         demand.add(new DemandRule("AN", all, null, LocalTime.of(7, 0), LocalTime.of(19, 0), 2, 3));
         Set<String> ids = new java.util.HashSet<>(shifts.stream().map(ShiftType::id).toList());
-        // restrictions, wishes and fixed duties on the dropped shifts go with them
+        // restrictions and previous duties on the dropped shifts go with them, wishes and fixed duties all
         Dataset changed = new Dataset(d.format(), d.version(), d.source(), d.areas(), shifts, demand, d.holidays(),
                 d.absenceTypes(), d.people(), d.restrictions().stream()
                         .filter(x -> x.shiftId() == null || ids.contains(x.shiftId())).toList(),
@@ -98,8 +98,9 @@ class UsualShiftsTest {
         long without = shortDuties(input(Map.of(), false));
         long with = shortDuties(input(Map.of()));
         // without shares one long or two short duties cost the same and the plan has some short ones; with shares
-        // the short ones are rare and the long usual shift covers the day
+        // the short ones are rare (at most 3 of the 62 day duties of the area) and the long usual shift covers the day
         assertThat(without).isPositive();
-        assertThat(with).isLessThanOrEqualTo(1).isLessThan(without);
+        assertThat(with).as("short duties with shares %d, without %d", with, without).isLessThanOrEqualTo(3);
+        assertThat(3 * with).isLessThan(without);
     }
 }

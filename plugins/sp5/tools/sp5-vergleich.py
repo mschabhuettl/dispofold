@@ -23,6 +23,7 @@ import argparse
 import csv
 import io
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -267,14 +268,13 @@ def main(argv: list[str] | None = None) -> int:
                 lines.append("Höchstbesetzung aus der Historie: wie Minimum; für den Vergleich ist im Ergebnis von "
                              "sp5_export.py jedes Maximum des Bedarfs auf das Minimum gesetzt")
             if request.get("shiftUsage"):
-                # since 0.30.0 (Dispofold only): each shift's share of its area's duties in the history months; set
-                # aside from the result of Dispofold, as json.dump writes it
-                dataset = json.loads((work / "dataset.json").read_text(encoding="utf-8"))
-                shares = [s.pop("usage") for s in dataset.get("shifts", []) if "usage" in s]
-                (work / "dataset.json").write_text(json.dumps(dataset, ensure_ascii=False, indent=1) + "\n",
-                                                   encoding="utf-8")
+                # since 0.30.0 (Dispofold only): each shift's share of its area's duties in the history months, the
+                # last field of a shift; taken out of the result of Dispofold as text, so every other byte is compared
+                raw = (work / "dataset.json").read_bytes()
+                shares = re.findall(rb',\n   "usage": ([-0-9.eE+]+)(?=\n  \})', raw)
+                (work / "dataset.json").write_bytes(re.sub(rb',\n   "usage": [-0-9.eE+]+(?=\n  \})', b"", raw))
                 lines.append(f"Häufigkeit der Schichten in der Historie: {len(shares)} Schichten mit Anteil, "
-                             f"{sum(1 for x in shares if x == 0)} davon ohne Dienst; für den Vergleich aus dem "
+                             f"{sum(1 for x in shares if float(x) == 0)} davon ohne Dienst; für den Vergleich aus dem "
                              "Ergebnis von Dispofold entfernt")
             same = all([
                 compare_dataset((work / "dataset.json").read_bytes(), (py / "dataset.json").read_bytes(), lines),

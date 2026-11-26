@@ -107,8 +107,8 @@ public final class ConstraintCatalog {
     }
 
     /**
-     * Weights stored with an older version (1: before 0.28, 2: before 0.29) with the new defaults, one version after
-     * the other. Per planning goal: when the goal's weights all stand at the old default times one Wichtigkeit factor
+     * Weights stored with an older version (1: before 0.28, 2: before 0.29, 3: before 0.30) with the new defaults, one
+     * version after the other. Per planning goal: when the goal's weights all stand at the old default times one Wichtigkeit factor
      * (a weight not stored counts as such), its changed weights get the new default times that factor; a changed
      * weight of no goal only at its old default. Weights set by hand otherwise, and all other weights, stay.
      */

@@ -24,7 +24,7 @@ import org.junit.jupiter.api.Test;
 class ShiftMixTest {
 
     /** A fixed number of moves: the same plan on every machine (since 0.30 more, the plan of 150 000 had no nights). */
-    private static final long MOVES = 400_000;
+    private static final long MOVES = 1_000_000;
     /** Area AN and DR, no restrictions in the small fixture. */
     private static final String PERSON = "P0010";
 
@@ -39,6 +39,11 @@ class ShiftMixTest {
      * target of 0.29 (100 and 0 hours; since 0.30: 25 and 8 hours, with which the mix shapes the plan less).
      */
     private static PlanningInput withMix(ShiftMix mix, Map<String, Long> weights) {
+        return withMix(mix, weights, 0);
+    }
+
+    /** With these weights and this tolerance around the target (null: the default). */
+    private static PlanningInput withMix(ShiftMix mix, Map<String, Long> weights, Integer tolerance) {
         PlanningInput base = Fixtures.input(Fixtures.SMALL);
         Dataset d = base.dataset();
         List<Person> people = new ArrayList<>();
@@ -56,7 +61,7 @@ class ShiftMixTest {
                 r.holidayWorkEarnsCompRest(), r.nightStart(), r.nightEnd(), r.nightMinHours(), r.accountCarryShare(),
                 r.historyMonths(), weights, r.timeZone(), r.averagingWeeks(), r.maxOverTargetPercent(),
                 r.minFreeSundays(), r.nightDistribution(), r.averageTolerancePercent(), r.freeInsideAbsence(),
-                r.averagingPeriod(), AccountBalancing.MONTHLY_SHARE, null).withTargetToleranceHours(0);
+                r.averagingPeriod(), AccountBalancing.MONTHLY_SHARE, null).withTargetToleranceHours(tolerance);
         return new PlanningInput(changed, base.period(), share, List.of());
     }
 
@@ -93,6 +98,16 @@ class ShiftMixTest {
                 Map.of()));
         assertThat(share(nights, ShiftCategory.NIGHT)).isGreaterThanOrEqualTo(0.5);
         assertThat(share(nights, ShiftCategory.NIGHT)).isGreaterThan(share(days, ShiftCategory.NIGHT) + 0.3);
+    }
+
+    @Test
+    void withTheDefaultsOf030TheMixStillShapesThePlan() throws Exception {
+        PersonStats days = solve(withMix(new ShiftMix(Map.of(ShiftCategory.DAY, 0.9, ShiftCategory.NIGHT, 0.1),
+                Map.of("AN", 0.8, "DR", 0.2)), Map.of(), null));
+        // weight 25 and 8 hours around the target: the mix weighs less against blocks, days still the most
+        assertThat(share(days, ShiftCategory.NIGHT)).isLessThanOrEqualTo(0.25);
+        assertThat(share(days, ShiftCategory.DAY)).isGreaterThanOrEqualTo(0.5);
+        assertThat(days.plannedMix().areasOrEmpty().getOrDefault("AN", 0.0)).isGreaterThanOrEqualTo(0.5);
     }
 
     @Test

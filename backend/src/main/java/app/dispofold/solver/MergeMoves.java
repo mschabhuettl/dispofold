@@ -26,7 +26,7 @@ public class MergeMoves implements MoveIteratorFactory<Roster, Move<Roster>> {
     static final PlanningVariableMetaModel<Roster, DutyCell, ShiftOption> SHIFT = PlanningSolutionMetaModel
             .of(Roster.class, DutyCell.class).genuineEntity(DutyCell.class).basicVariable("shift", ShiftOption.class);
 
-    /** Tries per move before the iterator gives a plain lengthening or the first cell back unchanged. */
+    /** Tries per move before the iterator gives a plain change of a random cell. */
     private static final int TRIES = 20;
 
     @Override
@@ -39,16 +39,31 @@ public class MergeMoves implements MoveIteratorFactory<Roster, Move<Roster>> {
         throw new UnsupportedOperationException("random selection only");
     }
 
+    /** The cells that are not pinned, all and per day, in the order of the roster; set when a phase starts. */
+    private List<DutyCell> movable = List.of();
+    private Map<LocalDate, List<DutyCell>> byDay = Map.of();
+
     @Override
-    public Iterator<Move<Roster>> createRandomMoveIterator(ScoreDirector<Roster> scoreDirector,
-            RandomGenerator random) {
-        List<DutyCell> movable = new ArrayList<>();
-        Map<LocalDate, List<DutyCell>> byDay = new HashMap<>();
+    public void phaseStarted(ScoreDirector<Roster> scoreDirector) {
+        index(scoreDirector);
+    }
+
+    private void index(ScoreDirector<Roster> scoreDirector) {
+        movable = new ArrayList<>();
+        byDay = new HashMap<>();
         for (DutyCell c : scoreDirector.getWorkingSolution().getCells()) {
             if (!c.isPinned()) {
                 movable.add(c);
                 byDay.computeIfAbsent(c.getDate(), d -> new ArrayList<>()).add(c);
             }
+        }
+    }
+
+    @Override
+    public Iterator<Move<Roster>> createRandomMoveIterator(ScoreDirector<Roster> scoreDirector,
+            RandomGenerator random) {
+        if (movable.isEmpty()) {
+            index(scoreDirector);
         }
         return new Iterator<>() {
             @Override
@@ -63,9 +78,12 @@ public class MergeMoves implements MoveIteratorFactory<Roster, Move<Roster>> {
                     move = merge(movable.get(random.nextInt(movable.size())), byDay, random);
                 }
                 if (move == null) {
-                    // nothing to lengthen found: a move that changes nothing (the forager does not accept it)
+                    // nothing to lengthen found: a plain change of a cell (a move without a change would be accepted
+                    // as a step at an equal score and crowd out real steps)
                     DutyCell c = movable.get(random.nextInt(movable.size()));
-                    move = Moves.change(SHIFT, c, c.getShift());
+                    List<ShiftOption> options = c.getOptions();
+                    int pick = random.nextInt(options.size() + 1);
+                    move = Moves.change(SHIFT, c, pick == options.size() ? null : options.get(pick));
                 }
                 return move;
             }

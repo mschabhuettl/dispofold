@@ -418,8 +418,8 @@ public final class Sp5Export {
 
     /**
      * Every shift with its share of its area's duties in the history months ("usage", rounded to four places): the
-     * duties counted for the areas of the people (those taken over and those whose area comes from their duties
-     * alone), per shift over all duties on the area's shifts. No share without a history or in an area without such
+     * duties counted for the areas of the people (those taken over and those without a group area, also when they
+     * are left out later), per shift over all duties on the area's shifts. No share without a history or in an area without such
      * duties: its shifts then count as usual.
      */
     @SuppressWarnings("unchecked")

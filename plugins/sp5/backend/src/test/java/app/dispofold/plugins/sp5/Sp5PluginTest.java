@@ -38,7 +38,6 @@ import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 
-import app.dispofold.plugins.sp5.port.PyJson;
 import app.dispofold.plugins.sp5.port.Sp5ExportTest;
 import app.dispofold.store.Store;
 
@@ -231,14 +230,9 @@ class Sp5PluginTest {
                 .isZero();
         // the shares of the shifts are the plugin's own (anfrage.json says so); without them, the same bytes
         assertThat(question.path("shiftUsage").asBoolean()).isTrue();
-        @SuppressWarnings("unchecked")
-        Map<String, Object> own = (Map<String, Object>) PyJson.load(zip.get("dataset.json"));
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> shifts = (List<Map<String, Object>>) own.get("shifts");
-        assertThat(shifts).anySatisfy(x -> assertThat(x).containsKey("usage"));
-        shifts.forEach(x -> x.remove("usage"));
-        assertThat((PyJson.dump(own) + "\n").getBytes(StandardCharsets.UTF_8))
-                .isEqualTo(Files.readAllBytes(dir.resolve("d.json")));
+        String own = new String(zip.get("dataset.json"), StandardCharsets.UTF_8);
+        assertThat(own).contains("\"usage\": ");
+        assertThat(own.replaceAll(Sp5ExportTest.USAGE_FIELD, "")).isEqualTo(Files.readString(dir.resolve("d.json")));
         assertThat(zip.get("report.csv")).isEqualTo(Files.readAllBytes(dir.resolve("r.csv")));
         String warnings = err.toString(StandardCharsets.UTF_8).lines().filter(l -> l.startsWith("Warnung: "))
                 .map(l -> l.substring("Warnung: ".length()) + "\n").collect(Collectors.joining());

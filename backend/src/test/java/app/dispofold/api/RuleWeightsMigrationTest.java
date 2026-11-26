@@ -138,7 +138,7 @@ class RuleWeightsMigrationTest {
                 .body("weights.dayNightSwitches", equalTo(30000)).body("weights.shiftMix", equalTo(25))
                 .body("weights.dayNightSwitch", equalTo(10000)).body("weights.nightBlock", equalTo(6000))
                 .body("weights.blockLength", equalTo(18000));
-        // saved again: version 3, the old value set by hand stays
+        // saved again: the current version, the old value set by hand stays
         String rules = given().get("/api/rules").then().extract().asString()
                 .replace("\"dayNightSwitches\":30000", "\"dayNightSwitches\":3000");
         given().contentType(ContentType.JSON).body(rules).put("/api/rules").then().statusCode(200);

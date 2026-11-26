@@ -664,10 +664,11 @@ public final class RosterBuilder {
      * or at least the rules' share of a rare shift, else the part of that share it lacks, from 1 to 100 (never worked).
      */
     static int rarity(Double usage, int percent) {
-        if (usage == null || percent <= 0 || usage * 100 >= percent) {
+        double share = percent / 100.0;
+        if (usage == null || percent <= 0 || usage >= share) {
             return 0;
         }
-        return (int) Math.max(1, Math.round(100 * (percent - usage * 100) / percent));
+        return (int) Math.max(1, Math.round(100 * (share - usage) / share));
     }
 
     /** Minutes of the duty inside the night window (which may cross midnight). */

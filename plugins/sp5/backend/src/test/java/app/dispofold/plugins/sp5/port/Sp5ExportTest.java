@@ -156,6 +156,9 @@ public class Sp5ExportTest {
         assertThat(rest).isEqualTo(usual.dataset());
     }
 
+    /** The share of a shift as the dataset file writes it (its last field), for comparing the rest byte for byte. */
+    public static final String USAGE_FIELD = ",\n   \"usage\": [-0-9.eE+]+(?=\n  \\})";
+
     static Sp5Export.Request withUsage(Path dir, int historyMonths, String demand) throws Exception {
         return new Sp5Export.Request(dir, "2027-01", null, historyMonths, null, null, demand, 1, 3, 3, mapping(), null,
                 true, "groups", 3, Sp5Export.DEMAND_MAX_P90, true);

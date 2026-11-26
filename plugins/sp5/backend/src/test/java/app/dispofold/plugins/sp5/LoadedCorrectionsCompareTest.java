@@ -33,7 +33,6 @@ import io.restassured.http.ContentType;
 
 import app.dispofold.model.Dataset;
 import app.dispofold.model.Period;
-import app.dispofold.plugins.sp5.port.PyJson;
 import app.dispofold.store.Store;
 
 /**
@@ -135,13 +134,10 @@ class LoadedCorrectionsCompareTest {
         byte[] dataset = Files.readAllBytes(out.resolve("dataset.json"));
         // each shift's share in the history is the plugin's own (as the comparison script does: set aside)
         assertThat(request.path("shiftUsage").asBoolean()).isTrue();
-        @SuppressWarnings("unchecked")
-        Map<String, Object> own = (Map<String, Object>) PyJson.load(zip.get("dataset.json"));
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> ownShifts = (List<Map<String, Object>>) own.get("shifts");
-        assertThat(ownShifts).anySatisfy(s -> assertThat(s).containsKey("usage"));
-        ownShifts.forEach(s -> s.remove("usage"));
-        assertThat(PyJson.dump(own) + "\n").isEqualTo(new String(dataset, StandardCharsets.UTF_8));
+        String own = new String(zip.get("dataset.json"), StandardCharsets.UTF_8);
+        assertThat(own).contains("\"usage\": ");
+        assertThat(own.replaceAll(app.dispofold.plugins.sp5.port.Sp5ExportTest.USAGE_FIELD, ""))
+                .isEqualTo(new String(dataset, StandardCharsets.UTF_8));
         assertThat(new String(zip.get("report.csv"), StandardCharsets.UTF_8))
                 .isEqualTo(Files.readString(out.resolve("report.csv"), StandardCharsets.UTF_8));
         assertThat(new String(zip.get("warnings.txt"), StandardCharsets.UTF_8)).isEqualTo(warnings.toString());
