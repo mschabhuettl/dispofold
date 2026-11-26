@@ -184,6 +184,13 @@ Siehe [Plan nach Funktion](plan-bearbeiten.md#plan-nach-funktion).
 Wie stark eine Regel der Gruppe [Qualität](#qualität) zählt, eine ganze Zahl ab 0 (0 schaltet die Regel aus). Die
 Gewichte stehen unter **Regeln**, **Erweitert**; meist reicht die [Wichtigkeit](#wichtigkeit).
 
+## Gewohnte Schichten
+
+Die Schichten, die in den Monaten der [Historie](#historie) die meisten Dienste ihres Bereichs hatten. Die
+Import-Erweiterung schreibt zu jeder Schicht ihren Anteil (unter **Stammdaten** die Spalte **Anteil in der
+Historie**). Eine Schicht unter **Seltene Schicht unter (%)** ist selten; die Regel **Gewohnte Schichten** meidet
+sie. Siehe [Einstellungen](einstellungen.md).
+
 ## Gewohnte Verteilung
 
 Wie sich die Dienste einer Person üblicherweise verteilen, in Prozent je [Schichtart](#schichtart) und je Bereich,
@@ -269,7 +276,7 @@ den Bedarf deckt. Die Qualitätsregeln heißen im Programm so, auch auf den Knö
 Wochenenden**, **Fairness Feiertage**, **Fairness fair verteilte Dienste**, **Wünsche**, **Dienstblöcke**,
 **Einzelne freie Tage**, **Vorwärtsrotation**, **Abstand zwischen Tag und Nacht**, **Wechsel zwischen Tag und
 Nacht**, **Nachtblöcke**, **Ganze Wochenenden frei**, **Ersatzruhe abbauen**, **Abwechslung
-Dienste**, **Abwechslung Bereiche**, **Gewohnte Verteilung**, **Familienregel**, **Dienst nur von Hand**.
+Dienste**, **Abwechslung Bereiche**, **Gewohnte Verteilung**, **Gewohnte Schichten**, **Familienregel**, **Dienst nur von Hand**.
 Treffer dieser Regeln sind keine Fehler: Der Plan ist trotzdem verwendbar. Siehe
 [Wie das Programm plant](wie-plant.md).
 

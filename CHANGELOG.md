@@ -3,6 +3,28 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.30.0 (2026-11-26)
+
+- **Gewohnte Schichten:** Ein neues Planungsziel. Jede Schicht kann ihren Anteil an den Diensten ihres Bereichs in
+  der Historie haben (Feld `usage` im Datensatz, unter Stammdaten in der Spalte **Anteil in der Historie**). Ein
+  Dienst auf einer Schicht unter **Seltene Schicht unter (%)** (Standard 5) kostet, je seltener, desto mehr (Gewicht
+  300). Ohne Anteil gilt eine Schicht als gewohnt; von Hand bleibt jede Schicht möglich. Die Anteile kommen mit dem
+  nächsten Einlesen über die Import-Erweiterung; bis dahin wirken die Regel und der Startplan nicht.
+- **Suche:** Der Startplan nimmt gewohnte Schichten, wo sie etwa so gut passen wie seltene. Ein neuer Zug legt zwei
+  Dienste eines Bereichs am selben Tag zu einem längeren zusammen, den die längere Schicht ganz enthält; einzelne
+  Änderungen schafften das nicht, weil Verlängern zuerst überbesetzt.
+- **Neue Standardwerte:** Gewohnte Verteilung 25 statt 100, Toleranz beim Ziel 8 statt 0 Stunden. Gespeicherte
+  Regeln, die noch beim alten Standard standen, bekommen die neuen Werte einmal beim ersten Laden; von Hand gesetzte
+  bleiben.
+- **Import aus dem alten Planungsprogramm:** schreibt zu jeder Schicht ihren Anteil aus den Diensten der Historie;
+  der Vergleich mit dem Python-Programm nimmt das Feld heraus und nennt die Zahl der Schichten mit Anteil.
+- **Demo-Generator:** ein Profil `usage` mit Bedarf aus langen Schichten und den Anteilen aus drei Monaten.
+- **Gemessen** auf dem großen synthetischen Monat mit Anteilen (150 Personen, 258 Schichten), „normal“, gegen die
+  Regeln von 0.29.0: Stunden über dem Minimum 17,3 % → 6,1 %, Dienste unter 10 Stunden 1210 → 145, Dienste auf
+  seltenen Schichten 1395 → 235, verschiedene Schichten 188 → 114, Einzeldienste 283 → 206, einzelne freie Tage
+  101 → 30, Wechsel zwischen Tag und Nacht 139 → 81, einzelne Nächte 72 → 46; mehr Personen mehr als 8 Stunden unter
+  dem Ziel (103 → 114). Zahlen je Gründlichkeit: docs/regeln.md, Gewohnte Schichten.
+
 ## 0.29.0 (2026-11-25)
 
 - **Weniger Wechsel zwischen Tag und Nacht:** Die Regel **Wechsel zwischen Tag und Nacht** wiegt zehnmal so viel

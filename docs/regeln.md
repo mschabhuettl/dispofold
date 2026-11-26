@@ -263,11 +263,12 @@ der Erklärung je Person.
 | `compRestUse` | Ersatzruhe abbauen | Bonus je geplantem Ersatzruhetag | 500 |
 | `shiftVariety` | Abwechslung der Dienste | je Paar Dienste gleichen Bereichs und gleicher Kategorie, mit Vormonat | 5 |
 | `areaVariety` | Abwechslung der Bereiche | je Paar Dienste im selben Bereich, mit Vormonat (nur bei mehreren Bereichen) | 1 |
-| `shiftMix` | Gewohnte Verteilung | quadrierte Abweichung in Zehntel-Diensten je Kategorie und Bereich, siehe unten | 100 |
+| `shiftMix` | Gewohnte Verteilung | quadrierte Abweichung in Zehntel-Diensten je Kategorie und Bereich, siehe unten | 25 |
+| `usualShifts` | Gewohnte Schichten | je Dienst auf einer seltenen Schicht, 1 bis 100 nach Seltenheit, siehe unten | 300 |
 | `family` | Familienregel | je Dienst gegen die Regel | 800 |
 | `onRequest` | Dienst, der nur von Hand geht, von Hand gesetzt | je solchem Dienst; Gewicht fest, nicht einstellbar | 1000 |
 
-**Wichtigkeit.** Die Seite Regeln fasst dreizehn Qualitätsregeln zu Planungszielen zusammen. Die Wichtigkeit eines
+**Wichtigkeit.** Die Seite Regeln fasst vierzehn Qualitätsregeln zu Planungszielen zusammen. Die Wichtigkeit eines
 Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerundet auf ganze Zahlen:
 
 | Planungsziel | Regeln | weniger / normal / mehr | Gewichte |
@@ -278,6 +279,7 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
 | Faire Verteilung | `fairNights`, `fairWeekends`, `fairHolidays`, `fairUnpopular` | 0,25 / 1 / 4 | 1 / 3 / 12, fair verteilte 1 / 2 / 8 |
 | Stunden treffen | `targetHours` | 0,5 / 1 / 2 | 10 / 20 / 40 |
 | Besetzung nahe am Mindestbedarf | `overMinimum` | 0,5 / 1 / 2 | 1000 / 2000 / 4000 |
+| Gewohnte Schichten | `usualShifts` | 0,5 / 1 / 2 | 150 / 300 / 600 |
 | Familienregeln | `family` | 0,5 / 1 / 2 | 400 / 800 / 1600 |
 
 - `forwardRotation`, `splitWeekend`, `compRestUse`, `shiftVariety`, `areaVariety` und `shiftMix` gehören zu keinem
@@ -337,12 +339,15 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
   Dienst darf die Grenze überschreiten, erscheint dann aber als Regelverstoß; die Liste „Von Hand
   einsetzbar“ nennt niemanden, den der Dienst über die Grenze brächte. Regeln, die vor dieser Grenze gespeichert
   wurden, bekommen den Standard.
-- **Toleranz** (`targetToleranceHours`, Standard 0, 0 bis 40 Stunden, ab 0.29.0): So viele Stunden über oder unter
+- **Toleranz** (`targetToleranceHours`, Standard 8, bis 0.29.0 Standard 0, 0 bis 40 Stunden, ab 0.29.0): So viele Stunden über oder unter
   dem Ziel zählen bei „Stunden treffen“ nicht; erst die Abweichung darüber zählt, in Viertelstunden quadriert.
   Beispiel mit 8: 12 h unter dem Ziel zählen wie 4 h, (16)² × 20. Gemessen („normal“, siehe
   [Raster der Gewichte](#raster-der-gewichte)): 8 Stunden geben weniger Einzeldienste (276 statt 306), aber mehr
-  Stunden über dem Mindestbedarf (18,6 % statt 17,2 %), weil auch Stunden über dem Ziel nichts mehr kosten. Deshalb
-  bleibt der Standard 0. Die Obergrenze über dem Ziel (Regelverstoß) gilt bei jeder Toleranz.
+  Stunden über dem Mindestbedarf (18,6 % statt 17,2 %), weil auch Stunden über dem Ziel nichts mehr kosten. Ab
+  0.30.0 ist der Standard 8, zusammen mit der gewohnten Verteilung 25: Beide zusammen senken die Einzeldienste
+  um ein Drittel und die Wechsel zwischen Tag und Nacht um 40 % (283 → 191 und 139 → 81, gemessen unter
+  [Gewohnte Schichten](#gewohnte-schichten)). Gespeicherte Regeln mit dem alten Standard 0 bekommen einmal die 8; wer
+  0 wieder will, setzt es auf der Seite Regeln. Die Obergrenze über dem Ziel (Regelverstoß) gilt bei jeder Toleranz.
 - Verkleinertes Ziel: Braucht der Bedarf weniger Arbeit, als die Ziele aller Personen zusammen ergeben,
   wird das Ziel jeder Person um denselben Anteil verkleinert. Angerechnete Abwesenheitstage bleiben, der Rest
   des Ziels (die Arbeit) wird mit Bedarf / Summe der Arbeit malgenommen. Der Bedarf ist die Mindestbesetzung
@@ -386,7 +391,7 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
   Dienste der Person. Der Abzug ist die quadrierte Abweichung in Zehntel-Diensten, summiert. Beispiel: Eine
   Person mit 90 % Tag und 10 % Nacht hat 10 Dienste; 9 Tag und 1 Nacht kosten nichts, 5 und 5 kosten
   2 × 40² = 3200 mal Gewicht. Quadriert, damit kleine Abweichungen wenig und eine ganz andere Verteilung viel
-  kosten. Gewicht 100, damit die Verteilung den Plan sichtbar prägt: Im Demomonat mit klaren Verteilungen für
+  kosten. Gewicht 100 (bis 0.29.0 der Standard, seit 0.30.0 25), damit die Verteilung den Plan sichtbar prägt: Im Demomonat mit klaren Verteilungen für
   92 Personen (je 300 s) sinkt die Abweichung der Anteile von 0,59 auf 0,29; ein höheres Gewicht (200: 0,25)
   kostet deutlich mehr Abweichung vom Ziel (Abzug der Sollstunden fast doppelt so hoch) und mehr Tage außerhalb
   der Blocklänge (476 statt 435). Bedarf und Überbesetzung (Gruppe Bedarf) gehen immer vor.
@@ -416,9 +421,10 @@ Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerun
 - Die Personenansicht zeigt die geplante Verteilung neben der gewohnten.
 - **Beispiel:** Olga macht seit Jahren fast nur Tagdienste (90 % Tag, 10 % Nacht). Die Regel verhindert, dass sie
   in einem Monat plötzlich zur Hälfte Nächte bekommt, nur weil das bei anderen Regeln etwas spart.
-- **Wichtigkeit:** Die Regel gehört zu keinem Planungsziel, ihr Gewicht steht nur unter Erweitert. Gemessen ist
-  nur, was oben steht (Gewicht 100 und 200 gegen den Ausgangswert 0,59); ein Gewicht unter 100 ist nicht
-  gemessen. Erwartbar weicht die Verteilung dann stärker ab, zugunsten von Blöcken und Stunden.
+- **Wichtigkeit:** Die Regel gehört zu keinem Planungsziel, ihr Gewicht steht nur unter Erweitert. Der Standard ist
+  ab 0.30.0 **25** (bis 0.29.0: 100): Mit 25 gibt es etwa halb so viele Einzeldienste, die Verteilung weicht etwas
+  stärker ab (siehe [Raster der Gewichte](#raster-der-gewichte) und [Gewohnte Schichten](#gewohnte-schichten)).
+  Gespeicherte Regeln mit dem alten Standard 100 bekommen einmal die 25, ein von Hand gesetztes Gewicht bleibt.
 
 ### Nachtverteilung
 
@@ -634,7 +640,7 @@ Bestätigt mit „normal“ (1 000 000 Züge), gegen die Regeln von 0.28.0:
 | Wechsel 30 000, Verteilung 100, Toleranz 8 | 276 | 134 | 117 | 68 | 73 | 0,35 | 18,6 % |
 | Wechsel 30 000, Verteilung 25, Toleranz 8 | 137 | 54 | 96 | 67 | 34 | 0,45 | 17,8 % |
 
-- Gewählt ist die zweite Zeile: Wechsel und Personen mit Tag und Nacht sinken deutlich, Einzeldienste nicht mehr
+- Gewählt war für 0.29.0 die zweite Zeile (seit 0.30.0 gelten Verteilung 25 und Toleranz 8, die vierte): Wechsel und Personen mit Tag und Nacht sinken deutlich, Einzeldienste nicht mehr
   als mit 0.28.0, und die Stunden über dem Minimum steigen nicht. Die Abweichung der Verteilung ist die mittlere
   Abweichung der Anteile je Kategorie in diesem Monat (0: genau die gewohnte); sie steigt, weil Personen mit
   kleinem Nachtanteil keine einzelne Nacht mehr bekommen und der Nachtanteil über drei Monate gilt.
@@ -660,6 +666,72 @@ Lücken und Regelverstöße: in allen Läufen 0. Zwei Läufe mit demselben Start
 unter 10 Stunden (bei „normal“ 1256 von 1595), die die Abschnitte des Bedarfs ungenau füllen. Weder ein höheres
 Gewicht für **Besetzung über dem Mindestbedarf** noch ein Abzug je Dienst noch ein Startplan, der längere Dienste
 bevorzugt, hat daran auf dem synthetischen Monat etwas geändert.
+
+### Gewohnte Schichten
+
+- **Anteil einer Schicht** (`usage` der Schicht, siehe [Datenformat](datenformat.md)): Anteil der Schicht an den
+  Diensten ihres Bereichs in den Monaten der Historie, von 0 bis 1. Die Import-Erweiterung schreibt ihn aus den
+  Diensten der Historie; eine Schicht ohne Anteil (etwa in einem Datensatz von Hand) gilt als gewohnt.
+- **Regel** `usualShifts` (ab 0.30.0, Gewicht 300): Ein Dienst des Monats auf einer Schicht mit weniger als
+  `usualShiftPercent` (Standard 5 %, 0 bis 50, 0 schaltet sie aus) der Dienste ihres Bereichs ist selten. Abzug je
+  solchem Dienst: der fehlende Teil dieses Anteils, von 1 bis 100. Beispiel mit 5 %: eine Schicht ohne Dienst in der
+  Historie kostet 100 × 300, eine mit 2,5 % 50 × 300, eine mit 5 % oder mehr nichts. Von Hand bleibt jede Schicht
+  möglich; ein von Hand gesetzter Dienst auf einer seltenen Schicht erscheint nur als Treffer der Regel.
+- **Startplan:** Der Startplan der Suche zählt eine seltene Schicht so, als deckte sie entsprechend weniger offenen
+  Bedarf (eine Schicht ohne Dienst wie eine, die nichts deckt). Er nimmt also die gewohnten Schichten, wo sie etwa so
+  gut passen. Ohne Anteile ändert sich am Startplan nichts.
+- **Zusammenlegen** (ab 0.30.0, ein Zug der Suche, immer an): Ein Dienst wird in einem Schritt auf eine längere
+  Schicht seines Bereichs gelegt, die ihn ganz enthält, und ein anderer Dienst desselben Bereichs am selben Tag, den
+  die längere Schicht ebenfalls enthält, fällt weg. Aus zwei kurzen Diensten wird so ein langer. Mit einzelnen
+  Änderungen geht das nicht: Erst verlängern überbesetzt, erst streichen lässt eine Lücke. Gibt es keinen solchen
+  zweiten Dienst, verlängert der Zug nur. Er kommt auf 0,2 Züge je Änderung und je Tausch.
+- **Gemessen** am großen synthetischen Monat mit Anteilen (Profil `usage` des Generators: dieselben 150 Personen und
+  Varianten wie der große Monat, der Bedarf aus Schichten von 10 und 12 Stunden, die in drei Monaten Historie die
+  meisten Dienste tragen; die übrigen Varianten haben zusammen 8 % auf etwa der Hälfte von ihnen; 258 Schichten, davon
+  113 mit Diensten), mit klaren gewohnten Verteilungen für zwei Drittel der Personen und einer Höchstbesetzung von
+  Minimum + 1, Startwert 1, „normal“:
+
+  | Lauf | über Minimum | Dienste unter 10 h | auf seltenen Schichten | verschiedene Schichten | Einzeldienste | einzelne freie Tage | Wechsel | einzelne Nächte |
+  |---|---|---|---|---|---|---|---|---|
+  | Regeln von 0.29.0 | +17,3 % | 1210 von 1583 | 1395 | 188 | 283 | 101 | 139 | 72 |
+  | Verteilung 25, Toleranz 8, Regel mit Gewicht 100 | +16,9 % | 1175 von 1572 | 1352 | 191 | 191 | 46 | 81 | 46 |
+  | dazu der Startplan | +9,9 % | 367 von 1280 | 474 | 182 | 179 | 33 | 74 | 44 |
+  | dazu das Zusammenlegen | +7,2 % | 219 von 1204 | 331 | 121 | 215 | 34 | 79 | 45 |
+  | ebenso, Gewicht 300 | +5,6 % | 144 von 1176 | 234 | 106 | 187 | 23 | 81 | 37 |
+  | ebenso, Gewicht 1000 | +6,0 % | 35 von 1157 | 83 | 59 | 280 | 45 | 96 | 62 |
+  | Gewicht 300, Zusammenlegen 0,5 statt 0,2 | +5,9 % | 137 von 1177 | 225 | 102 | 194 | 22 | 63 | 40 |
+  | Startplan ohne die Regel (Gewicht 0) | +10,2 % | 411 von 1290 | 543 | 183 | 194 | 36 | 93 | 52 |
+  | nur das Zusammenlegen, ohne Startplan | +10,3 % | 657 von 1340 | 833 | 159 | 189 | 36 | 75 | 39 |
+  | Regel mit Gewicht 100 000, ohne Startplan und Zusammenlegen | +18,3 % | 1146 von 1579 | 1304 | 171 | 678 | 369 | 347 | 199 |
+
+  Lücken und Regelverstöße: in allen Läufen 0. Allein wirkt die Regel kaum, auch mit einem riesigen Gewicht nicht:
+  Jeder einzelne Wechsel auf eine lange Schicht überbesetzt zuerst, und Überbesetzung geht jeder Qualitätsregel vor.
+  Erst der Startplan und das Zusammenlegen bringen die Planung zu den gewohnten Schichten. Gewählt ist Gewicht 300:
+  ein Drittel der Stunden über dem Minimum von bisher und ein Achtel der kurzen Dienste, ohne mehr
+  Einzeldienste; 1000 hält sich an noch weniger Schichten, gibt aber deutlich mehr Einzeldienste. Personen mehr als
+  8 Stunden unter ihrem Ziel: 103 mit den Regeln von 0.29.0, 116 mit Gewicht 300 (im synthetischen Monat liegen die
+  Ziele aller zusammen weit über dem Mindestbedarf).
+- **Je Gründlichkeit**, dieselben Daten, die Regeln von 0.29.0 gegen die von 0.30.0 (je zwei Läufe gleichzeitig auf
+  einem Rechner, daher die Dauer):
+
+  | Gründlichkeit | Regeln | über Minimum | zwischen Minimum und Höchstbesetzung | über der Höchstbesetzung | Dienste | verschiedene Schichten | unter 8 h | 8 bis unter 10 h | 10 bis unter 12 h | 12 h und mehr | Einzeldienste | einzelne freie Tage | Wechsel | Personen mit Tag und Nacht | einzelne Nächte | mehr als 8 h unter dem Ziel | Dauer |
+  |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+  | schnell | 0.29.0 | +24,0 % | 1762 h | 880 h | 1666 | 206 | 0 | 1274 | 188 | 204 | 327 | 141 | 173 | 79 | 95 | 90 | 204 s |
+  | schnell | 0.30.0 | +6,7 % | 753 h | 1 h | 1187 | 115 | 0 | 138 | 593 | 456 | 267 | 43 | 92 | 65 | 55 | 125 | 281 s |
+  | normal | 0.29.0 | +17,3 % | 1395 h | 488 h | 1583 | 188 | 0 | 1210 | 217 | 156 | 283 | 101 | 139 | 73 | 72 | 103 | 692 s |
+  | normal | 0.30.0 | +6,1 % | 695 h | 0 h | 1183 | 114 | 0 | 145 | 589 | 449 | 206 | 30 | 81 | 59 | 46 | 114 | 887 s |
+  | gründlich | 0.29.0 | +15,0 % | 1259 h | 369 h | 1548 | 166 | 0 | 1172 | 217 | 159 | 234 | 70 | 104 | 59 | 38 | 110 | 2494 s |
+  | gründlich | 0.30.0 | +5,6 % | 630 h | 0 h | 1176 | 108 | 0 | 142 | 584 | 450 | 165 | 26 | 59 | 47 | 31 | 123 | 2190 s |
+
+  Lücken und Regelverstöße: in allen Läufen 0. Der Generator hat keine Schicht unter 8 Stunden. Mit derselben
+  Gründlichkeit, denselben Daten und demselben Startwert gibt die Planung denselben Plan, auch mit dem Zusammenlegen.
+  Die Läufe mit 0.30.0 hier sind nach einer Korrektur des Zusammenlegens gemessen (findet es nichts, ändert es eine
+  zufällige Zelle, statt nichts zu tun); die Tabelle oben davor, mit fast gleichen Zahlen („normal“, Gewicht 300:
+  +5,6 % gegen +6,1 %, Einzeldienste 187 gegen 206).
+- **Gewohnte Schichten je Person** (nur die Schichten, die eine Person selbst in der Historie hatte) gibt es nicht:
+  Der synthetische Monat hat keine persönlichen Muster, an denen sich das messen ließe, und mit den Anteilen je
+  Schicht, dem Startplan und dem Zusammenlegen sinken die seltenen Dienste dort schon auf ein Sechstel. Ob es mit
+  echten Daten mehr braucht, zeigt die Nachmessung mit einem echten Ordner.
 
 ### Ersatzruhe
 

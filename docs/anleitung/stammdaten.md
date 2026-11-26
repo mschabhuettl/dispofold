@@ -67,6 +67,11 @@ Stundenkonto“.
 | Farbe | Farbe im Plan; leer heißt ohne Farbe |
 | Fair verteilen | Dienste dieser Schicht werden über die Fairness gleichmäßig auf alle verteilt, die sie machen können. Nur ankreuzen, wenn eine Schicht so verteilt werden soll; Nachtschichten brauchen das nicht, sie haben ihre eigene Fairness-Regel. |
 
+Die Tabelle der Schichten zeigt dazu die Spalte **Anteil in der Historie**: welchen Teil der Dienste ihres Bereichs
+die Schicht in den Monaten der Historie hatte. Ein Import schreibt ihn, das Formular ändert ihn nicht; wird eine
+Schicht in einen anderen Bereich gelegt, fällt er weg. Leer heißt: kein Anteil, die Schicht gilt als gewohnt (siehe
+[Gewohnte Schichten](begriffe.md#gewohnte-schichten)).
+
 Neue Schichten bekommen ihre Id vom Programm; der Code lässt sich ändern.
 
 ## Bedarf

@@ -53,11 +53,12 @@ Darunter die Ziele, jedes mit seinen Werten und einer **Wichtigkeit**:
 | Wechsel zwischen Tag und Nacht | nach der letzten Nacht eines Blocks 2 freie Tage vor einem Dienst am Tag, vor der ersten Nacht 0; Nächte in Blöcken von 2 bis 4 Nächten | Nächte liegen in Blöcken, danach kommt Erholung, und eine Person wechselt selten zwischen Tag und Nacht |
 | Wünsche | höchstens 6 je Person und Monat | so viele Wünsche je Person zählen, die ersten nach Datum |
 | Faire Verteilung | über die letzten 3 Monate | Wochenenden, Feiertage, fair verteilte Dienste und Nächte gleichmäßig verteilen |
-| Stunden treffen | Toleranz beim Ziel 0 Stunden, höchstens 10 % über dem Soll (beim festen Anteil über dem Ziel), Stundenkonto ausgleichen bis Ende des Kalenderhalbjahrs (fester Anteil 25 % je Monat als Alternative), Minus am Halbjahresende verfällt | geplante und angerechnete Stunden nahe am Ziel; die Obergrenze ist ein Regelverstoß |
+| Stunden treffen | Toleranz beim Ziel 8 Stunden, höchstens 10 % über dem Soll (beim festen Anteil über dem Ziel), Stundenkonto ausgleichen bis Ende des Kalenderhalbjahrs (fester Anteil 25 % je Monat als Alternative), Minus am Halbjahresende verfällt | geplante und angerechnete Stunden nahe am Ziel; die Obergrenze ist ein Regelverstoß |
 | Besetzung nahe am Mindestbedarf | keine Werte | wo eine Höchstbesetzung mehr erlaubt, möglichst nur so viele Personen wie der Mindestbedarf |
+| Gewohnte Schichten | selten ist eine Schicht mit weniger als 5 % der Dienste ihres Bereichs in der Historie | die Planung nimmt die Schichten, die in der Historie die meisten Dienste hatten, und meidet die seltenen |
 | Familienregeln | keine Werte | die persönlichen Regeln der Personen einhalten, wenn es geht |
 
-- **Toleranz beim Ziel** (Standard 0 Stunden, 0 bis 40): So viele Stunden über oder unter dem Ziel zählen bei
+- **Toleranz beim Ziel** (Standard 8 Stunden, bis 0.29.0 0 Stunden; 0 bis 40): So viele Stunden über oder unter dem Ziel zählen bei
   **Stunden treffen** nicht. Mehr gibt etwas längere Blöcke, aber auch mehr Stunden über dem Mindestbedarf, weil
   dann auch Stunden über dem Ziel nichts kosten. **Wann ändern:** wenn Blöcke wichtiger sind als genaue Stunden.
 - **Besetzung nahe am Mindestbedarf** (ab 0.29.0): Wo der Bedarf eine Höchstbesetzung über dem Minimum hat, etwa
@@ -65,6 +66,13 @@ Darunter die Ziele, jedes mit seinen Werten und einer **Wichtigkeit**:
   **Besetzung über dem Mindestbedarf**, Gewicht 2000). Über der Höchstbesetzung ist es immer eine Überbesetzung.
   **Wann ändern:** „mehr“, wenn Pläne deutlich mehr Stunden haben als der Mindestbedarf; „weniger“, wenn Blöcke
   wichtiger sind.
+- **Gewohnte Schichten** (ab 0.30.0): Die Import-Erweiterung schreibt zu jeder Schicht ihren Anteil an den Diensten
+  ihres Bereichs in den Monaten der Historie (unter **Stammdaten** in der Spalte **Anteil in der Historie** der
+  Schichten). Eine Schicht mit weniger als **Seltene Schicht unter (%)** (Standard 5) gilt als selten, und jeder Dienst
+  darauf kostet (Regel **Gewohnte Schichten**, Gewicht 300), je seltener, desto mehr. So plant das Programm wie die
+  Planerinnen und Planer mit wenigen, meist langen Schichten statt mit vielen kurzen Varianten. Von Hand ist jede
+  Schicht möglich. Ohne Anteile (ohne Import) gilt jede Schicht als gewohnt. **Wann ändern:** „mehr“ oder eine höhere
+  Schwelle, wenn Pläne noch viele selten genutzte Schichten haben; „weniger“, wenn Blöcke oder Stunden wichtiger sind.
 - **Ausgleich des Stundenkontos:** Standard ist **bis Ende des Kalenderhalbjahrs**. Am Ende jedes Halbjahrs soll
   das Stundenkonto bei 0 stehen, denn über das Halbjahr sind die vereinbarten Stunden geschuldet, bei Teilzeit
   die Stunden laut Vertrag. Jeder Monat gleicht seinen Teil aus: Ziel = Soll minus Stundenkonto geteilt durch die
@@ -200,7 +208,8 @@ Planungsziels steht, zu welchem Ziel sie gehören. Die Standardgewichte:
 | Wechsel zwischen Tag und Nacht | 30000 | Wechsel zwischen Tag und Nacht |
 | Nachtblöcke | 6000 | Wechsel zwischen Tag und Nacht |
 | Familienregel | 800 | Familienregeln |
-| Gewohnte Verteilung | 100 | keines |
+| Gewohnte Schichten | 300 | Gewohnte Schichten |
+| Gewohnte Verteilung | 25 (bis 0.29.0: 100) | keines |
 | Vorwärtsrotation | 500 | keines |
 | Ganze Wochenenden frei | 300 | keines |
 | Ersatzruhe abbauen | 500 | keines |

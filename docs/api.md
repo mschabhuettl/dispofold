@@ -182,6 +182,14 @@ zählen zum Stand, nach dem ein Plan veraltet. Neue Regel-Id: `overMinimum` (Bes
 Treffer je Bereich und Tag ohne Person, Parameter `areaId` und `hours`). Gespeicherte Gewichte von 0.28 bekommen
 einmal den neuen Standard von `dayNightSwitches`, wenn sie unverändert waren (siehe [regeln.md](regeln.md)).
 
+Ab 0.30.0, ebenso optional: `Rules.usualShiftPercent` (eine Schicht mit weniger als diesem Anteil der Dienste
+ihres Bereichs in der Historie ist selten, 0 bis 50, Standard 5); außerhalb `400` mit `rules.values`. Der Standard
+von `Rules.targetToleranceHours` ist jetzt 8. Neue Regel-Id: `usualShifts` (Gewohnte Schichten, ein Treffer je Dienst
+auf einer seltenen Schicht, Parameter `shiftId`). Eine Schicht hat das optionale Feld `usage` (Anteil in der
+Historie, 0 bis 1); eine Änderung der Schicht ohne das Feld behält es, in einen anderen Bereich verschoben fällt es
+weg. Gespeicherte Regeln aus einer Version vor 0.30 bekommen einmal das neue Gewicht von `shiftMix` (25) und die Toleranz 8, wenn sie
+beim alten Standard standen.
+
 ## Planungsmonate
 
 | Methode | Pfad | Antwort |

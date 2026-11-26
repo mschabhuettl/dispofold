@@ -67,7 +67,8 @@ Zeiten mit Minimum 0; das gilt auch für Bedarf, den eine Korrekturdatei ersetzt
 Stunden (24 % statt 21 % über dem Minimum, „schnell“), alles darüber als Überbesetzung. Einstellungen aus einer Version davor behalten „übliche Spitze“.
 
 **Anteil jeder Schicht in der Historie** (ab 0.30.0, ohne Option): Die Erweiterung zählt die Dienste der
-übernommenen Personen in den Monaten der Historie je Schicht und schreibt jeder Schicht ihren Anteil an den Diensten
+Personen in den Monaten der Historie je Schicht (wie für die Bereiche aus der Historie, auch derer ohne Gruppe mit
+Bereich) und schreibt jeder Schicht ihren Anteil an den Diensten
 ihres Bereichs (`usage`, unter **Stammdaten → Schichten** in der Spalte „Anteil in der Historie“). Die Regel
 **Gewohnte Schichten** meidet damit Schichten, die selten vorkamen. Ohne Historie oder in einem Bereich ohne solchen
 Dienst bekommt keine Schicht einen Anteil; sie gelten dann alle als gewohnt.
