@@ -125,7 +125,21 @@ record PlanMetrics(int singleDuties, int singleFreeDays, double meanBlock, int s
         long duties = roster.getCells().stream().filter(c -> c.isInMonth() && c.isWork()).count();
         long shortDuties = roster.getCells().stream().filter(c -> c.isInMonth() && c.isWork()
                 && c.getDurationMinutes() < 600).count();
-        String byArea = String.format(java.util.Locale.ROOT, "duties %d, under 10 h %d; ", duties, shortDuties)
+        int[] lengths = new int[4];
+        java.util.Set<String> distinct = new java.util.HashSet<>();
+        long rare = 0;
+        for (DutyCell c : roster.getCells()) {
+            if (c.isInMonth() && c.isWork()) {
+                int m = c.getDurationMinutes();
+                lengths[m < 480 ? 0 : m < 600 ? 1 : m < 720 ? 2 : 3]++;
+                distinct.add(c.getShift().getId());
+                rare += c.getShift().getRarity() > 0 ? 1 : 0;
+            }
+        }
+        String byArea = String.format(java.util.Locale.ROOT, "duties %d, under 10 h %d, distinct shifts %d, "
+                + "by length <8 %d, 8-10 %d, 10-12 %d, 12+ %d, on rare shifts %d, between minimum and maximum %.0f h; ",
+                duties, shortDuties, distinct.size(), lengths[0], lengths[1], lengths[2], lengths[3], rare,
+                (above - overUpper) / 60.0)
                 + String.format(java.util.Locale.ROOT, "excess hours base %.0f of %.0f duty hours, variants %.0f of %.0f",
                 byKind.getOrDefault("base", 0.0), dutyHours.getOrDefault("base", 0.0),
                 byKind.getOrDefault("variant", 0.0), dutyHours.getOrDefault("variant", 0.0));

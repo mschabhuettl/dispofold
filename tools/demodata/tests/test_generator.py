@@ -34,6 +34,7 @@ def large():
     ("small-dataset-2027-03.synthetic.json", "2027-03", SMALL),
     ("small-dataset-2027-10.synthetic.json", "2027-10", SMALL),
     ("large-dataset-2027-01.synthetic.json", "2027-01", {"profile": "large"}),
+    ("usage-dataset-2027-01.synthetic.json", "2027-01", {"profile": "usage"}),
 ])
 def test_committed_fixtures_are_reproducible(name, month, kwargs):
     assert (FIXTURES / name).read_text(encoding="utf-8") == dumps(generate(month, 1, **kwargs))
@@ -52,6 +53,20 @@ def test_small_dataset_is_coverable(month):
     report = check_feasibility(generate(month, 1, **SMALL), month)
     assert report["problems"] == []
     assert 0.75 <= report["ratio"] <= 0.9
+
+
+def test_usage_dataset_is_coverable_and_keeps_to_long_shifts():
+    dataset = generate("2027-01", 1, profile="usage")
+    report = check_feasibility(dataset, "2027-01")
+    assert report["problems"] == []
+    assert 0.80 <= report["ratio"] <= 0.85
+    for area in ("AN", "DR", "TV", "LF", "TS"):
+        shifts = [s for s in dataset["shifts"] if s["areaId"] == area]
+        assert abs(sum(s["usage"] for s in shifts) - 1) < 0.01
+        # long shifts take most duties, short variants are rare, many shifts are never used
+        long = sum(s["usage"] for s in shifts if (minutes(s["end"]) - minutes(s["start"])) % DAY >= 600)
+        assert long > 0.85
+        assert any(s["usage"] == 0 for s in shifts)
 
 
 def test_large_dataset_is_coverable(large):

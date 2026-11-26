@@ -24,7 +24,8 @@ import org.junit.jupiter.api.condition.EnabledIfSystemProperty;
  * {@code -Dsolver.metrics.weights=blockLength:6000,...} weights, {@code -Dsolver.metrics.mix=apply} clear usual mixes
  * for two thirds of the people (as {@link DemoSolveTest}) and {@code -Dsolver.metrics.nightMixMonths} the window of
  * the usual night share (default: the rules' default), {@code -Dsolver.metrics.nightMixTolerance},
- * {@code -Dsolver.metrics.nightMixFloor=true} and {@code -Dsolver.metrics.targetTolerance} (hours) the other rule
+ * {@code -Dsolver.metrics.nightMixFloor=true}, {@code -Dsolver.metrics.targetTolerance} (hours) and
+ * {@code -Dsolver.metrics.usualShare} (percent: the share of a rare shift) the other rule
  * values, and {@code -Dsolver.metrics.maxPlus=N} a synthetic maximum: every demand rule with a minimum gets the
  * maximum minimum + N (0: the maximum is the minimum; with {@code -Dsolver.metrics.maxEvery=K} only every K-th
  * rule, the others minimum), as the demand from the history of the old planning system has
@@ -72,7 +73,7 @@ class BlockMetricsBenchmarkTest {
                 Integer.getInteger("solver.metrics.nightMixTolerance"),
                 System.getProperty("solver.metrics.nightMixFloor") == null ? null
                         : Boolean.getBoolean("solver.metrics.nightMixFloor"),
-                Integer.getInteger("solver.metrics.targetTolerance")),
+                Integer.getInteger("solver.metrics.targetTolerance"), Integer.getInteger("solver.metrics.usualShare")),
                 input.assignments());
         int seconds = Integer.getInteger("solver.metrics.seconds", 300);
         SolveOptions options = new SolveOptions(Long.getLong("solver.metrics.seed", 1L), seconds,

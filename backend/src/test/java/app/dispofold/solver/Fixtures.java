@@ -23,6 +23,8 @@ final class Fixtures {
     static final String SMALL_OCTOBER = "small-dataset-2027-10.synthetic.json";
     /** Real size: about 150 people, 250 shift variants, 1,300 restrictions. */
     static final String LARGE = "large-dataset-2027-01.synthetic.json";
+    /** As LARGE, the demand from long shifts and each shift's share of the duties in the history (usage). */
+    static final String USAGE = "usage-dataset-2027-01.synthetic.json";
 
     private static final ObjectMapper MAPPER = new ObjectMapper().registerModule(new JavaTimeModule())
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);

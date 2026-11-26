@@ -57,6 +57,21 @@ VARIANTS = {
     "LF": [("06:00", "06:30", 30, (720,)), ("18:00", "20:00", 30, (720,))],
     "TS": [("07:00", "09:00", 15, (480, 510))],
 }
+# Usage profile: the large catalogue, but the demand comes from long shifts (10 and 12 hours, by times per area,
+# added to the catalogue where no variant has them) that take most duties of the history months; the other variants
+# are used now and then (USAGE_RARE of the duties, on about half of them), as in a centre whose planners keep to a few
+# shifts. Every shift gets its share of its area's duties in the USAGE_MONTHS months before the planning month.
+USUAL_MIXES = {
+    "AN": {"WD": {("06:00", "16:00"): 3, ("07:00", "19:00"): 4, ("12:00", "22:00"): 3, ("20:00", "06:00"): 3},
+           "WE": {("06:00", "16:00"): 2, ("07:00", "19:00"): 3, ("12:00", "22:00"): 3, ("20:00", "06:00"): 3}},
+    "DR": {"WD": {("07:00", "19:00"): 4, ("06:00", "16:00"): 2, ("11:00", "21:00"): 2, ("19:00", "07:00"): 3},
+           "WE": {("07:00", "19:00"): 3, ("11:00", "21:00"): 1, ("19:00", "07:00"): 3}},
+    "TV": {"WD": {("06:00", "16:00"): 3, ("10:00", "20:00"): 2}, "WE": {("06:00", "16:00"): 1, ("10:00", "20:00"): 1}},
+    "LF": {"WD": {("07:00", "19:00"): 1, ("19:00", "07:00"): 1}, "WE": {("07:00", "19:00"): 1, ("19:00", "07:00"): 1}},
+    "TS": {"WD": {("07:00", "17:00"): 1}, "WE": {("07:00", "17:00"): 1}},
+}
+USAGE_MONTHS = 3
+USAGE_RARE = 0.08
 VARIANT_NAMES = {"AN": "Annahme", "DR": "Disposition", "TV": "Transport", "LF": "Lageführung", "TS": "Technik"}
 CATEGORY_NAMES = {"EARLY": "früh", "DAY": "Tag", "LATE": "spät", "NIGHT": "Nacht"}
 
@@ -65,6 +80,7 @@ CATEGORY_NAMES = {"EARLY": "früh", "DAY": "Tag", "LATE": "spät", "NIGHT": "Nac
 RESTRICTION_MIX = {
     "standard": {"share": 0.55, "count": (1, 6), "everyDay": 0.6, "never": 0.8, "category": 0.05},
     "large": {"share": 1.0, "count": (5, 12), "everyDay": 0.2, "never": 0.6, "category": 0.6},
+    "usage": {"share": 1.0, "count": (5, 12), "everyDay": 0.2, "never": 0.6, "category": 0.6},
 }
 
 # Reference staffing as shift counts per day type. Demand windows are the exact coverage of these
@@ -178,7 +194,20 @@ def _catalog(profile: str, area_ids: list[str]) -> dict[str, tuple]:
                     name = f"{VARIANT_NAMES[area]} {CATEGORY_NAMES[category]} {times[0]}-{times[1]}"
                     sid = f"{area}-{n:03d}"
                     shifts[sid] = (sid, area, f"{letter}{n}", name, *times, category, color)
+                    taken.add(times)
                     n += 1
+        if profile == "usage":
+            for times in dict.fromkeys(t for m in USUAL_MIXES[area].values() for t in m):
+                if times in taken:
+                    continue
+                start = minutes(times[0])
+                end = start + (minutes(times[1]) - start) % DAY
+                category = _category(start, end)
+                name = f"{VARIANT_NAMES[area]} {CATEGORY_NAMES[category]} {times[0]}-{times[1]}"
+                sid = f"{area}-{n:03d}"
+                shifts[sid] = (sid, area, f"{letter}{n}", name, *times, category, colors.get((area, category), ref[7]))
+                taken.add(times)
+                n += 1
     return shifts
 
 
@@ -320,9 +349,9 @@ def _absences(people: list[dict], days: list[date], rng: random.Random) -> tuple
     return absences, karenz
 
 
-def _windows(counts: dict[str, int]) -> list[tuple[int, int, int]]:
+def _windows(counts: dict[str, int], spans_of=None) -> list[tuple[int, int, int]]:
     """Coverage of a shift mix on one day; night counts are equal every day, so yesterday is today."""
-    spans = [(*_shift_interval(sid), k) for sid, k in counts.items()]
+    spans = [(*(spans_of or _shift_interval)(sid), k) for sid, k in counts.items()]
     return coverage_segments(spans, spans)
 
 
@@ -333,20 +362,22 @@ def _day_type(area: str, day: date, holiday_dates: set[str]) -> str:
 
 
 def _size_mixes(area_ids: list[str], days: list[date], holiday_dates: set[str],
-                targets: dict[str, float]) -> dict[str, dict[str, dict[str, int]]]:
+                targets: dict[str, float], table=None, spans_of=None) -> dict[str, dict[str, dict[str, int]]]:
     """Shift mixes per area and day type. Scaled areas get shifts added one at a time, in the
-    proportions of MIXES, until their hours reach the target hours of the area."""
-    mixes = {a: {t: dict(m) for t, m in MIXES[a].items()} for a in area_ids if a not in SCALED_AREAS}
+    proportions of MIXES (or the table given), until their hours reach the target hours of the area."""
+    table = table or MIXES
+    spans_of = spans_of or _shift_interval
+    mixes = {a: {t: dict(m) for t, m in table[a].items()} for a in area_ids if a not in SCALED_AREAS}
     units: dict[str, list[dict]] = {}
     for area in (a for a in area_ids if a in SCALED_AREAS):
         types = ["WD", "WE"] + (["HOL"] if area in HOLIDAY_AS_WEEKEND else [])
         counts = {t: sum(1 for d in days if _day_type(area, d, holiday_dates) == t) for t in types}
         units[area] = []
-        for sid in dict.fromkeys(sid for m in MIXES[area].values() for sid in m):
-            s, e = _shift_interval(sid)
+        for sid in dict.fromkeys(sid for m in table[area].values() for sid in m):
+            s, e = spans_of(sid)
             groups = [types] if e > DAY else [[t] for t in types]  # nights: same count every day
             for group in groups:
-                base = MIXES[area]["WE" if group[0] == "HOL" else group[0]].get(sid, 0)
+                base = table[area]["WE" if group[0] == "HOL" else group[0]].get(sid, 0)
                 if base:
                     hours = (e - s) / 60 * sum(counts[t] for t in group)
                     units[area].append({"sid": sid, "types": group, "base": base, "hours": hours, "count": 0})
@@ -369,11 +400,11 @@ def _size_mixes(area_ids: list[str], days: list[date], holiday_dates: set[str],
     return mixes
 
 
-def _demand(mixes: dict[str, dict[str, dict[str, int]]]) -> list[dict]:
+def _demand(mixes: dict[str, dict[str, dict[str, int]]], spans_of=None) -> list[dict]:
     rules = []
     for area, area_mixes in mixes.items():
         for day_type in DAY_TYPES:
-            for a, b, c in _windows(area_mixes[day_type]) if day_type in area_mixes else []:
+            for a, b, c in _windows(area_mixes[day_type], spans_of) if day_type in area_mixes else []:
                 rules.append({
                     "areaId": area, "days": DAY_TYPES[day_type], "date": None,
                     "from": hhmm(a), "to": hhmm(b), "min": c,
@@ -608,6 +639,33 @@ def _history(people, month, holidays, karenz, rng):
     return result
 
 
+def _usage(shifts: dict[str, tuple], mixes: dict, month: str, holiday_dates: set[str],
+           rng: random.Random) -> dict[str, float]:
+    """Share of each shift in its area's duties of the USAGE_MONTHS months before the planning month: the duties
+    of the usual mixes there, of which USAGE_RARE go to about half of the area's other shifts instead, a few of
+    them often and most rarely; a shift nobody worked has share 0."""
+    days = [d for k in range(USAGE_MONTHS, 0, -1) for d in month_days(add_months(month, -k))]
+    usage = {}
+    for area, area_mixes in mixes.items():
+        counts: dict[str, float] = {}
+        for d in days:
+            kind = _day_type(area, d, holiday_dates)
+            for sid, k in (area_mixes.get(kind) or area_mixes["WD"]).items():
+                counts[sid] = counts.get(sid, 0) + k
+        total = sum(counts.values())
+        others = [sid for sid, s in shifts.items() if s[1] == area and sid not in counts]
+        used = [sid for sid in others if rng.random() < 0.5]
+        weights = {sid: rng.random() ** 3 for sid in used}
+        for sid in counts:
+            counts[sid] *= 1 - (USAGE_RARE if weights else 0)
+        for sid, w in weights.items():
+            counts[sid] = total * USAGE_RARE * w / sum(weights.values())
+        for sid, s in shifts.items():
+            if s[1] == area:
+                usage[sid] = round(counts.get(sid, 0) / total, 4)
+    return usage
+
+
 def generate(month: str, seed: int = 1, people: int = 150, areas: list[str] | None = None,
              demand_factor: float = 1.0, profile: str = "standard") -> dict:
     """Build a synthetic dataset for one planning month."""
@@ -630,6 +688,12 @@ def generate_with_mixes(month: str, seed: int = 1, people: int = 150, areas: lis
     first_history_year = int(add_months(month, -HISTORY_MONTHS)[:4])
     holidays = [h for y in range(first_history_year, year + 1) for h in austrian_holidays(y)]
     shifts = _catalog(profile, area_ids)
+    table, spans_of = None, None
+    if profile == "usage":
+        by_times = {(s[1], s[4], s[5]): s[0] for s in shifts.values()}
+        table = {a: {t: {by_times[(a, *times)]: k for times, k in m.items()} for t, m in USUAL_MIXES[a].items()}
+                 for a in area_ids}
+        spans_of = lambda sid: interval(shifts[sid][4], shifts[sid][5])  # noqa: E731
 
     staff = _people(people, area_ids, random.Random(f"{seed}-people"))
     _employment(staff, days, random.Random(f"{seed}-employment"))
@@ -640,8 +704,9 @@ def generate_with_mixes(month: str, seed: int = 1, people: int = 150, areas: lis
     holiday_dates = {h["date"] for h in holidays}
     draft = {"holidays": holidays, "people": staff, "periods": [{"month": month, "absences": absences}]}
     capacity = capacity_hours(draft, month)
-    fixed_mixes = _size_mixes([a for a in area_ids if a not in SCALED_AREAS], days, holiday_dates, {})
-    draft.update(areas=[{"id": a} for a in fixed_mixes], demand=_demand(fixed_mixes))
+    fixed_mixes = _size_mixes([a for a in area_ids if a not in SCALED_AREAS], days, holiday_dates, {}, table,
+                              spans_of)
+    draft.update(areas=[{"id": a} for a in fixed_mixes], demand=_demand(fixed_mixes, spans_of))
     scaled_total = TARGET_RATIO * sum(capacity.values()) - sum(demand_hours(draft, month).values())
     share = {a: 0.0 for a in area_ids if a in SCALED_AREAS}
     for p in staff:
@@ -649,9 +714,10 @@ def generate_with_mixes(month: str, seed: int = 1, people: int = 150, areas: lis
         for a in own:
             share[a] += capacity[p["id"]] / len(own)
     targets = {a: scaled_total * v / sum(share.values()) for a, v in share.items()}
-    mixes = _size_mixes(area_ids, days, holiday_dates, targets)
-    demand = _demand(mixes)
-    nights = {sid: k for m in mixes.values() for sid, k in m.get("WD", {}).items() if _shift_interval(sid)[1] > DAY}
+    mixes = _size_mixes(area_ids, days, holiday_dates, targets, table, spans_of)
+    demand = _demand(mixes, spans_of)
+    nights = {sid: k for m in mixes.values() for sid, k in m.get("WD", {}).items()
+              if (spans_of or _shift_interval)(sid)[1] > DAY}
     if demand_factor != 1.0:
         for r in demand:
             r["min"] = max(1, round(r["min"] * demand_factor))
@@ -668,6 +734,8 @@ def generate_with_mixes(month: str, seed: int = 1, people: int = 150, areas: lis
                                       random.Random(f"{seed}-wishes"))
     previous = _previous_duties(staff, days[0], karenz, shifts, allowed, nights, random.Random(f"{seed}-previous"))
     history = _history(staff, month, holidays, karenz, random.Random(f"{seed}-history"))
+    if profile == "usage":
+        usage = _usage(shifts, mixes, month, holiday_dates, random.Random(f"{seed}-usage"))
 
     dataset = {
         "format": FORMAT,
@@ -675,7 +743,8 @@ def generate_with_mixes(month: str, seed: int = 1, people: int = 150, areas: lis
         "source": "synthetic",
         "areas": [{"id": a, "name": n, "color": c} for a, n, c in AREAS if a in area_ids],
         "shifts": [{"id": s[0], "areaId": s[1], "code": s[2], "name": s[3], "start": s[4], "end": s[5],
-                    "category": s[6], "color": s[7], "unpopular": False}
+                    "category": s[6], "color": s[7], "unpopular": False,
+                    **({"usage": usage[s[0]]} if profile == "usage" else {})}
                    for s in shifts.values()],
         "demand": demand,
         "holidays": holidays,
@@ -703,7 +772,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--demand-factor", type=float, default=1.0,
                         help="multiply all staffing levels, e.g. 3 for an impossible month")
     parser.add_argument("--profile", choices=sorted(RESTRICTION_MIX), default="standard",
-                        help="large: about 250 shift variants and 1,300 restrictions")
+                        help="large: about 250 shift variants and 1,300 restrictions; usage: as large, the demand "
+                             "from long shifts and each shift's share of the duties in the history")
     parser.add_argument("--out", help="output file (default: stdout)")
     parser.add_argument("--check", action="store_true", help="print the feasibility check to stderr")
     args = parser.parse_args(argv)
