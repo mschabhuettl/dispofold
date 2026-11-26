@@ -45,7 +45,7 @@ public class RosterConstraints implements ConstraintProvider {
                 targetHours(f), overMinimum(f), fairNights(f), fairWeekends(f), fairHolidays(f), fairUnpopular(f), wishes(f),
                 blockLength(f), isolatedDayOff(f), forwardRotation(f), dayNightSwitch(f), dayNightSwitches(f),
                 nightBlock(f), splitWeekend(f), compRestUse(f),
-                shiftVariety(f), areaVariety(f), shiftMix(f), family(f), onRequest(f)
+                shiftVariety(f), areaVariety(f), shiftMix(f), usualShifts(f), family(f), onRequest(f)
         };
     }
 
@@ -637,6 +637,18 @@ public class RosterConstraints implements ConstraintProvider {
             }
         }
         return sum;
+    }
+
+    /**
+     * A duty on a shift that was rare in the history (below the rules' share of its area's duties): the part of that
+     * share the shift lacks, 1 to 100 per duty (see RosterBuilder#rarity). A shift without a share counts as usual.
+     */
+    Constraint usualShifts(ConstraintFactory f) {
+        return monthWork(f)
+                .filter(c -> c.getShift().getRarity() > 0)
+                .penalize(SOFT, c -> c.getShift().getRarity())
+                .justifyWith((c, s) -> hit(c, "shiftId", c.getShift().getId()))
+                .asConstraint(ConstraintCatalog.USUAL_SHIFTS);
     }
 
     /** Pairs of equal duties: n (n - 1) / 2. */

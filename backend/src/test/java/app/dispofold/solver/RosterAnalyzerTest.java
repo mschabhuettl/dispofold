@@ -59,11 +59,18 @@ class RosterAnalyzerTest {
     /**
      * Recorded before the fairness loads were added to the figures: the analysis does not change the scoring. Recorded
      * again with the rules of version 0.28: the difference of 36000 is the block length alone (three blocks of one
-     * duty, 6000 to 18000 each); the new rules have no hit here.
+     * duty, 6000 to 18000 each); the new rules have no hit here. Since 0.30 the tolerance of 8 hours around the target
+     * leaves part of the target hours out (no person here has a usual mix, and no shift a share): with the defaults of
+     * 0.29 (tolerance 0, usual mix 100) the score is the one recorded before.
      */
     @Test
     void theScoreOfAFixedPlanIsUnchanged() {
-        assertThat(FACADE.analyze(fairnessInput()).score()).isEqualTo("-1hard/-61200000000000medium/-48775236soft");
+        assertThat(FACADE.analyze(fairnessInput()).score()).isEqualTo("-1hard/-61200000000000medium/-44023876soft");
+        PlanningInput before = fairnessInput();
+        Rules old = before.rules().withWeights(java.util.Map.of(ConstraintCatalog.SHIFT_MIX, 100L))
+                .withTargetToleranceHours(0);
+        assertThat(FACADE.analyze(new PlanningInput(before.dataset(), before.period(), old, before.assignments()))
+                .score()).isEqualTo("-1hard/-61200000000000medium/-48775236soft");
     }
 
     /** The loads in the figures are those the rules compare: the hits name the same loads, in thousandths. */

@@ -18,9 +18,16 @@ public final class ShiftOption {
     private final boolean night;
     private final boolean unpopular;
     private final boolean compRest;
+    private final int rarity;
 
     public ShiftOption(String id, String areaId, int startMinute, int durationMinutes, ShiftCategory category,
             boolean night, boolean unpopular, boolean compRest) {
+        this(id, areaId, startMinute, durationMinutes, category, night, unpopular, compRest, 0);
+    }
+
+    /** @param rarity how rare the shift was in the history, 0 (usual) to 100 (never worked); see RosterBuilder */
+    public ShiftOption(String id, String areaId, int startMinute, int durationMinutes, ShiftCategory category,
+            boolean night, boolean unpopular, boolean compRest, int rarity) {
         this.id = id;
         this.areaId = areaId;
         this.startMinute = startMinute;
@@ -29,6 +36,7 @@ public final class ShiftOption {
         this.night = night;
         this.unpopular = unpopular;
         this.compRest = compRest;
+        this.rarity = rarity;
     }
 
     public static ShiftOption compRest() {
@@ -65,6 +73,10 @@ public final class ShiftOption {
 
     public boolean isCompRest() {
         return compRest;
+    }
+
+    public int getRarity() {
+        return rarity;
     }
 
     @Override

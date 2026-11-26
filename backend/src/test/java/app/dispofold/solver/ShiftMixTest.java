@@ -23,19 +23,20 @@ import org.junit.jupiter.api.Test;
 /** A person's usual mix of categories and areas shapes the plan; people without one are planned as before. */
 class ShiftMixTest {
 
-    /** A fixed number of moves: the same plan on every machine. */
-    private static final long MOVES = 150_000;
+    /** A fixed number of moves: the same plan on every machine (since 0.30 more, the plan of 150 000 had no nights). */
+    private static final long MOVES = 400_000;
     /** Area AN and DR, no restrictions in the small fixture. */
     private static final String PERSON = "P0010";
 
     private static PlanningInput withMix(ShiftMix mix) {
-        return withMix(mix, Map.of(ConstraintCatalog.DAY_NIGHT_SWITCHES, 3000L));
+        return withMix(mix, Map.of(ConstraintCatalog.DAY_NIGHT_SWITCHES, 3000L, ConstraintCatalog.SHIFT_MIX, 100L));
     }
 
     /**
      * The tests of the mix were tuned with the weight of the day/night switches of 0.28 (3000): with the default since
      * 0.29 (30 000) a single night costs two switches and a small night share is left out (see
-     * {@link #withTheDefaultsASmallNightShareIsLeftOut}).
+     * {@link #withTheDefaultsASmallNightShareIsLeftOut}). Likewise the weight of the mix and the tolerance around the
+     * target of 0.29 (100 and 0 hours; since 0.30: 25 and 8 hours, with which the mix shapes the plan less).
      */
     private static PlanningInput withMix(ShiftMix mix, Map<String, Long> weights) {
         PlanningInput base = Fixtures.input(Fixtures.SMALL);
@@ -55,7 +56,7 @@ class ShiftMixTest {
                 r.holidayWorkEarnsCompRest(), r.nightStart(), r.nightEnd(), r.nightMinHours(), r.accountCarryShare(),
                 r.historyMonths(), weights, r.timeZone(), r.averagingWeeks(), r.maxOverTargetPercent(),
                 r.minFreeSundays(), r.nightDistribution(), r.averageTolerancePercent(), r.freeInsideAbsence(),
-                r.averagingPeriod(), AccountBalancing.MONTHLY_SHARE, null);
+                r.averagingPeriod(), AccountBalancing.MONTHLY_SHARE, null).withTargetToleranceHours(0);
         return new PlanningInput(changed, base.period(), share, List.of());
     }
 
@@ -81,7 +82,9 @@ class ShiftMixTest {
     void theMixShapesThePlanAndEditingItChangesIt() throws Exception {
         PersonStats days = solve(new ShiftMix(Map.of(ShiftCategory.DAY, 0.9, ShiftCategory.NIGHT, 0.1),
                 Map.of("AN", 0.8, "DR", 0.2)));
-        assertThat(share(days, ShiftCategory.DAY)).isGreaterThanOrEqualTo(0.7);
+        // the person (30 h, a week of leave) has 6 duties: 4 of them on days (since 0.30 the merges change the search;
+        // the remaining duty off the mix is an early one), and nights stay few
+        assertThat(share(days, ShiftCategory.DAY)).isGreaterThanOrEqualTo(0.65);
         assertThat(share(days, ShiftCategory.NIGHT)).isLessThanOrEqualTo(0.25);
         assertThat(days.plannedMix().areasOrEmpty().getOrDefault("AN", 0.0)).isGreaterThanOrEqualTo(0.6);
 
@@ -95,7 +98,7 @@ class ShiftMixTest {
     @Test
     void withTheDefaultsASmallNightShareIsLeftOut() throws Exception {
         PersonStats days = solve(withMix(new ShiftMix(Map.of(ShiftCategory.DAY, 0.9, ShiftCategory.NIGHT, 0.1),
-                Map.of("AN", 0.8, "DR", 0.2)), Map.of()));
+                Map.of("AN", 0.8, "DR", 0.2)), Map.of(ConstraintCatalog.SHIFT_MIX, 100L)));
         // one night would cost two switches: none, and the areas still follow the mix
         assertThat(share(days, ShiftCategory.NIGHT)).isZero();
         assertThat(share(days, ShiftCategory.DAY)).isGreaterThanOrEqualTo(0.6);

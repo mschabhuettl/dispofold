@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import app.dispofold.model.ConstraintInfo;
+import app.dispofold.model.Rules;
 
 import ai.timefold.solver.core.api.domain.solution.ConstraintWeightOverrides;
 import ai.timefold.solver.core.api.score.HardMediumSoftScore;
@@ -49,6 +50,7 @@ public final class ConstraintCatalog {
     public static final String SHIFT_VARIETY = "shiftVariety";
     public static final String AREA_VARIETY = "areaVariety";
     public static final String SHIFT_MIX = "shiftMix";
+    public static final String USUAL_SHIFTS = "usualShifts";
     public static final String FAMILY = "family";
     public static final String ON_REQUEST = "onRequest";
     public static final String OVERSTAFFING = "overstaffing";
@@ -77,7 +79,8 @@ public final class ConstraintCatalog {
             soft(FAIR_UNPOPULAR, 2), soft(WISHES, 300), soft(BLOCK_LENGTH, 18000), soft(ISOLATED_DAY_OFF, 30000),
             soft(FORWARD_ROTATION, 500), soft(DAY_NIGHT_SWITCH, 10000), soft(DAY_NIGHT_SWITCHES, 30000),
             soft(NIGHT_BLOCK, 6000), soft(SPLIT_WEEKEND, 300), soft(COMP_REST_USE, 500),
-            soft(SHIFT_VARIETY, 5), soft(AREA_VARIETY, 1), soft(SHIFT_MIX, 100), soft(FAMILY, 800),
+            soft(SHIFT_VARIETY, 5), soft(AREA_VARIETY, 1), soft(SHIFT_MIX, 25), soft(USUAL_SHIFTS, 300),
+            soft(FAMILY, 800),
             // On-request duties are never chosen by the solver (see RosterBuilder); the constraint only marks
             // duties set by planners, so its weight is not a setting.
             new ConstraintInfo(ON_REQUEST, SOFT, 1000, false));
@@ -90,8 +93,10 @@ public final class ConstraintCatalog {
     static final Map<String, Long> DEFAULTS_BEFORE_0_28 = Map.of(BLOCK_LENGTH, 6000L, ISOLATED_DAY_OFF, 10000L);
     /** Default weights before version 0.29 that have changed since (see {@link #DEFAULTS_BEFORE_0_28}). */
     static final Map<String, Long> DEFAULTS_BEFORE_0_29 = Map.of(DAY_NIGHT_SWITCHES, 3000L);
+    /** Default weights before version 0.30 that have changed since (see {@link #DEFAULTS_BEFORE_0_28}). */
+    static final Map<String, Long> DEFAULTS_BEFORE_0_30 = Map.of(SHIFT_MIX, 100L);
     /** The version of the stored weights that the current defaults belong to. */
-    public static final int WEIGHTS_VERSION = 3;
+    public static final int WEIGHTS_VERSION = 4;
     /** The planning goals with a Wichtigkeit (frontend lib/rule-groups.js) whose weights changed in a version. */
     private static final List<List<String>> GOALS = List.of(List.of(BLOCK_LENGTH, ISOLATED_DAY_OFF),
             List.of(DAY_NIGHT_SWITCH, DAY_NIGHT_SWITCHES, NIGHT_BLOCK));
@@ -115,7 +120,23 @@ public final class ConstraintCatalog {
         if (version < 3) {
             weights = upgrade(weights, DEFAULTS_BEFORE_0_29);
         }
+        if (version < 4) {
+            weights = upgrade(weights, DEFAULTS_BEFORE_0_30);
+        }
         return weights;
+    }
+
+    /**
+     * Rules stored with an older version of the weights with the new defaults: the weights as {@link #upgradeWeights},
+     * and before 0.30 a tolerance around the target at the old default 0 (the rules page saves every value) becomes
+     * the new default.
+     */
+    public static Rules upgradeRules(Rules stored, int version) {
+        Rules rules = stored.withWeights(upgradeWeights(stored.weights(), version));
+        if (version < 4 && Integer.valueOf(Rules.TARGET_TOLERANCE_HOURS_BEFORE_0_30).equals(rules.targetToleranceHours())) {
+            rules = rules.withTargetToleranceHours(null);
+        }
+        return rules;
     }
 
     private static Map<String, Long> upgrade(Map<String, Long> stored, Map<String, Long> before) {

@@ -27,9 +27,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
 /**
- * Rules saved before version 0.28 or 0.29 hold every tunable weight: the changed weights that stand at the old
+ * Rules saved before version 0.28, 0.29 or 0.30 hold every tunable weight: the changed weights that stand at the old
  * defaults (or at the old defaults times one Wichtigkeit level of their goal) move to the new ones once; weights set
- * by hand stay.
+ * by hand stay. Before 0.30 the tolerance around the target at its old default 0 moves to the new default too.
  */
 @QuarkusTest
 @TestProfile(FakeFacadeProfile.class)
@@ -135,7 +135,7 @@ class RuleWeightsMigrationTest {
     void weightsOf028TakeTheNewDefaultsOnce() throws Exception {
         storeOld(withWeights(weights028(1, 100)), 2);
         given().get("/api/rules").then().statusCode(200)
-                .body("weights.dayNightSwitches", equalTo(30000)).body("weights.shiftMix", equalTo(100))
+                .body("weights.dayNightSwitches", equalTo(30000)).body("weights.shiftMix", equalTo(25))
                 .body("weights.dayNightSwitch", equalTo(10000)).body("weights.nightBlock", equalTo(6000))
                 .body("weights.blockLength", equalTo(18000));
         // saved again: version 3, the old value set by hand stays
@@ -155,6 +155,40 @@ class RuleWeightsMigrationTest {
         hand.put("nightBlock", 7000L);
         storeOld(withWeights(hand), 2);
         given().get("/api/rules").then().body("weights.dayNightSwitches", equalTo(3000))
-                .body("weights.shiftMix", equalTo(100));
+                .body("weights.shiftMix", equalTo(25));
+    }
+
+    /** The rules the page of 0.29 saved: every weight and the tolerance around the target, 0 then. */
+    static Rules rules029(long mix, Integer tolerance) {
+        Map<String, Long> w = weights028(1, mix);
+        w.put("dayNightSwitches", 30000L);
+        w.put("overMinimum", 2000L);
+        Rules d = Rules.defaults().withWeights(w);
+        return d.withTargetToleranceHours(tolerance);
+    }
+
+    @Test
+    void rulesOf029TakeTheNewMixWeightAndToleranceOnce() throws Exception {
+        storeOld(rules029(100, 0), 3);
+        given().get("/api/rules").then().statusCode(200).body("weights.shiftMix", equalTo(25))
+                .body("weights.dayNightSwitches", equalTo(30000)).body("targetToleranceHours",
+                        org.hamcrest.Matchers.nullValue());
+        assertThat(Rules.defaults().targetTolerance()).isEqualTo(8);
+        // saved again (version 4): 0 and 100 set by hand stay
+        String rules = given().get("/api/rules").then().extract().asString().replace("\"shiftMix\":25",
+                "\"shiftMix\":100").replaceFirst("\\{", "{\"targetToleranceHours\":0,");
+        given().contentType(ContentType.JSON).body(rules).put("/api/rules").then().statusCode(200);
+        given().get("/api/rules").then().body("weights.shiftMix", equalTo(100)).body("targetToleranceHours",
+                equalTo(0));
+    }
+
+    @Test
+    void valuesOf029SetByHandStay() throws Exception {
+        storeOld(rules029(60, 4), 3);
+        given().get("/api/rules").then().body("weights.shiftMix", equalTo(60)).body("targetToleranceHours",
+                equalTo(4));
+        // a tolerance of 0 with a weight set by hand: the tolerance is no weight and moves on its own
+        assertThat(ConstraintCatalog.upgradeRules(rules029(60, 0), 3).targetToleranceHours()).isNull();
+        assertThat(ConstraintCatalog.upgradeRules(rules029(60, 0), 4).targetToleranceHours()).isEqualTo(0);
     }
 }

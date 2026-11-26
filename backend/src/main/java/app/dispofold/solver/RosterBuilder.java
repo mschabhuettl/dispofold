@@ -655,7 +655,19 @@ public final class RosterBuilder {
         boolean night = nightMinutes(start, duration, rules.nightStart(), rules.nightEnd())
                 >= Math.round(rules.nightMinHours() * 60);
         ShiftCategory category = s.category() != null ? s.category() : category(start, duration, night);
-        return new ShiftOption(s.id(), s.areaId(), start, duration, category, night, s.unpopular(), false);
+        return new ShiftOption(s.id(), s.areaId(), start, duration, category, night, s.unpopular(), false,
+                rarity(s.usage(), rules.usualShiftShare()));
+    }
+
+    /**
+     * How rare a shift was in the history, for the rule usualShifts: 0 when its share of the area's duties is unknown
+     * or at least the rules' share of a rare shift, else the part of that share it lacks, from 1 to 100 (never worked).
+     */
+    static int rarity(Double usage, int percent) {
+        if (usage == null || percent <= 0 || usage * 100 >= percent) {
+            return 0;
+        }
+        return (int) Math.max(1, Math.round(100 * (percent - usage * 100) / percent));
     }
 
     /** Minutes of the duty inside the night window (which may cross midnight). */

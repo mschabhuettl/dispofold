@@ -165,7 +165,7 @@ export const CONSTRAINTS = [
   ['targetHours', 'SOFT', 20], ['overMinimum', 'SOFT', 2000], ['fairNights', 'SOFT', 3], ['fairWeekends', 'SOFT', 3], ['fairHolidays', 'SOFT', 3],
   ['fairUnpopular', 'SOFT', 2], ['wishes', 'SOFT', 300], ['blockLength', 'SOFT', 18000], ['isolatedDayOff', 'SOFT', 30000],
   ['forwardRotation', 'SOFT', 500], ['dayNightSwitch', 'SOFT', 10000], ['dayNightSwitches', 'SOFT', 30000], ['nightBlock', 'SOFT', 6000], ['splitWeekend', 'SOFT', 300], ['compRestUse', 'SOFT', 500], ['shiftVariety', 'SOFT', 5],
-  ['areaVariety', 'SOFT', 1], ['shiftMix', 'SOFT', 100], ['family', 'SOFT', 800],
+  ['areaVariety', 'SOFT', 1], ['shiftMix', 'SOFT', 25], ['usualShifts', 'SOFT', 300], ['family', 'SOFT', 800],
   // on-request duties are never planned automatically, so their weight is not a setting
   ['onRequest', 'SOFT', 1000],
 ].map(([id, level, defaultWeight]) => ({ id, level, defaultWeight, tunable: level === 'SOFT' && id !== 'onRequest' }));
@@ -176,5 +176,5 @@ export const DEFAULT_RULES = {
   nightMinHours: 2, maxOverTargetPercent: 10, minFreeSundays: 2, accountCarryShare: 0.25, historyMonths: 3, averagingWeeks: 52, weights: {},
   nightDistribution: 'HABIT', averageTolerancePercent: 10, freeInsideAbsence: true, averagingPeriod: 'HALF_YEAR',
   accountBalancing: 'PERIOD_END', carryMinusRest: false, nightRestDays: 2, dayToNightDays: 0, nightBlockMin: 2, nightBlockMax: 4,
-  nightMixMonths: 3, thoroughness: 'NORMAL', nightMixTolerance: 1, nightMixFloor: false, targetToleranceHours: 0,
+  nightMixMonths: 3, thoroughness: 'NORMAL', nightMixTolerance: 1, nightMixFloor: false, targetToleranceHours: 8, usualShiftPercent: 5,
 };

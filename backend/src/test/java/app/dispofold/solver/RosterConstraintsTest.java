@@ -1,5 +1,7 @@
 package app.dispofold.solver;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.ArrayList;
@@ -512,6 +514,23 @@ class RosterConstraintsTest {
         DemandSegment open = segment("o", "AN", MON, start, start + 120, 1, null);
         VERIFIER.verifyThat(RosterConstraints::overMinimum).given(open, cell(A, MON, DAY), cell(b, MON, DAY))
                 .penalizesBy(0);
+    }
+
+    @Test
+    void usualShiftsCountsDutiesOnRareShiftsByHowRareTheyAre() {
+        ShiftOption never = new ShiftOption("R0", "AN", 420, 480, ShiftCategory.DAY, false, false, false,
+                RosterBuilder.rarity(0.0, 5));
+        ShiftOption half = new ShiftOption("R1", "AN", 420, 480, ShiftCategory.DAY, false, false, false,
+                RosterBuilder.rarity(0.025, 5));
+        VERIFIER.verifyThat(RosterConstraints::usualShifts).given(cell(A, MON, never), cell(A, MON.plusDays(1), half))
+                .penalizesBy(150);
+        // usual, unknown or ruled off: nothing
+        VERIFIER.verifyThat(RosterConstraints::usualShifts).given(cell(A, MON, DAY)).penalizesBy(0);
+        assertThat(RosterBuilder.rarity(0.05, 5)).isZero();
+        assertThat(RosterBuilder.rarity(null, 5)).isZero();
+        assertThat(RosterBuilder.rarity(0.0, 0)).isZero();
+        // just below the share still counts
+        assertThat(RosterBuilder.rarity(0.0499, 5)).isEqualTo(1);
     }
 
     @Test

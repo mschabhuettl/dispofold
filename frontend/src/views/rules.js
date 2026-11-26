@@ -46,17 +46,18 @@ const PARAMS = [
   ['nightMixTolerance', t('rules.param.nightMixTolerance.label'), '', 'number', 1],
   ['nightMixFloor', t('rules.param.nightMixFloor.label'), '', 'bool'],
   ['targetToleranceHours', t('rules.param.targetToleranceHours.label'), '', 'number', 1],
+  ['usualShiftPercent', t('rules.param.usualShiftPercent.label'), '', 'number', 1],
   ['thoroughness', t('rules.param.thoroughness.label'), t('rules.param.thoroughness.help'), 'choice',
     [['FAST', t('rules.param.thoroughness.fast')], ['NORMAL', t('rules.param.thoroughness.normal')], ['THOROUGH', t('rules.param.thoroughness.thorough')]]],
 ];
 /** Bounds of number fields other than "at least 0". */
 const BOUNDS = { nightRestDays: [0, 4], dayToNightDays: [0, 4], nightBlockMax: [1, null], nightMixMonths: [1, 12], nightMixTolerance: [0, 10],
-  targetToleranceHours: [0, 40] };
+  targetToleranceHours: [0, 40], usualShiftPercent: [0, 50] };
 const PARAM = Object.fromEntries(PARAMS.map((p) => [p[0], p]));
 /** Help per parameter: what it does and what raising or lowering it changes. */
 const PARAM_HELP = Object.fromEntries(PARAMS.map(([key]) => [key, t(`help.param.${key}`)]));
 const GOAL_HELP = { blocks: t('help.goal.blocks'), nights: t('help.goal.nights'), wishes: t('help.goal.wishes'), fairness: t('help.goal.fairness'), hours: t('help.goal.hours'),
-  staffing: t('help.goal.staffing'), family: t('help.goal.family') };
+  staffing: t('help.goal.staffing'), usualShifts: t('help.goal.usualShifts'), family: t('help.goal.family') };
 
 /** Planning goals: group (lib/rule-groups.js), title and sentences whose placeholders are parameter fields. */
 const GOALS = [
@@ -67,6 +68,7 @@ const GOALS = [
   ['hours', t('rules.goal.hours.title'), [t('rules.goal.hours.tolerance'), t('rules.goal.hours.over'), t('rules.goal.hours.balancing'),
     t('rules.goal.hours.account'), t('rules.goal.hours.minusRest')]],
   ['staffing', t('rules.goal.staffing.title'), [t('rules.goal.staffing.text')]],
+  ['usualShifts', t('rules.goal.usualShifts.title'), [t('rules.goal.usualShifts.text')]],
   ['family', t('rules.goal.family.title'), [t('rules.goal.family.text')]],
 ];
 const IMPORTANCE = [['less', t('rules.importance.less')], ['normal', t('rules.importance.normal')],
@@ -95,7 +97,8 @@ export async function render(root, ctx) {
   params.nightMixMonths ??= 3;
   params.nightMixTolerance ??= 1;
   params.nightMixFloor ??= false;
-  params.targetToleranceHours ??= 0;
+  params.targetToleranceHours ??= 8;
+  params.usualShiftPercent ??= 5;
   params.thoroughness ??= 'NORMAL';
 
   root.append(h('h1', {}, t('nav.rules')));

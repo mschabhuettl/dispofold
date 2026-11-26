@@ -358,7 +358,7 @@ public class Store {
         return List.copyOf(merged.values());
     }
 
-    /** The rules; rules saved before version 0.28 get the new default weights once (see V7). */
+    /** The rules; rules saved with older default weights get the new defaults once (see V7 and upgradeRules). */
     public synchronized Rules rules() {
         List<Rules> found = new ArrayList<>();
         int[] version = { app.dispofold.solver.ConstraintCatalog.WEIGHTS_VERSION };
@@ -371,7 +371,7 @@ public class Store {
         }
         Rules rules = found.get(0);
         if (version[0] < app.dispofold.solver.ConstraintCatalog.WEIGHTS_VERSION) {
-            rules = rules.withWeights(app.dispofold.solver.ConstraintCatalog.upgradeWeights(rules.weights(), version[0]));
+            rules = app.dispofold.solver.ConstraintCatalog.upgradeRules(rules, version[0]);
             saveRules(rules);
         }
         return rules;

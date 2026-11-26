@@ -6,6 +6,7 @@ import java.util.List;
 import app.dispofold.planning.SolveOptions;
 
 import ai.timefold.solver.core.config.heuristic.selector.move.composite.UnionMoveSelectorConfig;
+import ai.timefold.solver.core.config.heuristic.selector.move.factory.MoveIteratorFactoryConfig;
 import ai.timefold.solver.core.config.heuristic.selector.move.generic.ChangeMoveSelectorConfig;
 import ai.timefold.solver.core.config.heuristic.selector.move.generic.SwapMoveSelectorConfig;
 import ai.timefold.solver.core.config.localsearch.LocalSearchPhaseConfig;
@@ -41,9 +42,7 @@ public final class SolverSetup {
                 : new TerminationConfig().withTerminationConfigList(limits);
 
         LocalSearchPhaseConfig localSearch = new LocalSearchPhaseConfig()
-                .withMoveSelectorConfig(new UnionMoveSelectorConfig().withMoveSelectors(
-                        new ChangeMoveSelectorConfig(),
-                        new SwapMoveSelectorConfig().withFilterClass(SameDaySwap.class)))
+                .withMoveSelectorConfig(moves())
                 .withAcceptorConfig(new LocalSearchAcceptorConfig().withLateAcceptanceSize(400))
                 .withForagerConfig(new LocalSearchForagerConfig().withAcceptedCountLimit(1));
 
@@ -55,6 +54,21 @@ public final class SolverSetup {
                 .withRandomSeed(options.seed())
                 .withTerminationConfig(termination)
                 .withPhases(localSearch);
+    }
+
+    /**
+     * Share of the merges ({@link MergeMoves}) against change and same-day swap (1 each): measured with 0.2 and 0.5
+     * alike on the synthetic month with shares of the shifts (docs/regeln.md).
+     */
+    static final double MERGE_WEIGHT = 0.2;
+
+    /** Change, same-day swap and the merges of two duties into a longer one. */
+    static UnionMoveSelectorConfig moves() {
+        return new UnionMoveSelectorConfig().withMoveSelectors(
+                new ChangeMoveSelectorConfig().withFixedProbabilityWeight(1.0),
+                new SwapMoveSelectorConfig().withFilterClass(SameDaySwap.class).withFixedProbabilityWeight(1.0),
+                new MoveIteratorFactoryConfig().withMoveIteratorFactoryClass(MergeMoves.class)
+                        .withFixedProbabilityWeight(MERGE_WEIGHT));
     }
 
     /** Swaps only make sense between two people on the same day. */

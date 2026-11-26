@@ -9,7 +9,8 @@ import java.util.Map;
 
 /**
  * Greedy starting roster for local search. Day by day it covers the open demand of every area with the duty
- * that covers most of it, preferring people who are furthest below their target hours, and keeps daily rest,
+ * that covers most of it (a shift rare in the history counting as covering less), preferring people who are
+ * furthest below their target hours, and keeps daily rest,
  * weekly rest, weekly hours and the maximum block length. Timefold's construction heuristic is not used for
  * this: it scores each cell against the monthly target and would fill the first days with everybody.
  */
@@ -164,7 +165,8 @@ final class InitialRoster {
                 if (gain == 0) {
                     continue;
                 }
-                double score = 4.0 * gain / option.getDurationMinutes() + blockBonus(cells, d, staff);
+                double score = 4.0 * gain / option.getDurationMinutes() - rarity(option)
+                        + blockBonus(cells, d, staff);
                 if (score > bestScore) {
                     bestScore = score;
                     bestCell = cell;
@@ -213,7 +215,7 @@ final class InitialRoster {
                 if (gain == 0 || !allowed(cells, d, staff, option, start, end)) {
                     continue;
                 }
-                double score = 4.0 * gain / option.getDurationMinutes()
+                double score = 4.0 * gain / option.getDurationMinutes() - rarity(option)
                         + 2.0 * remaining(staff) / Math.max(1, staff.getScaledTargetMinutes())
                         + blockBonus(cells, d, staff);
                 if (score > bestScore) {
@@ -230,6 +232,14 @@ final class InitialRoster {
         counted.merge(bestCell.getStaff(), (long) bestCell.getCountedMinutes(), Long::sum);
         cover(bestCell, 1);
         return true;
+    }
+
+    /**
+     * A shift rare in the history counts as a duty that covers less (a never worked one as one that covers nothing),
+     * so the start takes the usual shifts where they fit about as well.
+     */
+    private static double rarity(ShiftOption option) {
+        return 4.0 * option.getRarity() / 100;
     }
 
     private long remaining(Staff staff) {
