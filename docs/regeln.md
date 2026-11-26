@@ -728,6 +728,11 @@ bevorzugt, hat daran auf dem synthetischen Monat etwas geändert.
   Die Läufe mit 0.30.0 hier sind nach einer Korrektur des Zusammenlegens gemessen (findet es nichts, ändert es eine
   zufällige Zelle, statt nichts zu tun); die Tabelle oben davor, mit fast gleichen Zahlen („normal“, Gewicht 300:
   +5,6 % gegen +6,1 %, Einzeldienste 187 gegen 206).
+- **Ohne Anteile** (bis zum nächsten Einlesen, oder ein Datensatz von Hand) wirken nur die neuen Standards und das
+  Zusammenlegen. Auf dem großen synthetischen Monat ohne Anteile, „normal“, gegen 0.29.0 (siehe
+  [Raster der Gewichte](#raster-der-gewichte)): Einzeldienste 306 → 150, einzelne freie Tage 117 → 32, Wechsel
+  zwischen Tag und Nacht 124 → 85, Personen mit Tag und Nacht 72 → 63, einzelne Nächte 94 → 34, über Minimum
+  17,2 % → 12,9 %, Dienste unter 10 Stunden 1256 → 1038 von 1465; keine Lücken, 652 s.
 - **Gewohnte Schichten je Person** (nur die Schichten, die eine Person selbst in der Historie hatte) gibt es nicht:
   Der synthetische Monat hat keine persönlichen Muster, an denen sich das messen ließe, und mit den Anteilen je
   Schicht, dem Startplan und dem Zusammenlegen sinken die seltenen Dienste dort schon auf ein Sechstel. Ob es mit
