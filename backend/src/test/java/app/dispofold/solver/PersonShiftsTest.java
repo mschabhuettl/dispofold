@@ -90,6 +90,20 @@ class PersonShiftsTest {
     }
 
     @Test
+    void withHistoriesTheSameSeedGivesTheSamePlanWithoutScoreCorruption() throws Exception {
+        PlanningInput input = input(true);
+        SolveOptions options = new SolveOptions(7, 600, 0, 3_000);
+        SolveProgress first = TimefoldPlanningFacadeTest.solve(new TimefoldPlanningFacade(), input, options);
+        SolveProgress second = TimefoldPlanningFacadeTest.solve(new TimefoldPlanningFacade(), input, options);
+        assertThat(second.score()).isEqualTo(first.score());
+        assertThat(second.assignments()).isEqualTo(first.assignments());
+        SolveProgress asserted = TimefoldPlanningFacadeTest.solve(
+                new TimefoldPlanningFacade(ai.timefold.solver.core.config.solver.EnvironmentMode.FULL_ASSERT), input,
+                new SolveOptions(7, 600, 0, 1_000));
+        assertThat(asserted.finished()).isTrue();
+    }
+
+    @Test
     void theUnusualShiftsComeFromATellingHistoryAndAWeight() {
         PlanningInput input = input(true);
         Roster roster = new RosterBuilder(input, true).build();
