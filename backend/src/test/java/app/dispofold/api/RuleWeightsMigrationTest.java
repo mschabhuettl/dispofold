@@ -79,10 +79,10 @@ class RuleWeightsMigrationTest {
     void untouchedWeightsTakeTheNewDefaultsOnce() throws Exception {
         storeOld(withWeights(oldWeights(6000, 10000)), 1);
         given().get("/api/rules").then().statusCode(200)
-                .body("weights.blockLength", equalTo(18000)).body("weights.isolatedDayOff", equalTo(30000))
+                .body("weights.blockLength", equalTo(36000)).body("weights.isolatedDayOff", equalTo(60000))
                 .body("weights.forwardRotation", equalTo(700)).body("weights.wishes", equalTo(300));
         // Set by hand to the old value after the upgrade: it stays.
-        String rules = given().get("/api/rules").then().extract().asString().replace("18000", "6000");
+        String rules = given().get("/api/rules").then().extract().asString().replace("36000", "6000");
         given().contentType(ContentType.JSON).body(rules).put("/api/rules").then().statusCode(200);
         given().get("/api/rules").then().body("weights.blockLength", equalTo(6000));
         // The new rules have no stored weight, so their defaults apply (this profile's fake solver has its own
@@ -97,8 +97,8 @@ class RuleWeightsMigrationTest {
     @Test
     void aWichtigkeitLevelStaysThatLevel() throws Exception {
         storeOld(withWeights(oldWeights(12000, 20000)), 1);
-        given().get("/api/rules").then().body("weights.blockLength", equalTo(36000))
-                .body("weights.isolatedDayOff", equalTo(60000));
+        given().get("/api/rules").then().body("weights.blockLength", equalTo(72000))
+                .body("weights.isolatedDayOff", equalTo(120000));
     }
 
     @Test
@@ -113,7 +113,7 @@ class RuleWeightsMigrationTest {
         assertThat(ConstraintCatalog.upgradeWeights(Map.of(), 1)).isEmpty();
         assertThat(ConstraintCatalog.upgradeWeights(Map.of("wishes", 5L), 1)).containsExactlyEntriesOf(Map.of("wishes", 5L));
         assertThat(ConstraintCatalog.upgradeWeights(Map.of("blockLength", 3000L), 1))
-                .containsExactlyEntriesOf(Map.of("blockLength", 9000L));
+                .containsExactlyEntriesOf(Map.of("blockLength", 18000L));
         // saved by 0.28: the block weights are not touched again
         assertThat(ConstraintCatalog.upgradeWeights(Map.of("blockLength", 6000L), 2))
                 .containsExactlyEntriesOf(Map.of("blockLength", 6000L));
@@ -137,7 +137,7 @@ class RuleWeightsMigrationTest {
         given().get("/api/rules").then().statusCode(200)
                 .body("weights.dayNightSwitches", equalTo(30000)).body("weights.shiftMix", equalTo(25))
                 .body("weights.dayNightSwitch", equalTo(10000)).body("weights.nightBlock", equalTo(6000))
-                .body("weights.blockLength", equalTo(18000));
+                .body("weights.blockLength", equalTo(36000));
         // saved again: the current version, the old value set by hand stays
         String rules = given().get("/api/rules").then().extract().asString()
                 .replace("\"dayNightSwitches\":30000", "\"dayNightSwitches\":3000");
@@ -190,5 +190,30 @@ class RuleWeightsMigrationTest {
         // a tolerance of 0 with a weight set by hand: the tolerance is no weight and moves on its own
         assertThat(ConstraintCatalog.upgradeRules(rules029(60, 0), 3).targetToleranceHours()).isNull();
         assertThat(ConstraintCatalog.upgradeRules(rules029(60, 0), 4).targetToleranceHours()).isEqualTo(0);
+    }
+
+    @Test
+    void blockWeightsOf030TakeTheNewDefaultsOnce() throws Exception {
+        // saved by 0.30 at "normal" and at "weniger"; one set by hand
+        storeOld(rules029(25, null), 4);
+        given().get("/api/rules").then().statusCode(200).body("weights.blockLength", equalTo(36000))
+                .body("weights.isolatedDayOff", equalTo(60000)).body("weights.shiftMix", equalTo(25));
+        Map<String, Long> less = weights028(1, 25);
+        less.put("blockLength", 9000L);
+        less.put("isolatedDayOff", 15000L);
+        storeOld(withWeights(less), 4);
+        given().get("/api/rules").then().body("weights.blockLength", equalTo(18000))
+                .body("weights.isolatedDayOff", equalTo(30000));
+        Map<String, Long> hand = weights028(1, 25);
+        hand.put("blockLength", 20000L);
+        storeOld(withWeights(hand), 4);
+        given().get("/api/rules").then().body("weights.blockLength", equalTo(20000))
+                .body("weights.isolatedDayOff", equalTo(30000));
+        // saved by this version: the old defaults set by hand stay
+        storeOld(withWeights(weights028(1, 25)), ConstraintCatalog.WEIGHTS_VERSION);
+        given().get("/api/rules").then().body("weights.blockLength", equalTo(18000));
+        // the new rules of this version have no stored weight: their defaults apply
+        assertThat(ConstraintCatalog.get(ConstraintCatalog.PERSON_SHIFTS).defaultWeight()).isEqualTo(10000);
+        assertThat(ConstraintCatalog.get(ConstraintCatalog.PERSON_LENGTHS).defaultWeight()).isEqualTo(100000);
     }
 }

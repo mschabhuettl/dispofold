@@ -21,6 +21,7 @@ import app.dispofold.model.AbsenceCredit;
 import app.dispofold.model.AveragingPeriod;
 import app.dispofold.model.AbsenceType;
 import app.dispofold.model.Dataset;
+import app.dispofold.model.DutyHistory;
 import app.dispofold.model.DemandRule;
 import app.dispofold.model.FamilyRule;
 import app.dispofold.model.FixedAssignment;
@@ -133,6 +134,7 @@ public final class RosterBuilder {
             Staff s = staff(p, own, counted.size(), Math.max(0, balance - preEnteredCompRest),
                     available(p, absences), previousCounts(before));
             nights(s, p, ownRestrictions);
+            unusual(s, p);
             s.setNightWindow(nightWindow(own, month, rules.nightMixWindow()));
             s.setNightMixTolerance(rules.nightMixSlack());
             s.setNightMixFloor(rules.nightMixMakesUp());
@@ -233,6 +235,36 @@ public final class RosterBuilder {
         Staff staff = new Staff(p.id(), p.weeklyHours(), Set.copyOf(list(p.areaIds())), credit, target,
                 compRestBalance, limits, h, wishCount, fairness, average(p, history), previousCounts);
         return staff;
+    }
+
+    /**
+     * The shifts of the person's areas that are unusual for the person (rules personShifts and personLengths): not
+     * worked in the history, or in a length class the person never worked. Only with a telling history and a weight
+     * above 0, so without them nothing changes for the solver.
+     */
+    void unusual(Staff s, Person p) {
+        DutyHistory h = p.dutyHistory();
+        if (h == null || !h.telling()) {
+            return;
+        }
+        boolean byShift = ConstraintCatalog.weight(ConstraintCatalog.get(ConstraintCatalog.PERSON_SHIFTS),
+                rules.weights()) > 0;
+        boolean byLength = ConstraintCatalog.weight(ConstraintCatalog.get(ConstraintCatalog.PERSON_LENGTHS),
+                rules.weights()) > 0;
+        Set<Integer> classes = h.lengthClasses();
+        Set<String> shifts = new HashSet<>();
+        Set<String> lengths = new HashSet<>();
+        for (ShiftOption o : options.values()) {
+            if (list(p.areaIds()).contains(o.getAreaId())) {
+                if (byShift && h.shiftsOrEmpty().getOrDefault(o.getId(), 0) == 0) {
+                    shifts.add(o.getId());
+                }
+                if (byLength && !classes.contains(DutyHistory.lengthClass(o.getDurationMinutes()))) {
+                    lengths.add(o.getId());
+                }
+            }
+        }
+        s.setUnusual(Set.copyOf(shifts), Set.copyOf(lengths));
     }
 
     /**

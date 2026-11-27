@@ -96,6 +96,10 @@ class BlockMetricsBenchmarkTest {
         double mixDeviation = analysis.people().stream().filter(p -> mixes.containsKey(p.personId()))
                 .mapToDouble(p -> DemoSolveTest.categoryDeviation(mixes.get(p.personId()), p.plannedMix())).average()
                 .orElse(0);
+        LOG.infof("Soft score by rule: %s", analysis.constraints().stream().filter(c -> c.score() != 0
+                && "SOFT".equals(c.level())).sorted(java.util.Comparator.comparingLong(c -> c.score()))
+                .map(c -> c.id() + " " + c.score() + " (" + c.matches() + ")")
+                .collect(java.util.stream.Collectors.joining(", ")));
         LOG.infof("Metrics: %s, mix deviation %.3f, gaps %d, hard %d, wall %d s, score %s; %s",
                 PlanMetrics.of(input, result.assignments()), mixDeviation,
                 analysis.gaps().size(), analysis.hardViolations(), result.elapsedMillis() / 1000, result.score(),

@@ -57,7 +57,7 @@ const PARAM = Object.fromEntries(PARAMS.map((p) => [p[0], p]));
 /** Help per parameter: what it does and what raising or lowering it changes. */
 const PARAM_HELP = Object.fromEntries(PARAMS.map(([key]) => [key, t(`help.param.${key}`)]));
 const GOAL_HELP = { blocks: t('help.goal.blocks'), nights: t('help.goal.nights'), wishes: t('help.goal.wishes'), fairness: t('help.goal.fairness'), hours: t('help.goal.hours'),
-  staffing: t('help.goal.staffing'), usualShifts: t('help.goal.usualShifts'), family: t('help.goal.family') };
+  staffing: t('help.goal.staffing'), usualShifts: t('help.goal.usualShifts'), personShifts: t('help.goal.personShifts'), family: t('help.goal.family') };
 
 /** Planning goals: group (lib/rule-groups.js), title and sentences whose placeholders are parameter fields. */
 const GOALS = [
@@ -69,6 +69,7 @@ const GOALS = [
     t('rules.goal.hours.account'), t('rules.goal.hours.minusRest')]],
   ['staffing', t('rules.goal.staffing.title'), [t('rules.goal.staffing.text')]],
   ['usualShifts', t('rules.goal.usualShifts.title'), [t('rules.goal.usualShifts.text')]],
+  ['personShifts', t('rules.goal.personShifts.title'), [t('rules.goal.personShifts.text')]],
   ['family', t('rules.goal.family.title'), [t('rules.goal.family.text')]],
 ];
 const IMPORTANCE = [['less', t('rules.importance.less')], ['normal', t('rules.importance.normal')],

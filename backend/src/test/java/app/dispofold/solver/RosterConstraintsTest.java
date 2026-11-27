@@ -534,6 +534,21 @@ class RosterConstraintsTest {
     }
 
     @Test
+    void personShiftsAndLengthsCountDutiesUnusualForThePerson() {
+        Staff p = staff("P", Set.of("AN", "DR"));
+        p.setUnusual(Set.of("E", "D"), Set.of("D"));
+        VERIFIER.verifyThat(RosterConstraints::personShifts)
+                .given(cell(p, MON, EARLY), cell(p, MON.plusDays(1), DAY), cell(p, MON.plusDays(2), LATE))
+                .penalizesBy(2);
+        VERIFIER.verifyThat(RosterConstraints::personLengths)
+                .given(cell(p, MON, EARLY), cell(p, MON.plusDays(1), DAY), cell(p, MON.plusDays(2), LATE))
+                .penalizesBy(1);
+        // without a history nothing is unusual
+        VERIFIER.verifyThat(RosterConstraints::personShifts).given(cell(A, MON, EARLY)).penalizesBy(0);
+        VERIFIER.verifyThat(RosterConstraints::personLengths).given(cell(A, MON, DAY)).penalizesBy(0);
+    }
+
+    @Test
     void uselessDuty() {
         long start = Times.minute(MON) + 8 * 60;
         DemandSegment segment = segment("s", "AN", MON, start, start + 120, 1, null);

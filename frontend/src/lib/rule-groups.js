@@ -10,6 +10,7 @@ export const GROUPS = {
   hours: ['targetHours'],
   staffing: ['overMinimum'],
   usualShifts: ['usualShifts'],
+  personShifts: ['personShifts', 'personLengths'],
   family: ['family'],
 };
 

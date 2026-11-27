@@ -51,6 +51,8 @@ public final class ConstraintCatalog {
     public static final String AREA_VARIETY = "areaVariety";
     public static final String SHIFT_MIX = "shiftMix";
     public static final String USUAL_SHIFTS = "usualShifts";
+    public static final String PERSON_SHIFTS = "personShifts";
+    public static final String PERSON_LENGTHS = "personLengths";
     public static final String FAMILY = "family";
     public static final String ON_REQUEST = "onRequest";
     public static final String OVERSTAFFING = "overstaffing";
@@ -76,10 +78,11 @@ public final class ConstraintCatalog {
             new ConstraintInfo(DEMAND, MEDIUM, DEMAND_WEIGHT, false), new ConstraintInfo(OVERSTAFFING, MEDIUM, 1, false),
             new ConstraintInfo(USELESS_DUTY, MEDIUM, 1, false),
             soft(TARGET_HOURS, 20), soft(OVER_MINIMUM, 2000), soft(FAIR_NIGHTS, 3), soft(FAIR_WEEKENDS, 3), soft(FAIR_HOLIDAYS, 3),
-            soft(FAIR_UNPOPULAR, 2), soft(WISHES, 300), soft(BLOCK_LENGTH, 18000), soft(ISOLATED_DAY_OFF, 30000),
+            soft(FAIR_UNPOPULAR, 2), soft(WISHES, 300), soft(BLOCK_LENGTH, 36000), soft(ISOLATED_DAY_OFF, 60000),
             soft(FORWARD_ROTATION, 500), soft(DAY_NIGHT_SWITCH, 10000), soft(DAY_NIGHT_SWITCHES, 30000),
             soft(NIGHT_BLOCK, 6000), soft(SPLIT_WEEKEND, 300), soft(COMP_REST_USE, 500),
             soft(SHIFT_VARIETY, 5), soft(AREA_VARIETY, 1), soft(SHIFT_MIX, 25), soft(USUAL_SHIFTS, 300),
+            soft(PERSON_SHIFTS, 10000), soft(PERSON_LENGTHS, 100000),
             soft(FAMILY, 800),
             // On-request duties are never chosen by the solver (see RosterBuilder); the constraint only marks
             // duties set by planners, so its weight is not a setting.
@@ -95,8 +98,10 @@ public final class ConstraintCatalog {
     static final Map<String, Long> DEFAULTS_BEFORE_0_29 = Map.of(DAY_NIGHT_SWITCHES, 3000L);
     /** Default weights before version 0.30 that have changed since (see {@link #DEFAULTS_BEFORE_0_28}). */
     static final Map<String, Long> DEFAULTS_BEFORE_0_30 = Map.of(SHIFT_MIX, 100L);
+    /** Default weights before version 0.31 that have changed since (see {@link #DEFAULTS_BEFORE_0_28}). */
+    static final Map<String, Long> DEFAULTS_BEFORE_0_31 = Map.of(BLOCK_LENGTH, 18000L, ISOLATED_DAY_OFF, 30000L);
     /** The version of the stored weights that the current defaults belong to. */
-    public static final int WEIGHTS_VERSION = 4;
+    public static final int WEIGHTS_VERSION = 5;
     /** The planning goals with a Wichtigkeit (frontend lib/rule-groups.js) whose weights changed in a version. */
     private static final List<List<String>> GOALS = List.of(List.of(BLOCK_LENGTH, ISOLATED_DAY_OFF),
             List.of(DAY_NIGHT_SWITCH, DAY_NIGHT_SWITCHES, NIGHT_BLOCK));
@@ -107,23 +112,32 @@ public final class ConstraintCatalog {
     }
 
     /**
-     * Weights stored with an older version (1: before 0.28, 2: before 0.29, 3: before 0.30) with the new defaults, one
+     * Weights stored with an older version (1: before 0.28, 2: before 0.29, 3: before 0.30, 4: before 0.31) with the new defaults, one
      * version after the other. Per planning goal: when the goal's weights all stand at the old default times one Wichtigkeit factor
      * (a weight not stored counts as such), its changed weights get the new default times that factor; a changed
      * weight of no goal only at its old default. Weights set by hand otherwise, and all other weights, stay.
      */
     public static Map<String, Long> upgradeWeights(Map<String, Long> stored, int version) {
         Map<String, Long> weights = stored;
-        if (version < 2) {
-            weights = upgrade(weights, DEFAULTS_BEFORE_0_28);
-        }
-        if (version < 3) {
-            weights = upgrade(weights, DEFAULTS_BEFORE_0_29);
-        }
-        if (version < 4) {
-            weights = upgrade(weights, DEFAULTS_BEFORE_0_30);
+        for (int step = Math.max(0, version - 1); step < STEPS.size(); step++) {
+            weights = upgrade(weights, STEPS.get(step), step + 1);
         }
         return weights;
+    }
+
+    /** The defaults that changed in each version of the weights, from version 1 on. */
+    private static final List<Map<String, Long>> STEPS = List.of(DEFAULTS_BEFORE_0_28, DEFAULTS_BEFORE_0_29,
+            DEFAULTS_BEFORE_0_30, DEFAULTS_BEFORE_0_31);
+
+    /** The default of a weight after the step: the old default of a later step that changes it, else the current. */
+    private static long defaultAfter(String id, int step) {
+        for (int later = step; later < STEPS.size(); later++) {
+            Long old = STEPS.get(later).get(id);
+            if (old != null) {
+                return old;
+            }
+        }
+        return get(id).defaultWeight();
     }
 
     /**
@@ -139,7 +153,7 @@ public final class ConstraintCatalog {
         return rules;
     }
 
-    private static Map<String, Long> upgrade(Map<String, Long> stored, Map<String, Long> before) {
+    private static Map<String, Long> upgrade(Map<String, Long> stored, Map<String, Long> before, int step) {
         if (stored == null || stored.isEmpty()) {
             return stored;
         }
@@ -150,11 +164,11 @@ public final class ConstraintCatalog {
             for (double factor : factors) {
                 boolean level = group.stream().noneMatch(id -> {
                     Long w = stored.get(id);
-                    return w != null && w != Math.round(before.getOrDefault(id, get(id).defaultWeight()) * factor);
+                    return w != null && w != Math.round(before.getOrDefault(id, defaultAfter(id, step - 1)) * factor);
                 });
                 if (level) {
                     if (stored.containsKey(changed)) {
-                        upgraded.put(changed, Math.round(get(changed).defaultWeight() * factor));
+                        upgraded.put(changed, Math.round(defaultAfter(changed, step) * factor));
                     }
                     break;
                 }

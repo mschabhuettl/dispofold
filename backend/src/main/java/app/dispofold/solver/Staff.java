@@ -42,6 +42,10 @@ public final class Staff {
     private boolean nightMixFloor;
     /** Minutes above or below the scaled target that the target rule does not count. */
     private int targetToleranceMinutes;
+
+    private Set<String> unusualShifts = Set.of();
+
+    private Set<String> unusualLengths = Set.of();
     /** Target the soft rule aims at: the target scaled to the work the demand needs (see RosterBuilder). */
     private int scaledTargetMinutes;
 
@@ -237,6 +241,21 @@ public final class Staff {
 
     public void setTargetToleranceMinutes(int targetToleranceMinutes) {
         this.targetToleranceMinutes = targetToleranceMinutes;
+    }
+
+    /** Ids of the shifts the person did not work in the history (rule personShifts); empty without one. */
+    public Set<String> getUnusualShifts() {
+        return unusualShifts;
+    }
+
+    /** Ids of the shifts in a length class the person never worked in the history (rule personLengths). */
+    public Set<String> getUnusualLengths() {
+        return unusualLengths;
+    }
+
+    public void setUnusual(Set<String> shifts, Set<String> lengths) {
+        this.unusualShifts = shifts;
+        this.unusualLengths = lengths;
     }
 
     /** The person has usual shares per area: they replace area variety. */

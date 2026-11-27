@@ -45,7 +45,7 @@ public class RosterConstraints implements ConstraintProvider {
                 targetHours(f), overMinimum(f), fairNights(f), fairWeekends(f), fairHolidays(f), fairUnpopular(f), wishes(f),
                 blockLength(f), isolatedDayOff(f), forwardRotation(f), dayNightSwitch(f), dayNightSwitches(f),
                 nightBlock(f), splitWeekend(f), compRestUse(f),
-                shiftVariety(f), areaVariety(f), shiftMix(f), usualShifts(f), family(f), onRequest(f)
+                shiftVariety(f), areaVariety(f), shiftMix(f), usualShifts(f), personShifts(f), personLengths(f), family(f), onRequest(f)
         };
     }
 
@@ -649,6 +649,24 @@ public class RosterConstraints implements ConstraintProvider {
                 .penalize(SOFT, c -> c.getShift().getRarity())
                 .justifyWith((c, s) -> hit(c, "shiftId", c.getShift().getId()))
                 .asConstraint(ConstraintCatalog.USUAL_SHIFTS);
+    }
+
+    /** A duty on a shift the person did not work in the history (see RosterBuilder#unusual). */
+    Constraint personShifts(ConstraintFactory f) {
+        return monthWork(f)
+                .filter(c -> c.getStaff().getUnusualShifts().contains(c.getShift().getId()))
+                .penalize(SOFT)
+                .justifyWith((c, s) -> hit(c, "shiftId", c.getShift().getId()))
+                .asConstraint(ConstraintCatalog.PERSON_SHIFTS);
+    }
+
+    /** A duty in a length class the person never worked in the history (see RosterBuilder#unusual). */
+    Constraint personLengths(ConstraintFactory f) {
+        return monthWork(f)
+                .filter(c -> c.getStaff().getUnusualLengths().contains(c.getShift().getId()))
+                .penalize(SOFT)
+                .justifyWith((c, s) -> hit(c, "shiftId", c.getShift().getId()))
+                .asConstraint(ConstraintCatalog.PERSON_LENGTHS);
     }
 
     /** Pairs of equal duties: n (n - 1) / 2. */

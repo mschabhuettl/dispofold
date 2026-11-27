@@ -7,7 +7,7 @@ const CATALOGUE = [
   ['targetHours', 20], ['overMinimum', 2000], ['fairNights', 3], ['fairWeekends', 3], ['fairHolidays', 3], ['fairUnpopular', 2], ['wishes', 300],
   ['blockLength', 18000], ['isolatedDayOff', 30000], ['forwardRotation', 500], ['dayNightSwitch', 10000], ['dayNightSwitches', 30000],
   ['nightBlock', 6000], ['splitWeekend', 300], ['compRestUse', 500],
-  ['shiftVariety', 5], ['areaVariety', 1], ['shiftMix', 25], ['usualShifts', 300], ['family', 800],
+  ['shiftVariety', 5], ['areaVariety', 1], ['shiftMix', 25], ['usualShifts', 300], ['personShifts', 30000], ['personLengths', 100000], ['family', 800],
 ].map(([id, defaultWeight]) => ({ id, level: 'SOFT', defaultWeight, tunable: true }))
   .concat([{ id: 'onRequest', level: 'SOFT', defaultWeight: 1000, tunable: false }, { id: 'dailyRest', level: 'HARD', defaultWeight: 1, tunable: false }]);
 const defaults = () => Object.fromEntries(CATALOGUE.map((c) => [c.id, c.defaultWeight]));

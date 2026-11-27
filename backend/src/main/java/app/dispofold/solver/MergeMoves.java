@@ -16,7 +16,8 @@ import ai.timefold.solver.core.preview.api.move.Move;
 import ai.timefold.solver.core.preview.api.move.builtin.Moves;
 
 /**
- * A duty made longer in one step: a cell's duty moves to a longer shift of its area that covers it, and a duty of
+ * A duty made longer in one step: a cell's duty moves to a longer shift of its area that covers it (not one in a
+ * length class the person never worked, see RosterBuilder#unusual), and a duty of
  * the same area on the same day that the longer shift covers as well goes (two short duties become one long one).
  * A single change cannot do that: lengthening first overstaffs, dropping first leaves a gap. Without such a second
  * duty the move only lengthens. Random selection only, with the solver's random generator.
@@ -101,6 +102,7 @@ public class MergeMoves implements MoveIteratorFactory<Roster, Move<Roster>> {
         List<ShiftOption> longer = new ArrayList<>();
         for (ShiftOption o : cell.getOptions()) {
             if (!o.isCompRest() && now.getAreaId().equals(o.getAreaId())
+                    && !cell.getStaff().getUnusualLengths().contains(o.getId())
                     && o.getDurationMinutes() > now.getDurationMinutes() && cell.startOf(o) <= start
                     && cell.endOf(o) >= end) {
                 longer.add(o);

@@ -66,9 +66,38 @@ export async function render(root, ctx, [personId]) {
     if (!planned) root.append(h('p.alert', { id: 'person-no-plan' }, t('person.noPlan', { month: monthLabel(month) })));
     root.append(...figures(explanation, person, areaNames, constraintLabels, nightDistribution, ctx.canEdit, planned));
   }
+  if (person.dutyHistory) root.append(habitSection(dataset, person));
   // the switch and the form are for planners only (viewers get no restrictions, family rules or balances anyway)
   if (ctx.canEdit) root.append(sourceSection(root, ctx, dataset, person), editor(root, ctx, dataset, person.id, rules));
   return undefined;
+}
+
+/** Lengths of fewer hours than these bounds: the classes of the rule personLengths (backend DutyHistory). */
+const LENGTH_BOUNDS = [8, 10, 12];
+const lengthClass = (hours) => LENGTH_BOUNDS.filter((b) => hours >= b).length;
+/** Fewer duties in the history give no usual shifts and lengths (backend DutyHistory.MIN_DUTIES). */
+const MIN_HISTORY_DUTIES = 10;
+
+/**
+ * The duties of the history months per shift and per length, as an import wrote them: what the rules "Gewohnte
+ * Schichten je Person" count as usual for the person, and the length classes that count as never worked.
+ */
+function habitSection(dataset, person) {
+  const shifts = new Map(dataset.shifts.map((s) => [s.id, s]));
+  const byShift = Object.entries(person.dutyHistory.shifts ?? {}).filter(([, n]) => n > 0).sort((a, b) => b[1] - a[1]);
+  const byHours = Object.entries(person.dutyHistory.hours ?? {}).filter(([, n]) => n > 0).sort((a, b) => Number(a[0]) - Number(b[0]));
+  const total = byHours.reduce((sum, [, n]) => sum + n, 0);
+  const worked = new Set(byHours.map(([hours]) => lengthClass(Number(hours))));
+  const classes = [t('people.habit.class0'), t('people.habit.class1'), t('people.habit.class2'), t('people.habit.class3')];
+  const shiftName = (id) => (shifts.has(id) ? `${shifts.get(id).code} ${shifts.get(id).name}` : t('people.habit.goneShift', { id }));
+  return h('section.section', { 'aria-labelledby': 'h-habit' }, h('h2', { id: 'h-habit' }, t('people.section.habit'),
+    info(t('help.people.habit'), t('people.section.habit'))),
+  h('p.muted', {}, total < MIN_HISTORY_DUTIES ? t('people.habit.tooFew', { duties: total, min: MIN_HISTORY_DUTIES })
+    : t('people.habit.intro', { duties: total })),
+  h('table.data', { id: 'person-habit' }, h('thead', {}, h('tr', {}, h('th', {}, t('people.habit.shift')), h('th.num', {}, t('people.habit.duties')))),
+    h('tbody', {}, byShift.map(([id, n]) => h('tr', {}, h('td', {}, shiftName(id)), h('td.num', {}, String(n)))))),
+  h('p', { id: 'person-habit-lengths' }, t('people.habit.lengths', { lengths: byHours.map(([hours, n]) => t('people.habit.length', { hours: fmt.num(Number(hours), 1), duties: n })).join(', ') })),
+  total >= MIN_HISTORY_DUTIES && h('p.muted', {}, t('people.habit.unusual', { classes: classes.filter((_, i) => !worked.has(i)).join(', ') || t('people.habit.none') })));
 }
 
 /**

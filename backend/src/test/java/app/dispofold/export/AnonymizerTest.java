@@ -57,6 +57,8 @@ class AnonymizerTest {
             Map.entry("Person.areaStates", "area ids as keys; never stored, the restrictions carry them"),
             Map.entry("FamilyRule.note", "cleared"),
             Map.entry("ShiftMix.areas", "area ids as keys, kept"),
+            Map.entry("DutyHistory.shifts", "shift ids as keys, kept"),
+            Map.entry("DutyHistory.hours", "duty lengths in hours as keys, kept"),
             Map.entry("Restriction.personId", "pseudonym"), Map.entry("Restriction.shiftId", "id, kept"),
             Map.entry("HistoryEntry.personId", "pseudonym"), Map.entry("HistoryEntry.month", "month, kept"),
             Map.entry("HistoryEntry.source", "import or plan, kept"),

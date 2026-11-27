@@ -82,6 +82,17 @@ const ABSENCE_TYPES = [
   { code: 'ER', name: 'Ersatzruhe', reducesTarget: true, chargesAccount: false, compensatoryRest: true, color: '#8FD3C7' },
 ];
 
+/** The duties per shift and per length in hours, as an import writes them. */
+function dutyHistory(shifts) {
+  const hours = {};
+  for (const [id, n] of Object.entries(shifts)) {
+    const { start, end } = SHIFTS.find((x) => x.id === id);
+    const minutes = (Number(end.slice(0, 2)) * 60 + Number(end.slice(3)) - Number(start.slice(0, 2)) * 60 - Number(start.slice(3)) + 1440) % 1440 || 1440;
+    hours[String(minutes / 60)] = (hours[String(minutes / 60)] ?? 0) + n;
+  }
+  return { shifts, hours };
+}
+
 export function makeDataset(month, seed = 1) {
   const r = rng(seed);
   const pick = (xs) => xs[Math.floor(r() * xs.length)];
@@ -101,6 +112,8 @@ export function makeDataset(month, seed = 1) {
       externalId: String(100 + i),
       shiftMix: i % 6 === 0 ? { categories: { DAY: 0.9, NIGHT: 0.1 }, areas: Object.fromEntries(areaIds.map((a, k) => [a, areaIds.length === 1 ? 1 : (k === 0 ? 0.7 : 0.3)])) }
         : i % 6 === 3 ? { categories: { EARLY: 0.5, LATE: 0.5 }, areas: {} } : null,
+      // every second person with duties of the history months on the first two shifts of the main area
+      ...(i % 2 === 0 ? { dutyHistory: dutyHistory(Object.fromEntries([...new Set(TEMPLATE[primary])].slice(0, 2).map((id, k) => [id, k ? 12 : 30]))) } : {}),
     };
   });
   const dates = monthDates(month);
@@ -165,7 +178,7 @@ export const CONSTRAINTS = [
   ['targetHours', 'SOFT', 20], ['overMinimum', 'SOFT', 2000], ['fairNights', 'SOFT', 3], ['fairWeekends', 'SOFT', 3], ['fairHolidays', 'SOFT', 3],
   ['fairUnpopular', 'SOFT', 2], ['wishes', 'SOFT', 300], ['blockLength', 'SOFT', 18000], ['isolatedDayOff', 'SOFT', 30000],
   ['forwardRotation', 'SOFT', 500], ['dayNightSwitch', 'SOFT', 10000], ['dayNightSwitches', 'SOFT', 30000], ['nightBlock', 'SOFT', 6000], ['splitWeekend', 'SOFT', 300], ['compRestUse', 'SOFT', 500], ['shiftVariety', 'SOFT', 5],
-  ['areaVariety', 'SOFT', 1], ['shiftMix', 'SOFT', 25], ['usualShifts', 'SOFT', 300], ['family', 'SOFT', 800],
+  ['areaVariety', 'SOFT', 1], ['shiftMix', 'SOFT', 25], ['usualShifts', 'SOFT', 300], ['personShifts', 'SOFT', 30000], ['personLengths', 'SOFT', 100000], ['family', 'SOFT', 800],
   // on-request duties are never planned automatically, so their weight is not a setting
   ['onRequest', 'SOFT', 1000],
 ].map(([id, level, defaultWeight]) => ({ id, level, defaultWeight, tunable: level === 'SOFT' && id !== 'onRequest' }));

@@ -65,9 +65,15 @@ class RosterAnalyzerTest {
      */
     @Test
     void theScoreOfAFixedPlanIsUnchanged() {
-        assertThat(FACADE.analyze(fairnessInput()).score()).isEqualTo("-1hard/-61200000000000medium/-44023876soft");
+        assertThat(FACADE.analyze(fairnessInput()).score()).isEqualTo("-1hard/-61200000000000medium/-44077876soft");
         PlanningInput before = fairnessInput();
-        Rules old = before.rules().withWeights(java.util.Map.of(ConstraintCatalog.SHIFT_MIX, 100L))
+        // the block weights of 0.30
+        Rules blocks030 = before.rules().withWeights(java.util.Map.of(ConstraintCatalog.BLOCK_LENGTH, 18000L,
+                ConstraintCatalog.ISOLATED_DAY_OFF, 30000L));
+        assertThat(FACADE.analyze(new PlanningInput(before.dataset(), before.period(), blocks030,
+                before.assignments())).score()).isEqualTo("-1hard/-61200000000000medium/-44023876soft");
+        Rules old = before.rules().withWeights(java.util.Map.of(ConstraintCatalog.SHIFT_MIX, 100L,
+                ConstraintCatalog.BLOCK_LENGTH, 18000L, ConstraintCatalog.ISOLATED_DAY_OFF, 30000L))
                 .withTargetToleranceHours(0);
         assertThat(FACADE.analyze(new PlanningInput(before.dataset(), before.period(), old, before.assignments()))
                 .score()).isEqualTo("-1hard/-61200000000000medium/-48775236soft");
