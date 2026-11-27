@@ -18,6 +18,7 @@ import app.dispofold.model.Absence;
 import app.dispofold.model.AbsenceType;
 import app.dispofold.model.Area;
 import app.dispofold.model.Dataset;
+import app.dispofold.model.DutyHistory;
 import app.dispofold.model.FamilyRule;
 import app.dispofold.model.FixedAssignment;
 import app.dispofold.model.HistoryEntry;
@@ -189,6 +190,9 @@ public final class DatasetValidator {
             }
             if (p.shiftMix() != null && !validMix(p.shiftMix(), list(p.areaIds()))) {
                 error("import.badShiftMix", "personId", p.id());
+            }
+            if (p.dutyHistory() != null && !validHistory(p.dutyHistory())) {
+                error("import.badDutyHistory", "personId", p.id());
             }
             for (FamilyRule f : list(p.familyRules())) {
                 if (f == null) {
@@ -471,6 +475,27 @@ public final class DatasetValidator {
     }
 
     /** Shares between 0 and 1, each non-empty map summing to 1, areas among the person's areas. */
+    /** Counts of 0 or more; lengths in hours above 0 and up to 24. */
+    static boolean validHistory(DutyHistory h) {
+        for (Integer n : h.shiftsOrEmpty().values()) {
+            if (n == null || n < 0) {
+                return false;
+            }
+        }
+        for (Map.Entry<String, Integer> e : h.hoursOrEmpty().entrySet()) {
+            double hours;
+            try {
+                hours = Double.parseDouble(e.getKey());
+            } catch (NumberFormatException ex) {
+                return false;
+            }
+            if (e.getValue() == null || e.getValue() < 0 || !(hours > 0 && hours <= 24)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     static boolean validMix(ShiftMix mix, List<String> areaIds) {
         return validShares(mix.categoriesOrEmpty().values()) && validShares(mix.areasOrEmpty().values())
                 && mix.categoriesOrEmpty().keySet().stream().noneMatch(java.util.Objects::isNull)

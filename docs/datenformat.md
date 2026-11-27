@@ -121,6 +121,7 @@ leer sein. Felder, die im Beispiel `null` sind, dürfen fehlen.
 | person | `areaSources` | optional, nur zur Anzeige: woher jeder Bereich der Person kommt, als Text je Bereich-Id, etwa `{"AN": "Gruppe Team Annahme; Historie: 14 Dienste"}`. Ein Import schreibt es; die Seite der Person zeigt es neben dem Bereich. Fehlt ein angekreuzter Bereich darin, gilt er als von Hand gesetzt. Ändert nichts an der Planung |
 | person | `areaStates` | optional: je Bereich-Id `ON_REQUEST` (nur von Hand) oder `NEVER` (nie) für alle Schichten des Bereichs an jedem Tag; ein Bereich ohne Eintrag ist planbar. Der Import legt jeden Eintrag als Einschränkungen an, je Schicht des Bereichs eine für jeden Tag ohne Zeitraum; Dateien aus Dispofold schreiben die Zustände nur so, damit jede Version sie gleich liest. Ein Bereich, den die Person nicht hat, gilt nicht |
 | person | `shiftMix` | optional, gewohnte Verteilung der Dienste, z. B. aus der Historie: `{"categories": {"DAY": 0.9, "NIGHT": 0.1}, "areas": {"AN": 0.7, "DR": 0.3}}`. Anteile von 0 bis 1, jede nicht leere Liste ergibt zusammen 1 (±0,01), Bereiche nur aus `areaIds`. Fehlt sie oder ist sie `null`, gilt keine Verteilung. Mit Anteilen je Kategorie fällt die Person aus der Fairness Nachtdienste und der Abwechslung Dienste. Siehe Regel `shiftMix` in [regeln.md](regeln.md) |
+| person | `dutyHistory` | optional: die Dienste der Person in den Monaten der Historie, je Schicht-Id und je Dienstlänge in Stunden, etwa `{"shifts": {"AN-T": 12, "AN-10": 30}, "hours": {"10": 30, "12": 12}}`. Anzahlen ab 0, Längen über 0 bis 24 Stunden; eine Schicht, die es nicht mehr gibt, zählt über ihre Länge weiter. Ein Import schreibt es (die Import-Erweiterung aus den Diensten der Historie); beim Bearbeiten der Person bleibt es. Mit mindestens 10 Diensten kosten Dienste auf einer Schicht, die die Person nicht hatte, und in einer Längenklasse, die sie nie hatte (Regeln `personShifts` und `personLengths` in [regeln.md](regeln.md)). Fehlt es, gilt für die Person alles als gewohnt |
 | restriction | `shiftId` / `category` | genau eines von beiden: eine Schicht oder alle Schichten einer Kategorie (z. B. `NIGHT`) |
 | restriction | `weekday` | 1..7, 0 = jeden Tag |
 | restriction | `kind` | `NEVER` (nie, Gruppe Regelverstoß) oder `ON_REQUEST` (nur von Hand: nie automatisch geplant, nur von Hand gesetzt) |
@@ -205,6 +206,8 @@ Abgelehnt wird insbesondere:
 - Monate in der Historie, die nicht `YYYY-MM` sind, und eine `source` außer `import` und `plan`;
 - Wochenstunden kleiner oder gleich 0, `exitDate` vor `entryDate`, eine gewohnte Verteilung (`shiftMix`) mit
   Anteilen außerhalb von 0 bis 1, einer Summe ungleich 1 oder einem Bereich, der nicht zur Person gehört;
+- Dienste der Historie einer Person (`dutyHistory`) mit einer negativen Anzahl oder einer Länge, die keine
+  Zahl über 0 bis 24 Stunden ist;
 - unbekannte Tagestypen im Bedarf, eine Bedarfsregel ohne `days` und ohne `date`, `min` kleiner als 0 oder
   `max` kleiner als `min`;
 - Wochentage einer Einschränkung außerhalb von 0..7 oder einer Familienregel außerhalb von 1..7, eine
@@ -289,6 +292,7 @@ der Monat des Eintrags.
 | `import.dateOutsideMonth` | `kind`, `personId`, `date`, `month` | Abwesenheit, Wunsch oder Vorgabe außerhalb des Planungsmonats, Vormonatsdienst nicht vor dessen Beginn |
 | `import.missingTime` | `shiftId` | Beginn oder Ende einer Schicht fehlt |
 | `import.badShiftUsage` | `shiftId` | Anteil der Schicht in der Historie (`usage`) liegt nicht zwischen 0 und 1 |
+| `import.badDutyHistory` | `personId` | Dienste der Historie (`dutyHistory`) mit negativer Anzahl oder einer Länge nicht über 0 und bis 24 Stunden |
 | `import.shiftTooLong` | `shiftId`, `minutes`, `maxMinutes` | Schicht ist länger als die Höchstdauer eines Dienstes (`maxDutyHours`) |
 | `import.shiftIdReserved` | `shiftId` | Schicht-Id `ER` ist für Ersatzruhe reserviert |
 

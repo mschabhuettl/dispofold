@@ -326,7 +326,7 @@ public class MasterDataService {
                 }
                 master.people.set(index, new Person(p.id(), p.firstName(), p.lastName(), p.shortName(),
                         p.weeklyHours(), areas, p.hoursAccount(), p.compRestBalance(), p.familyRules(), p.externalId(),
-                        p.entryDate(), p.exitDate(), mix, p.excludedFrom(), p.areaSources(), null));
+                        p.entryDate(), p.exitDate(), mix, p.excludedFrom(), p.areaSources(), null, p.dutyHistory()));
                 setStates(master, p.areaIds(), exceptionsIn(view, p.id()), p.id(), areas,
                         row.areaStates());
             }
@@ -345,9 +345,11 @@ public class MasterDataService {
                         "Die Id im Pfad und im Body muss gleich sein");
             }
             if (kind == Kind.PEOPLE) {
-                // set and cleared only with exclude(); where the areas come from only by an import
+                // set and cleared only with exclude(); where the areas come from and the duty history only by an
+                // import
                 Person p = ((Person) item).withExcludedFrom(master.people.get(index).excludedFrom())
-                        .withAreaSources(master.people.get(index).areaSources());
+                        .withAreaSources(master.people.get(index).areaSources())
+                        .withDutyHistory(master.people.get(index).dutyHistory());
                 // the states of the areas: stored as restrictions; a body without them keeps the old ones
                 Dataset view = view(master);
                 Map<String, RestrictionKind> states = object(kind, body).has("areaStates") ? p.areaStates()
@@ -501,7 +503,7 @@ public class MasterDataService {
                         p.areaIds().stream().filter(a -> !id.equals(a)).toList(), p.hoursAccount(),
                         p.compRestBalance(), p.familyRules(), p.externalId(), p.entryDate(), p.exitDate(),
                         p.shiftMix() == null ? null : p.shiftMix().withoutArea(id), p.excludedFrom(), p.areaSources(),
-                        withoutKey(p.areaStates(), id)));
+                        withoutKey(p.areaStates(), id), p.dutyHistory()));
         return demand + people;
     }
 

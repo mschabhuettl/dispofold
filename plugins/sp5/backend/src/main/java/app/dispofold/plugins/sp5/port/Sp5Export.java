@@ -7,6 +7,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -60,11 +61,23 @@ public final class Sp5Export {
      *        10 such days, as sp5_export.py; "min" the minimum (see {@link #withMaxAtMinimum})
      * @param shiftUsage each shift's share of its area's duties in the history months (Dispofold only, see
      *        {@link #withUsage}); sp5_export.py writes none
+     * @param dutyHistory each person's duties per shift and per length in the history months (Dispofold only, see
+     *        {@link #withDutyHistory}); sp5_export.py writes none
      */
     public record Request(Path folder, String month, String to, int historyMonths, Integer areasFromHistory,
             Integer shiftsFromHistory, String demand, Integer mixMinDuties, int hiddenShiftsMonths, int recentMonths,
             Map<String, Object> mapping, Map<String, Object> corrections, boolean nightsFair, String areaSource,
-            int historyAreaDuties, String demandMax, boolean shiftUsage) {
+            int historyAreaDuties, String demandMax, boolean shiftUsage, boolean dutyHistory) {
+
+        /** Without the duty histories of the people, as sp5_export.py. */
+        public Request(Path folder, String month, String to, int historyMonths, Integer areasFromHistory,
+                Integer shiftsFromHistory, String demand, Integer mixMinDuties, int hiddenShiftsMonths,
+                int recentMonths, Map<String, Object> mapping, Map<String, Object> corrections, boolean nightsFair,
+                String areaSource, int historyAreaDuties, String demandMax, boolean shiftUsage) {
+            this(folder, month, to, historyMonths, areasFromHistory, shiftsFromHistory, demand, mixMinDuties,
+                    hiddenShiftsMonths, recentMonths, mapping, corrections, nightsFair, areaSource, historyAreaDuties,
+                    demandMax, shiftUsage, false);
+        }
 
         /** Without the shares of the shifts, as sp5_export.py. */
         public Request(Path folder, String month, String to, int historyMonths, Integer areasFromHistory,
@@ -383,6 +396,9 @@ public final class Sp5Export {
         if (q.shiftUsage()) {
             withUsage(dataset, job.shiftCounts);
         }
+        if (q.dutyHistory()) {
+            withDutyHistory(dataset, job.shiftCounts);
+        }
         List<List<Object>> report = new ArrayList<>();
         for (List<Object> r : job.reportRows) {
             List<Object> padded = new ArrayList<>(r);
@@ -438,6 +454,46 @@ public final class Sp5Export {
             if (total > 0) {
                 s.put("usage", Math.round(10000.0 * byShift.getOrDefault(s.get("id"), 0L) / total) / 10000.0);
             }
+        }
+    }
+
+    /**
+     * Every person with duties in the history months gets them per shift and per duty length in hours
+     * ("dutyHistory", the last field of the person): the duties counted as for the shares of the shifts (all areas,
+     * also those the person no longer works). No such field without a history or without duties.
+     */
+    @SuppressWarnings("unchecked")
+    static void withDutyHistory(Map<String, Object> dataset, Map<Object, Long> counts) {
+        Map<Object, Map<String, Object>> shifts = new java.util.HashMap<>();
+        for (Map<String, Object> s : (List<Map<String, Object>>) dataset.get("shifts")) {
+            shifts.put(s.get("id"), s);
+        }
+        Map<Object, java.util.TreeMap<String, Long>> byPerson = new java.util.HashMap<>();
+        for (Map.Entry<Object, Long> e : counts.entrySet()) {
+            List<?> key = (List<?>) e.getKey();
+            if (shifts.containsKey(key.get(1)) && e.getValue() > 0) {
+                byPerson.computeIfAbsent(key.get(0), x -> new java.util.TreeMap<>()).put((String) key.get(1),
+                        e.getValue());
+            }
+        }
+        for (Map<String, Object> p : (List<Map<String, Object>>) dataset.get("people")) {
+            java.util.TreeMap<String, Long> own = byPerson.get(p.get("id"));
+            if (own == null) {
+                continue;
+            }
+            java.util.TreeMap<java.math.BigDecimal, Long> hours = new java.util.TreeMap<>();
+            for (Map.Entry<String, Long> e : own.entrySet()) {
+                Map<String, Object> s = shifts.get(e.getKey());
+                int[] ab = TimeUtil.interval((String) s.get("start"), (String) s.get("end"));
+                hours.merge(java.math.BigDecimal.valueOf(ab[1] - ab[0]).divide(java.math.BigDecimal.valueOf(60), 2,
+                        java.math.RoundingMode.HALF_UP).stripTrailingZeros(), e.getValue(), Long::sum);
+            }
+            Map<String, Object> byHours = new LinkedHashMap<>();
+            hours.forEach((h, n) -> byHours.put(h.toPlainString(), n));
+            Map<String, Object> history = new LinkedHashMap<>();
+            history.put("shifts", new LinkedHashMap<String, Object>(own));
+            history.put("hours", byHours);
+            p.put("dutyHistory", history);
         }
     }
 

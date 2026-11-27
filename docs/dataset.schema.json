@@ -132,8 +132,21 @@
         "excludedFrom": { "$ref": "#/$defs/dateOrNull" },
         "areaSources": { "type": ["object", "null"], "additionalProperties": { "type": "string" } },
         "areaStates": { "type": ["object", "null"], "additionalProperties": { "enum": ["ON_REQUEST", "NEVER"] } },
-        "shiftMix": { "anyOf": [{ "$ref": "#/$defs/shiftMix" }, { "type": "null" }] }
+        "shiftMix": { "anyOf": [{ "$ref": "#/$defs/shiftMix" }, { "type": "null" }] },
+        "dutyHistory": { "anyOf": [{ "$ref": "#/$defs/dutyHistory" }, { "type": "null" }] }
       }
+    },
+    "dutyHistory": {
+      "description": "The person's duties in the history months per shift id and per duty length in hours.",
+      "type": "object",
+      "properties": {
+        "shifts": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
+        "hours": {
+          "type": "object", "propertyNames": { "pattern": "^[0-9]+(\\.[0-9]+)?$" },
+          "additionalProperties": { "type": "integer", "minimum": 0 }
+        }
+      },
+      "additionalProperties": false
     },
     "shiftMix": {
       "description": "Usual shares of the person's duties per shift category and per area; each map sums to 1.",

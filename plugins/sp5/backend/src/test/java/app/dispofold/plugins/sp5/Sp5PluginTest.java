@@ -230,9 +230,10 @@ class Sp5PluginTest {
                 .isZero();
         // the shares of the shifts are the plugin's own (anfrage.json says so); without them, the same bytes
         assertThat(question.path("shiftUsage").asBoolean()).isTrue();
+        assertThat(question.path("dutyHistory").asBoolean()).isTrue();
         String own = new String(zip.get("dataset.json"), StandardCharsets.UTF_8);
         assertThat(own).contains("\"usage\": ");
-        assertThat(own.replaceAll(Sp5ExportTest.USAGE_FIELD, "")).isEqualTo(Files.readString(dir.resolve("d.json")));
+        assertThat(Sp5ExportTest.withoutOwnFields(own)).isEqualTo(Files.readString(dir.resolve("d.json")));
         assertThat(zip.get("report.csv")).isEqualTo(Files.readAllBytes(dir.resolve("r.csv")));
         String warnings = err.toString(StandardCharsets.UTF_8).lines().filter(l -> l.startsWith("Warnung: "))
                 .map(l -> l.substring("Warnung: ".length()) + "\n").collect(Collectors.joining());

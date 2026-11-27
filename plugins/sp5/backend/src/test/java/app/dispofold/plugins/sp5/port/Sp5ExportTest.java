@@ -159,9 +159,50 @@ public class Sp5ExportTest {
     /** The share of a shift as the dataset file writes it (its last field), for comparing the rest byte for byte. */
     public static final String USAGE_FIELD = ",\n   \"usage\": [-0-9.eE+]+(?=\n  \\})";
 
+    /** A person's duty history as the dataset file writes it (its last field, an object over several lines). */
+    public static final String DUTY_HISTORY_FIELD = ",\n   \"dutyHistory\": \\{(?:\n    [^\n]*)*\n   \\}(?=\n  \\})";
+
+    /** The dataset file without the plugin's own fields: the shares of the shifts and the people's duty histories. */
+    public static String withoutOwnFields(String dataset) {
+        return dataset.replaceAll(USAGE_FIELD, "").replaceAll(DUTY_HISTORY_FIELD, "");
+    }
+
     static Sp5Export.Request withUsage(Path dir, int historyMonths, String demand) throws Exception {
         return new Sp5Export.Request(dir, "2027-01", null, historyMonths, null, null, demand, 1, 3, 3, mapping(), null,
                 true, "groups", 3, Sp5Export.DEMAND_MAX_P90, true);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void theDutyHistoryOfAPersonComesFromTheDutiesOfTheHistory(@TempDir Path dir) throws Exception {
+        folder(dir);
+        // December as in the test of the shares: Anna A1 on 15 even days and N1 on 16 odd ones, Ben A1 on 21 days;
+        // both shifts last 12 hours
+        Sp5Export.Request q = withUsage(dir, 1, "history");
+        Sp5Export.Request withHistory = new Sp5Export.Request(q.folder(), q.month(), q.to(), q.historyMonths(),
+                q.areasFromHistory(), q.shiftsFromHistory(), q.demand(), q.mixMinDuties(), q.hiddenShiftsMonths(),
+                q.recentMonths(), q.mapping(), q.corrections(), q.nightsFair(), q.areaSource(), q.historyAreaDuties(),
+                q.demandMax(), false, true);
+        Sp5Export.Result result = Sp5Export.run(withHistory);
+        List<Map<String, Object>> people = (List<Map<String, Object>>) result.dataset().get("people");
+        Map<String, Object> shifts = new java.util.HashMap<>();
+        for (Map<String, Object> s : (List<Map<String, Object>>) result.dataset().get("shifts")) {
+            shifts.put((String) s.get("code"), s.get("id"));
+        }
+        assertThat(people).extracting(p -> p.get("dutyHistory")).containsExactly(
+                Map.of("shifts", Map.of(shifts.get("A1"), 15L, shifts.get("N1"), 16L), "hours", Map.of("12", 31L)),
+                Map.of("shifts", Map.of(shifts.get("A1"), 21L), "hours", Map.of("12", 21L)));
+        // the last field of the person; without it the same bytes as without the option
+        Sp5Export.Result plain = Sp5Export.run(new Sp5Export.Request(dir, "2027-01", null, 1, null, null, "history", 1,
+                3, 3, mapping(), null, true, "groups", 3, Sp5Export.DEMAND_MAX_P90));
+        assertThat(withoutOwnFields(new String(Sp5Export.datasetBytes(result), StandardCharsets.UTF_8)))
+                .isEqualTo(new String(Sp5Export.datasetBytes(plain), StandardCharsets.UTF_8));
+        assertThat(new String(Sp5Export.datasetBytes(result), StandardCharsets.UTF_8)).contains("\"dutyHistory\": {");
+        // without a history: no duty history
+        Sp5Export.Result none = Sp5Export.run(new Sp5Export.Request(dir, "2027-01", null, 0, null, null, "sp5", 1, 3, 3,
+                mapping(), null, true, "groups", 3, Sp5Export.DEMAND_MAX_P90, false, true));
+        assertThat((List<Map<String, Object>>) none.dataset().get("people")).allSatisfy(x -> assertThat(x)
+                .doesNotContainKey("dutyHistory"));
     }
 
     @Test

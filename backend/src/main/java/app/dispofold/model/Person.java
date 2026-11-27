@@ -26,13 +26,26 @@ import com.fasterxml.jackson.annotation.JsonInclude;
  * @param areaStates per area of the person that is not freely plannable: ON_REQUEST ("nur von Hand": never planned
  *        automatically, a planner may set a duty) or NEVER ("nie"), for every shift of the area on every day; or null.
  *        Only in what the pages read and send: stored as restrictions ({@link AreaStates})
+ * @param dutyHistory the person's duties per shift and length in the history months, as an import counts them, or
+ *        null; with at least {@link DutyHistory#MIN_DUTIES} duties the rules personShifts and personLengths use it;
+ *        written only when set
  */
 public record Person(String id, String firstName, String lastName, String shortName, double weeklyHours,
         List<String> areaIds, double hoursAccount, int compRestBalance, List<FamilyRule> familyRules,
         String externalId, LocalDate entryDate, LocalDate exitDate, ShiftMix shiftMix,
         @JsonInclude(JsonInclude.Include.NON_NULL) LocalDate excludedFrom,
         @JsonInclude(JsonInclude.Include.NON_NULL) Map<String, String> areaSources,
-        @JsonInclude(JsonInclude.Include.NON_EMPTY) Map<String, RestrictionKind> areaStates) {
+        @JsonInclude(JsonInclude.Include.NON_EMPTY) Map<String, RestrictionKind> areaStates,
+        @JsonInclude(JsonInclude.Include.NON_NULL) DutyHistory dutyHistory) {
+
+    /** A person without a duty history. */
+    public Person(String id, String firstName, String lastName, String shortName, double weeklyHours,
+            List<String> areaIds, double hoursAccount, int compRestBalance, List<FamilyRule> familyRules,
+            String externalId, LocalDate entryDate, LocalDate exitDate, ShiftMix shiftMix, LocalDate excludedFrom,
+            Map<String, String> areaSources, Map<String, RestrictionKind> areaStates) {
+        this(id, firstName, lastName, shortName, weeklyHours, areaIds, hoursAccount, compRestBalance, familyRules,
+                externalId, entryDate, exitDate, shiftMix, excludedFrom, areaSources, areaStates, null);
+    }
 
     /** A person taken over from the source. */
     public Person(String id, String firstName, String lastName, String shortName, double weeklyHours,
@@ -51,21 +64,27 @@ public record Person(String id, String firstName, String lastName, String shortN
     /** The same person with another {@link #excludedFrom}. */
     public Person withExcludedFrom(LocalDate from) {
         return new Person(id, firstName, lastName, shortName, weeklyHours, areaIds, hoursAccount, compRestBalance,
-                familyRules, externalId, entryDate, exitDate, shiftMix, from, areaSources, areaStates);
+                familyRules, externalId, entryDate, exitDate, shiftMix, from, areaSources, areaStates, dutyHistory);
     }
 
     /** The same person with other {@link #areaSources}. */
     public Person withAreaSources(Map<String, String> sources) {
         return new Person(id, firstName, lastName, shortName, weeklyHours, areaIds, hoursAccount, compRestBalance,
-                familyRules, externalId, entryDate, exitDate, shiftMix, excludedFrom, sources, areaStates);
+                familyRules, externalId, entryDate, exitDate, shiftMix, excludedFrom, sources, areaStates, dutyHistory);
     }
 
     /** The same person with other {@link #areaStates}. */
     public Person withAreaStates(Map<String, RestrictionKind> states) {
         return new Person(id, firstName, lastName, shortName, weeklyHours, areaIds, hoursAccount, compRestBalance,
-                familyRules, externalId, entryDate, exitDate, shiftMix, excludedFrom, areaSources, states);
+                familyRules, externalId, entryDate, exitDate, shiftMix, excludedFrom, areaSources, states, dutyHistory);
     }
 
+
+    /** The same person with another {@link #dutyHistory}. */
+    public Person withDutyHistory(DutyHistory history) {
+        return new Person(id, firstName, lastName, shortName, weeklyHours, areaIds, hoursAccount, compRestBalance,
+                familyRules, externalId, entryDate, exitDate, shiftMix, excludedFrom, areaSources, areaStates, history);
+    }
 
     public String displayName() {
         return lastName + " " + firstName;

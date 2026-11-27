@@ -134,9 +134,10 @@ class LoadedCorrectionsCompareTest {
         byte[] dataset = Files.readAllBytes(out.resolve("dataset.json"));
         // each shift's share in the history is the plugin's own (as the comparison script does: set aside)
         assertThat(request.path("shiftUsage").asBoolean()).isTrue();
+        assertThat(request.path("dutyHistory").asBoolean()).isTrue();
         String own = new String(zip.get("dataset.json"), StandardCharsets.UTF_8);
         assertThat(own).contains("\"usage\": ");
-        assertThat(own.replaceAll(app.dispofold.plugins.sp5.port.Sp5ExportTest.USAGE_FIELD, ""))
+        assertThat(app.dispofold.plugins.sp5.port.Sp5ExportTest.withoutOwnFields(own))
                 .isEqualTo(new String(dataset, StandardCharsets.UTF_8));
         assertThat(new String(zip.get("report.csv"), StandardCharsets.UTF_8))
                 .isEqualTo(Files.readString(out.resolve("report.csv"), StandardCharsets.UTF_8));

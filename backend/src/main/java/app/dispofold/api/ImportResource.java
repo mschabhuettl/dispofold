@@ -396,7 +396,7 @@ public class ImportResource {
                     list(p.areaIds()).stream().filter(areas::contains).toList(), p.hoursAccount(),
                     p.compRestBalance(), p.familyRules(), p.externalId(), p.entryDate(), p.exitDate(), mix,
                     before.getOrDefault(p.id(), p.excludedFrom() != null ? p.excludedFrom() : start), p.areaSources(),
-                    p.areaStates()));
+                    p.areaStates(), p.dutyHistory()));
         }
         list(current.restrictions()).stream().filter(r -> ids.contains(r.personId())
                 && (r.shiftId() == null || shifts.contains(r.shiftId()))).forEach(restrictions::add);

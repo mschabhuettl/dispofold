@@ -4040,7 +4040,21 @@
    "familyRules": [],
    "externalId": "1001",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-011": 1,
+     "DR-076": 1,
+     "DR-089": 5,
+     "DR-N": 7,
+     "DR-T": 6,
+     "TS-027": 22
+    },
+    "hours": {
+     "10": 29,
+     "12": 13
+    }
+   }
   },
   {
    "id": "P0002",
@@ -4056,7 +4070,22 @@
    "familyRules": [],
    "externalId": "1002",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 11,
+     "AN-052": 1,
+     "AN-080": 6,
+     "AN-089": 1,
+     "AN-098": 14,
+     "AN-T": 15
+    },
+    "hours": {
+     "9": 1,
+     "10": 31,
+     "12": 16
+    }
+   }
   },
   {
    "id": "P0003",
@@ -4072,7 +4101,22 @@
    "familyRules": [],
    "externalId": "1003",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-011": 3,
+     "DR-034": 1,
+     "DR-042": 1,
+     "DR-089": 7,
+     "DR-N": 11,
+     "DR-T": 19
+    },
+    "hours": {
+     "8.5": 2,
+     "10": 10,
+     "12": 30
+    }
+   }
   },
   {
    "id": "P0004",
@@ -4098,7 +4142,26 @@
    ],
    "externalId": "1004",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 5,
+     "AN-022": 1,
+     "AN-041": 1,
+     "AN-052": 1,
+     "AN-080": 7,
+     "AN-089": 1,
+     "AN-098": 10,
+     "AN-T": 11
+    },
+    "hours": {
+     "8": 1,
+     "8.5": 1,
+     "9": 1,
+     "10": 22,
+     "12": 12
+    }
+   }
   },
   {
    "id": "P0005",
@@ -4114,7 +4177,15 @@
    "familyRules": [],
    "externalId": "1005",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-T": 48
+    },
+    "hours": {
+     "12": 48
+    }
+   }
   },
   {
    "id": "P0006",
@@ -4132,7 +4203,21 @@
    "familyRules": [],
    "externalId": "1006",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 5,
+     "AN-080": 6,
+     "AN-098": 7,
+     "DR-011": 2,
+     "DR-089": 1,
+     "TV-060": 8,
+     "TV-061": 8
+    },
+    "hours": {
+     "10": 37
+    }
+   }
   },
   {
    "id": "P0007",
@@ -4159,7 +4244,24 @@
    ],
    "externalId": "1007",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-014": 1,
+     "AN-015": 6,
+     "AN-080": 3,
+     "AN-089": 1,
+     "AN-098": 8,
+     "AN-T": 5,
+     "TV-060": 22,
+     "TV-061": 6
+    },
+    "hours": {
+     "8": 1,
+     "10": 45,
+     "12": 6
+    }
+   }
   },
   {
    "id": "P0008",
@@ -4185,7 +4287,16 @@
    ],
    "externalId": "1008",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-N": 19,
+     "DR-T": 23
+    },
+    "hours": {
+     "12": 42
+    }
+   }
   },
   {
    "id": "P0009",
@@ -4202,7 +4313,19 @@
    "familyRules": [],
    "externalId": "1009",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 6,
+     "AN-080": 9,
+     "AN-098": 11,
+     "DR-011": 7,
+     "DR-089": 9
+    },
+    "hours": {
+     "10": 42
+    }
+   }
   },
   {
    "id": "P0010",
@@ -4218,7 +4341,16 @@
    "familyRules": [],
    "externalId": "1010",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "TV-060": 23,
+     "TV-061": 8
+    },
+    "hours": {
+     "10": 31
+    }
+   }
   },
   {
    "id": "P0011",
@@ -4235,7 +4367,25 @@
    "familyRules": [],
    "externalId": "1011",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-089": 6,
+     "DR-N": 6,
+     "DR-T": 7,
+     "TV-025": 1,
+     "TV-031": 1,
+     "TV-032": 1,
+     "TV-060": 11,
+     "TV-061": 9
+    },
+    "hours": {
+     "8": 2,
+     "8.5": 1,
+     "10": 26,
+     "12": 13
+    }
+   }
   },
   {
    "id": "P0012",
@@ -4252,7 +4402,19 @@
    "familyRules": [],
    "externalId": "1012",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-080": 7,
+     "AN-T": 7,
+     "TV-060": 27,
+     "TV-061": 7
+    },
+    "hours": {
+     "10": 41,
+     "12": 7
+    }
+   }
   },
   {
    "id": "P0013",
@@ -4269,7 +4431,19 @@
    "familyRules": [],
    "externalId": "1013",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-011": 1,
+     "DR-T": 15,
+     "TV-060": 27,
+     "TV-061": 5
+    },
+    "hours": {
+     "10": 33,
+     "12": 15
+    }
+   }
   },
   {
    "id": "P0014",
@@ -4286,7 +4460,20 @@
    "familyRules": [],
    "externalId": "1014",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-080": 4,
+     "AN-098": 5,
+     "AN-T": 6,
+     "DR-N": 4,
+     "DR-T": 12
+    },
+    "hours": {
+     "10": 9,
+     "12": 22
+    }
+   }
   },
   {
    "id": "P0015",
@@ -4303,7 +4490,20 @@
    "familyRules": [],
    "externalId": "1015",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-080": 6,
+     "AN-098": 10,
+     "AN-T": 11,
+     "DR-011": 5,
+     "DR-089": 5
+    },
+    "hours": {
+     "10": 26,
+     "12": 11
+    }
+   }
   },
   {
    "id": "P0016",
@@ -4320,7 +4520,19 @@
    "familyRules": [],
    "externalId": "1016",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-098": 20,
+     "AN-T": 12,
+     "DR-011": 5,
+     "DR-089": 11
+    },
+    "hours": {
+     "10": 36,
+     "12": 12
+    }
+   }
   },
   {
    "id": "P0017",
@@ -4347,7 +4559,26 @@
    ],
    "externalId": "1017",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-014": 1,
+     "AN-015": 4,
+     "AN-037": 1,
+     "AN-062": 1,
+     "AN-086": 1,
+     "AN-098": 5,
+     "AN-T": 8,
+     "TV-060": 18,
+     "TV-061": 9
+    },
+    "hours": {
+     "8": 2,
+     "9": 1,
+     "10": 37,
+     "12": 8
+    }
+   }
   },
   {
    "id": "P0018",
@@ -4364,7 +4595,27 @@
    "familyRules": [],
    "externalId": "1018",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 6,
+     "AN-022": 1,
+     "AN-043": 1,
+     "AN-080": 6,
+     "AN-098": 4,
+     "AN-T": 10,
+     "DR-011": 4,
+     "DR-089": 4,
+     "DR-N": 2,
+     "DR-T": 10
+    },
+    "hours": {
+     "8": 1,
+     "8.5": 1,
+     "10": 24,
+     "12": 22
+    }
+   }
   },
   {
    "id": "P0019",
@@ -4380,7 +4631,24 @@
    "familyRules": [],
    "externalId": "1019",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 6,
+     "AN-040": 1,
+     "AN-080": 8,
+     "AN-086": 1,
+     "AN-089": 1,
+     "AN-097": 1,
+     "AN-098": 13,
+     "AN-T": 6
+    },
+    "hours": {
+     "8.5": 1,
+     "10": 28,
+     "12": 8
+    }
+   }
   },
   {
    "id": "P0020",
@@ -4397,7 +4665,26 @@
    "familyRules": [],
    "externalId": "1020",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 4,
+     "AN-080": 4,
+     "AN-098": 6,
+     "AN-T": 3,
+     "DR-011": 2,
+     "DR-034": 1,
+     "DR-079": 1,
+     "DR-089": 1,
+     "DR-N": 5,
+     "DR-T": 10
+    },
+    "hours": {
+     "8.5": 1,
+     "10": 17,
+     "12": 19
+    }
+   }
   },
   {
    "id": "P0021",
@@ -4414,7 +4701,23 @@
    "familyRules": [],
    "externalId": "1021",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 3,
+     "AN-098": 3,
+     "DR-011": 2,
+     "DR-033": 1,
+     "DR-089": 2,
+     "DR-N": 4,
+     "DR-T": 10
+    },
+    "hours": {
+     "8.5": 1,
+     "10": 10,
+     "12": 14
+    }
+   }
   },
   {
    "id": "P0022",
@@ -4431,7 +4734,25 @@
    "familyRules": [],
    "externalId": "1022",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 7,
+     "AN-098": 12,
+     "DR-011": 1,
+     "DR-016": 1,
+     "DR-042": 1,
+     "DR-089": 5,
+     "DR-N": 7,
+     "DR-T": 14
+    },
+    "hours": {
+     "8": 1,
+     "8.5": 1,
+     "10": 25,
+     "12": 21
+    }
+   }
   },
   {
    "id": "P0023",
@@ -4447,7 +4768,16 @@
    "familyRules": [],
    "externalId": "1023",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "TV-060": 17,
+     "TV-061": 20
+    },
+    "hours": {
+     "10": 37
+    }
+   }
   },
   {
    "id": "P0024",
@@ -4464,7 +4794,24 @@
    "familyRules": [],
    "externalId": "1024",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 2,
+     "AN-098": 6,
+     "DR-042": 1,
+     "DR-060": 1,
+     "DR-089": 6,
+     "DR-N": 7,
+     "DR-T": 8
+    },
+    "hours": {
+     "8": 1,
+     "8.5": 1,
+     "10": 14,
+     "12": 15
+    }
+   }
   },
   {
    "id": "P0025",
@@ -4481,7 +4828,19 @@
    "familyRules": [],
    "externalId": "1025",
    "entryDate": null,
-   "exitDate": "2027-01-20"
+   "exitDate": "2027-01-20",
+   "dutyHistory": {
+    "shifts": {
+     "DR-011": 5,
+     "DR-N": 9,
+     "TV-060": 11,
+     "TV-061": 6
+    },
+    "hours": {
+     "10": 22,
+     "12": 9
+    }
+   }
   },
   {
    "id": "P0026",
@@ -4497,7 +4856,16 @@
    "familyRules": [],
    "externalId": "1026",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "TV-060": 33,
+     "TV-061": 9
+    },
+    "hours": {
+     "10": 42
+    }
+   }
   },
   {
    "id": "P0027",
@@ -4514,7 +4882,23 @@
    "familyRules": [],
    "externalId": "1027",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 7,
+     "AN-098": 8,
+     "TV-019": 1,
+     "TV-031": 2,
+     "TV-032": 1,
+     "TV-060": 19,
+     "TV-061": 14
+    },
+    "hours": {
+     "8": 2,
+     "8.5": 2,
+     "10": 48
+    }
+   }
   },
   {
    "id": "P0028",
@@ -4531,7 +4915,20 @@
    "familyRules": [],
    "externalId": "1028",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 8,
+     "AN-080": 5,
+     "AN-098": 15,
+     "DR-011": 3,
+     "DR-T": 17
+    },
+    "hours": {
+     "10": 31,
+     "12": 17
+    }
+   }
   },
   {
    "id": "P0029",
@@ -4557,7 +4954,16 @@
    ],
    "externalId": "1029",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "TV-060": 28,
+     "TV-061": 14
+    },
+    "hours": {
+     "10": 42
+    }
+   }
   },
   {
    "id": "P0030",
@@ -4573,7 +4979,24 @@
    "familyRules": [],
    "externalId": "1030",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-011": 3,
+     "DR-037": 1,
+     "DR-065": 2,
+     "DR-089": 5,
+     "DR-A": 1,
+     "DR-N": 13,
+     "DR-T": 23
+    },
+    "hours": {
+     "8": 2,
+     "9": 2,
+     "10": 8,
+     "12": 36
+    }
+   }
   },
   {
    "id": "P0031",
@@ -4590,7 +5013,19 @@
    "familyRules": [],
    "externalId": "1031",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 8,
+     "AN-080": 6,
+     "AN-098": 12,
+     "TV-060": 13,
+     "TV-061": 9
+    },
+    "hours": {
+     "10": 48
+    }
+   }
   },
   {
    "id": "P0032",
@@ -4606,7 +5041,25 @@
    "familyRules": [],
    "externalId": "1032",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 6,
+     "AN-027": 2,
+     "AN-033": 1,
+     "AN-050": 1,
+     "AN-080": 8,
+     "AN-088": 1,
+     "AN-098": 7,
+     "AN-T": 16
+    },
+    "hours": {
+     "8": 3,
+     "9": 1,
+     "10": 22,
+     "12": 16
+    }
+   }
   },
   {
    "id": "P0033",
@@ -4623,7 +5076,22 @@
    "familyRules": [],
    "externalId": "1033",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-T": 14,
+     "TV-012": 1,
+     "TV-046": 1,
+     "TV-060": 20,
+     "TV-061": 12
+    },
+    "hours": {
+     "8": 1,
+     "8.5": 1,
+     "10": 32,
+     "12": 14
+    }
+   }
   },
   {
    "id": "P0034",
@@ -4640,7 +5108,22 @@
    "familyRules": [],
    "externalId": "1034",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 11,
+     "AN-080": 9,
+     "AN-098": 10,
+     "DR-011": 3,
+     "DR-076": 2,
+     "DR-089": 4,
+     "DR-N": 13
+    },
+    "hours": {
+     "10": 39,
+     "12": 13
+    }
+   }
   },
   {
    "id": "P0035",
@@ -4657,7 +5140,19 @@
    "familyRules": [],
    "externalId": "1035",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-011": 1,
+     "DR-089": 3,
+     "LF-N": 24,
+     "LF-T": 20
+    },
+    "hours": {
+     "10": 4,
+     "12": 44
+    }
+   }
   },
   {
    "id": "P0036",
@@ -4673,7 +5168,20 @@
    "familyRules": [],
    "externalId": "1036",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 7,
+     "AN-080": 3,
+     "AN-088": 2,
+     "AN-098": 5,
+     "AN-T": 14
+    },
+    "hours": {
+     "10": 17,
+     "12": 14
+    }
+   }
   },
   {
    "id": "P0037",
@@ -4690,7 +5198,21 @@
    "familyRules": [],
    "externalId": "1037",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-011": 3,
+     "DR-089": 6,
+     "DR-T": 13,
+     "LF-012": 1,
+     "LF-N": 10,
+     "LF-T": 9
+    },
+    "hours": {
+     "10": 9,
+     "12": 33
+    }
+   }
   },
   {
    "id": "P0038",
@@ -4706,7 +5228,17 @@
    "familyRules": [],
    "externalId": "1038",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 21,
+     "AN-080": 24,
+     "AN-088": 3
+    },
+    "hours": {
+     "10": 48
+    }
+   }
   },
   {
    "id": "P0039",
@@ -4733,7 +5265,25 @@
    ],
    "externalId": "1039",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-014": 1,
+     "AN-015": 7,
+     "AN-037": 1,
+     "AN-052": 1,
+     "AN-080": 12,
+     "AN-088": 1,
+     "AN-098": 11,
+     "AN-T": 14
+    },
+    "hours": {
+     "8": 2,
+     "9": 1,
+     "10": 31,
+     "12": 14
+    }
+   }
   },
   {
    "id": "P0040",
@@ -4751,7 +5301,20 @@
    "familyRules": [],
    "externalId": "1040",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-T": 8,
+     "DR-N": 10,
+     "DR-T": 8,
+     "TV-060": 15,
+     "TV-061": 7
+    },
+    "hours": {
+     "10": 22,
+     "12": 26
+    }
+   }
   },
   {
    "id": "P0041",
@@ -4768,7 +5331,20 @@
    "familyRules": [],
    "externalId": "1041",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 5,
+     "AN-080": 9,
+     "DR-089": 5,
+     "DR-N": 11,
+     "DR-T": 18
+    },
+    "hours": {
+     "10": 19,
+     "12": 29
+    }
+   }
   },
   {
    "id": "P0042",
@@ -4785,7 +5361,21 @@
    "familyRules": [],
    "externalId": "1042",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-080": 5,
+     "AN-T": 5,
+     "TV-012": 2,
+     "TV-060": 14,
+     "TV-061": 5
+    },
+    "hours": {
+     "8": 2,
+     "10": 24,
+     "12": 5
+    }
+   }
   },
   {
    "id": "P0043",
@@ -4802,7 +5392,21 @@
    "familyRules": [],
    "externalId": "1043",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 7,
+     "AN-080": 2,
+     "AN-098": 11,
+     "AN-T": 5,
+     "DR-N": 5,
+     "DR-T": 12
+    },
+    "hours": {
+     "10": 20,
+     "12": 22
+    }
+   }
   },
   {
    "id": "P0044",
@@ -4819,7 +5423,24 @@
    "familyRules": [],
    "externalId": "1044",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-011": 2,
+     "DR-023": 1,
+     "DR-089": 5,
+     "DR-N": 7,
+     "DR-T": 6,
+     "LF-010": 2,
+     "LF-N": 9,
+     "LF-T": 10
+    },
+    "hours": {
+     "8.5": 1,
+     "10": 7,
+     "12": 34
+    }
+   }
   },
   {
    "id": "P0045",
@@ -4836,7 +5457,19 @@
    "familyRules": [],
    "externalId": "1045",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-N": 8,
+     "DR-T": 8,
+     "LF-010": 2,
+     "LF-N": 13,
+     "LF-T": 11
+    },
+    "hours": {
+     "12": 42
+    }
+   }
   },
   {
    "id": "P0046",
@@ -4853,7 +5486,26 @@
    "familyRules": [],
    "externalId": "1046",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 4,
+     "AN-053": 1,
+     "AN-077": 1,
+     "AN-080": 5,
+     "AN-088": 1,
+     "AN-089": 1,
+     "AN-098": 4,
+     "AN-T": 6,
+     "TV-060": 7,
+     "TV-061": 7
+    },
+    "hours": {
+     "8": 1,
+     "10": 28,
+     "12": 8
+    }
+   }
   },
   {
    "id": "P0047",
@@ -4870,7 +5522,20 @@
    "familyRules": [],
    "externalId": "1047",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-011": 6,
+     "DR-089": 5,
+     "LF-010": 2,
+     "LF-N": 14,
+     "LF-T": 21
+    },
+    "hours": {
+     "10": 11,
+     "12": 37
+    }
+   }
   },
   {
    "id": "P0048",
@@ -4886,7 +5551,16 @@
    "familyRules": [],
    "externalId": "1048",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-011": 18,
+     "DR-089": 30
+    },
+    "hours": {
+     "10": 48
+    }
+   }
   },
   {
    "id": "P0049",
@@ -4903,7 +5577,25 @@
    "familyRules": [],
    "externalId": "1049",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 4,
+     "AN-022": 1,
+     "AN-065": 1,
+     "AN-080": 6,
+     "AN-086": 1,
+     "AN-098": 6,
+     "AN-T": 4,
+     "TS-027": 19
+    },
+    "hours": {
+     "8.5": 1,
+     "9": 1,
+     "10": 36,
+     "12": 4
+    }
+   }
   },
   {
    "id": "P0050",
@@ -4919,7 +5611,21 @@
    "familyRules": [],
    "externalId": "1050",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "TV-011": 1,
+     "TV-012": 2,
+     "TV-031": 1,
+     "TV-060": 29,
+     "TV-061": 15
+    },
+    "hours": {
+     "8": 3,
+     "8.5": 1,
+     "10": 44
+    }
+   }
   },
   {
    "id": "P0051",
@@ -4936,7 +5642,20 @@
    "familyRules": [],
    "externalId": "1051",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 6,
+     "AN-080": 8,
+     "DR-011": 5,
+     "DR-089": 8,
+     "DR-N": 10
+    },
+    "hours": {
+     "10": 27,
+     "12": 10
+    }
+   }
   },
   {
    "id": "P0052",
@@ -4953,7 +5672,25 @@
    "familyRules": [],
    "externalId": "1052",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 7,
+     "AN-022": 1,
+     "AN-034": 1,
+     "AN-040": 1,
+     "AN-080": 4,
+     "AN-098": 7,
+     "AN-T": 4,
+     "TV-060": 14,
+     "TV-061": 9
+    },
+    "hours": {
+     "8.5": 3,
+     "10": 41,
+     "12": 4
+    }
+   }
   },
   {
    "id": "P0053",
@@ -4981,7 +5718,23 @@
    ],
    "externalId": "1053",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 7,
+     "AN-080": 6,
+     "AN-086": 1,
+     "AN-088": 1,
+     "AN-098": 9,
+     "AN-T": 7,
+     "DR-N": 4,
+     "DR-T": 13
+    },
+    "hours": {
+     "10": 24,
+     "12": 24
+    }
+   }
   },
   {
    "id": "P0054",
@@ -5009,7 +5762,25 @@
    ],
    "externalId": "1054",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-014": 1,
+     "AN-027": 1,
+     "AN-065": 1,
+     "AN-080": 7,
+     "AN-098": 11,
+     "AN-T": 6,
+     "DR-N": 8,
+     "DR-T": 7
+    },
+    "hours": {
+     "8": 2,
+     "9": 1,
+     "10": 18,
+     "12": 21
+    }
+   }
   },
   {
    "id": "P0055",
@@ -5025,7 +5796,17 @@
    "familyRules": [],
    "externalId": "1055",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-011": 29,
+     "DR-080": 1,
+     "DR-089": 18
+    },
+    "hours": {
+     "10": 48
+    }
+   }
   },
   {
    "id": "P0056",
@@ -5042,7 +5823,20 @@
    "familyRules": [],
    "externalId": "1056",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-080": 14,
+     "AN-098": 9,
+     "DR-011": 7,
+     "DR-089": 6,
+     "DR-N": 16
+    },
+    "hours": {
+     "10": 36,
+     "12": 16
+    }
+   }
   },
   {
    "id": "P0057",
@@ -5058,7 +5852,22 @@
    "familyRules": [],
    "externalId": "1057",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-011": 4,
+     "DR-016": 1,
+     "DR-049": 2,
+     "DR-089": 8,
+     "DR-N": 7,
+     "DR-T": 20
+    },
+    "hours": {
+     "8": 3,
+     "10": 12,
+     "12": 27
+    }
+   }
   },
   {
    "id": "P0058",
@@ -5074,7 +5883,23 @@
    "familyRules": [],
    "externalId": "1058",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-014": 1,
+     "AN-015": 8,
+     "AN-027": 1,
+     "AN-064": 2,
+     "AN-080": 6,
+     "AN-098": 15,
+     "AN-T": 9
+    },
+    "hours": {
+     "8": 4,
+     "10": 29,
+     "12": 9
+    }
+   }
   },
   {
    "id": "P0059",
@@ -5091,7 +5916,18 @@
    "familyRules": [],
    "externalId": "1059",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 6,
+     "AN-098": 11,
+     "TV-060": 15,
+     "TV-061": 5
+    },
+    "hours": {
+     "10": 37
+    }
+   }
   },
   {
    "id": "P0060",
@@ -5108,7 +5944,19 @@
    "familyRules": [],
    "externalId": "1060",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-080": 6,
+     "AN-T": 11,
+     "DR-N": 9,
+     "DR-T": 22
+    },
+    "hours": {
+     "10": 6,
+     "12": 42
+    }
+   }
   },
   {
    "id": "P0061",
@@ -5124,7 +5972,24 @@
    "familyRules": [],
    "externalId": "1061",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 14,
+     "AN-022": 1,
+     "AN-040": 1,
+     "AN-080": 5,
+     "AN-088": 1,
+     "AN-089": 1,
+     "AN-098": 12,
+     "AN-T": 13
+    },
+    "hours": {
+     "8.5": 2,
+     "10": 32,
+     "12": 14
+    }
+   }
   },
   {
    "id": "P0062",
@@ -5156,7 +6021,16 @@
    "familyRules": [],
    "externalId": "1063",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 18,
+     "AN-080": 13
+    },
+    "hours": {
+     "10": 31
+    }
+   }
   },
   {
    "id": "P0064",
@@ -5173,7 +6047,25 @@
    "familyRules": [],
    "externalId": "1064",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 10,
+     "AN-080": 3,
+     "DR-011": 7,
+     "DR-016": 1,
+     "DR-038": 1,
+     "DR-089": 4,
+     "DR-N": 7,
+     "DR-T": 15
+    },
+    "hours": {
+     "8": 1,
+     "8.5": 1,
+     "10": 24,
+     "12": 22
+    }
+   }
   },
   {
    "id": "P0065",
@@ -5189,7 +6081,17 @@
    "familyRules": [],
    "externalId": "1065",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 13,
+     "AN-080": 21,
+     "AN-098": 14
+    },
+    "hours": {
+     "10": 48
+    }
+   }
   },
   {
    "id": "P0066",
@@ -5217,7 +6119,19 @@
    ],
    "externalId": "1066",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-N": 8,
+     "DR-T": 10,
+     "TV-060": 21,
+     "TV-061": 9
+    },
+    "hours": {
+     "10": 30,
+     "12": 18
+    }
+   }
   },
   {
    "id": "P0067",
@@ -5233,7 +6147,16 @@
    "familyRules": [],
    "externalId": "1067",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-N": 21,
+     "DR-T": 27
+    },
+    "hours": {
+     "12": 48
+    }
+   }
   },
   {
    "id": "P0068",
@@ -5249,7 +6172,17 @@
    "familyRules": [],
    "externalId": "1068",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-098": 14,
+     "AN-T": 17
+    },
+    "hours": {
+     "10": 14,
+     "12": 17
+    }
+   }
   },
   {
    "id": "P0069",
@@ -5266,7 +6199,19 @@
    "familyRules": [],
    "externalId": "1069",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 4,
+     "AN-080": 7,
+     "AN-098": 7,
+     "TV-060": 19,
+     "TV-061": 11
+    },
+    "hours": {
+     "10": 48
+    }
+   }
   },
   {
    "id": "P0070",
@@ -5284,7 +6229,26 @@
    "familyRules": [],
    "externalId": "1070",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 6,
+     "AN-080": 2,
+     "AN-T": 3,
+     "DR-011": 1,
+     "DR-016": 1,
+     "DR-089": 1,
+     "DR-N": 3,
+     "DR-T": 10,
+     "LF-N": 6,
+     "LF-T": 4
+    },
+    "hours": {
+     "8": 1,
+     "10": 10,
+     "12": 26
+    }
+   }
   },
   {
    "id": "P0071",
@@ -5302,7 +6266,32 @@
    "familyRules": [],
    "externalId": "1071",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 3,
+     "AN-040": 1,
+     "AN-065": 1,
+     "AN-080": 7,
+     "AN-098": 6,
+     "AN-T": 8,
+     "DR-011": 2,
+     "DR-066": 1,
+     "DR-089": 3,
+     "DR-N": 1,
+     "DR-T": 7,
+     "LF-010": 3,
+     "LF-012": 1,
+     "LF-N": 4
+    },
+    "hours": {
+     "8": 1,
+     "8.5": 1,
+     "9": 1,
+     "10": 21,
+     "12": 24
+    }
+   }
   },
   {
    "id": "P0072",
@@ -5330,7 +6319,18 @@
    ],
    "externalId": "1072",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 3,
+     "AN-080": 7,
+     "TV-060": 13,
+     "TV-061": 8
+    },
+    "hours": {
+     "10": 31
+    }
+   }
   },
   {
    "id": "P0073",
@@ -5347,7 +6347,24 @@
    "familyRules": [],
    "externalId": "1073",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 4,
+     "AN-098": 8,
+     "DR-011": 6,
+     "DR-035": 1,
+     "DR-070": 1,
+     "DR-089": 5,
+     "DR-N": 10,
+     "DR-T": 13
+    },
+    "hours": {
+     "8": 2,
+     "10": 23,
+     "12": 23
+    }
+   }
   },
   {
    "id": "P0074",
@@ -5364,7 +6381,21 @@
    "familyRules": [],
    "externalId": "1074",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 5,
+     "AN-080": 9,
+     "AN-098": 13,
+     "DR-011": 7,
+     "DR-089": 11,
+     "DR-N": 7
+    },
+    "hours": {
+     "10": 45,
+     "12": 7
+    }
+   }
   },
   {
    "id": "P0075",
@@ -5381,7 +6412,19 @@
    "familyRules": [],
    "externalId": "1075",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 14,
+     "AN-080": 11,
+     "AN-098": 13,
+     "DR-011": 5,
+     "DR-089": 5
+    },
+    "hours": {
+     "10": 48
+    }
+   }
   },
   {
    "id": "P0076",
@@ -5409,7 +6452,29 @@
    ],
    "externalId": "1076",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-014": 1,
+     "AN-015": 1,
+     "AN-022": 1,
+     "AN-027": 1,
+     "AN-080": 3,
+     "AN-098": 4,
+     "AN-T": 1,
+     "DR-011": 1,
+     "DR-089": 3,
+     "LF-010": 1,
+     "LF-N": 9,
+     "LF-T": 5
+    },
+    "hours": {
+     "8": 2,
+     "8.5": 1,
+     "10": 12,
+     "12": 16
+    }
+   }
   },
   {
    "id": "P0077",
@@ -5425,7 +6490,16 @@
    "familyRules": [],
    "externalId": "1077",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-N": 23,
+     "DR-T": 25
+    },
+    "hours": {
+     "12": 48
+    }
+   }
   },
   {
    "id": "P0078",
@@ -5443,7 +6517,27 @@
    "familyRules": [],
    "externalId": "1078",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 3,
+     "AN-040": 1,
+     "AN-050": 1,
+     "AN-080": 5,
+     "AN-098": 3,
+     "AN-T": 6,
+     "DR-089": 2,
+     "DR-N": 5,
+     "TV-060": 9,
+     "TV-061": 7
+    },
+    "hours": {
+     "8.5": 1,
+     "9": 1,
+     "10": 29,
+     "12": 11
+    }
+   }
   },
   {
    "id": "P0079",
@@ -5459,7 +6553,16 @@
    "familyRules": [],
    "externalId": "1079",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "TV-060": 25,
+     "TV-061": 12
+    },
+    "hours": {
+     "10": 37
+    }
+   }
   },
   {
    "id": "P0080",
@@ -5486,7 +6589,18 @@
    ],
    "externalId": "1080",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-T": 8,
+     "TV-060": 34,
+     "TV-061": 6
+    },
+    "hours": {
+     "10": 40,
+     "12": 8
+    }
+   }
   },
   {
    "id": "P0081",
@@ -5502,7 +6616,15 @@
    "familyRules": [],
    "externalId": "1081",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-T": 25
+    },
+    "hours": {
+     "12": 25
+    }
+   }
   },
   {
    "id": "P0082",
@@ -5518,7 +6640,17 @@
    "familyRules": [],
    "externalId": "1082",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 15,
+     "AN-080": 16,
+     "AN-098": 17
+    },
+    "hours": {
+     "10": 48
+    }
+   }
   },
   {
    "id": "P0083",
@@ -5546,7 +6678,18 @@
    ],
    "externalId": "1083",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-080": 18,
+     "AN-098": 12,
+     "DR-011": 6,
+     "DR-089": 12
+    },
+    "hours": {
+     "10": 48
+    }
+   }
   },
   {
    "id": "P0084",
@@ -5563,7 +6706,20 @@
    "familyRules": [],
    "externalId": "1084",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-011": 4,
+     "DR-089": 2,
+     "DR-T": 12,
+     "TV-060": 23,
+     "TV-061": 7
+    },
+    "hours": {
+     "10": 36,
+     "12": 12
+    }
+   }
   },
   {
    "id": "P0085",
@@ -5579,7 +6735,16 @@
    "familyRules": [],
    "externalId": "1085",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 28,
+     "AN-080": 20
+    },
+    "hours": {
+     "10": 48
+    }
+   }
   },
   {
    "id": "P0086",
@@ -5606,7 +6771,16 @@
    ],
    "externalId": "1086",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "TV-060": 34,
+     "TV-061": 14
+    },
+    "hours": {
+     "10": 48
+    }
+   }
   },
   {
    "id": "P0087",
@@ -5633,7 +6807,23 @@
    ],
    "externalId": "1087",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-023": 1,
+     "DR-063": 1,
+     "DR-089": 3,
+     "DR-N": 1,
+     "DR-T": 4,
+     "TS-027": 15
+    },
+    "hours": {
+     "8.5": 1,
+     "9": 1,
+     "10": 18,
+     "12": 5
+    }
+   }
   },
   {
    "id": "P0088",
@@ -5649,7 +6839,17 @@
    "familyRules": [],
    "externalId": "1088",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-011": 7,
+     "DR-T": 35
+    },
+    "hours": {
+     "10": 7,
+     "12": 35
+    }
+   }
   },
   {
    "id": "P0089",
@@ -5666,7 +6866,19 @@
    "familyRules": [],
    "externalId": "1089",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-N": 14,
+     "DR-T": 8,
+     "LF-012": 2,
+     "LF-N": 13,
+     "LF-T": 11
+    },
+    "hours": {
+     "12": 48
+    }
+   }
   },
   {
    "id": "P0090",
@@ -5682,7 +6894,24 @@
    "familyRules": [],
    "externalId": "1090",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 10,
+     "AN-027": 1,
+     "AN-064": 1,
+     "AN-080": 10,
+     "AN-086": 1,
+     "AN-089": 1,
+     "AN-098": 11,
+     "AN-T": 13
+    },
+    "hours": {
+     "8": 2,
+     "10": 32,
+     "12": 14
+    }
+   }
   },
   {
    "id": "P0091",
@@ -5699,7 +6928,26 @@
    "familyRules": [],
    "externalId": "1091",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-011": 5,
+     "DR-023": 1,
+     "DR-033": 1,
+     "DR-037": 1,
+     "DR-086": 1,
+     "DR-089": 4,
+     "DR-N": 5,
+     "DR-T": 12,
+     "TS-027": 18
+    },
+    "hours": {
+     "8": 1,
+     "8.5": 2,
+     "10": 27,
+     "12": 18
+    }
+   }
   },
   {
    "id": "P0092",
@@ -5716,7 +6964,31 @@
    "familyRules": [],
    "externalId": "1092",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 1,
+     "AN-027": 1,
+     "AN-034": 1,
+     "AN-040": 1,
+     "AN-080": 4,
+     "AN-088": 1,
+     "AN-097": 1,
+     "AN-098": 6,
+     "AN-T": 5,
+     "DR-011": 2,
+     "DR-085": 1,
+     "DR-089": 1,
+     "DR-N": 9,
+     "DR-T": 8
+    },
+    "hours": {
+     "8": 1,
+     "8.5": 2,
+     "10": 16,
+     "12": 23
+    }
+   }
   },
   {
    "id": "P0093",
@@ -5732,7 +7004,16 @@
    "familyRules": [],
    "externalId": "1093",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "TV-060": 24,
+     "TV-061": 18
+    },
+    "hours": {
+     "10": 42
+    }
+   }
   },
   {
    "id": "P0094",
@@ -5749,7 +7030,27 @@
    "familyRules": [],
    "externalId": "1094",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 7,
+     "AN-062": 1,
+     "AN-080": 6,
+     "AN-088": 1,
+     "AN-089": 3,
+     "AN-098": 4,
+     "AN-S": 1,
+     "AN-T": 5,
+     "DR-N": 8,
+     "DR-T": 12
+    },
+    "hours": {
+     "8": 1,
+     "9": 1,
+     "10": 18,
+     "12": 28
+    }
+   }
   },
   {
    "id": "P0095",
@@ -5765,7 +7066,16 @@
    "familyRules": [],
    "externalId": "1095",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 31,
+     "AN-080": 21
+    },
+    "hours": {
+     "10": 52
+    }
+   }
   },
   {
    "id": "P0096",
@@ -5781,7 +7091,16 @@
    "familyRules": [],
    "externalId": "1096",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-011": 17,
+     "DR-089": 31
+    },
+    "hours": {
+     "10": 48
+    }
+   }
   },
   {
    "id": "P0097",
@@ -5798,7 +7117,20 @@
    "familyRules": [],
    "externalId": "1097",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-080": 2,
+     "AN-098": 7,
+     "AN-T": 17,
+     "TV-060": 17,
+     "TV-061": 9
+    },
+    "hours": {
+     "10": 35,
+     "12": 17
+    }
+   }
   },
   {
    "id": "P0098",
@@ -5814,7 +7146,25 @@
    "familyRules": [],
    "externalId": "1098",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 11,
+     "AN-022": 1,
+     "AN-040": 1,
+     "AN-050": 1,
+     "AN-080": 9,
+     "AN-089": 1,
+     "AN-098": 9,
+     "AN-T": 15
+    },
+    "hours": {
+     "8.5": 2,
+     "9": 1,
+     "10": 29,
+     "12": 16
+    }
+   }
   },
   {
    "id": "P0099",
@@ -5831,7 +7181,24 @@
    "familyRules": [],
    "externalId": "1099",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 2,
+     "AN-080": 3,
+     "AN-098": 13,
+     "DR-011": 4,
+     "DR-034": 1,
+     "DR-089": 2,
+     "DR-N": 8,
+     "DR-T": 15
+    },
+    "hours": {
+     "8.5": 1,
+     "10": 24,
+     "12": 23
+    }
+   }
   },
   {
    "id": "P0100",
@@ -5847,7 +7214,25 @@
    "familyRules": [],
    "externalId": "1100",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 8,
+     "AN-040": 1,
+     "AN-055": 1,
+     "AN-080": 7,
+     "AN-089": 1,
+     "AN-098": 14,
+     "AN-S": 1,
+     "AN-T": 15
+    },
+    "hours": {
+     "8": 2,
+     "8.5": 1,
+     "10": 29,
+     "12": 16
+    }
+   }
   },
   {
    "id": "P0101",
@@ -5863,7 +7248,16 @@
    "familyRules": [],
    "externalId": "1101",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "TV-060": 29,
+     "TV-061": 19
+    },
+    "hours": {
+     "10": 48
+    }
+   }
   },
   {
    "id": "P0102",
@@ -5879,7 +7273,16 @@
    "familyRules": [],
    "externalId": "1102",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 23,
+     "AN-080": 19
+    },
+    "hours": {
+     "10": 42
+    }
+   }
   },
   {
    "id": "P0103",
@@ -5896,7 +7299,19 @@
    "familyRules": [],
    "externalId": "1103",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-080": 8,
+     "AN-098": 14,
+     "DR-089": 5,
+     "DR-T": 10
+    },
+    "hours": {
+     "10": 27,
+     "12": 10
+    }
+   }
   },
   {
    "id": "P0104",
@@ -5912,7 +7327,17 @@
    "familyRules": [],
    "externalId": "1104",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 15,
+     "AN-080": 8,
+     "AN-098": 19
+    },
+    "hours": {
+     "10": 42
+    }
+   }
   },
   {
    "id": "P0105",
@@ -5928,7 +7353,16 @@
    "familyRules": [],
    "externalId": "1105",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 32,
+     "AN-080": 16
+    },
+    "hours": {
+     "10": 48
+    }
+   }
   },
   {
    "id": "P0106",
@@ -5944,7 +7378,19 @@
    "familyRules": [],
    "externalId": "1106",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "TV-012": 2,
+     "TV-031": 1,
+     "TV-060": 30,
+     "TV-061": 15
+    },
+    "hours": {
+     "8": 3,
+     "10": 45
+    }
+   }
   },
   {
    "id": "P0107",
@@ -5960,7 +7406,17 @@
    "familyRules": [],
    "externalId": "1107",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 10,
+     "AN-080": 15,
+     "AN-098": 23
+    },
+    "hours": {
+     "10": 48
+    }
+   }
   },
   {
    "id": "P0108",
@@ -5976,7 +7432,17 @@
    "familyRules": [],
    "externalId": "1108",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 8,
+     "AN-080": 16,
+     "AN-098": 18
+    },
+    "hours": {
+     "10": 42
+    }
+   }
   },
   {
    "id": "P0109",
@@ -5994,7 +7460,20 @@
    "familyRules": [],
    "externalId": "1109",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 4,
+     "AN-098": 8,
+     "DR-011": 2,
+     "DR-089": 2,
+     "TV-060": 15,
+     "TV-061": 6
+    },
+    "hours": {
+     "10": 37
+    }
+   }
   },
   {
    "id": "P0110",
@@ -6011,7 +7490,26 @@
    "familyRules": [],
    "externalId": "1110",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-011": 1,
+     "DR-037": 1,
+     "DR-065": 1,
+     "DR-086": 1,
+     "DR-089": 8,
+     "DR-N": 6,
+     "DR-T": 4,
+     "TV-060": 15,
+     "TV-061": 11
+    },
+    "hours": {
+     "8": 1,
+     "9": 1,
+     "10": 35,
+     "12": 11
+    }
+   }
   },
   {
    "id": "P0111",
@@ -6027,7 +7525,16 @@
    "familyRules": [],
    "externalId": "1111",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "TV-060": 35,
+     "TV-061": 17
+    },
+    "hours": {
+     "10": 52
+    }
+   }
   },
   {
    "id": "P0112",
@@ -6044,7 +7551,26 @@
    "familyRules": [],
    "externalId": "1112",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 6,
+     "AN-052": 1,
+     "AN-080": 5,
+     "AN-084": 1,
+     "AN-098": 3,
+     "AN-T": 6,
+     "DR-011": 2,
+     "DR-089": 8,
+     "DR-N": 7,
+     "DR-T": 9
+    },
+    "hours": {
+     "9": 1,
+     "10": 25,
+     "12": 22
+    }
+   }
   },
   {
    "id": "P0113",
@@ -6061,7 +7587,26 @@
    "familyRules": [],
    "externalId": "1113",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 11,
+     "AN-080": 1,
+     "AN-098": 4,
+     "DR-011": 5,
+     "DR-033": 1,
+     "DR-038": 1,
+     "DR-086": 1,
+     "DR-089": 5,
+     "DR-N": 10,
+     "DR-T": 9
+    },
+    "hours": {
+     "8.5": 2,
+     "10": 26,
+     "12": 20
+    }
+   }
   },
   {
    "id": "P0114",
@@ -6078,7 +7623,20 @@
    "familyRules": [],
    "externalId": "1114",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 7,
+     "AN-080": 5,
+     "AN-098": 11,
+     "DR-N": 2,
+     "DR-T": 12
+    },
+    "hours": {
+     "10": 23,
+     "12": 14
+    }
+   }
   },
   {
    "id": "P0115",
@@ -6095,7 +7653,18 @@
    "familyRules": [],
    "externalId": "1115",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-080": 5,
+     "AN-098": 7,
+     "TV-060": 22,
+     "TV-061": 14
+    },
+    "hours": {
+     "10": 48
+    }
+   }
   },
   {
    "id": "P0116",
@@ -6112,7 +7681,23 @@
    "familyRules": [],
    "externalId": "1116",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-T": 6,
+     "TV-011": 1,
+     "TV-025": 1,
+     "TV-032": 1,
+     "TV-060": 20,
+     "TV-061": 13
+    },
+    "hours": {
+     "8": 1,
+     "8.5": 2,
+     "10": 33,
+     "12": 6
+    }
+   }
   },
   {
    "id": "P0117",
@@ -6138,7 +7723,16 @@
    ],
    "externalId": "1117",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "TV-060": 32,
+     "TV-061": 16
+    },
+    "hours": {
+     "10": 48
+    }
+   }
   },
   {
    "id": "P0118",
@@ -6154,7 +7748,16 @@
    "familyRules": [],
    "externalId": "1118",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 18,
+     "AN-098": 24
+    },
+    "hours": {
+     "10": 42
+    }
+   }
   },
   {
    "id": "P0119",
@@ -6171,7 +7774,26 @@
    "familyRules": [],
    "externalId": "1119",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 4,
+     "AN-040": 1,
+     "AN-080": 3,
+     "AN-088": 1,
+     "AN-098": 7,
+     "AN-T": 4,
+     "TV-011": 1,
+     "TV-019": 1,
+     "TV-060": 6,
+     "TV-061": 3
+    },
+    "hours": {
+     "8.5": 3,
+     "10": 24,
+     "12": 4
+    }
+   }
   },
   {
    "id": "P0120",
@@ -6188,7 +7810,21 @@
    "familyRules": [],
    "externalId": "1120",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 9,
+     "AN-080": 5,
+     "AN-083": 1,
+     "AN-098": 4,
+     "AN-T": 15,
+     "TS-027": 14
+    },
+    "hours": {
+     "10": 32,
+     "12": 16
+    }
+   }
   },
   {
    "id": "P0121",
@@ -6204,7 +7840,17 @@
    "familyRules": [],
    "externalId": "1121",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 12,
+     "AN-080": 14,
+     "AN-098": 16
+    },
+    "hours": {
+     "10": 42
+    }
+   }
   },
   {
    "id": "P0122",
@@ -6220,7 +7866,22 @@
    "familyRules": [],
    "externalId": "1122",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-011": 11,
+     "DR-016": 1,
+     "DR-030": 1,
+     "DR-089": 12,
+     "DR-N": 6,
+     "DR-T": 17
+    },
+    "hours": {
+     "8": 2,
+     "10": 23,
+     "12": 23
+    }
+   }
   },
   {
    "id": "P0123",
@@ -6248,7 +7909,26 @@
    ],
    "externalId": "1123",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 4,
+     "AN-040": 1,
+     "AN-080": 4,
+     "AN-097": 1,
+     "AN-098": 5,
+     "AN-S": 1,
+     "AN-T": 6,
+     "TV-060": 10,
+     "TV-061": 5
+    },
+    "hours": {
+     "8": 1,
+     "8.5": 1,
+     "10": 28,
+     "12": 7
+    }
+   }
   },
   {
    "id": "P0124",
@@ -6265,7 +7945,17 @@
    "familyRules": [],
    "externalId": "1124",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-T": 8,
+     "DR-N": 12,
+     "DR-T": 11
+    },
+    "hours": {
+     "12": 31
+    }
+   }
   },
   {
    "id": "P0125",
@@ -6292,7 +7982,17 @@
    ],
    "externalId": "1125",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-098": 24,
+     "AN-T": 24
+    },
+    "hours": {
+     "10": 24,
+     "12": 24
+    }
+   }
   },
   {
    "id": "P0126",
@@ -6308,7 +8008,16 @@
    "familyRules": [],
    "externalId": "1126",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-N": 19,
+     "DR-T": 33
+    },
+    "hours": {
+     "12": 52
+    }
+   }
   },
   {
    "id": "P0127",
@@ -6324,7 +8033,16 @@
    "familyRules": [],
    "externalId": "1127",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-N": 18,
+     "DR-T": 19
+    },
+    "hours": {
+     "12": 37
+    }
+   }
   },
   {
    "id": "P0128",
@@ -6341,7 +8059,18 @@
    "familyRules": [],
    "externalId": "1128",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-080": 3,
+     "AN-098": 9,
+     "TV-060": 23,
+     "TV-061": 7
+    },
+    "hours": {
+     "10": 42
+    }
+   }
   },
   {
    "id": "P0129",
@@ -6368,7 +8097,25 @@
    ],
    "externalId": "1129",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-080": 2,
+     "AN-098": 3,
+     "DR-011": 2,
+     "DR-060": 1,
+     "DR-076": 1,
+     "DR-086": 1,
+     "DR-089": 3,
+     "DR-N": 3,
+     "DR-T": 9
+    },
+    "hours": {
+     "8": 1,
+     "10": 11,
+     "12": 13
+    }
+   }
   },
   {
    "id": "P0130",
@@ -6384,7 +8131,17 @@
    "familyRules": [],
    "externalId": "1130",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-089": 5,
+     "DR-T": 26
+    },
+    "hours": {
+     "10": 5,
+     "12": 26
+    }
+   }
   },
   {
    "id": "P0131",
@@ -6411,7 +8168,16 @@
    ],
    "externalId": "1131",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-011": 12,
+     "DR-089": 13
+    },
+    "hours": {
+     "10": 25
+    }
+   }
   },
   {
    "id": "P0132",
@@ -6428,7 +8194,20 @@
    "familyRules": [],
    "externalId": "1132",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-080": 6,
+     "AN-098": 10,
+     "AN-T": 12,
+     "DR-N": 5,
+     "DR-T": 15
+    },
+    "hours": {
+     "10": 16,
+     "12": 32
+    }
+   }
   },
   {
    "id": "P0133",
@@ -6444,7 +8223,26 @@
    "familyRules": [],
    "externalId": "1133",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 9,
+     "AN-040": 1,
+     "AN-052": 1,
+     "AN-064": 1,
+     "AN-080": 5,
+     "AN-089": 1,
+     "AN-098": 14,
+     "AN-T": 16
+    },
+    "hours": {
+     "8": 1,
+     "8.5": 1,
+     "9": 1,
+     "10": 28,
+     "12": 17
+    }
+   }
   },
   {
    "id": "P0134",
@@ -6460,7 +8258,16 @@
    "familyRules": [],
    "externalId": "1134",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-011": 11,
+     "DR-089": 14
+    },
+    "hours": {
+     "10": 25
+    }
+   }
   },
   {
    "id": "P0135",
@@ -6478,7 +8285,21 @@
    "familyRules": [],
    "externalId": "1135",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-098": 1,
+     "AN-T": 3,
+     "DR-089": 2,
+     "DR-T": 6,
+     "TV-060": 11,
+     "TV-061": 8
+    },
+    "hours": {
+     "10": 22,
+     "12": 9
+    }
+   }
   },
   {
    "id": "P0136",
@@ -6495,7 +8316,25 @@
    "familyRules": [],
    "externalId": "1136",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-011": 1,
+     "DR-070": 1,
+     "DR-089": 3,
+     "DR-A": 1,
+     "DR-N": 4,
+     "DR-T": 4,
+     "LF-010": 3,
+     "LF-N": 8,
+     "LF-T": 6
+    },
+    "hours": {
+     "8": 2,
+     "10": 4,
+     "12": 25
+    }
+   }
   },
   {
    "id": "P0137",
@@ -6512,7 +8351,21 @@
    "familyRules": [],
    "externalId": "1137",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 14,
+     "AN-080": 6,
+     "AN-098": 6,
+     "AN-T": 15,
+     "DR-011": 5,
+     "DR-089": 6
+    },
+    "hours": {
+     "10": 37,
+     "12": 15
+    }
+   }
   },
   {
    "id": "P0138",
@@ -6530,7 +8383,21 @@
    "familyRules": [],
    "externalId": "1138",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 6,
+     "AN-080": 6,
+     "DR-N": 10,
+     "DR-T": 6,
+     "TV-060": 13,
+     "TV-061": 7
+    },
+    "hours": {
+     "10": 32,
+     "12": 16
+    }
+   }
   },
   {
    "id": "P0139",
@@ -6547,7 +8414,18 @@
    "familyRules": [],
    "externalId": "1139",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "DR-011": 2,
+     "DR-089": 7,
+     "TV-060": 24,
+     "TV-061": 15
+    },
+    "hours": {
+     "10": 48
+    }
+   }
   },
   {
    "id": "P0140",
@@ -6565,7 +8443,21 @@
    "familyRules": [],
    "externalId": "1140",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 5,
+     "AN-098": 9,
+     "DR-N": 5,
+     "DR-T": 6,
+     "LF-N": 13,
+     "LF-T": 10
+    },
+    "hours": {
+     "10": 14,
+     "12": 34
+    }
+   }
   },
   {
    "id": "P0141",
@@ -6581,7 +8473,17 @@
    "familyRules": [],
    "externalId": "1141",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 19,
+     "AN-084": 1,
+     "AN-098": 28
+    },
+    "hours": {
+     "10": 48
+    }
+   }
   },
   {
    "id": "P0142",
@@ -6617,7 +8519,26 @@
    "familyRules": [],
    "externalId": "1143",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 5,
+     "AN-098": 6,
+     "DR-N": 6,
+     "DR-T": 5,
+     "TV-012": 1,
+     "TV-032": 1,
+     "TV-046": 1,
+     "TV-060": 16,
+     "TV-061": 7
+    },
+    "hours": {
+     "8": 1,
+     "8.5": 2,
+     "10": 34,
+     "12": 11
+    }
+   }
   },
   {
    "id": "P0144",
@@ -6633,7 +8554,17 @@
    "familyRules": [],
    "externalId": "1144",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 21,
+     "AN-080": 13,
+     "AN-098": 14
+    },
+    "hours": {
+     "10": 48
+    }
+   }
   },
   {
    "id": "P0145",
@@ -6650,7 +8581,23 @@
    "familyRules": [],
    "externalId": "1145",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 3,
+     "AN-080": 6,
+     "AN-086": 1,
+     "AN-088": 1,
+     "AN-098": 11,
+     "AN-T": 4,
+     "TV-060": 19,
+     "TV-061": 7
+    },
+    "hours": {
+     "10": 48,
+     "12": 4
+    }
+   }
   },
   {
    "id": "P0146",
@@ -6668,7 +8615,22 @@
    "familyRules": [],
    "externalId": "1146",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 2,
+     "AN-080": 8,
+     "AN-098": 6,
+     "DR-011": 2,
+     "DR-N": 8,
+     "TV-060": 15,
+     "TV-061": 7
+    },
+    "hours": {
+     "10": 40,
+     "12": 8
+    }
+   }
   },
   {
    "id": "P0147",
@@ -6685,7 +8647,20 @@
    "familyRules": [],
    "externalId": "1147",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 3,
+     "AN-T": 5,
+     "DR-079": 1,
+     "DR-N": 13,
+     "DR-T": 9
+    },
+    "hours": {
+     "10": 3,
+     "12": 28
+    }
+   }
   },
   {
    "id": "P0148",
@@ -6701,7 +8676,17 @@
    "familyRules": [],
    "externalId": "1148",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 10,
+     "AN-080": 16,
+     "AN-098": 11
+    },
+    "hours": {
+     "10": 37
+    }
+   }
   },
   {
    "id": "P0149",
@@ -6728,7 +8713,20 @@
    ],
    "externalId": "1149",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-015": 4,
+     "AN-098": 6,
+     "TV-050": 1,
+     "TV-060": 13,
+     "TV-061": 7
+    },
+    "hours": {
+     "8": 1,
+     "10": 30
+    }
+   }
   },
   {
    "id": "P0150",
@@ -6746,7 +8744,20 @@
    "familyRules": [],
    "externalId": "1150",
    "entryDate": null,
-   "exitDate": null
+   "exitDate": null,
+   "dutyHistory": {
+    "shifts": {
+     "AN-T": 4,
+     "DR-011": 3,
+     "DR-089": 4,
+     "TV-060": 12,
+     "TV-061": 8
+    },
+    "hours": {
+     "10": 27,
+     "12": 4
+    }
+   }
   }
  ],
  "restrictions": [

@@ -185,6 +185,19 @@ def test_owner_script_finds_identical_and_anonymous_differences(source, tmp_path
     assert (f"Häufigkeit der Schichten in der Historie: {len(shared['shifts'])} Schichten mit Anteil, 1 davon ohne "
             "Dienst") in usage.stdout
     assert compare(_bundle(tmp_path / "anteile-ohne.zip", shared_out, args)).returncode == 1
+    # since 0.31.0: each person's duties in the history (Dispofold only) are set aside and counted
+    with_history = json.loads(out.read_text(encoding="utf-8"))
+    for person in with_history["people"][:2]:
+        person["dutyHistory"] = {"shifts": {with_history["shifts"][0]["id"]: 3}, "hours": {"12": 3}}
+    history_out = tmp_path / "historie" / "dataset.json"
+    history_out.parent.mkdir()
+    history_out.write_text(json.dumps(with_history, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
+    for suffix in (".csv", ".warnings"):
+        history_out.with_suffix(suffix).write_bytes(out.with_suffix(suffix).read_bytes())
+    history = compare(_bundle(tmp_path / "historie.zip", history_out, args, extra={"dutyHistory": True}))
+    assert history.returncode == 0 and "ERGEBNIS: alles identisch" in history.stdout, history.stdout + history.stderr
+    assert "Dienste der Personen in der Historie: 2 Personen mit Diensten je Schicht und Länge" in history.stdout
+    assert compare(_bundle(tmp_path / "historie-ohne.zip", history_out, args)).returncode == 1
     # the same result compared as if nights were marked automatically: the difference shows
     assert compare(_bundle(tmp_path / "mit-nacht.zip", plain_out, args, nights_fair=True)).returncode == 1
     # a changed person name and a changed number: found, and nothing of the data in the result

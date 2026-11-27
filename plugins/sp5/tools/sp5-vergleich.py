@@ -276,6 +276,15 @@ def main(argv: list[str] | None = None) -> int:
                 lines.append(f"Häufigkeit der Schichten in der Historie: {len(shares)} Schichten mit Anteil, "
                              f"{sum(1 for x in shares if float(x) == 0)} davon ohne Dienst; für den Vergleich aus dem "
                              "Ergebnis von Dispofold entfernt")
+            if request.get("dutyHistory"):
+                # since 0.31.0 (Dispofold only): each person's duties per shift and length in the history months,
+                # the last field of a person; taken out as text as well
+                raw = (work / "dataset.json").read_bytes()
+                field = rb',\n   "dutyHistory": \{(?:\n    [^\n]*)*\n   \}(?=\n  \})'
+                people = len(re.findall(field, raw))
+                (work / "dataset.json").write_bytes(re.sub(field, b"", raw))
+                lines.append(f"Dienste der Personen in der Historie: {people} Personen mit Diensten je Schicht und "
+                             "Länge; für den Vergleich aus dem Ergebnis von Dispofold entfernt")
             same = all([
                 compare_dataset((work / "dataset.json").read_bytes(), (py / "dataset.json").read_bytes(), lines),
                 compare_report((work / "report.csv").read_bytes(), (py / "report.csv").read_bytes(), lines),

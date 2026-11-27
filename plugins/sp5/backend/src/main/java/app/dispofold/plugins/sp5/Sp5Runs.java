@@ -90,7 +90,7 @@ public class Sp5Runs {
                                 r.historyMonths(), r.areasFromHistory(), r.shiftsFromHistory(), r.demand(),
                                 r.mixMinDuties(), r.hiddenShiftsMonths(), r.recentMonths(), r.mapping(), null,
                                 r.nightsFair(), r.areaSource(), r.historyAreaDuties(), r.demandMax(),
-                                r.shiftUsage())))
+                                r.shiftUsage(), r.dutyHistory())))
                                 .dataset();
             }
             return withoutCorrections;

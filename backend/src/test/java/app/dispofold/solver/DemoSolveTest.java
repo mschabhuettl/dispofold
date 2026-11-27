@@ -142,7 +142,7 @@ class DemoSolveTest {
         java.util.List<app.dispofold.model.Person> people = d.people().stream()
                 .map(p -> new app.dispofold.model.Person(p.id(), p.firstName(), p.lastName(), p.shortName(),
                         p.weeklyHours(), p.areaIds(), p.hoursAccount(), p.compRestBalance(), p.familyRules(),
-                        p.externalId(), p.entryDate(), p.exitDate(), mixes.get(p.id())))
+                        p.externalId(), p.entryDate(), p.exitDate(), mixes.get(p.id())).withDutyHistory(p.dutyHistory()))
                 .toList();
         app.dispofold.model.Dataset changed = new app.dispofold.model.Dataset(d.format(), d.version(), d.source(),
                 d.areas(), d.shifts(), d.demand(), d.holidays(), d.absenceTypes(), people, d.restrictions(),

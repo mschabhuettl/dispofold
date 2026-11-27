@@ -307,3 +307,23 @@ def test_large_profile(large):
         assert s["unpopular"] is False  # "Fair verteilen" only where chosen; nights have their own rule
     assert {r["areaId"] for r in large["demand"]} == {"AN", "DR", "TV", "LF", "TS"}
     assert large["demand"] == generate("2027-01", 1)["demand"]
+
+
+def test_usage_dataset_has_personal_patterns_in_the_history():
+    dataset = generate("2027-01", 1, profile="usage")
+    shifts = {s["id"]: s for s in dataset["shifts"]}
+    people = [p for p in dataset["people"] if "dutyHistory" in p]
+    # everybody employed before the month has a history; who joins in the month has none
+    assert len(people) == sum(1 for p in dataset["people"] if p["entryDate"] is None or p["entryDate"] < "2027-01-01")
+    lengths = []
+    for p in people:
+        h = p["dutyHistory"]
+        assert sum(h["shifts"].values()) == sum(h["hours"].values()) > 0
+        assert all(shifts[sid]["areaId"] in p["areaIds"] for sid in h["shifts"])
+        for sid, n in h["shifts"].items():
+            start, end = interval(shifts[sid]["start"], shifts[sid]["end"])
+            assert h["hours"][f"{(end - start) / 60:g}"] >= n
+        lengths.append(len(h["hours"]))
+    # most keep to one or two lengths, some work many
+    assert sum(1 for n in lengths if n <= 2) > 0.5 * len(lengths)
+    assert any(n >= 4 for n in lengths)

@@ -72,6 +72,10 @@ USUAL_MIXES = {
 }
 USAGE_MONTHS = 3
 USAGE_RARE = 0.08
+# Personal patterns of the usage profile: the share of people who work every shift of an area as it comes; the others
+# keep to one length (or with NARROW_TWO_LENGTHS two) and two or three of the area's usual shifts of that length.
+BROAD_SHARE = 0.25
+NARROW_TWO_LENGTHS = 0.3
 VARIANT_NAMES = {"AN": "Annahme", "DR": "Disposition", "TV": "Transport", "LF": "Lageführung", "TS": "Technik"}
 CATEGORY_NAMES = {"EARLY": "früh", "DAY": "Tag", "LATE": "spät", "NIGHT": "Nacht"}
 
@@ -666,6 +670,53 @@ def _usage(shifts: dict[str, tuple], mixes: dict, month: str, holiday_dates: set
     return usage
 
 
+def _duty_history(people: list[dict], shifts: dict[str, tuple], usage: dict[str, float], month: str,
+                  rng: random.Random) -> None:
+    """Each person employed before the month gets the duties of the USAGE_MONTHS months before it per shift and per
+    length in hours ("dutyHistory"), about one duty per 10.5 hours of the weekly hours a week, spread over the areas.
+    A person works the shifts of an area as their shares come (BROAD_SHARE of the people) or keeps to a pattern: the
+    usual shifts (a share of 5 % or more) of one or two lengths, two or three of them, now and then a rare one."""
+    first = month + "-01"
+    for p in people:
+        if p["entryDate"] is not None and p["entryDate"] >= first:
+            continue
+        own = {}
+        for area in p["areaIds"]:
+            ids = [sid for sid, s in shifts.items() if s[1] == area and usage[sid] > 0]
+            usual = [sid for sid in ids if usage[sid] >= 0.05]
+            if rng.random() < BROAD_SHARE:
+                picked = ids
+            else:
+                by_length: dict[int, float] = {}
+                for sid in usual:
+                    by_length[_length(shifts[sid])] = by_length.get(_length(shifts[sid]), 0) + usage[sid]
+                lengths = rng.choices(list(by_length), weights=list(by_length.values()))
+                if len(by_length) > 1 and rng.random() < NARROW_TWO_LENGTHS:
+                    lengths = rng.sample(list(by_length), 2)
+                fitting = [sid for sid in usual if _length(shifts[sid]) in lengths]
+                picked = rng.sample(fitting, min(len(fitting), rng.choice([2, 3])))
+                rare = [sid for sid in ids if sid not in usual and _length(shifts[sid]) in lengths]
+                if rare and rng.random() < 0.3:
+                    picked.append(rng.choice(rare))
+            for sid in picked:
+                own[sid] = own.get(sid, 0) + usage[sid] / len(p["areaIds"])
+        duties = round(USAGE_MONTHS * 4.33 * p["weeklyHours"] / 10.5)
+        counts: dict[str, int] = {}
+        for sid in rng.choices(list(own), weights=list(own.values()), k=duties):
+            counts[sid] = counts.get(sid, 0) + 1
+        hours: dict[str, int] = {}
+        for sid, n in counts.items():
+            key = f"{_length(shifts[sid]) / 60:g}"
+            hours[key] = hours.get(key, 0) + n
+        p["dutyHistory"] = {"shifts": dict(sorted(counts.items())),
+                            "hours": dict(sorted(hours.items(), key=lambda e: float(e[0])))}
+
+
+def _length(shift: tuple) -> int:
+    start, end = interval(shift[4], shift[5])
+    return end - start
+
+
 def generate(month: str, seed: int = 1, people: int = 150, areas: list[str] | None = None,
              demand_factor: float = 1.0, profile: str = "standard") -> dict:
     """Build a synthetic dataset for one planning month."""
@@ -736,6 +787,7 @@ def generate_with_mixes(month: str, seed: int = 1, people: int = 150, areas: lis
     history = _history(staff, month, holidays, karenz, random.Random(f"{seed}-history"))
     if profile == "usage":
         usage = _usage(shifts, mixes, month, holiday_dates, random.Random(f"{seed}-usage"))
+        _duty_history(staff, shifts, usage, month, random.Random(f"{seed}-patterns"))
 
     dataset = {
         "format": FORMAT,

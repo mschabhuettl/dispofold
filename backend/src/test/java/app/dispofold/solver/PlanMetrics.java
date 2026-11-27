@@ -143,6 +143,36 @@ record PlanMetrics(int singleDuties, int singleFreeDays, double meanBlock, int s
                 + String.format(java.util.Locale.ROOT, "excess hours base %.0f of %.0f duty hours, variants %.0f of %.0f",
                 byKind.getOrDefault("base", 0.0), dutyHours.getOrDefault("base", 0.0),
                 byKind.getOrDefault("variant", 0.0), dutyHours.getOrDefault("variant", 0.0));
+        // per person against the duty history: duties on a shift the person did not work (and of these the ones on a
+        // shift that is not rare), duties in a length class the person never worked; of the duties of the people with
+        // a telling history
+        Map<String, app.dispofold.model.DutyHistory> histories = new HashMap<>();
+        solved.dataset().people().forEach(p -> {
+            if (p.dutyHistory() != null && p.dutyHistory().telling()) {
+                histories.put(p.id(), p.dutyHistory());
+            }
+        });
+        long withHistory = 0, newShift = 0, newShiftUsual = 0, newLength = 0;
+        for (DutyCell c : roster.getCells()) {
+            app.dispofold.model.DutyHistory h = histories.get(c.getStaff().getId());
+            if (c.isInMonth() && c.isWork() && h != null) {
+                withHistory++;
+                if (h.shiftsOrEmpty().getOrDefault(c.getShift().getId(), 0) == 0) {
+                    newShift++;
+                    newShiftUsual += c.getShift().getRarity() == 0 ? 1 : 0;
+                }
+                newLength += h.lengthClasses().contains(app.dispofold.model.DutyHistory.lengthClass(
+                        c.getDurationMinutes())) ? 0 : 1;
+            }
+        }
+        String personal = String.format(java.util.Locale.ROOT, "; per person: new shift %.0f %%, new and not rare "
+                + "%.0f %%, new length class %.0f %% of %d duties, people with a new length class %d",
+                100.0 * newShift / Math.max(1, withHistory), 100.0 * newShiftUsual / Math.max(1, withHistory),
+                100.0 * newLength / Math.max(1, withHistory), withHistory, roster.getCells().stream()
+                        .filter(c -> c.isInMonth() && c.isWork() && histories.containsKey(c.getStaff().getId())
+                                && !histories.get(c.getStaff().getId()).lengthClasses().contains(
+                                        app.dispofold.model.DutyHistory.lengthClass(c.getDurationMinutes())))
+                        .map(c -> c.getStaff().getId()).distinct().count());
         Map<Staff, Long> counted = new HashMap<>();
         for (DutyCell c : roster.getCells()) {
             if (c.isInMonth()) {
@@ -162,7 +192,7 @@ record PlanMetrics(int singleDuties, int singleFreeDays, double meanBlock, int s
                         + " (minimum demand %.0f h), people more than 8 h below target %d, above maximum %.0f h,"
                         + " maximum over minimum %.0f h",
                 100.0 * (planned - required) / required, 100.0 * above / required, targets / 60.0, required / 60.0,
-                below, overUpper / 60.0, room / 60.0) + " " + byArea;
+                below, overUpper / 60.0, room / 60.0) + " " + byArea + personal;
     }
 
     @Override

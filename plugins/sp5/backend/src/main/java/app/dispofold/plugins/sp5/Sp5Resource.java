@@ -132,6 +132,9 @@ public class Sp5Resource {
         // nor this: each shift's share of its area's duties in the history months (a field of the shifts that the
         // comparison sets aside)
         question.put("shiftUsage", request.shiftUsage());
+        // nor this: each person's duties per shift and length in the history months (a field of the people that the
+        // comparison sets aside)
+        question.put("dutyHistory", request.dutyHistory());
         question.set("areaCounts", mapper.valueToTree(result.areaCounts()));
         // the restrictions as rows (as the export writes them) and as the pages show them: the states of whole areas
         // and the exceptions (numbers only)
