@@ -73,6 +73,14 @@ ihres Bereichs (`usage`, unter **Stammdaten → Schichten** in der Spalte „Ant
 **Gewohnte Schichten** meidet damit Schichten, die selten vorkamen. Ohne Historie oder in einem Bereich ohne solchen
 Dienst bekommt keine Schicht einen Anteil; sie gelten dann alle als gewohnt.
 
+**Dienste je Person in der Historie** (ab 0.31.0, ohne Option): Aus denselben Diensten schreibt die Erweiterung
+jeder Person mit Diensten in den Monaten der Historie, wie viele sie je Schicht und je Dienstlänge hatte
+(`dutyHistory`, auf der Seite der Person unter **Gewohnte Schichten der Person**). Die Regeln **Ungewohnte Schicht**
+und **Ungewohnte Dienstlänge** halten jede Person damit bei ihren Schichten und Längen. Ohne Historie bekommt
+niemand solche Zahlen. Das Programm kennt je Person nur Schichtsperren je Wochentag (die übernommenen
+Einschränkungen), keine Höchstlänge eines Dienstes und keine Qualifikation; die Kategorie einer Schicht ist dort ein
+Recht der Benutzer, keine Eigenschaft der Mitarbeiter.
+
 **Schichten seltener als … Dienste nur von Hand** braucht es mit „Historie, Gruppen als Reserve“ meist nicht:
 Dort hat eine Person ohnehin nur die Bereiche ganz, in denen sie gearbeitet hat. Mit echten Daten zeigt sich:
 Reserve und diese Option zusammen geben einer Person viele Zeilen mit Ausnahmen je Schicht; bleibt die Option leer,

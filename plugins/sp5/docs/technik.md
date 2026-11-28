@@ -46,7 +46,9 @@ nennt die Zahl der Bereiche nach ihrer Herkunft (aus `anfrage.json`). Byte für 
 „Gruppen“ und mit der Höchstbesetzung „übliche Spitze“; `anfrage.json` nennt sie als `demandMax`. Den Anteil
 jeder Schicht in der Historie (`usage`, ab 0.30.0) schreibt nur Dispofold; `anfrage.json` sagt es mit
 `shiftUsage`, und `sp5-vergleich.py` nimmt das Feld vor dem Vergleich aus dem Ergebnis von Dispofold und nennt die
-Zahl der Schichten mit Anteil.
+Zahl der Schichten mit Anteil. Ebenso die Dienste jeder Person in der Historie (`dutyHistory`, ab 0.31.0, das letzte Feld
+einer Person): `anfrage.json` sagt es mit `dutyHistory`, `sp5-vergleich.py` nimmt das Feld heraus und nennt die Zahl
+der Personen damit.
 
 | Option in Dispofold | Kommandozeile von `sp5_export.py` |
 |---|---|

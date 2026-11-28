@@ -191,6 +191,14 @@ Import-Erweiterung schreibt zu jeder Schicht ihren Anteil (unter **Stammdaten** 
 Historie**). Eine Schicht unter **Seltene Schicht unter (%)** ist selten; die Regel **Gewohnte Schichten** meidet
 sie. Siehe [Einstellungen](einstellungen.md).
 
+## Gewohnte Schichten je Person
+
+Die Schichten und Dienstlängen, die eine Person in den Monaten der [Historie](#historie) selbst gearbeitet hat. Die
+Import-Erweiterung zählt sie je Person (zu sehen auf der Seite der Person unter **Gewohnte Schichten der Person**).
+Die Regel **Ungewohnte Schicht** kostet je Dienst auf einer Schicht, die die Person nicht hatte, die Regel
+**Ungewohnte Dienstlänge** mehr je Dienst in einer Längenklasse, die sie nie hatte (etwa 12 Stunden für jemanden,
+der nur 10 Stunden gearbeitet hat). Siehe [Einstellungen](einstellungen.md).
+
 ## Gewohnte Verteilung
 
 Wie sich die Dienste einer Person üblicherweise verteilen, in Prozent je [Schichtart](#schichtart) und je Bereich,
@@ -276,7 +284,8 @@ den Bedarf deckt. Die Qualitätsregeln heißen im Programm so, auch auf den Knö
 Wochenenden**, **Fairness Feiertage**, **Fairness fair verteilte Dienste**, **Wünsche**, **Dienstblöcke**,
 **Einzelne freie Tage**, **Vorwärtsrotation**, **Abstand zwischen Tag und Nacht**, **Wechsel zwischen Tag und
 Nacht**, **Nachtblöcke**, **Ganze Wochenenden frei**, **Ersatzruhe abbauen**, **Abwechslung
-Dienste**, **Abwechslung Bereiche**, **Gewohnte Verteilung**, **Gewohnte Schichten**, **Familienregel**, **Dienst nur von Hand**.
+Dienste**, **Abwechslung Bereiche**, **Gewohnte Verteilung**, **Gewohnte Schichten**, **Ungewohnte Schicht**, **Ungewohnte Dienstlänge**,
+**Familienregel**, **Dienst nur von Hand**.
 Treffer dieser Regeln sind keine Fehler: Der Plan ist trotzdem verwendbar. Siehe
 [Wie das Programm plant](wie-plant.md).
 

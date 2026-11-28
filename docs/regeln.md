@@ -253,33 +253,36 @@ der Erklärung je Person.
 | `fairHolidays` | Fairness Feiertage | siehe Fairness | 3 |
 | `fairUnpopular` | Fairness fair verteilte Dienste | siehe Fairness | 2 |
 | `wishes` | Wünsche mit gleicher Quote | siehe Wünsche | 300 |
-| `blockLength` | Blöcke von 2 bis 4 Diensten | je Tag zu kurz oder zu lang | 18000 |
-| `isolatedDayOff` | Kein einzelner freier Tag zwischen Diensten | je Fall | 30000 |
+| `blockLength` | Blöcke von 2 bis 4 Diensten | je Tag zu kurz oder zu lang | 36000 (bis 0.30.0: 18000) |
+| `isolatedDayOff` | Kein einzelner freier Tag zwischen Diensten | je Fall | 60000 (bis 0.30.0: 30000) |
 | `forwardRotation` | Vorwärtsrotation | je Rückwärtswechsel | 500 |
-| `dayNightSwitch` | Abstand zwischen Tag und Nacht: 2 freie Tage nach Nächten, 0 vor der ersten Nacht | je fehlendem freien Tag | 10000 |
-| `dayNightSwitches` | Wechsel zwischen Tag und Nacht | je Wechsel | 30000 |
-| `nightBlock` | Nachtblöcke von 2 bis 4 Nächten | je Nacht zu kurz oder zu lang | 6000 |
+| `dayNightSwitch` | Abstand zwischen Tag und Nacht: 2 freie Tage nach Nächten, 0 vor der ersten Nacht | je fehlendem freien Tag | 20000 (bis 0.30.0: 10000) |
+| `dayNightSwitches` | Wechsel zwischen Tag und Nacht | je Wechsel | 60000 (bis 0.30.0: 30000) |
+| `nightBlock` | Nachtblöcke von 2 bis 4 Nächten | je Nacht zu kurz oder zu lang | 12000 (bis 0.30.0: 6000) |
 | `splitWeekend` | Ganze Wochenenden | je Wochenende mit nur einem Diensttag | 300 |
 | `compRestUse` | Ersatzruhe abbauen | Bonus je geplantem Ersatzruhetag | 500 |
 | `shiftVariety` | Abwechslung der Dienste | je Paar Dienste gleichen Bereichs und gleicher Kategorie, mit Vormonat | 5 |
 | `areaVariety` | Abwechslung der Bereiche | je Paar Dienste im selben Bereich, mit Vormonat (nur bei mehreren Bereichen) | 1 |
 | `shiftMix` | Gewohnte Verteilung | quadrierte Abweichung in Zehntel-Diensten je Kategorie und Bereich, siehe unten | 25 |
 | `usualShifts` | Gewohnte Schichten | je Dienst auf einer seltenen Schicht, 1 bis 100 nach Seltenheit, siehe unten | 300 |
+| `personShifts` | Ungewohnte Schicht | je Dienst auf einer Schicht, die die Person in der Historie nicht hatte, siehe unten | 30000 |
+| `personLengths` | Ungewohnte Dienstlänge | je Dienst in einer Längenklasse, die die Person in der Historie nie hatte, siehe unten | 100000 |
 | `family` | Familienregel | je Dienst gegen die Regel | 800 |
 | `onRequest` | Dienst, der nur von Hand geht, von Hand gesetzt | je solchem Dienst; Gewicht fest, nicht einstellbar | 1000 |
 
-**Wichtigkeit.** Die Seite Regeln fasst vierzehn Qualitätsregeln zu Planungszielen zusammen. Die Wichtigkeit eines
+**Wichtigkeit.** Die Seite Regeln fasst sechzehn Qualitätsregeln zu Planungszielen zusammen. Die Wichtigkeit eines
 Ziels setzt die Gewichte seiner Regeln auf ein Vielfaches ihres Standards, gerundet auf ganze Zahlen:
 
 | Planungsziel | Regeln | weniger / normal / mehr | Gewichte |
 |---|---|---|---|
-| Dienstblöcke | `blockLength`, `isolatedDayOff` | 0,5 / 1 / 2 | 9000 / 18000 / 36000 und 15000 / 30000 / 60000 |
-| Wechsel zwischen Tag und Nacht | `dayNightSwitch`, `dayNightSwitches`, `nightBlock` | 0,5 / 1 / 2 | 5000 / 10000 / 20000, 15000 / 30000 / 60000 und 3000 / 6000 / 12000 |
+| Dienstblöcke | `blockLength`, `isolatedDayOff` | 0,5 / 1 / 2 | 18000 / 36000 / 72000 und 30000 / 60000 / 120000 |
+| Wechsel zwischen Tag und Nacht | `dayNightSwitch`, `dayNightSwitches`, `nightBlock` | 0,5 / 1 / 2 | 10000 / 20000 / 40000, 30000 / 60000 / 120000 und 6000 / 12000 / 24000 |
 | Wünsche | `wishes` | 0,5 / 1 / 2 | 150 / 300 / 600 |
 | Faire Verteilung | `fairNights`, `fairWeekends`, `fairHolidays`, `fairUnpopular` | 0,25 / 1 / 4 | 1 / 3 / 12, fair verteilte 1 / 2 / 8 |
 | Stunden treffen | `targetHours` | 0,5 / 1 / 2 | 10 / 20 / 40 |
 | Besetzung nahe am Mindestbedarf | `overMinimum` | 0,5 / 1 / 2 | 1000 / 2000 / 4000 |
 | Gewohnte Schichten | `usualShifts` | 0,5 / 1 / 2 | 150 / 300 / 600 |
+| Gewohnte Schichten je Person | `personShifts`, `personLengths` | 0,5 / 1 / 2 | 15000 / 30000 / 60000 und 50000 / 100000 / 200000 |
 | Familienregeln | `family` | 0,5 / 1 / 2 | 400 / 800 / 1600 |
 
 - `forwardRotation`, `splitWeekend`, `compRestUse`, `shiftVariety`, `areaVariety` und `shiftMix` gehören zu keinem
@@ -545,14 +548,15 @@ Eine Einstellung der Regeln, `nightDistribution`:
   Tage zu lang. Beides vermeidet die Regel, sie bevorzugt etwa drei Tage Dienst und dann mehrere freie.
 - **Beispiel `isolatedDayOff`:** Xenia hätte Dienst am Montag und Dienstag, frei am Mittwoch, Dienst am Donnerstag
   und Freitag. Der einzelne freie Mittwoch erholt wenig; die Regel zieht die freien Tage zusammen.
-- Gewichte (ab 0.6.0): Einzelner freier Tag 10000 je Fall, Blocklänge 6000 je Tag. Mit dem verkleinerten
+- Gewichte: Einzelner freier Tag 60000 je Fall, Blocklänge 36000 je Tag (ab 0.31.0; ab 0.28.0 30000 und 18000,
+  siehe [Gewohnte Schichten je Person](#gewohnte-schichten-je-person); ab 0.6.0 10000 und 6000). Ab 0.6.0: Mit dem verkleinerten
   Ziel prägen sie den Plan sichtbar. Im Demomonat (je 300 s) gibt es mit ihnen statt mit den alten Standards
   (600 und 400) 48 statt 211 einzelne freie Tage und 293 statt 592 Tage außerhalb der Blocklänge (2 bis 4); der
   Preis: 42 statt 26 unerfüllte Wünsche. Mit deutlich weniger Bedarf als Arbeit (Bedarf mal 0,6) sind es 12 statt
   91 einzelne freie Tage. Wer die Gewichte auf der Seite Regeln einmal gespeichert hat, behält die gespeicherten
   Werte; dort lassen sie sich auf die neuen Standards setzen. Die Analyse zeigt beide Zahlen (`singleDaysOff`, `blockDays`).
-- **Wichtigkeit („Dienstblöcke“, Gewichte 3000, 6000 oder 12000 je Tag und 5000, 10000 oder 20000 je
-  einzelnem freien Tag):** Gemessen ist nur der Sprung von den alten Standards (600 und 400, also das 10- und
+- **Wichtigkeit („Dienstblöcke“, Gewichte 18000, 36000 oder 72000 je Tag und 30000, 60000 oder 120000 je
+  einzelnem freien Tag):** Gemessen ist für 0.6.0 nur der Sprung von den alten Standards (600 und 400, also das 10- und
   25-Fache) auf die heutigen, mit den Zahlen oben. Das 0,5- und 2-Fache
   ist nicht gemessen. Erwartbar wirkt es in dieselbe Richtung, aber schwächer: „mehr“ gibt weniger Einzeldienste
   und einzelne freie Tage und kostet eher Wünsche und Stunden nahe am Ziel, „weniger“ umgekehrt.
@@ -560,22 +564,22 @@ Eine Einstellung der Regeln, `nightDistribution`:
   folgen (freie Tage dazwischen übersprungen), der eine eine Nacht (Kategorie Nacht), der andere nicht. Nach der
   letzten Nacht eines Blocks sollen `nightRestDays` (Standard 2) freie Tage vor einem Dienst am Tag liegen, nach
   Tagdiensten vor der ersten Nacht `dayToNightDays` (Standard 0, denn Tag auf Nacht ist Vorwärtsrotation). Abzug
-  je fehlendem Tag, Gewicht 10000. Abwesenheiten und Ersatzruhe zählen als freie Tage, Dienste des Vormonats
+  je fehlendem Tag, Gewicht 20000 (bis 0.30.0 10000). Abwesenheiten und Ersatzruhe zählen als freie Tage, Dienste des Vormonats
   zählen mit. Beide Zahlen gehen von 0 bis 4; 0 schaltet die Richtung aus.
-- **Wechsel zwischen Tag und Nacht** (`dayNightSwitches`): ein Abzug (Gewicht 30 000, bis 0.28 3000) für jeden
+- **Wechsel zwischen Tag und Nacht** (`dayNightSwitches`): ein Abzug (Gewicht 60 000, bis 0.30 30 000, bis 0.28 3000) für jeden
   solchen Wechsel, auch über freie Tage hinweg, damit nicht nur der Abstand stimmt, sondern auch weniger gewechselt
-  wird. Gewicht 0 schaltet ihn aus. Bei 30 000 kostet eine einzelne Nacht zwei Wechsel, mehr als eine Person mit
+  wird. Gewicht 0 schaltet ihn aus. Schon bei 30 000 kostet eine einzelne Nacht zwei Wechsel, mehr als eine Person mit
   kleinem Nachtanteil (etwa 10 %) an Abweichung von ihrer gewohnten Verteilung spart: Sie bekommt dann eher keine
   Nacht. **Gemessen** am großen synthetischen Monat (150 Personen, klare Verteilungen für zwei Drittel,
   Höchstbesetzung Minimum + 1, „normal“), gegen die Regeln von 0.28.0: Wechsel 217 → 124, Personen mit Tag und
   Nacht 78 → 72, Einzeldienste 309 → 306, einzelne Nächte 112 → 94 (mit der Obergrenze für den Nachtanteil). Das
   Raster dazu steht unter [Raster der Gewichte](#raster-der-gewichte).
 - **Nachtblöcke** (`nightBlock`): aufeinanderfolgende Nächte, gewünscht `nightBlockMin` (2) bis `nightBlockMax`
-  (4). Abzug je Nacht zu wenig oder zu viel, Gewicht 6000; ein Block, der am Monatsende endet, ist nicht zu kurz.
+  (4). Abzug je Nacht zu wenig oder zu viel, Gewicht 12000 (bis 0.30.0 6000); ein Block, der am Monatsende endet, ist nicht zu kurz.
   Kürzester Block 0 oder 1 schaltet die Untergrenze aus. Die Regel „Dienstblöcke“ zählt alle Dienste gleich; erst
   diese Regel sieht, dass Tag, Tag, Nacht nur eine einzelne Nacht ist.
 - **Beispiel `dayNightSwitch`:** Anna hat Nacht am Montag und Dienstag, frei am Mittwoch und Tagdienst am
-  Donnerstag: ein freier Tag nach den Nächten statt zwei, Abzug 1 × 10000, dazu 30 000 für den Wechsel. Mit Tagdienst
+  Donnerstag: ein freier Tag nach den Nächten statt zwei, Abzug 1 × 20000, dazu 60 000 für den Wechsel. Mit Tagdienst
   erst am Freitag fällt nur der Wechsel an.
 - Vorwärtsrotation: die Reihenfolge Früh, Tag, Spät, Nacht. Ein Wechsel von einem Tag auf den nächsten in
   eine frühere Kategorie kostet. Nacht auf Früh ohne genug Ruhe ist ohnehin als Regelverstoß verboten.
@@ -733,10 +737,79 @@ bevorzugt, hat daran auf dem synthetischen Monat etwas geändert.
   [Raster der Gewichte](#raster-der-gewichte)): Einzeldienste 306 → 150, einzelne freie Tage 117 → 32, Wechsel
   zwischen Tag und Nacht 124 → 85, Personen mit Tag und Nacht 72 → 63, einzelne Nächte 94 → 34, über Minimum
   17,2 % → 12,9 %, Dienste unter 10 Stunden 1256 → 1038 von 1465; keine Lücken, 652 s.
-- **Gewohnte Schichten je Person** (nur die Schichten, die eine Person selbst in der Historie hatte) gibt es nicht:
-  Der synthetische Monat hat keine persönlichen Muster, an denen sich das messen ließe, und mit den Anteilen je
-  Schicht, dem Startplan und dem Zusammenlegen sinken die seltenen Dienste dort schon auf ein Sechstel. Ob es mit
-  echten Daten mehr braucht, zeigt die Nachmessung mit einem echten Ordner.
+- **Gewohnte Schichten je Person:** siehe den nächsten Abschnitt (ab 0.31.0).
+
+### Gewohnte Schichten je Person
+
+- **Dienste der Historie einer Person** (`dutyHistory` der Person, siehe [Datenformat](datenformat.md)): je Schicht
+  und je Dienstlänge, wie viele Dienste die Person in den Monaten der Historie hatte. Die Import-Erweiterung schreibt
+  sie aus denselben Diensten wie die Anteile der Schichten; die Seite der Person zeigt sie unter **Gewohnte
+  Schichten der Person**.
+- **Regel** `personShifts` (Ungewohnte Schicht, Gewicht 30000): je Dienst auf einer Schicht, die die Person in der
+  Historie nicht hatte. Nur Schichten mit einem Anteil in der Historie zählen; eine Schicht, die nach dem Einlesen
+  von Hand dazukam, ist für niemanden ungewohnt.
+- **Regel** `personLengths` (Ungewohnte Dienstlänge, Gewicht 100000): je Dienst in einer Längenklasse, die die Person
+  nie hatte. Klassen: unter 8 Stunden, 8 bis unter 10, 10 bis unter 12, 12 und mehr.
+- Beide gelten nur für Personen mit mindestens 10 Diensten in der Historie; mit weniger (etwa nach einem Eintritt)
+  wäre alles ungewohnt. Ohne Dienste der Historie, oder mit Gewicht 0, ändert sich an der Planung nichts, auch nicht
+  am Startplan. Von Hand ist jede Schicht möglich; ein solcher Dienst erscheint unter Prüfen als Treffer mit Person
+  und Tag.
+- **Startplan und Zusammenlegen:** Der Startplan zählt eine für die Person ungewohnte Schicht wie eine, die etwas
+  weniger deckt (eine ungewohnte Länge doppelt so viel). Das Zusammenlegen verlängert einen Dienst nicht in eine
+  Länge, die die Person nie hatte.
+- **Blöcke und Nächte doppelt gewichtet** (ab 0.31.0): `blockLength` 36000, `isolatedDayOff` 60000,
+  `dayNightSwitch` 20000, `dayNightSwitches` 60000, `nightBlock` 12000. Mit den gewohnten Schichten aus 0.30.0 hat
+  jede Person weniger, dafür längere Dienste; „normal“ fand dann weniger gute Blöcke als 0.29.0 (Einzeldienste 158
+  und 168 mit 0.29.0, 206 und 208 mit 0.30.0, Startwert 1 und 2). Ein stärkerer Blockbonus im Startplan
+  (Einzeldienste 244 und 265) und das Zusammenlegen vorzugsweise am Rand eines Blocks (202) halfen nicht; ohne
+  Zusammenlegen waren es 237. Erst die Gewichte der Blöcke halfen, und mit ihnen allein stiegen die Wechsel zwischen
+  Tag und Nacht (großer Monat ohne Anteile 98 → 128); mit beiden Zielen doppelt bleibt ihr Verhältnis wie bisher.
+  Gespeicherte Gewichte auf einer Wichtigkeit von 0.30.0 bekommen die neuen einmal.
+- **Längen:** Im synthetischen Monat folgen die Dienste von 12 Stunden dem Bedarf (450 im Plan, 443 in den
+  Schichten, aus denen der Bedarf entsteht), mit und ohne Zusammenlegen (439) und Startplan; eine Ursache für zu
+  viele lange Dienste fand sich dort nicht. Dienste von 12 Stunden für Personen, die nie 12 Stunden hatten,
+  verhindert jetzt `personLengths`.
+- **Synthetische Daten:** Das Profil `usage` des Generators gibt jeder Person, die vor dem Monat eingetreten ist,
+  Dienste in drei Monaten Historie: ein Viertel arbeitet alle Schichten ihrer Bereiche, wie sie vorkommen, die
+  anderen bleiben bei einer Länge (oder zwei) und zwei bis drei gewohnten Schichten davon, ab und zu eine seltene.
+- **Gemessen** am synthetischen Monat mit Anteilen und Diensten der Historie (Profil `usage`, 150 Personen, klare
+  gewohnte Verteilungen für zwei Drittel, Höchstbesetzung Minimum + 1). „Neue Schicht“ und „neue Länge“: Anteil der
+  Dienste von Personen mit Historie auf einer Schicht bzw. in einer Längenklasse, die sie nicht hatten; „davon
+  nicht selten“ auf einer Schicht mit mindestens 5 % ihres Bereichs (alle Anteile an allen Diensten dieser Personen).
+  0.29.0 mit Verteilung 25 und Toleranz 8, ohne Anteile und Historie; je zwei Läufe gleichzeitig auf einem Rechner:
+
+  | Gründlichkeit | Version | Startwert | über Minimum | Dienste | verschiedene Schichten | unter 8 h / 8 bis <10 / 10 bis <12 / ab 12 h | auf seltenen Schichten | neue Schicht | davon nicht selten | neue Länge | Personen mit neuer Länge | Einzeldienste | einzelne freie Tage | mittlerer Block | Wechsel | Personen mit Tag und Nacht | einzelne Nächte | mehr als 8 h unter dem Ziel | Dauer |
+  |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+  | schnell | 0.30.0 | 1 | +6,7 % | 1187 | 115 | 0 / 138 / 593 / 456 | 217 | 36 % | 18 % | 18 % | 72 | 267 | 43 | 1,83 | 92 | 65 | 55 | 125 | 280 s |
+  | schnell | 0.31.0 | 1 | +5,8 % | 1162 | 77 | 0 / 40 / 659 / 463 | 87 | 12 % | 5 % | 0 % | 3 | 175 | 19 | 2,02 | 80 | 58 | 38 | 114 | 229 s |
+  | normal | 0.29.0 | 1 | +18,1 % | 1589 | – | – | – | – | – | – | – | 158 | 48 | 2,28 | 78 | 54 | 38 | 93 | 1079 s |
+  | normal | 0.29.0 | 2 | +17,9 % | 1592 | – | – | – | – | – | – | – | 168 | 44 | 2,26 | 89 | 59 | 37 | 90 | 1125 s |
+  | normal | 0.30.0 | 1 | +6,1 % | 1183 | 114 | 0 / 145 / 589 / 449 | 235 | 38 % | 19 % | 18 % | 70 | 206 | 30 | 1,95 | 81 | 59 | 46 | 114 | 1023 s |
+  | normal | 0.30.0 | 2 | +6,5 % | 1190 | 119 | 0 / 159 / 581 / 450 | 249 | 40 % | 19 % | 19 % | 78 | 208 | 30 | 1,95 | 71 | 52 | 38 | 121 | 1056 s |
+  | normal | 0.31.0 | 1 | +5,8 % | 1166 | 87 | 0 / 53 / 659 / 454 | 125 | 13 % | 4 % | 0 % | 2 | 137 | 21 | 2,05 | 66 | 52 | 34 | 111 | 1142 s |
+  | normal | 0.31.0 | 2 | +6,0 % | 1166 | 78 | 0 / 58 / 643 / 465 | 127 | 14 % | 4 % | 1 % | 5 | 134 | 17 | 2,10 | 67 | 55 | 41 | 114 | 1022 s |
+  | gründlich | 0.30.0 | 1 | +5,6 % | 1176 | 108 | 0 / 142 / 584 / 450 | 222 | 38 % | 20 % | 18 % | 69 | 165 | 26 | 2,05 | 59 | 47 | 31 | 123 | 2727 s |
+  | gründlich | 0.31.0 | 1 | +5,3 % | 1158 | 81 | 0 / 54 / 644 / 460 | 121 | 13 % | 3 % | 0 % | 4 | 121 | 11 | 2,14 | 52 | 44 | 25 | 119 | 2792 s |
+
+  Lücken und Regelverstöße: in allen Läufen 0. Die gewohnte Verteilung wird etwas ungenauer (mittlere Abweichung
+  0,41 und 0,43 mit 0.30.0, 0,56 und 0,56 mit 0.31.0, „normal“).
+- **Ohne Anteile und Historie** (der große synthetische Monat, „normal“, Startwert 1, mit der Höchstbesetzung
+  des Datensatzes statt Minimum + 1, darum andere Zahlen als oben), 0.30.0 → 0.31.0:
+  Einzeldienste 191 → 177, einzelne freie Tage 53 → 38, Wechsel zwischen Tag und Nacht 98 → 83, Personen mit Tag
+  und Nacht 66 → 58, einzelne Nächte 49 → 35, über Minimum 9,5 % → 9,0 %, über der Höchstbesetzung 985 → 943 h,
+  mehr als 8 h unter dem Ziel 102 → 97; keine Lücken, 863 s.
+- **Stunden bei viel Spielraum:** Wo der Bedarf weit unter den Zielen liegt (ein kleiner Monat mit halbem Bedarf),
+  gewinnen die schwereren Blöcke öfter gegen die Stunden: 11 von 20 Personen enden innerhalb von 12 Stunden um ihr
+  skaliertes Ziel, mit den Gewichten von 0.30.0 15. Ein doppeltes Gewicht für **Stunden treffen** (40) brachte dort
+  17, machte aber die großen Monate schlechter (Einzeldienste 122 → 150, einzelne Nächte 27 → 34, mehr Personen unter
+  dem Ziel) und ist darum nicht Standard; „Stunden treffen: mehr“ stellt es ein.
+- **Gewichte gewählt** (je „normal“, Startwert 1 und 2): Mit den Block- und Nachtgewichten von 0.30.0 senkten
+  `personShifts` 3000 und `personLengths` 10000 die neuen Schichten nur auf 28 und 29 % und die neuen Längen auf
+  10 %. Mit den doppelten Block- und Nachtgewichten und `personLengths` 100000 gab `personShifts` 10000 neue
+  Schichten 22 und 21 %, neue Längen 1 %, Einzeldienste 122 und 136, Wechsel 61 und 71; `personShifts` 30000 neue
+  Schichten 13 und 14 %, neue Längen 0 und 1 %, Einzeldienste 137 und 134, Wechsel 66 und 67, über Minimum 5,8 und
+  6,0 %. Standard ist 30000: Etwa jeder siebte Dienst liegt dann auf einer für die Person neuen Schicht,
+  kaum einer in einer neuen Länge, ohne mehr Einzeldienste oder Wechsel als mit 0.30.0.
 
 ### Ersatzruhe
 

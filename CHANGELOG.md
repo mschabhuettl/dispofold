@@ -3,6 +3,36 @@
 Jede Version steht auch als Release auf GitHub, mit Images, Installationsdateien und Prüfsummen. Installation
 und Update: [docs/betrieb.md](docs/betrieb.md).
 
+## 0.31.0 (2026-11-28)
+
+- **Gewohnte Schichten je Person:** Ein neues Planungsziel mit zwei Regeln. **Ungewohnte Schicht** (Gewicht 30000)
+  kostet je Dienst auf einer Schicht, die die Person in der Historie nicht hatte, **Ungewohnte Dienstlänge**
+  (Gewicht 100000) je Dienst in einer Längenklasse, die sie nie hatte (unter 8, 8 bis unter 10, 10 bis unter 12, ab
+  12 Stunden). So bekommt etwa, wer nur 10 Stunden gearbeitet hat, keine 12-Stunden-Dienste. Gilt für Personen mit
+  mindestens 10 Diensten in der Historie; von Hand bleibt jede Schicht möglich. Startplan und Zusammenlegen
+  berücksichtigen es.
+- **Dienste der Historie je Person:** Der Datensatz kann zu jeder Person ihre Dienste der Historie je Schicht und je
+  Länge haben (Feld `dutyHistory`); die Seite der Person zeigt sie unter **Gewohnte Schichten der Person**. Die
+  Import-Erweiterung schreibt sie beim nächsten Einlesen; der Vergleich mit dem Python-Programm nimmt das Feld heraus
+  und nennt die Zahl der Personen damit.
+- **Blöcke und Nächte wiegen doppelt:** Dienstblöcke 36000, Einzelne freie Tage 60000, Abstand zwischen Tag und
+  Nacht 20000, Wechsel zwischen Tag und Nacht 60000, Nachtblöcke 12000. Mit den langen gewohnten Schichten aus
+  0.30.0 hatte „normal“ mehr Einzeldienste als 0.29.0. Gespeicherte Gewichte, die noch auf einer Wichtigkeit von
+  0.30.0 standen, bekommen die neuen einmal beim ersten Laden; von Hand gesetzte bleiben.
+- **Einschränkungen der Länge im alten Planungsprogramm:** Dessen Daten kennen je Person nur Schichtsperren je
+  Wochentag (schon übernommen), keine Höchstlänge eines Dienstes und keine Qualifikation; die Kategorie einer Schicht
+  ist ein Recht der Benutzer. Darum gibt es keine neue harte Einschränkung; die Länge regelt die neue Regel.
+- **Demo-Generator:** Das Profil `usage` gibt den Personen persönliche Muster in der Historie.
+- **Gemessen** auf dem synthetischen Monat mit Anteilen und Historie, „normal“, 0.30.0 → 0.31.0 (Startwert 1 und 2):
+  Dienste auf einer für die Person neuen Schicht 38 und 40 % → 13 und 14 %, in einer neuen Längenklasse 18 und 19 %
+  → 0 und 1 %, Einzeldienste 206 und 208 → 137 und 134, einzelne freie Tage 30 und 30 → 21 und 17, Wechsel zwischen
+  Tag und Nacht 81 und 71 → 66 und 67, einzelne Nächte 46 und 38 → 34 und 41, über dem Minimum 6,1 und 6,5 % → 5,8
+  und 6,0 %. Ohne Anteile und Historie (großer Monat): Einzeldienste 191 → 177, Wechsel 98 → 83. Zahlen je
+  Gründlichkeit: docs/regeln.md, Gewohnte Schichten je Person.
+- **Stunden bei viel Spielraum:** Liegt der Bedarf weit unter den Zielen, gewinnen die schwereren Blöcke öfter gegen
+  genaue Stunden (in einem kleinen Monat mit halbem Bedarf enden 11 statt 15 von 20 Personen nahe am Ziel).
+  „Stunden treffen: mehr“ gleicht das aus.
+
 ## 0.30.0 (2026-11-26)
 
 - **Gewohnte Schichten:** Ein neues Planungsziel. Jede Schicht kann ihren Anteil an den Diensten ihres Bereichs in

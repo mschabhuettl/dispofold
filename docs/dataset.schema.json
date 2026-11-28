@@ -137,8 +137,9 @@
       }
     },
     "dutyHistory": {
-      "description": "The person's duties in the history months per shift id and per duty length in hours.",
+      "description": "The person's duties in the history months per shift id and per duty length in hours; both count the same duties.",
       "type": "object",
+      "required": ["shifts", "hours"],
       "properties": {
         "shifts": { "type": "object", "additionalProperties": { "type": "integer", "minimum": 0 } },
         "hours": {

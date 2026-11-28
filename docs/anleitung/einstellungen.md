@@ -56,6 +56,7 @@ Darunter die Ziele, jedes mit seinen Werten und einer **Wichtigkeit**:
 | Stunden treffen | Toleranz beim Ziel 8 Stunden, höchstens 10 % über dem Soll (beim festen Anteil über dem Ziel), Stundenkonto ausgleichen bis Ende des Kalenderhalbjahrs (fester Anteil 25 % je Monat als Alternative), Minus am Halbjahresende verfällt | geplante und angerechnete Stunden nahe am Ziel; die Obergrenze ist ein Regelverstoß |
 | Besetzung nahe am Mindestbedarf | keine Werte | wo eine Höchstbesetzung mehr erlaubt, möglichst nur so viele Personen wie der Mindestbedarf |
 | Gewohnte Schichten | selten ist eine Schicht mit weniger als 5 % der Dienste ihres Bereichs in der Historie | die Planung nimmt die Schichten, die in der Historie die meisten Dienste hatten, und meidet die seltenen |
+| Gewohnte Schichten je Person | keine Werte | jede Person bei den Schichten und vor allem den Dienstlängen, die sie in der Historie gearbeitet hat |
 | Familienregeln | keine Werte | die persönlichen Regeln der Personen einhalten, wenn es geht |
 
 - **Toleranz beim Ziel** (Standard 8 Stunden, bis 0.29.0 0 Stunden; 0 bis 40): So viele Stunden über oder unter dem Ziel zählen bei
@@ -73,6 +74,13 @@ Darunter die Ziele, jedes mit seinen Werten und einer **Wichtigkeit**:
   Planerinnen und Planer mit wenigen, meist langen Schichten statt mit vielen kurzen Varianten. Von Hand ist jede
   Schicht möglich. Ohne Anteile (ohne Import) gilt jede Schicht als gewohnt. **Wann ändern:** „mehr“ oder eine höhere
   Schwelle, wenn Pläne noch viele selten genutzte Schichten haben; „weniger“, wenn Blöcke oder Stunden wichtiger sind.
+- **Gewohnte Schichten je Person** (ab 0.31.0): Die Import-Erweiterung zählt je Person die Dienste der Historie je
+  Schicht und je Länge (auf der Seite der Person unter **Gewohnte Schichten der Person**). Ein Dienst auf einer
+  Schicht, die die Person nicht hatte, kostet (Regel **Ungewohnte Schicht**, Gewicht 30000), ein Dienst in einer
+  Längenklasse, die sie nie hatte, mehr (Regel **Ungewohnte Dienstlänge**, Gewicht 100000). So bekommt etwa, wer nur
+  10 Stunden gearbeitet hat, keine 12-Stunden-Dienste. Personen ohne diese Zahlen oder mit weniger als 10 Diensten
+  in der Historie betrifft das nicht. Von Hand ist jede Schicht möglich. **Wann ändern:** „mehr“, wenn Personen noch
+  oft Schichten oder Längen bekommen, die sie nicht kennen; „weniger“, wenn Blöcke oder Stunden wichtiger sind.
 - **Ausgleich des Stundenkontos:** Standard ist **bis Ende des Kalenderhalbjahrs**. Am Ende jedes Halbjahrs soll
   das Stundenkonto bei 0 stehen, denn über das Halbjahr sind die vereinbarten Stunden geschuldet, bei Teilzeit
   die Stunden laut Vertrag. Jeder Monat gleicht seinen Teil aus: Ziel = Soll minus Stundenkonto geteilt durch die
@@ -202,13 +210,15 @@ Planungsziels steht, zu welchem Ziel sie gehören. Die Standardgewichte:
 | Fairness Nachtdienste, Wochenenden, Feiertage | je 3 | Faire Verteilung |
 | Fairness fair verteilte Dienste | 2 | Faire Verteilung |
 | Wünsche | 300 | Wünsche |
-| Dienstblöcke | 18000 | Dienstblöcke |
-| Einzelne freie Tage | 30000 | Dienstblöcke |
-| Abstand zwischen Tag und Nacht | 10000 | Wechsel zwischen Tag und Nacht |
-| Wechsel zwischen Tag und Nacht | 30000 | Wechsel zwischen Tag und Nacht |
-| Nachtblöcke | 6000 | Wechsel zwischen Tag und Nacht |
+| Dienstblöcke | 36000 (bis 0.30.0: 18000) | Dienstblöcke |
+| Einzelne freie Tage | 60000 (bis 0.30.0: 30000) | Dienstblöcke |
+| Abstand zwischen Tag und Nacht | 20000 (bis 0.30.0: 10000) | Wechsel zwischen Tag und Nacht |
+| Wechsel zwischen Tag und Nacht | 60000 (bis 0.30.0: 30000) | Wechsel zwischen Tag und Nacht |
+| Nachtblöcke | 12000 (bis 0.30.0: 6000) | Wechsel zwischen Tag und Nacht |
 | Familienregel | 800 | Familienregeln |
 | Gewohnte Schichten | 300 | Gewohnte Schichten |
+| Ungewohnte Schicht | 30000 | Gewohnte Schichten je Person |
+| Ungewohnte Dienstlänge | 100000 | Gewohnte Schichten je Person |
 | Gewohnte Verteilung | 25 (bis 0.29.0: 100) | keines |
 | Vorwärtsrotation | 500 | keines |
 | Ganze Wochenenden frei | 300 | keines |
@@ -225,9 +235,13 @@ Ziels. Ein Gewicht 0 schaltet eine Regel aus.
 Die Beschreibungen der Regeln nennen die eingestellten Werte. Regeln, die mit einer älteren Version gespeichert
 wurden, laden unverändert; ohne Einstellung der Nachtdienste gilt „Wie bisher“. Ausnahme ab Version 0.28: Stehen
 die Gewichte von **Dienstblöcke** und **Einzelne freie Tage** noch auf den alten Standards (6000 und 10000, oder
-beide auf derselben Wichtigkeit davon), bekommen sie beim ersten Laden die neuen (18000 und 30000, oder dieselbe
-Wichtigkeit davon). Von Hand gesetzte Gewichte bleiben. Die neuen Regeln und die Gründlichkeit beginnen mit
+beide auf derselben Wichtigkeit davon), bekommen sie beim ersten Laden die heutigen (36000 und 60000, oder
+dieselbe Wichtigkeit davon). Von Hand gesetzte Gewichte bleiben. Die neuen Regeln und die Gründlichkeit beginnen mit
 ihrem Standard. Ebenso ab Version 0.29: Stehen die drei Gewichte des Ziels **Wechsel zwischen Tag und Nacht** noch
 auf einer Wichtigkeit von 0.28 (normal: 10000, 3000 und 6000), bekommt **Wechsel zwischen Tag und Nacht** den neuen
-Standard 30000 auf derselben Wichtigkeit. Die neue Regel **Besetzung über dem Mindestbedarf**, die Toleranz beim
-Ziel und die Einstellungen zum Nachtanteil beginnen mit ihrem Standard.
+Standard von 0.29 (30000) auf derselben Wichtigkeit. Die neue Regel **Besetzung über dem Mindestbedarf**, die Toleranz beim
+Ziel und die Einstellungen zum Nachtanteil beginnen mit ihrem Standard. Ebenso ab Version 0.31: Stehen
+**Dienstblöcke** und **Einzelne freie Tage** noch auf einer Wichtigkeit von 0.30 (normal: 18000 und 30000),
+bekommen sie das Doppelte auf derselben Wichtigkeit (normal: 36000 und 60000); ebenso die drei Gewichte des Ziels
+**Wechsel zwischen Tag und Nacht** (normal: 10000, 30000 und 6000 werden 20000, 60000 und 12000). Die neuen Regeln **Ungewohnte
+Schicht** und **Ungewohnte Dienstlänge** beginnen mit ihrem Standard.

@@ -25,8 +25,27 @@ Ein Klick auf einen Namen öffnet die Seite der Person. Die Liste zeigt Kürzel,
 Oben stehen Kürzel, Wochenstunden, Bereiche und der Beschäftigungszeitraum; **Alle Personen** führt zurück zur
 Liste, **Bearbeiten** springt zum Formular. Darunter folgen die Zahlen der Person im gewählten Monat (Stunden,
 Belastung und Wünsche, Verteilung der Dienste, Historie) und **Warum dieser Dienst?**. Was die Zahlen bedeuten,
-erklärt [Auswertungen](auswertungen.md#die-zahlen-einer-person). Ganz unten stehen
+erklärt [Auswertungen](auswertungen.md#die-zahlen-einer-person). Hat ein Import die Dienste der Person in der
+Historie mitgebracht, folgt **Gewohnte Schichten der Person** (siehe unten). Ganz unten stehen
 **Übernahme aus dem Quellsystem** und das Formular **Person bearbeiten**.
+
+### Gewohnte Schichten der Person
+
+Die Dienste der Person in den Monaten der [Historie](begriffe.md#historie), je Schicht und je Dienstlänge, wie die
+Import-Erweiterung sie gezählt hat (ab 0.31.0; Feld `dutyHistory`). Von Hand lassen sie sich nicht ändern; das
+nächste Einlesen schreibt sie neu.
+
+- Die Tabelle nennt die Schichten mit ihren Diensten. Eine Schicht, die es in den Stammdaten nicht mehr gibt, steht
+  mit ihrer Id da und zählt über ihre Länge weiter.
+- **Dienstlängen** nennt die Längen mit ihren Diensten. Darunter steht, welche Längenklassen die Person nie
+  gearbeitet hat: unter 8 Stunden, 8 bis unter 10, 10 bis unter 12, 12 Stunden und mehr.
+- Beim Planen kostet ein Dienst auf einer Schicht, die nicht in der Tabelle steht, etwas (Regel **Ungewohnte
+  Schicht**), ein Dienst in einer nie gearbeiteten Längenklasse mehr (Regel **Ungewohnte Dienstlänge**). Siehe
+  [Gewohnte Schichten je Person](begriffe.md#gewohnte-schichten-je-person).
+- Mit weniger als 10 Diensten in der Historie, etwa nach einem Eintritt, gilt für die Person alles als gewohnt; der
+  Abschnitt sagt es dann.
+- Von Hand ist jede Schicht möglich: Ein solcher Dienst erscheint unter **Prüfen** nur als Treffer der Regel, mit
+  Person und Tag.
 
 ## Person bearbeiten
 

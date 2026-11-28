@@ -190,6 +190,13 @@ Historie, 0 bis 1); eine Änderung der Schicht ohne das Feld behält es, in eine
 weg. Gespeicherte Regeln aus einer Version vor 0.30 bekommen einmal das neue Gewicht von `shiftMix` (25) und die Toleranz 8, wenn sie
 beim alten Standard standen.
 
+Ab 0.31.0: neue Regel-Ids `personShifts` (Ungewohnte Schicht) und `personLengths` (Ungewohnte Dienstlänge), ein
+Treffer je Dienst mit Person und Tag, Parameter `shiftId`. Eine Person hat das optionale Feld `dutyHistory` (Dienste
+der Historie je Schicht und Länge, siehe [datenformat.md](datenformat.md)); eine Änderung der Person behält es, nur
+ein Import setzt es. Neue Standardgewichte: `blockLength` 36000, `isolatedDayOff` 60000, `dayNightSwitch` 20000,
+`dayNightSwitches` 60000, `nightBlock` 12000; gespeicherte Regeln, deren Gewichte dieser zwei Ziele noch auf einer
+Wichtigkeit von 0.30 standen, bekommen sie einmal (siehe [regeln.md](regeln.md)).
+
 ## Planungsmonate
 
 | Methode | Pfad | Antwort |
