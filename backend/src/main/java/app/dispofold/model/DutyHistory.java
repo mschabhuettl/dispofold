@@ -1,17 +1,21 @@
 package app.dispofold.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * A person's duties in the history months before the planning month, as an import counts them: per shift and per
- * duty length. A shift that is no longer in the master data still counts by its length.
+ * duty length. A shift that is no longer in the master data still counts by its length. Both maps count the same
+ * duties.
  *
  * @param shifts duties per shift id
  * @param hours duties per duty length in hours (for example "10" or "8.5")
  */
-public record DutyHistory(Map<String, Integer> shifts, Map<String, Integer> hours) {
+public record DutyHistory(@JsonInclude(JsonInclude.Include.NON_NULL) Map<String, Integer> shifts,
+        @JsonInclude(JsonInclude.Include.NON_NULL) Map<String, Integer> hours) {
 
     /** Fewer duties than this in the history give no usual shifts and lengths: everything would be unusual. */
     public static final int MIN_DUTIES = 10;

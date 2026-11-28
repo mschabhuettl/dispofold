@@ -201,6 +201,7 @@ public class MasterDataService {
                     key = nextId(kind, master, ids);
                     node.put("id", key);
                     node.remove("areaSources"); // only an import writes where the areas come from
+                    node.remove("dutyHistory"); // and the duties of the history
                     item = parse(kind, node);
                 }
                 case AREAS, ABSENCE_TYPES -> {

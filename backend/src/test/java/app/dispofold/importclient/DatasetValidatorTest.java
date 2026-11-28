@@ -285,4 +285,20 @@ class DatasetValidatorTest {
         }
         return found;
     }
+
+    @org.junit.jupiter.api.Test
+    void aDutyHistoryNeedsBothCountsWithTheSameSumAndPlainLengths() {
+        java.util.function.Function<java.util.Map<String, Integer>, Boolean> hours = h -> DatasetValidator.validHistory(
+                new app.dispofold.model.DutyHistory(java.util.Map.of("A", 4), h));
+        org.assertj.core.api.Assertions.assertThat(hours.apply(java.util.Map.of("10", 3, "8.5", 1))).isTrue();
+        org.assertj.core.api.Assertions.assertThat(hours.apply(java.util.Map.of("10", 3))).isFalse();
+        for (String odd : java.util.List.of("1e1", "10d", " 8", "0", "24.5", "-2")) {
+            org.assertj.core.api.Assertions.assertThat(hours.apply(java.util.Map.of(odd, 4))).as(odd).isFalse();
+        }
+        org.assertj.core.api.Assertions.assertThat(hours.apply(java.util.Map.of("24", 4))).isTrue();
+        org.assertj.core.api.Assertions.assertThat(DatasetValidator.validHistory(
+                new app.dispofold.model.DutyHistory(null, java.util.Map.of("10", 4)))).isFalse();
+        org.assertj.core.api.Assertions.assertThat(DatasetValidator.validHistory(
+                new app.dispofold.model.DutyHistory(java.util.Map.of("A", 4), null))).isFalse();
+    }
 }

@@ -10,7 +10,8 @@
 // MOCK_PLUGINS=1 adds the shipped plugins of ../plugins (not testOnly) with their dev/mock.mjs, all off; MOCK_TEST_PLUGINS=1
 // adds the test-only ones too.
 // MOCK_EMPTY=1 starts without any data, like a new installation ("Demodaten laden" still loads them).
-// Uses tests/fixtures/synthetic/*dataset*.synthetic.json when present, otherwise a generated mini dataset.
+// Uses tests/fixtures/synthetic/*dataset*.synthetic.json when present (MOCK_FIXTURE: that file), otherwise a
+// generated mini dataset.
 import http from 'node:http';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { extname, join, normalize, dirname, resolve, sep } from 'node:path';
@@ -28,7 +29,9 @@ const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '
 
 function fixtureDataset() {
   if (!existsSync(fixtures)) return null;
-  for (const f of readdirSync(fixtures).filter((n) => /dataset.*synthetic.*\.json$/i.test(n)).sort()) {
+  // MOCK_FIXTURE: one fixture by its file name, for example usage-dataset-2027-01.synthetic.json
+  const names = process.env.MOCK_FIXTURE ? [process.env.MOCK_FIXTURE] : readdirSync(fixtures).sort();
+  for (const f of names.filter((n) => /dataset.*synthetic.*\.json$/i.test(n))) {
     const data = JSON.parse(readFileSync(join(fixtures, f), 'utf8'));
     if (data.format === 'dispofold/dataset') {
       console.log('using fixture', f);

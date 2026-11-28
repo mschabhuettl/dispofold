@@ -38,9 +38,11 @@ class PersonShiftsTest {
         PlanningInput base = Fixtures.input(Fixtures.SMALL);
         Dataset d = base.dataset();
         List<ShiftType> shifts = new ArrayList<>(d.shifts().stream()
-                .filter(s -> s.id().equals("AN-T") || !s.areaId().equals("AN")).toList());
+                .filter(s -> !s.areaId().equals("AN")).toList());
+        // both with a share in the history, as an import writes it (a shift without one is new to everybody)
+        shifts.add(d.shifts().stream().filter(s -> s.id().equals("AN-T")).findFirst().orElseThrow().withUsage(0.5));
         shifts.add(new ShiftType("AN-Z", "AN", "A8", "Annahme 10 h", LocalTime.of(7, 0), LocalTime.of(17, 0),
-                ShiftCategory.DAY, null, false));
+                ShiftCategory.DAY, null, false, 0.5));
         List<String> all = List.of("MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN", "HOL");
         List<DemandRule> demand = new ArrayList<>(d.demand().stream().filter(r -> !r.areaId().equals("AN")).toList());
         demand.add(new DemandRule("AN", all, null, LocalTime.of(7, 0), LocalTime.of(17, 0), 2, 2));
@@ -121,6 +123,15 @@ class PersonShiftsTest {
                 .filter(s -> s.getId().equals("P0001")).findFirst().orElseThrow();
         assertThat(offTen.getUnusualShifts()).isEmpty();
         assertThat(offTen.getUnusualLengths()).isEmpty();
+        // a shift without a share in the history (made by hand after the import) is not unusual for the person
+        Dataset d0 = input.dataset();
+        Dataset noShare = new Dataset(d0.format(), d0.version(), d0.source(), d0.areas(), d0.shifts().stream()
+                .map(s -> s.withUsage(null)).toList(), d0.demand(), d0.holidays(), d0.absenceTypes(), d0.people(),
+                d0.restrictions(), d0.history(), d0.periods());
+        Staff handTen = new RosterBuilder(new PlanningInput(noShare, input.period(), input.rules(), List.of()), true)
+                .build().getStaff().stream().filter(s -> s.getId().equals("P0001")).findFirst().orElseThrow();
+        assertThat(handTen.getUnusualShifts()).isEmpty();
+        assertThat(handTen.getUnusualLengths()).contains("AN-T");
         // fewer than the minimum of duties: no history
         Dataset d = input.dataset();
         Dataset thinData = new Dataset(d.format(), d.version(), d.source(), d.areas(), d.shifts(), d.demand(),

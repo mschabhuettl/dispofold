@@ -96,7 +96,7 @@ function habitSection(dataset, person) {
     : t('people.habit.intro', { duties: total })),
   h('table.data', { id: 'person-habit' }, h('thead', {}, h('tr', {}, h('th', {}, t('people.habit.shift')), h('th.num', {}, t('people.habit.duties')))),
     h('tbody', {}, byShift.map(([id, n]) => h('tr', {}, h('td', {}, shiftName(id)), h('td.num', {}, String(n)))))),
-  h('p', { id: 'person-habit-lengths' }, t('people.habit.lengths', { lengths: byHours.map(([hours, n]) => t('people.habit.length', { hours: fmt.num(Number(hours), 1), duties: n })).join(', ') })),
+  h('p', { id: 'person-habit-lengths' }, t('people.habit.lengths', { lengths: byHours.map(([hours, n]) => t('people.habit.length', { hours: hours.replace('.', ','), duties: n })).join(', ') })),
   total >= MIN_HISTORY_DUTIES && h('p.muted', {}, t('people.habit.unusual', { classes: classes.filter((_, i) => !worked.has(i)).join(', ') || t('people.habit.none') })));
 }
 

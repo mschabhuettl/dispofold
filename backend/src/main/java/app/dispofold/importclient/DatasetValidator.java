@@ -474,28 +474,39 @@ public final class DatasetValidator {
         return new Issue(code, Collections.unmodifiableMap(map));
     }
 
-    /** Shares between 0 and 1, each non-empty map summing to 1, areas among the person's areas. */
-    /** Counts of 0 or more; lengths in hours above 0 and up to 24. */
+    /**
+     * Both maps present, counts of 0 or more summing to the same number, lengths in hours as plain decimal numbers
+     * above 0 and up to 24.
+     */
     static boolean validHistory(DutyHistory h) {
-        for (Integer n : h.shiftsOrEmpty().values()) {
+        if (h.shifts() == null || h.hours() == null) {
+            return false;
+        }
+        long shifts = 0;
+        for (Integer n : h.shifts().values()) {
             if (n == null || n < 0) {
                 return false;
             }
+            shifts += n;
         }
-        for (Map.Entry<String, Integer> e : h.hoursOrEmpty().entrySet()) {
-            double hours;
-            try {
-                hours = Double.parseDouble(e.getKey());
-            } catch (NumberFormatException ex) {
+        long hours = 0;
+        for (Map.Entry<String, Integer> e : h.hours().entrySet()) {
+            if (e.getValue() == null || e.getValue() < 0 || !HOURS.matcher(e.getKey()).matches()) {
                 return false;
             }
-            if (e.getValue() == null || e.getValue() < 0 || !(hours > 0 && hours <= 24)) {
+            double value = Double.parseDouble(e.getKey());
+            if (!(value > 0 && value <= 24)) {
                 return false;
             }
+            hours += e.getValue();
         }
-        return true;
+        return shifts == hours;
     }
 
+    /** A duty length in hours as the dataset writes it (docs/dataset.schema.json). */
+    private static final Pattern HOURS = Pattern.compile("[0-9]+(\\.[0-9]+)?");
+
+    /** Shares between 0 and 1, each non-empty map summing to 1, areas among the person's areas. */
     static boolean validMix(ShiftMix mix, List<String> areaIds) {
         return validShares(mix.categoriesOrEmpty().values()) && validShares(mix.areasOrEmpty().values())
                 && mix.categoriesOrEmpty().keySet().stream().noneMatch(java.util.Objects::isNull)

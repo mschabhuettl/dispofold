@@ -239,7 +239,8 @@ public final class RosterBuilder {
 
     /**
      * The shifts of the person's areas that are unusual for the person (rules personShifts and personLengths): not
-     * worked in the history, or in a length class the person never worked. Only with a telling history and a weight
+     * worked in the history (only shifts with a share in the history, see ShiftType#usage), or in a length class the
+     * person never worked. Only with a telling history and a weight
      * above 0, so without them nothing changes for the solver.
      */
     void unusual(Staff s, Person p) {
@@ -252,11 +253,18 @@ public final class RosterBuilder {
         boolean byLength = ConstraintCatalog.weight(ConstraintCatalog.get(ConstraintCatalog.PERSON_LENGTHS),
                 rules.weights()) > 0;
         Set<Integer> classes = h.lengthClasses();
+        // a shift without a share in the history (made by hand after the import) is new to everybody: not unusual
+        Set<String> usage = new HashSet<>();
+        for (ShiftType t : list(dataset.shifts())) {
+            if (t.usage() != null) {
+                usage.add(t.id());
+            }
+        }
         Set<String> shifts = new HashSet<>();
         Set<String> lengths = new HashSet<>();
         for (ShiftOption o : options.values()) {
             if (list(p.areaIds()).contains(o.getAreaId())) {
-                if (byShift && h.shiftsOrEmpty().getOrDefault(o.getId(), 0) == 0) {
+                if (byShift && h.shiftsOrEmpty().getOrDefault(o.getId(), 0) == 0 && usage.contains(o.getId())) {
                     shifts.add(o.getId());
                 }
                 if (byLength && !classes.contains(DutyHistory.lengthClass(o.getDurationMinutes()))) {
