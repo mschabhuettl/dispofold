@@ -5,9 +5,9 @@ import { CUSTOM, GROUPS, applyLevel, groupConstraints, groupLevel, levelWeight, 
 /** The soft part of the backend catalogue (ConstraintCatalog), with the default weights. */
 const CATALOGUE = [
   ['targetHours', 20], ['overMinimum', 2000], ['fairNights', 3], ['fairWeekends', 3], ['fairHolidays', 3], ['fairUnpopular', 2], ['wishes', 300],
-  ['blockLength', 18000], ['isolatedDayOff', 30000], ['forwardRotation', 500], ['dayNightSwitch', 10000], ['dayNightSwitches', 30000],
-  ['nightBlock', 6000], ['splitWeekend', 300], ['compRestUse', 500],
-  ['shiftVariety', 5], ['areaVariety', 1], ['shiftMix', 25], ['usualShifts', 300], ['personShifts', 30000], ['personLengths', 100000], ['family', 800],
+  ['blockLength', 36000], ['isolatedDayOff', 60000], ['forwardRotation', 500], ['dayNightSwitch', 20000], ['dayNightSwitches', 60000],
+  ['nightBlock', 12000], ['splitWeekend', 300], ['compRestUse', 500],
+  ['shiftVariety', 5], ['areaVariety', 1], ['shiftMix', 25], ['usualShifts', 300], ['personShifts', 10000], ['personLengths', 100000], ['family', 800],
 ].map(([id, defaultWeight]) => ({ id, level: 'SOFT', defaultWeight, tunable: true }))
   .concat([{ id: 'onRequest', level: 'SOFT', defaultWeight: 1000, tunable: false }, { id: 'dailyRest', level: 'HARD', defaultWeight: 1, tunable: false }]);
 const defaults = () => Object.fromEntries(CATALOGUE.map((c) => [c.id, c.defaultWeight]));
@@ -21,7 +21,7 @@ test('the groups name tunable constraints of the catalogue, each in one group on
 
 test('Wichtigkeit is 0.5, 1 or 2 times the default weight, rounded to whole numbers', () => {
   const block = CATALOGUE.find((c) => c.id === 'blockLength');
-  assert.deepEqual(['less', 'normal', 'more'].map((l) => levelWeight(block, l)), [9000, 18000, 36000]);
+  assert.deepEqual(['less', 'normal', 'more'].map((l) => levelWeight(block, l)), [18000, 36000, 72000]);
   const hours = CATALOGUE.find((c) => c.id === 'targetHours');
   assert.deepEqual(['less', 'normal', 'more'].map((l) => levelWeight(hours, l)), [10, 20, 40]);
   assert.equal(levelWeight({ defaultWeight: 15 }, 'less'), 8);
@@ -41,7 +41,7 @@ test('choosing a level overwrites the weights of the group and nothing else', ()
   applyLevel('fairness', 'more', CATALOGUE, weights);
   assert.deepEqual([weights.fairNights, weights.fairWeekends, weights.fairHolidays, weights.fairUnpopular], [12, 12, 12, 8]);
   assert.equal(weights.shiftMix, 0);
-  assert.equal(weights.blockLength, 18000);
+  assert.equal(weights.blockLength, 36000);
   assert.equal(groupLevel('fairness', CATALOGUE, weights), 'more');
   applyLevel('fairness', 'less', CATALOGUE, weights);
   assert.deepEqual([weights.fairNights, weights.fairUnpopular], [1, 1]);
@@ -54,9 +54,9 @@ test('weights set by hand show as custom', () => {
   weights.isolatedDayOff = 9000;
   assert.equal(groupLevel('blocks', CATALOGUE, weights), CUSTOM);
   // not uniform: one constraint at 2x, the other at 1x
-  Object.assign(weights, { blockLength: 36000, isolatedDayOff: 30000 });
+  Object.assign(weights, { blockLength: 72000, isolatedDayOff: 60000 });
   assert.equal(groupLevel('blocks', CATALOGUE, weights), CUSTOM);
-  assert.equal(groupLevel('blocks', CATALOGUE, { ...weights, isolatedDayOff: 60000 }), 'more');
+  assert.equal(groupLevel('blocks', CATALOGUE, { ...weights, isolatedDayOff: 120000 }), 'more');
 });
 
 test('a default of 1 reads as normal, not as less', () => {

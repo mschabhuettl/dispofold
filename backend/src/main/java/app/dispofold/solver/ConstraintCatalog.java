@@ -79,8 +79,8 @@ public final class ConstraintCatalog {
             new ConstraintInfo(USELESS_DUTY, MEDIUM, 1, false),
             soft(TARGET_HOURS, 20), soft(OVER_MINIMUM, 2000), soft(FAIR_NIGHTS, 3), soft(FAIR_WEEKENDS, 3), soft(FAIR_HOLIDAYS, 3),
             soft(FAIR_UNPOPULAR, 2), soft(WISHES, 300), soft(BLOCK_LENGTH, 36000), soft(ISOLATED_DAY_OFF, 60000),
-            soft(FORWARD_ROTATION, 500), soft(DAY_NIGHT_SWITCH, 10000), soft(DAY_NIGHT_SWITCHES, 30000),
-            soft(NIGHT_BLOCK, 6000), soft(SPLIT_WEEKEND, 300), soft(COMP_REST_USE, 500),
+            soft(FORWARD_ROTATION, 500), soft(DAY_NIGHT_SWITCH, 20000), soft(DAY_NIGHT_SWITCHES, 60000),
+            soft(NIGHT_BLOCK, 12000), soft(SPLIT_WEEKEND, 300), soft(COMP_REST_USE, 500),
             soft(SHIFT_VARIETY, 5), soft(AREA_VARIETY, 1), soft(SHIFT_MIX, 25), soft(USUAL_SHIFTS, 300),
             soft(PERSON_SHIFTS, 10000), soft(PERSON_LENGTHS, 100000),
             soft(FAMILY, 800),
@@ -99,7 +99,8 @@ public final class ConstraintCatalog {
     /** Default weights before version 0.30 that have changed since (see {@link #DEFAULTS_BEFORE_0_28}). */
     static final Map<String, Long> DEFAULTS_BEFORE_0_30 = Map.of(SHIFT_MIX, 100L);
     /** Default weights before version 0.31 that have changed since (see {@link #DEFAULTS_BEFORE_0_28}). */
-    static final Map<String, Long> DEFAULTS_BEFORE_0_31 = Map.of(BLOCK_LENGTH, 18000L, ISOLATED_DAY_OFF, 30000L);
+    static final Map<String, Long> DEFAULTS_BEFORE_0_31 = Map.of(BLOCK_LENGTH, 18000L, ISOLATED_DAY_OFF, 30000L,
+            DAY_NIGHT_SWITCH, 10000L, DAY_NIGHT_SWITCHES, 30000L, NIGHT_BLOCK, 6000L);
     /** The version of the stored weights that the current defaults belong to. */
     public static final int WEIGHTS_VERSION = 5;
     /** The planning goals with a Wichtigkeit (frontend lib/rule-groups.js) whose weights changed in a version. */

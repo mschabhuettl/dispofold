@@ -89,9 +89,9 @@ class RuleWeightsMigrationTest {
         // catalogue, so the real one is asked).
         given().get("/api/rules").then().body("weights.dayNightSwitch", org.hamcrest.Matchers.nullValue());
         assertThat(ConstraintCatalog.weight(ConstraintCatalog.get(ConstraintCatalog.DAY_NIGHT_SWITCH), Map.of()))
-                .isEqualTo(10000);
-        assertThat(ConstraintCatalog.get(ConstraintCatalog.DAY_NIGHT_SWITCHES).defaultWeight()).isEqualTo(30000);
-        assertThat(ConstraintCatalog.get(ConstraintCatalog.NIGHT_BLOCK).defaultWeight()).isEqualTo(6000);
+                .isEqualTo(20000);
+        assertThat(ConstraintCatalog.get(ConstraintCatalog.DAY_NIGHT_SWITCHES).defaultWeight()).isEqualTo(60000);
+        assertThat(ConstraintCatalog.get(ConstraintCatalog.NIGHT_BLOCK).defaultWeight()).isEqualTo(12000);
     }
 
     @Test
@@ -135,12 +135,12 @@ class RuleWeightsMigrationTest {
     void weightsOf028TakeTheNewDefaultsOnce() throws Exception {
         storeOld(withWeights(weights028(1, 100)), 2);
         given().get("/api/rules").then().statusCode(200)
-                .body("weights.dayNightSwitches", equalTo(30000)).body("weights.shiftMix", equalTo(25))
-                .body("weights.dayNightSwitch", equalTo(10000)).body("weights.nightBlock", equalTo(6000))
+                .body("weights.dayNightSwitches", equalTo(60000)).body("weights.shiftMix", equalTo(25))
+                .body("weights.dayNightSwitch", equalTo(20000)).body("weights.nightBlock", equalTo(12000))
                 .body("weights.blockLength", equalTo(36000));
         // saved again: the current version, the old value set by hand stays
         String rules = given().get("/api/rules").then().extract().asString()
-                .replace("\"dayNightSwitches\":30000", "\"dayNightSwitches\":3000");
+                .replace("\"dayNightSwitches\":60000", "\"dayNightSwitches\":3000");
         given().contentType(ContentType.JSON).body(rules).put("/api/rules").then().statusCode(200);
         given().get("/api/rules").then().body("weights.dayNightSwitches", equalTo(3000));
     }
@@ -148,8 +148,8 @@ class RuleWeightsMigrationTest {
     @Test
     void theNightGoalKeepsItsLevelAndHandWeightsStay() throws Exception {
         storeOld(withWeights(weights028(2, 80)), 2);
-        given().get("/api/rules").then().body("weights.dayNightSwitches", equalTo(60000))
-                .body("weights.nightBlock", equalTo(12000)).body("weights.shiftMix", equalTo(80));
+        given().get("/api/rules").then().body("weights.dayNightSwitches", equalTo(120000))
+                .body("weights.nightBlock", equalTo(24000)).body("weights.shiftMix", equalTo(80));
         // one weight of the goal set by hand: the goal is no level, its weights stay
         Map<String, Long> hand = weights028(1, 100);
         hand.put("nightBlock", 7000L);
@@ -171,7 +171,7 @@ class RuleWeightsMigrationTest {
     void rulesOf029TakeTheNewMixWeightAndToleranceOnce() throws Exception {
         storeOld(rules029(100, 0), 3);
         given().get("/api/rules").then().statusCode(200).body("weights.shiftMix", equalTo(25))
-                .body("weights.dayNightSwitches", equalTo(30000)).body("targetToleranceHours",
+                .body("weights.dayNightSwitches", equalTo(60000)).body("targetToleranceHours",
                         org.hamcrest.Matchers.nullValue());
         assertThat(Rules.defaults().targetTolerance()).isEqualTo(8);
         // saved again (version 4): 0 and 100 set by hand stay
@@ -193,11 +193,13 @@ class RuleWeightsMigrationTest {
     }
 
     @Test
-    void blockWeightsOf030TakeTheNewDefaultsOnce() throws Exception {
+    void blockAndNightWeightsOf030TakeTheNewDefaultsOnce() throws Exception {
         // saved by 0.30 at "normal" and at "weniger"; one set by hand
         storeOld(rules029(25, null), 4);
         given().get("/api/rules").then().statusCode(200).body("weights.blockLength", equalTo(36000))
-                .body("weights.isolatedDayOff", equalTo(60000)).body("weights.shiftMix", equalTo(25));
+                .body("weights.isolatedDayOff", equalTo(60000)).body("weights.shiftMix", equalTo(25))
+                .body("weights.dayNightSwitch", equalTo(20000)).body("weights.dayNightSwitches", equalTo(60000))
+                .body("weights.nightBlock", equalTo(12000));
         Map<String, Long> less = weights028(1, 25);
         less.put("blockLength", 9000L);
         less.put("isolatedDayOff", 15000L);

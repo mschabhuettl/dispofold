@@ -176,9 +176,9 @@ export const CONSTRAINTS = [
     'qualification', 'absence', 'freeInsideAbsence', 'employment', 'neverRestriction', 'compRestBalance', 'missingShift'].map((id) => [id, 'HARD', 1]),
   ['demand', 'MEDIUM', 1000000000], ['overstaffing', 'MEDIUM', 1], ['uselessDuty', 'MEDIUM', 1],
   ['targetHours', 'SOFT', 20], ['overMinimum', 'SOFT', 2000], ['fairNights', 'SOFT', 3], ['fairWeekends', 'SOFT', 3], ['fairHolidays', 'SOFT', 3],
-  ['fairUnpopular', 'SOFT', 2], ['wishes', 'SOFT', 300], ['blockLength', 'SOFT', 18000], ['isolatedDayOff', 'SOFT', 30000],
-  ['forwardRotation', 'SOFT', 500], ['dayNightSwitch', 'SOFT', 10000], ['dayNightSwitches', 'SOFT', 30000], ['nightBlock', 'SOFT', 6000], ['splitWeekend', 'SOFT', 300], ['compRestUse', 'SOFT', 500], ['shiftVariety', 'SOFT', 5],
-  ['areaVariety', 'SOFT', 1], ['shiftMix', 'SOFT', 25], ['usualShifts', 'SOFT', 300], ['personShifts', 'SOFT', 30000], ['personLengths', 'SOFT', 100000], ['family', 'SOFT', 800],
+  ['fairUnpopular', 'SOFT', 2], ['wishes', 'SOFT', 300], ['blockLength', 'SOFT', 36000], ['isolatedDayOff', 'SOFT', 60000],
+  ['forwardRotation', 'SOFT', 500], ['dayNightSwitch', 'SOFT', 20000], ['dayNightSwitches', 'SOFT', 60000], ['nightBlock', 'SOFT', 12000], ['splitWeekend', 'SOFT', 300], ['compRestUse', 'SOFT', 500], ['shiftVariety', 'SOFT', 5],
+  ['areaVariety', 'SOFT', 1], ['shiftMix', 'SOFT', 25], ['usualShifts', 'SOFT', 300], ['personShifts', 'SOFT', 10000], ['personLengths', 'SOFT', 100000], ['family', 'SOFT', 800],
   // on-request duties are never planned automatically, so their weight is not a setting
   ['onRequest', 'SOFT', 1000],
 ].map(([id, level, defaultWeight]) => ({ id, level, defaultWeight, tunable: level === 'SOFT' && id !== 'onRequest' }));

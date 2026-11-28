@@ -74,7 +74,13 @@ class ScaledTargetTest {
 
     @Test
     void belowCapacityTheScaledTargetsAreReachedEvenly() throws Exception {
-        PlanningInput input = halfDemand();
+        // with the block and night weights of 0.30: since 0.31 they weigh twice as much, and with half the demand
+        // blocks then win over hours for more people (11 of 20 within 12 h, measured); the rest holds either way
+        PlanningInput half = halfDemand();
+        PlanningInput input = new PlanningInput(half.dataset(), half.period(), half.rules().withWeights(java.util.Map.of(
+                ConstraintCatalog.BLOCK_LENGTH, 18000L, ConstraintCatalog.ISOLATED_DAY_OFF, 30000L,
+                ConstraintCatalog.DAY_NIGHT_SWITCH, 10000L, ConstraintCatalog.DAY_NIGHT_SWITCHES, 30000L,
+                ConstraintCatalog.NIGHT_BLOCK, 6000L)), half.assignments());
         TimefoldPlanningFacade facade = new TimefoldPlanningFacade();
         SolveProgress result = TimefoldPlanningFacadeTest.solve(facade, input, new SolveOptions(1, 600, 0, MOVES));
         PlanAnalysis analysis = facade.analyze(TimefoldPlanningFacadeTest.withAssignments(input,
@@ -96,6 +102,21 @@ class ScaledTargetTest {
         PersonStats part = people.stream().filter(p -> p.personId().equals("P0007")).findFirst().orElseThrow();
         assertThat(part.scaledGoalHours() / part.goalHours())
                 .isCloseTo(full.scaledGoalHours() / full.goalHours(), org.assertj.core.data.Offset.offset(0.15));
+    }
+
+    @Test
+    void belowCapacityWithTheDefaultsNobodyGoesOverTheCapAndBlocksStay() throws Exception {
+        PlanningInput input = halfDemand();
+        TimefoldPlanningFacade facade = new TimefoldPlanningFacade();
+        SolveProgress result = TimefoldPlanningFacadeTest.solve(facade, input, new SolveOptions(1, 600, 0, MOVES));
+        PlanAnalysis analysis = facade.analyze(TimefoldPlanningFacadeTest.withAssignments(input,
+                result.assignments()));
+        assertThat(analysis.gaps()).isEmpty();
+        assertThat(analysis.hardViolations()).isZero();
+        List<PersonStats> people = analysis.people();
+        assertThat(people).allSatisfy(p -> assertThat(p.plannedHours() + p.creditedHours())
+                .isLessThanOrEqualTo(p.goalHours() * 1.1 + 0.1));
+        assertThat(analysis.singleDaysOff()).isLessThanOrEqualTo(people.size() / 4);
     }
 
     @Test
