@@ -215,7 +215,7 @@ class RuleWeightsMigrationTest {
         storeOld(withWeights(weights028(1, 25)), ConstraintCatalog.WEIGHTS_VERSION);
         given().get("/api/rules").then().body("weights.blockLength", equalTo(18000));
         // the new rules of this version have no stored weight: their defaults apply
-        assertThat(ConstraintCatalog.get(ConstraintCatalog.PERSON_SHIFTS).defaultWeight()).isEqualTo(10000);
+        assertThat(ConstraintCatalog.get(ConstraintCatalog.PERSON_SHIFTS).defaultWeight()).isEqualTo(30000);
         assertThat(ConstraintCatalog.get(ConstraintCatalog.PERSON_LENGTHS).defaultWeight()).isEqualTo(100000);
     }
 }

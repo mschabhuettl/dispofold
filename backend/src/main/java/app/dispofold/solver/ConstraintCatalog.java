@@ -82,7 +82,7 @@ public final class ConstraintCatalog {
             soft(FORWARD_ROTATION, 500), soft(DAY_NIGHT_SWITCH, 20000), soft(DAY_NIGHT_SWITCHES, 60000),
             soft(NIGHT_BLOCK, 12000), soft(SPLIT_WEEKEND, 300), soft(COMP_REST_USE, 500),
             soft(SHIFT_VARIETY, 5), soft(AREA_VARIETY, 1), soft(SHIFT_MIX, 25), soft(USUAL_SHIFTS, 300),
-            soft(PERSON_SHIFTS, 10000), soft(PERSON_LENGTHS, 100000),
+            soft(PERSON_SHIFTS, 30000), soft(PERSON_LENGTHS, 100000),
             soft(FAMILY, 800),
             // On-request duties are never chosen by the solver (see RosterBuilder); the constraint only marks
             // duties set by planners, so its weight is not a setting.

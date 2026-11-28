@@ -1419,7 +1419,7 @@ export const TEXTS = {
   'error.import.dateOutsideMonth': '{kind} von Person {personId}: der {date} liegt nicht im Planungsmonat {month}.',
   'error.import.missingTime': 'Schicht {shiftId}: Beginn oder Ende fehlt.',
   'error.import.badShiftUsage': 'Schicht {shiftId}: Der Anteil in der Historie (usage) muss zwischen 0 und 1 liegen.',
-  'error.import.badDutyHistory': 'Person {personId}: Die Dienste der Historie (dutyHistory) brauchen Anzahlen ab 0 und Längen über 0 bis 24 Stunden.',
+  'error.import.badDutyHistory': 'Person {personId}: Die Dienste der Historie (dutyHistory) brauchen Schichten und Längen mit derselben Summe, Anzahlen ab 0 und Längen über 0 bis 24 Stunden.',
   'error.import.shiftTooLong': 'Schicht {shiftId} dauert {hours} h, erlaubt sind höchstens {maxHours} h.',
   'error.import.shiftIdReserved': 'Die Schicht-Id {shiftId} ist für Ersatzruhe reserviert.',
   'error.import.duplicateAbsence': 'Person {personId} hat am {date} mehrere Abwesenheiten; die erste gilt.',
